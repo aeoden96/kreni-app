@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Navigation, MapPin, Smartphone, Map, GitMerge, Coffee, List, MousePointerClick, Layers } from 'lucide-react';
 import { useSettingsStore } from '../../stores/settingsStore';
 
@@ -14,17 +14,41 @@ export function OnboardingWizard({ variant }: OnboardingWizardProps) {
   const onboardingStep = useSettingsStore((s) => s.onboardingStep);
   const setOnboardingStep = useSettingsStore((s) => s.setOnboardingStep);
   const [step, setStep] = useState(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     // Sync local step whenever store value changes (allows external reset)
     setStep(onboardingStep ?? 0);
   }, [onboardingStep]);
 
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.pause();
+    video.currentTime = 0;
+    let loopTimer: ReturnType<typeof setTimeout>;
+    const onEnded = () => {
+      loopTimer = setTimeout(() => {
+        video.currentTime = 0;
+        video.play().catch(() => {});
+      }, 2000);
+    };
+    video.addEventListener('ended', onEnded);
+    const startTimer = setTimeout(() => {
+      video.play().catch(() => {});
+    }, 1000);
+    return () => {
+      clearTimeout(startTimer);
+      clearTimeout(loopTimer);
+      video.removeEventListener('ended', onEnded);
+    };
+  }, [step]);
+
   if (onboardingCompleted[variant]) return null;
 
   const modeSwitchStep = {
     title: 'Promjena načina rada',
-    body: 'Klikni na glavni gumb na dnu (Spider izbornik) za brzo prebacivanje između javnog prijevoza, bicikla, auta ili gradskog sadržaja.',
+    body: 'Klikni na glavni gumb gore desno (Spider izbornik) za brzo prebacivanje između javnog prijevoza, bicikla, auta ili gradskog sadržaja.',
     icon: <Layers className="w-6 h-6 text-primary" />,
     video: '/onboarding/switch_views.webm'
   };
@@ -136,9 +160,9 @@ export function OnboardingWizard({ variant }: OnboardingWizardProps) {
         {currentStep.video ? (
           <div className="w-full bg-base-300">
             <video
+              key={step}
+              ref={videoRef}
               src={import.meta.env.BASE_URL + currentStep.video.replace(/^\//, '')}
-              autoPlay
-              loop
               muted
               playsInline
               className="w-full h-auto"
@@ -154,12 +178,14 @@ export function OnboardingWizard({ variant }: OnboardingWizardProps) {
           </div>
         ) : null}
 
-        <button
-          onClick={handleClose}
-          className="btn btn-sm btn-circle absolute right-2 top-2 bg-base-100/80 hover:bg-base-200 border-none shadow-sm"
-        >
-          <X className="w-4 h-4" />
-        </button>
+        {step > 0 && (
+          <button
+            onClick={handleClose}
+            className="btn btn-sm btn-circle absolute left-2 top-2 bg-base-100/80 hover:bg-base-200 border-none shadow-sm"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
 
         <div className="p-6">
           <div className="flex items-start gap-4 mb-6">
@@ -183,13 +209,15 @@ export function OnboardingWizard({ variant }: OnboardingWizardProps) {
           </div>
 
           <div className="flex justify-between gap-3">
-            <button
-              onClick={back}
-              disabled={step === 0}
-              className="btn btn-outline flex-1"
-            >
-              Natrag
-            </button>
+            {step === 0 ? (
+              <button onClick={handleClose} className="btn btn-outline flex-1">
+                Zatvori
+              </button>
+            ) : (
+              <button onClick={back} className="btn btn-outline flex-1">
+                Natrag
+              </button>
+            )}
             {step < steps.length - 1 ? (
               <button onClick={next} className="btn btn-primary flex-1">
                 Sljedeće
