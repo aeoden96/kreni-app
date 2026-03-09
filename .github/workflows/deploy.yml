@@ -8,6 +8,11 @@ on:
         type: boolean
         default: false
         required: false
+      skip_ci:
+        description: 'Skip CI tests'
+        type: boolean
+        default: false
+        required: false
 
 permissions:
   contents: read
@@ -18,10 +23,13 @@ concurrency:
 
 jobs:
   ci:
+    if: ${{ !inputs.skip_ci }}
     uses: ./.github/workflows/ci.yml
 
   build:
-    needs: ci
+    needs:
+      - ci
+    if: ${{ always() && (needs.ci.result == 'success' || needs.ci.result == 'skipped') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
