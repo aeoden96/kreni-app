@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { GTFS_PROXY_URL, GTFS_API_KEY } from '../config';
 import type { ParsedServiceAlert } from '../utils/realtime';
 import type { Route } from '../utils/gtfs';
 
@@ -31,7 +32,7 @@ const TYPE_TO_EFFECT: Record<RssAlert['type'], string> = {
 };
 
 const CACHE_KEY = 'zet-live-rss-alerts-cache';
-const CACHE_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+const CACHE_DURATION_MS = 30 * 60 * 1000; // 30 minutes – alerts update every 4 h
 
 function toActivePosix(dateStr: string | null): number | null {
   if (!dateStr) return null;
@@ -98,7 +99,12 @@ export function useRssServiceAlerts(routesById: Map<string, Route>): ParsedServi
       }
 
       try {
-        const res = await fetch(`${import.meta.env.BASE_URL}data/service-alerts.json`);
+        const url = GTFS_PROXY_URL
+          ? `${GTFS_PROXY_URL}?endpoint=service-alerts`
+          : `${import.meta.env.BASE_URL}data/service-alerts.json`;
+        const headers: Record<string, string> = {};
+        if (GTFS_PROXY_URL && GTFS_API_KEY) headers['X-API-Key'] = GTFS_API_KEY;
+        const res = await fetch(url, GTFS_PROXY_URL ? { headers } : undefined);
         if (!res.ok) return;
         const json: RssAlertsFile = await res.json();
 

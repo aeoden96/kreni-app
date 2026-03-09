@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write  # needed to commit updated service-alerts.json
+  contents: read
 
 concurrency:
   group: parse-service-alerts
@@ -19,9 +19,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-        with:
-          # Use a token with write access so the commit push works
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -36,10 +33,4 @@ jobs:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
         run: node scripts/parse-service-alerts.mjs
 
-      - name: Commit updated alerts
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/data/service-alerts.json
-          git diff --cached --quiet && echo "No changes to commit" || \
-            git commit -m "chore: update service alerts [skip ci]" && git push
+
