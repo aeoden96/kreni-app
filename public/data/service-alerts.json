@@ -1,6 +1,32 @@
 {
   "alerts": [
     {
+      "id": "ac6e1829af1a",
+      "guid": "http://www.zet.hr/default.aspx?id=9933",
+      "title": "Izmjena trasa linija 295, 307 i 308",
+      "lines": [
+        "295",
+        "307",
+        "308"
+      ],
+      "type": "route-change",
+      "startDate": "2026-03-09",
+      "endDate": null,
+      "affectedStops": [
+        "Sarajevska - Ukrajinska",
+        "Sarajevska - Vatikanska",
+        "Sarajevska - rotor",
+        "Sarajevska - Hrelić",
+        "Kamenarka 18",
+        "Gata 13",
+        "Sarajevska - Jakuševečka"
+      ],
+      "summary": "Od 9. ožujka autobusne linije 295, 307 i 308 prometovat će izmijenjenim trasama zbog rekonstrukcije Sarajevske ceste. Dio stajališta je zatvoren, a uspostavljena su privremena stajališta.",
+      "pubDate": "Mon, 09 Mar 2026 13:41:03 +0100",
+      "url": "https://www.zet.hr/default.aspx?id=9933",
+      "processedAt": "2026-03-09T16:47:26.485Z"
+    },
+    {
       "id": "423c15d23888",
       "guid": "http://www.zet.hr/default.aspx?id=9931",
       "title": "Linija 159 vozi obilazno prema Saskom mostu",
@@ -156,32 +182,6 @@
       "processedAt": "2026-03-08T01:14:18.173Z"
     },
     {
-      "id": "6a42bcc221f1",
-      "guid": "http://www.zet.hr/default.aspx?id=9732",
-      "title": "Izmjena trasa linija 295, 307 i 308",
-      "lines": [
-        "295",
-        "307",
-        "308"
-      ],
-      "type": "route-change",
-      "startDate": "2023-09-08",
-      "endDate": null,
-      "affectedStops": [
-        "Sarajevska - Ukrajinska",
-        "Sarajevska - Vatikanska",
-        "Sarajevska - rotor",
-        "Sarajevska - Hrelić",
-        "Kamenarka 18",
-        "Gata 13",
-        "Sarajevska - Jakuševečka"
-      ],
-      "summary": "Zbog rekonstrukcije Sarajevske ceste, autobusne linije 295, 307 i 308 prometovat će izmijenjenim trasama od 8. rujna. Dio stajališta je zatvoren, a postavljena su privremena stajališta.",
-      "pubDate": "Thu, 04 Sep 2025 04:00:00 +0200",
-      "url": "https://www.zet.hr/default.aspx?id=9732",
-      "processedAt": "2026-03-08T01:14:21.040Z"
-    },
-    {
       "id": "f5956c48d5ca",
       "guid": "http://www.zet.hr/default.aspx?id=9880",
       "title": "Linija 107 prometuje skraćenom trasom",
@@ -257,5 +257,5 @@
       "processedAt": "2026-03-08T01:14:30.672Z"
     }
   ],
-  "lastUpdate": "2026-03-09T12:37:58.553Z"
+  "lastUpdate": "2026-03-09T16:47:26.486Z"
 }
