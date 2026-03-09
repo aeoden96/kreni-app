@@ -18,7 +18,7 @@ interface CacheData {
     stations: BajsStation[];
 }
 
-const CACHE_KEY = 'zet-live-nextbike-cache';
+const CACHE_KEY = 'kreni-nextbike-cache';
 const CACHE_DURATION_MS = 60 * 1000; // 1 minute
 const API_URL = 'https://maps.nextbike.net/maps/nextbike-live.json?city=1172&domains=hd&list_cities=0&bikes=0';
 

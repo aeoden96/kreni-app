@@ -41,7 +41,7 @@ export function SettingsPage() {
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && key.startsWith('zet-live-')) keysToRemove.push(key);
+        if (key && key.startsWith('kreni-')) keysToRemove.push(key);
       }
       keysToRemove.forEach((key) => localStorage.removeItem(key));
       clearCache();

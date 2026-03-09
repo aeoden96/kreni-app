@@ -1,4 +1,4 @@
-name: Parse ZET Service Alerts
+name: Parse Service Alerts
 
 on:
   schedule:

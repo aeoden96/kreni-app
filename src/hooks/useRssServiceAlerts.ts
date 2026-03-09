@@ -31,7 +31,7 @@ const TYPE_TO_EFFECT: Record<RssAlert['type'], string> = {
   'other': 'OTHER_EFFECT',
 };
 
-const CACHE_KEY = 'zet-live-rss-alerts-cache';
+const CACHE_KEY = 'kreni-rss-alerts-cache';
 const CACHE_DURATION_MS = 30 * 60 * 1000; // 30 minutes – alerts update every 4 h
 
 function toActivePosix(dateStr: string | null): number | null {

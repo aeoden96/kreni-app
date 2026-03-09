@@ -189,7 +189,7 @@ export const useSettingsStore = create<SettingsState>()(
       };
     },
     {
-      name: 'zet-live-settings',
+      name: 'kreni-settings',
       // Bump version here whenever a default value changes and you want
       // existing users' stored value to be overridden with the new default.
       // migrate() receives the persisted state and should return the corrected state.

@@ -149,7 +149,7 @@ export function ListApp() {
     <div className="h-svh flex flex-col bg-base-200">
       {/* Header */}
       <header className="relative z-[2100] bg-base-100 border-b border-base-300 px-4 py-3 flex items-center gap-3 shrink-0">
-        <h1 className="text-lg font-bold flex-1">ZET Live</h1>
+        <h1 className="text-lg font-bold flex-1">Kreni</h1>
 
         {/* Realtime status */}
         {realtimeStats && !realtimeError && (

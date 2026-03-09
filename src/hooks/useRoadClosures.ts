@@ -18,7 +18,7 @@ interface CacheData {
     closures: RoadClosure[];
 }
 
-const CACHE_KEY = 'zet-live-road-closures-cache';
+const CACHE_KEY = 'kreni-road-closures-cache';
 const CACHE_DURATION_MS = 60 * 60 * 1000; // 1 hour
 
 export function useRoadClosures(enabled: boolean) {

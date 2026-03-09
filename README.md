@@ -1,4 +1,4 @@
-# ZET Live
+# Kreni
 
 Zagreb public transit tracker — static frontend app, no backend. All GTFS data pre-processed into JSON chunks served from a CDN.
 

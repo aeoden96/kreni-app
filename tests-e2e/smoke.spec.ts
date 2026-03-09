@@ -7,7 +7,7 @@ import { test, expect } from './fixtures';
  * Title and selectors captured via Playwright MCP inspecting the live app.
  */
 
-const APP_TITLE = 'ZET Live \u2014 Pra\u0107enje javnog prijevoza u Zagrebu';
+const APP_TITLE = 'Kreni \u2014 Pra\u0107enje javnog prijevoza u Zagrebu';
 
 // In the E2E test environment the app is built with
 // VITE_GTFS_PROXY_URL=http://localhost:9999 (set in playwright.config.ts

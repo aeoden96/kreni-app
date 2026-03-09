@@ -1,5 +1,5 @@
 /**
- * Shared Playwright fixtures for ZET Live E2E tests.
+ * Shared Playwright fixtures for Kreni E2E tests.
  *
  * Import `test` and `expect` from this file instead of `@playwright/test`
  * directly so app-level fixtures run automatically for every spec.
@@ -19,7 +19,7 @@ import type { Page } from '@playwright/test';
 export const test = base.extend<{ page: Page }>({
   /**
    * Override `page` to pre-populate localStorage before each navigation.
-   * The zustand-persist key `zet-live-settings` stores `onboardingCompleted`
+   * The zustand-persist key `kreni-settings` stores `onboardingCompleted`
    * which controls whether the OnboardingWizard modal is shown.
    * `run` is Playwright's `use` parameter, renamed to avoid the
    * react-hooks/rules-of-hooks ESLint false positive.
@@ -27,7 +27,7 @@ export const test = base.extend<{ page: Page }>({
   page: async ({ page }, run) => {
     await page.addInitScript(() => {
       try {
-        const raw = localStorage.getItem('zet-live-settings');
+        const raw = localStorage.getItem('kreni-settings');
         const stored = raw ? JSON.parse(raw) : {};
         if (!stored.state) stored.state = {};
         stored.state.onboardingCompleted = {
@@ -37,7 +37,7 @@ export const test = base.extend<{ page: Page }>({
           city: true,
           list: true,
         };
-        localStorage.setItem('zet-live-settings', JSON.stringify(stored));
+        localStorage.setItem('kreni-settings', JSON.stringify(stored));
       } catch {
         // ignore localStorage / JSON errors in the browser context
       }

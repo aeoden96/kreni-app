@@ -14,7 +14,7 @@ import { test, expect } from '../fixtures';
 test.describe('mobile smoke', () => {
   test('page loads with the correct title', async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveTitle('ZET Live — Praćenje javnog prijevoza u Zagrebu');
+    await expect(page).toHaveTitle('Kreni — Praćenje javnog prijevoza u Zagrebu');
   });
 
   test('root route renders without uncaught JS errors', async ({ page }) => {
