@@ -8,7 +8,6 @@
     "dev": "vite",
     "dev:host": "vite --host",
     "build": "tsc -b && vite build",
-    "build:gh-pages": "GITHUB_PAGES=true GITHUB_REPOSITORY=username/repo-name tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",

@@ -3,17 +3,6 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// Get repository name from environment variable (set by GitHub Actions)
-// Format: owner/repo-name -> repo-name
-const getBasePath = () => {
-  if (process.env.GITHUB_PAGES === 'true' && process.env.GITHUB_REPOSITORY) {
-    const repoName = process.env.GITHUB_REPOSITORY.split('/')[1]
-    return `/${repoName}/`
-  }
-  // Default to root for local development
-  return '/'
-}
-
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -33,8 +22,8 @@ export default defineConfig({
         theme_color: '#1e3a5f',
         background_color: '#ffffff',
         display: 'standalone',
-        start_url: getBasePath(),
-        scope: getBasePath(),
+        start_url: '/',
+        scope: '/',
         icons: [
           {
             src: 'pwa-192x192.png',
