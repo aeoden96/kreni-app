@@ -71,11 +71,11 @@ export function SettingsPage() {
     <div className="h-full overflow-y-auto bg-base-200">
       {/* Header */}
       <div className="bg-base-100 border-b border-base-300">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-3">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
           <Link to="/" className="btn btn-circle btn-ghost btn-sm">
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <h1 className="text-2xl font-bold">Postavke</h1>
+          <h1 className="text-lg font-bold">Postavke</h1>
         </div>
       </div>
 

@@ -11,10 +11,12 @@ import {
     LocateFixed,
     Map,
     List,
-    Train
+    Train,
+    Download
 } from 'lucide-react';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useNavigationStore } from '../../stores/navigationStore';
+import { usePWAInstall } from '../../hooks/usePWAInstall';
 
 export function SpiderMenu() {
     const [isOpen, setIsOpen] = useState(false);
@@ -45,6 +47,7 @@ export function SpiderMenu() {
         setShowFreeWifi
     } = useSettingsStore();
     const { onLocateClick, locating } = useNavigationStore();
+    const { canInstall, install } = usePWAInstall();
 
     const toggleMenu = () => setIsOpen(!isOpen);
 
@@ -116,9 +119,10 @@ export function SpiderMenu() {
 
     // Show locate button on modes that support it (any that register an action)
     const showLocate = !!onLocateClick;
+    const isHeaderMode = (location.pathname === '/' && appMode === 'list') || location.pathname === '/settings';
 
     return (
-        <div className="fixed top-2 right-2 sm:top-4 sm:right-4 z-[2000] flex flex-col items-end">
+        <div className={`fixed ${isHeaderMode ? 'top-[10px] right-2' : 'top-2 right-2 sm:top-4 sm:right-4'} z-[2000] flex flex-col items-end`}>
             {isOpen && (
                 <div
                     className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[1999]"
@@ -148,7 +152,7 @@ export function SpiderMenu() {
                     {/* HUB BUTTON */}
                     <button
                         onClick={toggleMenu}
-                        className={`relative flex items-center justify-center w-10 h-10 sm:w-14 sm:h-14 text-white rounded-full shadow-2xl transition-all duration-300 ease-in-out border border-white/20 active:scale-95 backdrop-blur-xl ${isOpen ? 'bg-zinc-900 rotate-0' : `${activeItem.color} hover:brightness-110`}`}
+                        className={`relative flex items-center justify-center ${isHeaderMode ? 'w-8 h-8' : 'w-10 h-10 sm:w-14 sm:h-14'} text-white rounded-full shadow-2xl transition-all duration-300 ease-in-out border border-white/20 active:scale-95 backdrop-blur-xl ${isOpen ? 'bg-zinc-900 rotate-0' : `${activeItem.color} hover:brightness-110`}`}
                     >
                         <div className={`absolute transition-all duration-300 ${isOpen ? 'rotate-180 scale-0 opacity-0' : 'rotate-0 scale-100 opacity-100'}`}>
                             {activeItem.icon}
@@ -388,6 +392,22 @@ export function SpiderMenu() {
                                 </button>
                             ))}
                         </div>
+                        {canInstall && (
+                            <button
+                                onClick={() => {
+                                    install();
+                                    setIsOpen(false);
+                                }}
+                                className="flex flex-row items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-neutral/90 text-neutral-content shadow-lg border border-white/10 hover:bg-neutral hover:scale-105 transition-all duration-300 animate-spider-reveal self-end"
+                                title="Instaliraj aplikaciju"
+                                style={{
+                                    animationDelay: `${(menuItems.length * 50) + 100 + (actionItems.length * 50)}ms`
+                                }}
+                            >
+                                <Download className="w-5 h-5" />
+                                <span className="text-[9px] font-black tracking-widest">INSTALIRAJ</span>
+                            </button>
+                        )}
                     </div>
                 )
                 }

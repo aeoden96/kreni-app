@@ -12,8 +12,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { Star, Route as RouteIcon, MapPin, AlertTriangle, Settings } from 'lucide-react';
+import { Star, Route as RouteIcon, MapPin, AlertTriangle } from 'lucide-react';
 import { useInitialData } from '../../hooks/useInitialData';
 import { useCurrentService } from '../../hooks/useCurrentService';
 import { useRouteData } from '../../hooks/useRouteData';
@@ -148,7 +147,7 @@ export function ListApp() {
   return (
     <div className="h-svh flex flex-col bg-base-200">
       {/* Header */}
-      <header className="relative z-[2100] bg-base-100 border-b border-base-300 px-4 py-3 flex items-center gap-3 shrink-0">
+      <header className="relative z-50 bg-base-100 border-b border-base-300 pl-4 pr-14 sm:pr-20 py-3 flex items-center gap-3 shrink-0">
         <h1 className="text-lg font-bold flex-1">Kreni</h1>
 
         {/* Realtime status */}
@@ -162,9 +161,7 @@ export function ListApp() {
           <span className="badge badge-error badge-sm gap-1">GPS greška</span>
         )}
 
-        <Link to="/settings" className="btn btn-ghost btn-circle btn-sm">
-          <Settings className="w-5 h-5" />
-        </Link>
+
       </header>
 
       {/* Tab content */}
