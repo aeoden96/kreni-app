@@ -117,24 +117,6 @@
       "processedAt": "2026-03-08T01:14:12.201Z"
     },
     {
-      "id": "eddfff04acdb",
-      "guid": "http://www.zet.hr/default.aspx?id=9917",
-      "title": "Izmješteno stajalište „Tomislavova“",
-      "lines": [
-        "134"
-      ],
-      "type": "stop-change",
-      "startDate": "2024-02-17",
-      "endDate": null,
-      "affectedStops": [
-        "Tomislavova"
-      ],
-      "summary": "Zbog radova na Zagrebačkoj cesti, autobusi linije 134 privremeno će se zaustavljati 50 metara južnije od stajališta Tomislavova.",
-      "pubDate": "Tue, 17 Feb 2026 13:34:25 +0100",
-      "url": "https://www.zet.hr/default.aspx?id=9917",
-      "processedAt": "2026-03-08T01:14:14.100Z"
-    },
-    {
       "id": "1343ec070345",
       "guid": "http://www.zet.hr/default.aspx?id=9912",
       "title": "Linije 6, 8 i 14 mijenjaju trase prometovanja",
@@ -275,5 +257,5 @@
       "processedAt": "2026-03-08T01:14:30.672Z"
     }
   ],
-  "lastUpdate": "2026-03-09T08:33:38.352Z"
+  "lastUpdate": "2026-03-09T12:37:58.553Z"
 }
