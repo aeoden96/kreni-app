@@ -24,13 +24,14 @@ export function StopTabSelector({
   compact = false,
   hideVehicles = false,
 }: StopTabSelectorProps) {
-  // reduce overall padding/size so tabs take less space
-  const tabClass = compact ? 'tab text-xs px-2 py-0.5' : 'tab text-xs px-3 py-0.5';
+  const tabClass = compact
+    ? 'tab text-[11px] px-2 py-0.5 rounded-full'
+    : 'tab text-xs px-3 py-1 rounded-full';
   const activeClass = 'tab-active font-semibold';
-  const iconSize = compact ? 'w-3 h-3' : 'w-4 h-4';
+  const iconSize = compact ? 'w-3 h-3' : 'w-3.5 h-3.5';
 
   return (
-    <div role="tablist" className="tabs tabs-box bg-base-200 rounded-lg w-full">
+    <div role="tablist" className="tabs tabs-box bg-base-200/70 rounded-full w-full p-0.5">
       {!hideVehicles && (
         <button
           role="tab"

@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Maximize2, X, Star, ArrowRight, ArrowLeftRight } from 'lucide-react';
+import { Maximize2, X, Star, ArrowRight, Navigation2, Info } from 'lucide-react';
 import type { Stop, Route } from '../../utils/gtfs';
 import { bearingToDirection } from '../../utils/gtfs';
 import { useApproachingVehicles } from '../../hooks/useApproachingVehicles';
@@ -42,10 +42,13 @@ export function StopInfoBar({
   stackBelow = false,
 }: StopInfoBarProps) {
   const { dataDir, hasRealtime } = useGTFSMode();
-  const { favouriteStopIds, toggleFavouriteStop } = useSettingsStore();
+  const { favouriteStopIds, toggleFavouriteStop, dismissedGpsTip, setDismissedGpsTip } = useSettingsStore();
   const isFav = favouriteStopIds.includes(stop.id);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [activeTab, setActiveTab] = useState<StopTab>(hasRealtime ? 'vehicles' : 'timetable');
+  const [routesExpanded, setRoutesExpanded] = useState(false);
+
+  const ROUTES_COLLAPSED_MAX = 6;
 
   // 1-second tick for live countdown
   useEffect(() => {
@@ -181,8 +184,8 @@ export function StopInfoBar({
             </div>
           )}
           {stopRoutes.length > 0 && (
-            <div className="flex flex-nowrap gap-1 mt-1.5 overflow-x-auto">
-              {stopRoutes.map((route) => (
+            <div className="flex flex-wrap gap-1 mt-1.5">
+              {(routesExpanded ? stopRoutes : stopRoutes.slice(0, ROUTES_COLLAPSED_MAX)).map((route) => (
                 <span
                   key={route.id}
                   className={`badge badge-sm font-bold ${
@@ -192,28 +195,43 @@ export function StopInfoBar({
                   {route.shortName}
                 </span>
               ))}
+              {!routesExpanded && stopRoutes.length > ROUTES_COLLAPSED_MAX && (
+                <button
+                  type="button"
+                  onClick={() => setRoutesExpanded(true)}
+                  className="badge badge-sm badge-ghost font-semibold cursor-pointer hover:badge-neutral"
+                >
+                  +{stopRoutes.length - ROUTES_COLLAPSED_MAX}
+                </button>
+              )}
             </div>
           )}
           {siblingPlatforms.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1.5">
-              {siblingPlatforms.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => onStopSelect?.(s.id)}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-base-300 hover:bg-base-200 active:bg-base-300 text-[11px] text-base-content/60 transition-colors"
-                  title={`Prebaci na: ${s.name}${
-                    s.bearing !== undefined ? ` (${bearingToDirection(s.bearing)})` : ''
-                  }`}
-                >
-                  <ArrowLeftRight className="w-2.5 h-2.5 shrink-0" />
-                  <span>
-                    {s.bearing !== undefined
-                      ? `Smjer prema ${bearingToDirection(s.bearing)}`
-                      : (s.code ?? s.name)}
-                  </span>
-                </button>
-              ))}
+            <div className="mt-1.5">
+              <p className="text-[10px] uppercase tracking-wide text-base-content/40 mb-1">Ostala stajališta</p>
+              <div className="flex flex-wrap gap-1">
+                {siblingPlatforms.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => onStopSelect?.(s.id)}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-base-200/60 border border-base-300 hover:bg-base-200 active:bg-base-300 text-[11px] text-base-content/70 transition-colors"
+                    title={`Prebaci na: ${s.name}${
+                      s.bearing !== undefined ? ` (${bearingToDirection(s.bearing)})` : ''
+                    }`}
+                  >
+                    <Navigation2
+                      className="w-2.5 h-2.5 shrink-0"
+                      style={s.bearing !== undefined ? { transform: `rotate(${s.bearing}deg)` } : undefined}
+                    />
+                    <span>
+                      {s.bearing !== undefined
+                        ? `Smjer prema ${bearingToDirection(s.bearing)}`
+                        : (s.code ?? s.name)}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -229,6 +247,29 @@ export function StopInfoBar({
           />
         </div>
 
+        {/* GPS tip banner */}
+        {activeTab === 'vehicles' && !vehiclesLoading && !dismissedGpsTip && (
+          <div className="mt-2 p-4 rounded-xl bg-info/10 border border-info/30 flex gap-3 items-start">
+            <Info className="w-5 h-5 text-info shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-base-content/90 mb-1">GPS prikaz vozila</p>
+              <p className="text-sm text-base-content/70 leading-snug mb-1.5">
+                Prikazuju se <strong>vozila koja se približavaju</strong> ovom stajalištu u stvarnom vremenu.
+              </p>
+              <p className="text-sm text-base-content/50 leading-snug">
+                Temelji se na GPS signalu — može se razlikovati od &ldquo;Red vožnje&rdquo;.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDismissedGpsTip(true)}
+              className="btn btn-ghost btn-circle btn-sm shrink-0"
+              title="Ne prikazuj više"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
         {/* Vehicles tab */}
         {activeTab === 'vehicles' && (
           vehiclesLoading ? (

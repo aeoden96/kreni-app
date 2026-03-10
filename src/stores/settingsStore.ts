@@ -47,6 +47,8 @@ interface SettingsState {
   recentRoutes: RecentItem[];
   /** Recently viewed stops (newest first, max 10) */
   recentStops: RecentItem[];
+  /** User dismissed the GPS-vs-timetable info tip in stop view */
+  dismissedGpsTip: boolean;
 
   setSandboxVisible: (visible: boolean) => void;
   setMapTileProvider: (provider: MapTileProvider) => void;
@@ -68,6 +70,7 @@ interface SettingsState {
   setShowElectricCharging: (show: boolean) => void;
   setShowRailwayStations: (show: boolean) => void;
   setAppMode: (mode: AppMode) => void;
+  setDismissedGpsTip: (dismissed: boolean) => void;
   toggleFavouriteRoute: (id: string) => void;
   toggleFavouriteStop: (id: string) => void;
   addRecentRoute: (id: string) => void;
@@ -112,6 +115,7 @@ export const useSettingsStore = create<SettingsState>()(
         favouriteStopIds: [],
         recentRoutes: [],
         recentStops: [],
+        dismissedGpsTip: false,
 
         setSandboxVisible: (visible) => set({ sandboxVisible: visible }),
         setDetailedMap: (detailed) => set({ detailedMap: detailed }),
@@ -154,6 +158,7 @@ export const useSettingsStore = create<SettingsState>()(
         setShowElectricCharging: (show) => set({ showElectricCharging: show }),
         setShowRailwayStations: (show) => set({ showRailwayStations: show }),
         setAppMode: (mode) => set({ appMode: mode }),
+        setDismissedGpsTip: (dismissed) => set({ dismissedGpsTip: dismissed }),
 
         toggleFavouriteRoute: (id) =>
           set((s) => ({

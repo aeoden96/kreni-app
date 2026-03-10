@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { X, Clock, Star, ArrowRight, ArrowLeftRight } from 'lucide-react';
+import { X, Clock, Star, ArrowRight, Navigation2, Info } from 'lucide-react';
 import type { Stop, Route } from '../../utils/gtfs';
 import { minutesToTime, bearingToDirection } from '../../utils/gtfs';
 import { useCurrentTime } from '../../hooks/useCurrentTime';
@@ -39,10 +39,13 @@ export function StopModal({
 }: StopModalProps) {
   const { dataDir, hasRealtime } = useGTFSMode();
   const currentTime = useCurrentTime();
-  const { favouriteStopIds, toggleFavouriteStop } = useSettingsStore();
+  const { favouriteStopIds, toggleFavouriteStop, dismissedGpsTip, setDismissedGpsTip } = useSettingsStore();
   const isFav = favouriteStopIds.includes(stop.id);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [activeTab, setActiveTab] = useState<StopTab>(hasRealtime ? 'vehicles' : 'timetable');
+  const [routesExpanded, setRoutesExpanded] = useState(false);
+
+  const ROUTES_COLLAPSED_MAX = 6;
 
   // 1-second tick for live countdown
   useEffect(() => {
@@ -174,8 +177,8 @@ export function StopModal({
           </div>
           {/* Tab selector */}
           {stopRoutes.length > 0 && (
-            <div className="flex flex-nowrap gap-1 mb-3 overflow-x-auto">
-              {stopRoutes.map((route) => (
+            <div className="flex flex-wrap gap-1 mb-3">
+              {(routesExpanded ? stopRoutes : stopRoutes.slice(0, ROUTES_COLLAPSED_MAX)).map((route) => (
                 <span
                   key={route.id}
                   className={`badge badge-sm font-bold ${
@@ -185,28 +188,43 @@ export function StopModal({
                   {route.shortName}
                 </span>
               ))}
+              {!routesExpanded && stopRoutes.length > ROUTES_COLLAPSED_MAX && (
+                <button
+                  type="button"
+                  onClick={() => setRoutesExpanded(true)}
+                  className="badge badge-sm badge-ghost font-semibold cursor-pointer hover:badge-neutral"
+                >
+                  +{stopRoutes.length - ROUTES_COLLAPSED_MAX}
+                </button>
+              )}
             </div>
           )}
           {siblingPlatforms.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              {siblingPlatforms.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => onStopSelect?.(s.id)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-base-300 hover:bg-base-200 active:bg-base-300 text-xs text-base-content/60 transition-colors"
-                  title={`Prebaci na: ${s.name}${
-                    s.bearing !== undefined ? ` (${bearingToDirection(s.bearing)})` : ''
-                  }`}
-                >
-                  <ArrowLeftRight className="w-3.5 h-3.5 shrink-0" />
-                  <span>
-                    {s.bearing !== undefined
-                      ? `Smjer prema ${bearingToDirection(s.bearing)}`
-                      : (s.code ?? s.name)}
-                  </span>
-                </button>
-              ))}
+            <div className="mb-3">
+              <p className="text-[10px] uppercase tracking-wide text-base-content/40 mb-1.5">Ostala stajališta</p>
+              <div className="flex flex-wrap gap-1.5">
+                {siblingPlatforms.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => onStopSelect?.(s.id)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-base-200/60 border border-base-300 hover:bg-base-200 active:bg-base-300 text-xs text-base-content/70 transition-colors"
+                    title={`Prebaci na: ${s.name}${
+                      s.bearing !== undefined ? ` (${bearingToDirection(s.bearing)})` : ''
+                    }`}
+                  >
+                    <Navigation2
+                      className="w-3.5 h-3.5 shrink-0"
+                      style={s.bearing !== undefined ? { transform: `rotate(${s.bearing}deg)` } : undefined}
+                    />
+                    <span>
+                      {s.bearing !== undefined
+                        ? `Smjer prema ${bearingToDirection(s.bearing)}`
+                        : (s.code ?? s.name)}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           {/* Tab selector */}
@@ -221,6 +239,29 @@ export function StopModal({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto overscroll-contain">
+          {/* GPS tip banner */}
+          {activeTab === 'vehicles' && !vehiclesLoading && !dismissedGpsTip && (
+            <div className="mx-4 mt-4 mb-3 p-4 rounded-xl bg-info/10 border border-info/30 flex gap-3 items-start">
+              <Info className="w-5 h-5 text-info shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-base-content/90 mb-1">GPS prikaz vozila</p>
+                <p className="text-sm text-base-content/70 leading-snug mb-1.5">
+                  Ovdje možeš vidjeti <strong>vozila koja se stvarno približavaju</strong> ovom stajalištu — udaljenost i smjer u stvarnom vremenu.
+                </p>
+                <p className="text-sm text-base-content/50 leading-snug">
+                  Prikaz se temelji na GPS signalu, neovisno o voznom redu, pa može odstupati od taba &ldquo;Red vožnje&rdquo;.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDismissedGpsTip(true)}
+                className="btn btn-ghost btn-circle btn-sm shrink-0"
+                title="Ne prikazuj više"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
           {/* Vehicles tab */}
           {activeTab === 'vehicles' && (
             vehiclesLoading ? (
@@ -235,7 +276,7 @@ export function StopModal({
                 </div>
               )
             ) : (
-              <div className="p-4 space-y-2">
+              <div className="px-4 pb-4 space-y-2">
                 <div className="flex items-center justify-between mb-1">
                   <h3 className="font-semibold">Nadolazeća vozila</h3>
                   <span className="text-xs text-base-content/40">GPS uživo</span>
