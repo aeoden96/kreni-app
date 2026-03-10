@@ -37,6 +37,8 @@ export function SpiderMenu() {
         setShowPublicGarages,
         showElectricCharging,
         setShowElectricCharging,
+        showParkingZones,
+        setShowParkingZones,
         showStudentRestaurants,
         setShowStudentRestaurants,
         showPublicFountains,
@@ -237,6 +239,20 @@ export function SpiderMenu() {
                                             `}
                                         >
                                             EV
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setShowParkingZones(!showParkingZones);
+                                            }}
+                                            className={`
+                                                flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest transition-all duration-300
+                                                ${showParkingZones
+                                                    ? 'bg-emerald-500 text-white shadow-lg scale-105'
+                                                    : 'text-white/40 hover:text-white/60 hover:bg-white/5'}
+                                            `}
+                                        >
+                                            ZONE
                                         </button>
                                     </div>
                                 )}
