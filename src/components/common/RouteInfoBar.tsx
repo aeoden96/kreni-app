@@ -24,7 +24,7 @@ interface RouteInfoBarProps {
 }
 
 const TRAM_COLOR = '#2563eb'; // blue-600
-const BUS_COLOR  = '#ea580c'; // orange-600
+const BUS_COLOR = '#d97706'; // amber-600
 
 export function RouteInfoBar({ route, vehicles, onExpand, onClose, orderedStops, stopsById, followCandidateTripId, onFollowStart }: RouteInfoBarProps) {
   const color = route.type === 0 ? TRAM_COLOR : BUS_COLOR;

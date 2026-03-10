@@ -15,9 +15,9 @@ function stopFillColor(stop: Stop, isSelected: boolean, isHighlighted: boolean):
   if (isHighlighted) return '#2337ff';
   switch (stop.routeType) {
     case 0: return '#2563eb';  // tram-only  → blue
-    case 3: return '#ea580c';  // bus-only   → orange
-    case 2: return '#c0392b';  // rail       → deep red
-    default: return '#8242be'; // fallback    → purple
+    case 3: return '#d97706';  // bus-only   → amber
+    case 2: return '#dc2626';  // rail       → red
+    default: return '#475569'; // fallback    → slate
   }
 }
 

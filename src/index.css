@@ -307,7 +307,8 @@ body {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background-color: #8242be;
+  background-color: #475569;
+  /* slate (was purple) */
   border: 2px solid white;
   display: flex;
   align-items: center;
@@ -592,14 +593,17 @@ body {
 
 .spider-route-badge.is-tram {
   background-color: #2563eb;
+  /* blue-600 */
 }
 
 .spider-route-badge.is-bus {
-  background-color: #ea580c;
+  background-color: #d97706;
+  /* amber-600 */
 }
 
 .spider-route-badge.is-mixed {
-  background-color: #8242be;
+  background-color: #475569;
+  /* slate-600 */
 }
 
 .spider-route-ticker {

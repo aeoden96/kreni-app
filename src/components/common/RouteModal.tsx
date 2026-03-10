@@ -36,7 +36,7 @@ interface RouteModalProps {
 type DirectionFilter = 'A' | 'B';
 
 const TRAM_COLOR = '#2563eb'; // blue-600
-const BUS_COLOR = '#ea580c'; // orange-600
+const BUS_COLOR = '#d97706'; // amber-600
 
 export function RouteModal({
   isOpen,

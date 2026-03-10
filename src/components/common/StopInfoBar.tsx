@@ -185,8 +185,8 @@ export function StopInfoBar({
                   {(routesExpanded ? stopRoutes : stopRoutes.slice(0, ROUTES_COLLAPSED_MAX)).map((route) => (
                     <span
                       key={route.id}
-                      className={`badge badge-sm font-bold ${route.type === 0 ? 'badge-primary' : 'badge-accent'
-                        }`}
+                      className="badge badge-sm font-bold text-white"
+                      style={{ backgroundColor: route.type === 0 ? '#2563eb' : '#d97706' }}
                     >
                       {route.shortName}
                     </span>
@@ -257,7 +257,7 @@ export function StopInfoBar({
               </div>
 
               {(platformsExpanded || siblingPlatforms.length === 1) && (
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-col gap-1">
                   {sortedSiblingPlatforms.map((s) => {
                     const routes = siblingRouteMap.get(s.id) ?? [];
                     const isTerminus = siblingTerminusSet.has(s.id);
@@ -283,9 +283,9 @@ export function StopInfoBar({
                         {label && <span>{label}</span>}
                         {isTerminus && <span className="badge-xs text-warning font-semibold">Odredišna platforma</span>}
                         {routes.length > 0 && (
-                          <span className="flex gap-0.5 ml-0.5">
+                          <span className="flex gap-0.5 ml-auto">
                             {routes.slice(0, 3).map(r => (
-                              <span key={r.id} className={`badge badge-xs font-bold ${r.type === 0 ? 'badge-primary' : 'badge-accent'}`}>{r.shortName}</span>
+                              <span key={r.id} className="badge badge-xs font-bold text-white" style={{ backgroundColor: r.type === 0 ? '#2563eb' : '#d97706' }}>{r.shortName}</span>
                             ))}
                             {routes.length > 3 && <span className="text-[10px] opacity-50">+{routes.length - 3}</span>}
                           </span>
@@ -392,9 +392,11 @@ export function StopInfoBar({
                       }`}
                   >
                     <span
-                      className={`badge ${vehicle.routeType === 0 ? 'badge-primary' : 'badge-accent'
-                        } badge-sm font-bold min-w-[2.5rem] justify-center shrink-0 ${isAtStop ? 'animate-pulse' : ''
-                        }`}
+                      className="badge badge-sm font-bold min-w-[2.5rem] justify-center shrink-0 text-white"
+                      style={{
+                        backgroundColor: vehicle.routeType === 0 ? '#2563eb' : '#d97706',
+                        ...(isAtStop ? { animation: 'pulse 2s cubic-bezier(0.4,0,0.6,1) infinite' } : {})
+                      }}
                     >
                       {vehicle.routeShortName}
                     </span>

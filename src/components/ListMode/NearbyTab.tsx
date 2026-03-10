@@ -68,7 +68,8 @@ function NearbyStopCard({
               return (
                 <span
                   key={v.tripId}
-                  className={`badge badge-sm gap-1 ${v.routeType === 0 ? 'badge-primary' : 'badge-accent'}`}
+                  className="badge badge-sm gap-1 text-white"
+                  style={{ backgroundColor: v.routeType === 0 ? '#2563eb' : '#d97706' }}
                 >
                   {v.routeShortName}
                   <span className="opacity-80">{mins === 0 ? 'dolazi' : `${mins} min`}</span>

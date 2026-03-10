@@ -215,9 +215,8 @@ export function StopModal({
               {(routesExpanded ? stopRoutes : stopRoutes.slice(0, ROUTES_COLLAPSED_MAX)).map((route) => (
                 <span
                   key={route.id}
-                  className={`badge badge-sm font-bold ${
-                    route.type === 0 ? 'badge-primary' : 'badge-accent'
-                  }`}
+                  className="badge badge-sm font-bold text-white"
+                  style={{ backgroundColor: route.type === 0 ? '#2563eb' : '#d97706' }}
                 >
                   {route.shortName}
                 </span>
@@ -248,14 +247,12 @@ export function StopModal({
                       key={s.id}
                       type="button"
                       onClick={() => onStopSelect?.(s.id)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs text-base-content/70 transition-colors ${
-                        isTerminus
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs text-base-content/70 transition-colors ${isTerminus
                           ? 'bg-warning/10 border-warning/40 hover:bg-warning/20 active:bg-warning/30'
                           : 'bg-base-200/60 border-base-300 hover:bg-base-200 active:bg-base-300'
-                      }`}
-                      title={`Prebaci na: ${s.name}${
-                        s.bearing !== undefined ? ` (${bearingToDirection(s.bearing)})` : ''
-                      }${isTerminus ? ' · odredišna' : ''}`}
+                        }`}
+                      title={`Prebaci na: ${s.name}${s.bearing !== undefined ? ` (${bearingToDirection(s.bearing)})` : ''
+                        }${isTerminus ? ' · odredišna' : ''}`}
                     >
                       <Navigation2
                         className="w-3.5 h-3.5 shrink-0"
@@ -266,7 +263,7 @@ export function StopModal({
                       {routes.length > 0 && (
                         <span className="flex gap-0.5 ml-0.5">
                           {routes.slice(0, 3).map(r => (
-                            <span key={r.id} className={`badge badge-xs font-bold ${r.type === 0 ? 'badge-primary' : 'badge-accent'}`}>{r.shortName}</span>
+                            <span key={r.id} className="badge badge-xs font-bold text-white" style={{ backgroundColor: r.type === 0 ? '#2563eb' : '#d97706' }}>{r.shortName}</span>
                           ))}
                           {routes.length > 3 && <span className="text-[10px] opacity-50">+{routes.length - 3}</span>}
                         </span>

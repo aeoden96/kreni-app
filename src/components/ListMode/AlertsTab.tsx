@@ -70,9 +70,8 @@ export function AlertsTab({ alerts, routesById, onRouteClick }: AlertsTabProps) 
                   <button
                     key={rid}
                     onClick={() => onRouteClick(rid, route.type)}
-                    className={`badge ${
-                      route.type === 0 ? 'badge-primary' : 'badge-accent'
-                    } badge-sm font-bold gap-1 hover:opacity-80 transition-opacity cursor-pointer`}
+                    className="badge badge-sm font-bold gap-1 hover:opacity-80 transition-opacity cursor-pointer text-white"
+                    style={{ backgroundColor: route.type === 0 ? '#2563eb' : '#d97706' }}
                   >
                     {route.shortName}
                     <ChevronRight className="w-3 h-3" />

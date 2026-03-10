@@ -1,10 +1,10 @@
 export function getDirectionColor(routeType: number | null, index: number): string {
   // Color palettes per transport type
   const palettes: Record<string, string[]> = {
-    tram:  ['#2337ff', '#1fb6ff', '#7fb3ff'],
-    bus:   ['#ff6b35', '#ffb26b', '#ffd6b0'],
-    rail:  ['#c0392b', '#e74c3c', '#f1948a'],
-    mixed: ['#8242be', '#5e32a8', '#a36bd1']
+    tram: ['#2563eb', '#1d4ed8', '#3b82f6'],  // blues
+    bus: ['#d97706', '#b45309', '#f59e0b'],  // ambers
+    rail: ['#dc2626', '#b91c1c', '#ef4444'],  // reds
+    mixed: ['#475569', '#334155', '#64748b'],  // slates (neutral)
   };
 
   let key = 'mixed';

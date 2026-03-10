@@ -38,7 +38,7 @@ export function TimetableDepartureCard({
   const isEarly = delaySec < -90;
   const isOnTime = hasRealtime && !isLate && !isEarly;
 
-  const badgeClass = departure.routeType === 0 ? 'badge-primary' : 'badge-accent';
+  const badgeColor = departure.routeType === 0 ? '#2563eb' : '#d97706';
   const countdownText = formatMinutesUntil(minutesUntil);
   // Clock time: show adjusted if there's a delay, else scheduled
   const clockTime = minutesToTime(hasRealtime ? adjustedMinutes : scheduledMinutes);
@@ -48,7 +48,8 @@ export function TimetableDepartureCard({
     return (
       <div className="flex items-center gap-2">
         <span
-          className={`badge ${badgeClass} badge-sm font-bold min-w-[2.5rem] justify-center shrink-0`}
+          className="badge badge-sm font-bold min-w-[2.5rem] justify-center shrink-0 text-white"
+          style={{ backgroundColor: badgeColor }}
         >
           {departure.routeShortName}
         </span>
@@ -93,7 +94,7 @@ export function TimetableDepartureCard({
       <div className="card-body p-3 gap-0">
         <div className="flex items-center gap-2">
           {/* Route badge */}
-          <div className={`badge ${badgeClass} font-bold shrink-0 min-w-[2.75rem] justify-center`}>
+          <div className="badge font-bold shrink-0 min-w-[2.75rem] justify-center text-white" style={{ backgroundColor: badgeColor }}>
             {departure.routeShortName}
           </div>
 

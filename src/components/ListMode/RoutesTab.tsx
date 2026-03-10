@@ -47,10 +47,10 @@ export function RoutesTab({ routes, onSelectRoute }: RoutesTabProps) {
     const q = searchQuery.toLowerCase().trim();
     const list = q
       ? sourceRoutes.filter(
-          (r) =>
-            r.shortName.toLowerCase().includes(q) ||
-            r.longName.toLowerCase().includes(q)
-        )
+        (r) =>
+          r.shortName.toLowerCase().includes(q) ||
+          r.longName.toLowerCase().includes(q)
+      )
       : sourceRoutes;
     return [...list].sort(ROUTE_TYPE_SORT);
   }, [sourceRoutes, searchQuery]);
@@ -79,7 +79,7 @@ export function RoutesTab({ routes, onSelectRoute }: RoutesTabProps) {
           </button>
           <button
             onClick={() => setFilter('bus')}
-            className={`btn btn-sm flex-1 gap-1.5 ${filter === 'bus' ? 'btn-accent' : 'btn-ghost'}`}
+            className={`btn btn-sm flex-1 gap-1.5 ${filter === 'bus' ? 'btn-warning' : 'btn-ghost'}`}
           >
             <Bus className="w-4 h-4" />
             Autobusi ({buses.length})
@@ -104,9 +104,8 @@ export function RoutesTab({ routes, onSelectRoute }: RoutesTabProps) {
                     className="flex-1 flex items-center gap-3 px-4 py-3 text-left min-w-0"
                   >
                     <span
-                      className={`badge font-bold shrink-0 ${
-                        isRouteTypeTram(route.type) ? 'badge-primary' : 'badge-accent'
-                      }`}
+                      className="badge font-bold shrink-0 text-white"
+                      style={{ backgroundColor: isRouteTypeTram(route.type) ? '#2563eb' : '#d97706' }}
                     >
                       {route.shortName}
                     </span>

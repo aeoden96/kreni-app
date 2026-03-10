@@ -43,12 +43,12 @@ function fmtTimestamp(ts: number, nowMs: number): string {
 }
 
 const REASON_LABELS: Record<string, { label: string; color: string }> = {
-  ok:                  { label: 'Included',               color: 'badge-success' },
-  terminus:            { label: 'Terminus (arrival only)', color: 'badge-secondary' },
-  outside_window:      { label: 'Too far ahead (>30 min)', color: 'badge-warning' },
-  past_grace_window:   { label: 'Already departed',        color: 'badge-neutral' },
-  passed_stop_too_far: { label: 'Passed stop (>400 m)',    color: 'badge-error' },
-  beyond_diag_window:  { label: 'Outside ±60 min',          color: 'badge-ghost' },
+  ok: { label: 'Included', color: 'badge-success' },
+  terminus: { label: 'Terminus (arrival only)', color: 'badge-secondary' },
+  outside_window: { label: 'Too far ahead (>30 min)', color: 'badge-warning' },
+  past_grace_window: { label: 'Already departed', color: 'badge-neutral' },
+  passed_stop_too_far: { label: 'Passed stop (>400 m)', color: 'badge-error' },
+  beyond_diag_window: { label: 'Outside ±60 min', color: 'badge-ghost' },
 };
 
 // ─── Sub-component: VehicleCard (Live Feed tab) ───────────────────────────────
@@ -121,7 +121,7 @@ function TripDiagnosticRow({ d, nowMs }: TripDiagnosticRowProps) {
         onClick={() => setOpen((o) => !o)}
         type="button"
       >
-        <span className={`badge badge-xs ${d.routeType === 0 ? 'badge-primary' : 'badge-accent'}`}>
+        <span className="badge badge-xs text-white" style={{ backgroundColor: d.routeType === 0 ? '#2563eb' : '#d97706' }}>
           {d.routeShortName}
         </span>
         <span className="flex-1 truncate">{etaStr}</span>
@@ -209,11 +209,11 @@ function LiveFeedTab({ routesById, nowMs }: LiveFeedTabProps) {
   const q = query.trim().toLowerCase();
   const filtered = q
     ? all.filter(
-        (p) =>
-          p.tripId.toLowerCase().includes(q) ||
-          (p.vehicleId && p.vehicleId.toLowerCase().includes(q)) ||
-          (p.routeId && p.routeId.toLowerCase().includes(q))
-      )
+      (p) =>
+        p.tripId.toLowerCase().includes(q) ||
+        (p.vehicleId && p.vehicleId.toLowerCase().includes(q)) ||
+        (p.routeId && p.routeId.toLowerCase().includes(q))
+    )
     : all;
 
   filtered.sort((a, b) => {
@@ -461,17 +461,17 @@ export function DebugPanel({
       },
       selectedStop: selectedStop
         ? {
-            id: selectedStopId,
-            name: selectedStop.name,
-            lat: selectedStop.lat,
-            lon: selectedStop.lon,
-            diagnostics: {
-              totalTrips: stopDiag.totalTrips,
-              tripsIncluded: stopDiag.tripsIncluded,
-              tripsWithGPS: stopDiag.tripsWithGPS,
-              trips: stopDiag.diagnostics,
-            },
-          }
+          id: selectedStopId,
+          name: selectedStop.name,
+          lat: selectedStop.lat,
+          lon: selectedStop.lon,
+          diagnostics: {
+            totalTrips: stopDiag.totalTrips,
+            tripsIncluded: stopDiag.tripsIncluded,
+            tripsWithGPS: stopDiag.tripsWithGPS,
+            trips: stopDiag.diagnostics,
+          },
+        }
         : null,
     };
     void navigator.clipboard.writeText(JSON.stringify(payload, null, 2)).then(() => {
@@ -496,8 +496,8 @@ export function DebugPanel({
 
   const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
     { id: 'sandbox', label: 'Sandbox', icon: <Clock className="w-3 h-3" /> },
-    { id: 'feed',    label: 'Live Feed', icon: <Radio className="w-3 h-3" /> },
-    { id: 'stop',    label: 'Stop',     icon: <Bus className="w-3 h-3" /> },
+    { id: 'feed', label: 'Live Feed', icon: <Radio className="w-3 h-3" /> },
+    { id: 'stop', label: 'Stop', icon: <Bus className="w-3 h-3" /> },
   ];
 
   return (

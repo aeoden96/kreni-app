@@ -74,15 +74,15 @@ export function ApproachingVehicleCard({ vehicle, onRouteClick }: ApproachingVeh
   const isLate = delaySec > 90;
   const isEarly = delaySec < -90;
 
-  const badgeClass = vehicle.routeType === 0 ? 'badge-primary' : 'badge-accent';
+  const badgeColor = vehicle.routeType === 0 ? '#2563eb' : '#d97706';
 
   // Proximity state for highlight effects
   const isNear = !vehicle.passedStop && vehicle.distanceMeters !== null && vehicle.distanceMeters < 100;
   const proximityRing = isAtStop
     ? 'ring-2 ring-success bg-success/10'
     : isNear
-    ? 'ring-1 ring-success/50 bg-success/5'
-    : '';
+      ? 'ring-1 ring-success/50 bg-success/5'
+      : '';
   const badgeAnim = isAtStop ? 'animate-pulse' : '';
 
   // Primary display: distance in meters
@@ -115,15 +115,14 @@ export function ApproachingVehicleCard({ vehicle, onRouteClick }: ApproachingVeh
 
   return (
     <div
-      className={`card bg-base-200 overflow-hidden transition-all duration-500 ${proximityRing} ${
-        leaving ? 'opacity-0 max-h-0 !py-0 !my-0' : 'max-h-44 opacity-100'
-      }`}
+      className={`card bg-base-200 overflow-hidden transition-all duration-500 ${proximityRing} ${leaving ? 'opacity-0 max-h-0 !py-0 !my-0' : 'max-h-44 opacity-100'
+        }`}
     >
       <div className="card-body p-3 pb-2 gap-0">
         {/* Top row: badge + name + distance + time */}
         <div className={`flex items-center gap-2 mb-1.5 ${dimClass}`}>
           {/* Route badge */}
-          <div className={`badge ${badgeClass} ${badgeAnim} font-bold shrink-0 min-w-[2.75rem] justify-center`}>
+          <div className={`badge ${badgeAnim} font-bold shrink-0 min-w-[2.75rem] justify-center text-white`} style={{ backgroundColor: badgeColor }}>
             {vehicle.routeShortName}
           </div>
 
@@ -191,15 +190,14 @@ export function ApproachingVehicleCard({ vehicle, onRouteClick }: ApproachingVeh
         {!vehicle.passedStop && (
           <div className="w-full h-1 bg-base-300 rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full transition-[width] duration-[4s] ease-linear ${
-                isScheduled
+              className={`h-full rounded-full transition-[width] duration-[4s] ease-linear ${isScheduled
                   ? 'bg-base-content/25'
                   : isArriving
-                  ? 'bg-success'
-                  : vehicle.routeType === 0
-                  ? 'bg-primary'
-                  : 'bg-accent'
-              }`}
+                    ? 'bg-success'
+                    : vehicle.routeType === 0
+                      ? 'bg-blue-600'
+                      : 'bg-amber-600'
+                }`}
               style={{ width: `${barPercent}%` }}
             />
           </div>

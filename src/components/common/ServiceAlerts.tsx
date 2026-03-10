@@ -102,9 +102,9 @@ export function ServiceAlerts({ alerts, routesById, selectedRouteId, onRouteClic
   // Relevant alerts first when a route is selected
   const sorted = selectedRouteId
     ? [
-        ...alerts.filter((a) => a.routeIds.includes(selectedRouteId!)),
-        ...alerts.filter((a) => !a.routeIds.includes(selectedRouteId!)),
-      ]
+      ...alerts.filter((a) => a.routeIds.includes(selectedRouteId!)),
+      ...alerts.filter((a) => !a.routeIds.includes(selectedRouteId!)),
+    ]
     : alerts;
 
   const hasRelevant = selectedRouteId && alerts.some((a) => a.routeIds.includes(selectedRouteId));
@@ -114,9 +114,8 @@ export function ServiceAlerts({ alerts, routesById, selectedRouteId, onRouteClic
       {/* ── Badge trigger ── */}
       <button
         onClick={() => setOpen((o) => !o)}
-        className={`badge gap-1.5 shadow cursor-pointer transition-all ${
-          hasRelevant ? 'badge-error hover:badge-outline' : 'badge-warning hover:badge-outline'
-        }`}
+        className={`badge gap-1.5 shadow cursor-pointer transition-all ${hasRelevant ? 'badge-error hover:badge-outline' : 'badge-warning hover:badge-outline'
+          }`}
         title="Obavijesti o prometu"
       >
         <AlertTriangle className="w-3 h-3" />
@@ -209,9 +208,8 @@ export function ServiceAlerts({ alerts, routesById, selectedRouteId, onRouteClic
                                 onRouteClick?.(rid, route.type);
                                 setOpen(false);
                               }}
-                              className={`badge ${
-                                route.type === 0 ? 'badge-primary' : 'badge-accent'
-                              } badge-sm font-bold gap-1 hover:opacity-80 transition-opacity cursor-pointer`}
+                              className="badge badge-sm font-bold gap-1 hover:opacity-80 transition-opacity cursor-pointer text-white"
+                              style={{ backgroundColor: route.type === 0 ? '#2563eb' : '#d97706' }}
                             >
                               {route.shortName}
                               <ChevronRight className="w-3 h-3" />
@@ -226,7 +224,7 @@ export function ServiceAlerts({ alerts, routesById, selectedRouteId, onRouteClic
             </div>
           </div>
         </div>
-      , document.body)}
+        , document.body)}
     </>
   );
 }

@@ -176,7 +176,7 @@ export function SearchModal({
   const isRouteFilter = filter === 'tram' || filter === 'bus' || filter === 'trains';
   const isTramOrBus = filter === 'tram' || filter === 'bus';
   const isTram = filter === 'tram';
-  const badgeClass = isTram ? 'badge-primary' : filter === 'trains' ? 'badge-secondary' : 'badge-accent';
+  const badgeColor = isTram ? '#2563eb' : filter === 'trains' ? '#64748b' : '#d97706';
 
   return (
     <div className="fixed inset-0 z-[3000] flex items-start justify-center">
@@ -288,7 +288,8 @@ export function SearchModal({
                       <button
                         key={route.id}
                         onClick={() => handleSelectRoute(route)}
-                        className={`badge ${badgeClass} badge-lg font-bold hover:opacity-80 transition-opacity cursor-pointer`}
+                        className="badge badge-lg font-bold hover:opacity-80 transition-opacity cursor-pointer text-white"
+                        style={{ backgroundColor: badgeColor }}
                       >
                         {route.shortName}
                       </button>
@@ -324,7 +325,8 @@ export function SearchModal({
                       <button
                         key={route.id}
                         onClick={() => handleSelectRoute(route)}
-                        className={`badge ${badgeClass} badge-lg font-bold hover:opacity-80 transition-opacity cursor-pointer`}
+                        className="badge badge-lg font-bold hover:opacity-80 transition-opacity cursor-pointer text-white"
+                        style={{ backgroundColor: badgeColor }}
                       >
                         {route.shortName}
                       </button>
@@ -356,9 +358,8 @@ export function SearchModal({
                 <button
                   key={`recent-r-${route.id}`}
                   onClick={() => handleSelectRoute(route)}
-                  className={`badge ${
-                    isRouteTypeTram(route.type) ? 'badge-primary' : isRouteTypeRail(route.type) ? 'badge-secondary' : 'badge-accent'
-                  } badge-md font-bold hover:opacity-80 transition-opacity cursor-pointer`}
+                  className="badge badge-md font-bold hover:opacity-80 transition-opacity cursor-pointer text-white"
+                  style={{ backgroundColor: isRouteTypeTram(route.type) ? '#2563eb' : isRouteTypeRail(route.type) ? '#64748b' : '#d97706' }}
                 >
                   {route.shortName}
                 </button>
@@ -399,7 +400,7 @@ export function SearchModal({
                         className="flex-1 py-3 px-4 text-left min-h-[52px]"
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`badge ${badgeClass} font-bold min-w-[3rem] justify-center`}>
+                          <div className="badge font-bold min-w-[3rem] justify-center text-white" style={{ backgroundColor: badgeColor }}>
                             {route.shortName}
                           </div>
                           <div className="text-sm">{route.longName}</div>

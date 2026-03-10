@@ -16,7 +16,7 @@ import type { ParsedVehiclePosition, ParsedTripUpdate } from '../../utils/realti
 import { VehicleStopStatus } from '../../utils/realtime';
 
 const TRAM_COLOR = '#2563eb';
-const BUS_COLOR  = '#ea580c';
+const BUS_COLOR = '#d97706'; // amber-600
 
 function haversineMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371000;
@@ -50,8 +50,8 @@ function formatDelay(seconds: number): { text: string; positive: boolean } {
   return seconds > 30
     ? { text: `+${label} kašnjenje`, positive: false }
     : seconds < -30
-    ? { text: `${label} ispred`, positive: true }
-    : { text: 'na vrijeme', positive: true };
+      ? { text: `${label} ispred`, positive: true }
+      : { text: 'na vrijeme', positive: true };
 }
 
 export function VehicleFollowBar({

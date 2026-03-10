@@ -487,10 +487,10 @@ export function GTFSMode({ config }: GTFSModeProps) {
                 <div className="flex items-center gap-2">
                   <div style={{ position: 'relative', width: 22, height: 22, flexShrink: 0 }}>
                     <svg style={{ position: 'absolute', top: 0, left: 0, transform: 'rotate(45deg)', transformOrigin: '11px 11px' }} width="22" height="22" viewBox="0 0 22 22">
-                      <polygon points="11,1 8,6 14,6" fill="#ff6b35" stroke="white" strokeWidth="1" strokeLinejoin="round" />
+                      <polygon points="11,1 8,6 14,6" fill="#d97706" stroke="white" strokeWidth="1" strokeLinejoin="round" />
                     </svg>
                     <svg style={{ position: 'absolute', top: 0, left: 0 }} width="22" height="22" viewBox="0 0 22 22">
-                      <circle cx="11" cy="11" r="7" fill="#ff6b35" fillOpacity="0.95" stroke="white" strokeWidth="2" />
+                      <circle cx="11" cy="11" r="7" fill="#d97706" fillOpacity="0.95" stroke="white" strokeWidth="2" />
                       <text x="11" y="14" textAnchor="middle" fontSize="6" fontWeight="bold" fill="white" fontFamily="system-ui,sans-serif">109</text>
                     </svg>
                   </div>
@@ -498,7 +498,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
                 </div>
                 <div className="flex items-center gap-2">
                   <svg width="20" height="20" viewBox="0 0 20 20">
-                    <circle cx="10" cy="10" r="7" fill="#ff6b35" fillOpacity="0.85" stroke="white" strokeWidth="2" />
+                    <circle cx="10" cy="10" r="7" fill="#d97706" fillOpacity="0.85" stroke="white" strokeWidth="2" />
                     <text x="10" y="13" textAnchor="middle" fontSize="6" fontWeight="bold" fill="white" fontFamily="system-ui,sans-serif">109</text>
                   </svg>
                   <span className="text-base-content/80">Autobus (u mirovanju)</span>
@@ -521,17 +521,17 @@ export function GTFSMode({ config }: GTFSModeProps) {
                 <div className="flex items-center gap-2">
                   <div style={{ position: 'relative', width: 18, height: 18, flexShrink: 0 }}>
                     <svg style={{ position: 'absolute', top: 0, left: 0, transform: 'rotate(0deg)', transformOrigin: '9px 9px' }} width="18" height="18" viewBox="0 0 18 18">
-                      <polygon points="9,1 6,4 12,4" fill="#ea580c" stroke="white" strokeWidth="1" strokeLinejoin="round" />
+                      <polygon points="9,1 6,4 12,4" fill="#d97706" stroke="white" strokeWidth="1" strokeLinejoin="round" />
                     </svg>
                     <svg style={{ position: 'absolute', top: 0, left: 0 }} width="18" height="18" viewBox="0 0 18 18">
-                      <circle cx="9" cy="9" r="5" fill="#ea580c" fillOpacity="0.9" stroke="white" strokeWidth="1.5" />
+                      <circle cx="9" cy="9" r="5" fill="#d97706" fillOpacity="0.9" stroke="white" strokeWidth="1.5" />
                     </svg>
                   </div>
                   <span className="text-base-content/80">Autobusna stanica</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <svg width="18" height="18" viewBox="0 0 18 18">
-                    <circle cx="9" cy="9" r="5" fill="#8242be" fillOpacity="0.9" stroke="white" strokeWidth="1.5" />
+                    <circle cx="9" cy="9" r="5" fill="#475569" fillOpacity="0.9" stroke="white" strokeWidth="1.5" />
                   </svg>
                   <span className="text-base-content/80">Mješovita stanica</span>
                 </div>
@@ -614,7 +614,8 @@ export function GTFSMode({ config }: GTFSModeProps) {
                 {selectedRoute && routeModalOpen ? (
                   <span className="text-sm flex-1">
                     <span
-                      className={`badge ${selectedRoute.type === 0 ? 'badge-primary' : 'badge-accent'} font-bold mr-2`}
+                      className="badge font-bold mr-2 text-white"
+                      style={{ backgroundColor: selectedRoute.type === 0 ? '#2563eb' : '#d97706' }}
                     >
                       {selectedRoute.shortName}
                     </span>

@@ -62,9 +62,8 @@ function FavouriteStopCard({
               return (
                 <span
                   key={v.tripId}
-                  className={`badge badge-sm gap-1 ${
-                    v.routeType === 0 ? 'badge-primary' : 'badge-accent'
-                  }`}
+                  className="badge badge-sm gap-1 text-white"
+                  style={{ backgroundColor: v.routeType === 0 ? '#2563eb' : '#d97706' }}
                 >
                   {v.routeShortName}
                   <span className="opacity-80">
@@ -152,9 +151,8 @@ export function FavouritesTab({ stopsById, routesById, onSelectStop, onSelectRou
               <button
                 key={route.id}
                 onClick={() => onSelectRoute(route.id, route.type)}
-                className={`btn btn-sm gap-1 ${
-                  isRouteTypeTram(route.type) ? 'btn-primary' : 'btn-accent'
-                }`}
+                className={`btn btn-sm gap-1 ${isRouteTypeTram(route.type) ? 'btn-primary' : 'btn-warning'
+                  }`}
               >
                 {route.shortName}
                 <span className="opacity-70 text-xs truncate max-w-24">{route.longName}</span>
@@ -196,9 +194,8 @@ export function FavouritesTab({ stopsById, routesById, onSelectStop, onSelectRou
               <button
                 key={route.id}
                 onClick={() => onSelectRoute(route.id, route.type)}
-                className={`badge ${
-                  isRouteTypeTram(route.type) ? 'badge-primary' : 'badge-accent'
-                } badge-lg font-bold gap-1 cursor-pointer hover:opacity-80 transition-opacity`}
+                className={`badge badge-lg font-bold gap-1 cursor-pointer hover:opacity-80 transition-opacity text-white`}
+                style={{ backgroundColor: isRouteTypeTram(route.type) ? '#2563eb' : '#d97706' }}
               >
                 {route.shortName}
               </button>
