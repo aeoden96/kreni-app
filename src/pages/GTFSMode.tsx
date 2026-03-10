@@ -286,7 +286,6 @@ export function GTFSMode({ config }: GTFSModeProps) {
 
   const handleCloseStop = () => {
     setStopModalOpen(false);
-    clearStop();
   };
 
   const handleCloseStopInfo = () => clearStop();
@@ -405,12 +404,12 @@ export function GTFSMode({ config }: GTFSModeProps) {
           onFlyToStop={
             selectedStop
               ? () =>
-                  setParentStationZoomTarget({
-                    lat: selectedStop.lat,
-                    lon: selectedStop.lon,
-                    zoom: config.stopZoom,
-                    panOffsetY: stopSelectPanOffsetY(),
-                  })
+                setParentStationZoomTarget({
+                  lat: selectedStop.lat,
+                  lon: selectedStop.lon,
+                  zoom: config.stopZoom,
+                  panOffsetY: stopSelectPanOffsetY(),
+                })
               : undefined
           }
           highlightStopIds={activeHighlightStopIds}
