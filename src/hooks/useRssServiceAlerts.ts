@@ -99,12 +99,11 @@ export function useRssServiceAlerts(routesById: Map<string, Route>): ParsedServi
       }
 
       try {
-        const url = GTFS_PROXY_URL
-          ? `${GTFS_PROXY_URL}?endpoint=service-alerts`
-          : `${import.meta.env.BASE_URL}data/service-alerts.json`;
+        if (!GTFS_PROXY_URL) return;
+
         const headers: Record<string, string> = {};
-        if (GTFS_PROXY_URL && GTFS_API_KEY) headers['X-API-Key'] = GTFS_API_KEY;
-        const res = await fetch(url, GTFS_PROXY_URL ? { headers } : undefined);
+        if (GTFS_API_KEY) headers['X-API-Key'] = GTFS_API_KEY;
+        const res = await fetch(`${GTFS_PROXY_URL}?endpoint=service-alerts`, { headers });
         if (!res.ok) return;
         const json: RssAlertsFile = await res.json();
 

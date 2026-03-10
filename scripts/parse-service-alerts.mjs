@@ -2,22 +2,16 @@
 /**
  * parse-service-alerts.mjs
  *
- * Fetches the ZET RSS feed, diffs against the current service-alerts.json,
- * calls OpenAI GPT-4o-mini (structured output) for any new items, and
- * persists the result both to public/data/service-alerts.json (committed to
- * the repo) and optionally to Cloudflare KV (for edge serving via the CF worker).
+ * Fetches the ZET RSS feed, diffs against the current Cloudflare KV state,
+ * calls Ollama (gemma3:12b) for any new items, and writes the result to KV.
  *
  * Required env vars:
  *   OLLAMA_API_KEY          – Ollama Cloud API key (https://ollama.com)
- *
- * Optional env vars (for Cloudflare KV write-back):
  *   CF_ACCOUNT_ID           – Cloudflare account ID
  *   CF_KV_NAMESPACE_ID      – KV namespace ID bound as KV_SERVICE_ALERTS
  *   CF_API_TOKEN            – Cloudflare API token with KV write permission
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
 import { createHash } from 'node:crypto';
 
 // ---------------------------------------------------------------------------
@@ -25,7 +19,6 @@ import { createHash } from 'node:crypto';
 // ---------------------------------------------------------------------------
 
 const RSS_URL = 'https://www.zet.hr/rss_promet.aspx';
-const ALERTS_FILE = 'public/data/service-alerts.json';
 const KV_KEY = 'service-alerts';
 
 const OLLAMA_API_KEY = process.env.OLLAMA_API_KEY;
@@ -199,9 +192,27 @@ async function parsWithLlm(title, plainDescription) {
 // Cloudflare KV write-back
 // ---------------------------------------------------------------------------
 
+async function readFromKv() {
+  if (!CF_ACCOUNT_ID || !CF_KV_NAMESPACE_ID || !CF_API_TOKEN) return null;
+  const url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/storage/kv/namespaces/${CF_KV_NAMESPACE_ID}/values/${KV_KEY}`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${CF_API_TOKEN}` },
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    console.warn(`KV read failed ${res.status} – treating as empty`);
+    return null;
+  }
+  try {
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
 async function writeToKv(payload) {
   if (!CF_ACCOUNT_ID || !CF_KV_NAMESPACE_ID || !CF_API_TOKEN) {
-    console.log('CF KV env vars not set – skipping KV write-back');
+    console.warn('CF KV env vars not set – cannot write to KV');
     return;
   }
 
@@ -232,16 +243,12 @@ async function main() {
   const rssItems = await fetchRssItems();
   console.log(`  ${rssItems.length} items in feed`);
 
-  // Load existing alerts
+  // Load existing alerts from KV (source of truth)
   /** @type {{ alerts: ServiceAlert[], lastUpdate: string }} */
-  let existing = { alerts: [], lastUpdate: new Date(0).toISOString() };
-  if (existsSync(ALERTS_FILE)) {
-    try {
-      existing = JSON.parse(readFileSync(ALERTS_FILE, 'utf8'));
-    } catch {
-      console.warn('Could not parse existing alerts file – starting fresh');
-    }
-  }
+  console.log('Reading existing alerts from KV…');
+  const kvExisting = await readFromKv();
+  const existing = kvExisting ?? { alerts: [], lastUpdate: new Date(0).toISOString() };
+  if (!kvExisting) console.log('  No existing KV data – starting fresh');
 
   const existingIds = new Set(existing.alerts.map(a => a.guid));
   const newItems = rssItems.filter(item => !existingIds.has(item.guid));
@@ -288,14 +295,10 @@ async function main() {
     lastUpdate: new Date().toISOString(),
   };
 
-  mkdirSync(dirname(ALERTS_FILE), { recursive: true });
-  writeFileSync(ALERTS_FILE, JSON.stringify(output, null, 2) + '\n');
-  console.log(`✓ Saved ${pruned.length} alerts to ${ALERTS_FILE}`);
-
   if (newAlerts.length > 0 || pruned.length !== existing.alerts.length) {
     await writeToKv(output);
   } else {
-    console.log('No changes – skipping KV write-back');
+    console.log('No changes – skipping KV write');
   }
 }
 
