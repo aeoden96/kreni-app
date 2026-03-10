@@ -22,7 +22,8 @@ export default defineConfig({
       manifest: {
         name: 'Kreni — Zagreb javni prijevoz',
         short_name: 'Kreni',
-        description: 'Live tracking of Zagreb public transport',
+        description: 'Pratite tramvaje, autobuse i vlakove ZET-a uživo na karti Zagreba.',
+        lang: 'hr',
         theme_color: '#1e3a5f',
         background_color: '#ffffff',
         display: 'standalone',

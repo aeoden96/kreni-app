@@ -21,7 +21,7 @@
     <!-- Geographic / Language -->
     <meta name="geo.region" content="HR-21" />
     <meta name="geo.placename" content="Zagreb, Croatia" />
-    <meta name="language" content="Croatian" />
+    <link rel="alternate" hreflang="hr" href="https://kreni.app/" />
 
     <!-- Open Graph (Facebook, LinkedIn, WhatsApp) -->
     <meta property="og:type" content="website" />
@@ -29,6 +29,7 @@
     <meta property="og:title" content="Kreni — Praćenje javnog prijevoza u Zagrebu" />
     <meta property="og:description" content="Pratite tramvaje, autobuse i vlakove ZET-a uživo na karti Zagreba. Stvarno-vremenski položaji vozila i informacije o stanicama." />
     <meta property="og:image" content="https://kreni.app/screenshot-wide.png" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1280" />
     <meta property="og:image:height" content="720" />
     <meta property="og:image:alt" content="Kreni karta s prikazom tramvajskih linija u Zagrebu" />
@@ -51,7 +52,33 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Kreni" />
     <link rel="apple-touch-icon" href="/pwa-192x192.png" />
-    
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Kreni",
+      "url": "https://kreni.app/",
+      "description": "Pratite tramvaje, autobuse i vlakove ZET-a uživo na karti Zagreba. Stvarno-vremenski položaji vozila, rasporedi linija i informacije o stanicama.",
+      "applicationCategory": "TravelApplication",
+      "operatingSystem": "Any",
+      "inLanguage": "hr",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      },
+      "areaServed": {
+        "@type": "City",
+        "name": "Zagreb",
+        "addressCountry": "HR"
+      },
+      "image": "https://kreni.app/screenshot-wide.png"
+    }
+    </script>
+
     <script>
       // Initialize theme before React loads to prevent flash
       (function() {
