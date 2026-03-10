@@ -2,7 +2,7 @@ import { memo, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Polygon } from 'react-leaflet';
 import type { LeafletMouseEvent } from 'leaflet';
-import { cachedFetch } from '../../stores/dataCache';
+import { cachedFetch, dataFetch } from '../../stores/dataCache';
 import type { ParkingZonesData, ParkingZoneProperties, GeoJSONParkingFeature } from '../../types/parkingZones';
 import { ParkingZoneModal } from './ParkingZoneModal';
 
@@ -18,7 +18,7 @@ export const ParkingZonesMap = memo(function ParkingZonesMap({ show }: ParkingZo
         if (!show || data) return;
 
         const url = `${import.meta.env.BASE_URL}static_data/parking_zones.json`;
-        cachedFetch(url, () => fetch(url).then(res => res.json()))
+        cachedFetch(url, () => dataFetch(url).then(res => res.json()))
             .then((d: ParkingZonesData) => setData(d))
             .catch(err => console.error('Failed to load parking zones:', err));
     }, [show, data]);

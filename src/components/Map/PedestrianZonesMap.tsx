@@ -1,7 +1,7 @@
 import { memo, useEffect, useState } from 'react';
 import { GeoJSON, Tooltip } from 'react-leaflet';
 import type { FeatureCollection, MultiPolygon } from 'geojson';
-import { cachedFetch } from '../../stores/dataCache';
+import { cachedFetch, dataFetch } from '../../stores/dataCache';
 
 interface PedestrianZonesMapProps {
     show: boolean;
@@ -14,7 +14,7 @@ export const PedestrianZonesMap = memo(function PedestrianZonesMap({ show }: Ped
         if (!show || geoData) return;
 
         const url = `${import.meta.env.BASE_URL}static_data/pjesacka_zona.geojson`;
-        cachedFetch(url, () => fetch(url).then(res => res.json()))
+        cachedFetch(url, () => dataFetch(url).then(res => res.json()))
             .then(data => setGeoData(data))
             .catch(err => console.error('Failed to load pedestrian zones:', err));
     }, [show, geoData]);

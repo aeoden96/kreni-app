@@ -129,6 +129,26 @@ const inFlight = new Map<string, Promise<unknown>>();
 /**
  * Helper function to fetch data with caching
  */
+/**
+ * Thin fetch wrapper that attaches the custom `X-App-Request` header to every
+ * data-file request.  Pair this with a Cloudflare WAF rule that blocks requests
+ * to `/data/*` and `/static_data/*` lacking this header to add a lightweight
+ * friction layer against bulk scraping:
+ *
+ *   (http.request.uri.path contains "/data/" or
+ *    http.request.uri.path contains "/static_data/")
+ *   and not (http.request.headers["x-app-request"][0] == "1")
+ */
+export function dataFetch(url: string, init?: RequestInit): Promise<Response> {
+  return fetch(url, {
+    ...init,
+    headers: {
+      'X-App-Request': '1',
+      ...init?.headers,
+    },
+  });
+}
+
 export async function cachedFetch<T>(
   url: string,
   fetcher: () => Promise<T>
@@ -167,7 +187,7 @@ export async function cachedFetch<T>(
 export async function checkCacheVersion(manifestRelPath = 'data/manifest.json'): Promise<void> {
   try {
     const url = `${import.meta.env.BASE_URL}${manifestRelPath}`;
-    const response = await fetch(url);
+    const response = await dataFetch(url);
     if (!response.ok) {
       console.warn(`Failed to fetch ${manifestRelPath}`);
       return;

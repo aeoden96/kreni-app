@@ -2,7 +2,7 @@ import { memo, useEffect, useState } from 'react';
 import { Marker, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import type { FeatureCollection, Point } from 'geojson';
-import { cachedFetch } from '../../stores/dataCache';
+import { cachedFetch, dataFetch } from '../../stores/dataCache';
 
 interface StudentRestaurantsMapProps {
     show: boolean;
@@ -15,7 +15,7 @@ export const StudentRestaurantsMap = memo(function StudentRestaurantsMap({ show 
         if (!show || geoData) return;
 
         const url = `${import.meta.env.BASE_URL}static_data/studentski_restorani.json`;
-        cachedFetch(url, () => fetch(url).then(res => res.json()))
+        cachedFetch(url, () => dataFetch(url).then(res => res.json()))
             .then(data => setGeoData(data))
             .catch(err => console.error('Failed to load student restaurants:', err));
     }, [show, geoData]);

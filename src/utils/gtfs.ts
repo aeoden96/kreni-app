@@ -2,7 +2,7 @@
  * Utility functions for working with processed GTFS data
  */
 
-import { cachedFetch } from '../stores/dataCache';
+import { cachedFetch, dataFetch } from '../stores/dataCache';
 
 const BASE_URL = import.meta.env.BASE_URL;
 
@@ -252,7 +252,7 @@ export function clusterParentStops(parents: Stop[], radiusMeters = 100): ParentG
 export async function fetchInitialData(dataDir = 'data'): Promise<InitialData> {
   const url = `${BASE_URL}${dataDir}/initial.json`;
   return cachedFetch(url, async () => {
-    const response = await fetch(url);
+    const response = await dataFetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch initial data: ${response.statusText}`);
     }
@@ -263,7 +263,7 @@ export async function fetchInitialData(dataDir = 'data'): Promise<InitialData> {
 export async function fetchRouteTrips(routeId: string, dataDir = 'data'): Promise<{ trips: Trip[] }> {
   const url = `${BASE_URL}${dataDir}/routes/${routeId}.json`;
   return cachedFetch(url, async () => {
-    const response = await fetch(url);
+    const response = await dataFetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch route ${routeId}: ${response.statusText}`);
     }
@@ -274,7 +274,7 @@ export async function fetchRouteTrips(routeId: string, dataDir = 'data'): Promis
 export async function fetchRouteTimetable(routeId: string, dataDir = 'data'): Promise<Record<string, [string, number, number][]>> {
   const url = `${BASE_URL}${dataDir}/timetables/${routeId}.json`;
   return cachedFetch(url, async () => {
-    const response = await fetch(url);
+    const response = await dataFetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch timetable for route ${routeId}: ${response.statusText}`);
     }
@@ -285,7 +285,7 @@ export async function fetchRouteTimetable(routeId: string, dataDir = 'data'): Pr
 export async function fetchRouteShapes(routeId: string, dataDir = 'data'): Promise<Record<string, [number, number][]>> {
   const url = `${BASE_URL}${dataDir}/shapes/${routeId}.json`;
   return cachedFetch(url, async () => {
-    const response = await fetch(url);
+    const response = await dataFetch(url);
     if (response.status === 404) {
       // Shape data is optional — some datasets (e.g. HZPP trains) don't include shapes.txt.
       return {};
@@ -300,7 +300,7 @@ export async function fetchRouteShapes(routeId: string, dataDir = 'data'): Promi
 export async function fetchStopDepartures(stopId: string, dataDir = 'data'): Promise<StopDepartures> {
   const url = `${BASE_URL}${dataDir}/stops/${stopId}.json`;
   return cachedFetch(url, async () => {
-    const response = await fetch(url);
+    const response = await dataFetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch departures for stop ${stopId}: ${response.statusText}`);
     }
@@ -311,7 +311,7 @@ export async function fetchStopDepartures(stopId: string, dataDir = 'data'): Pro
 export async function fetchRouteActiveTrips(routeId: string, dataDir = 'data'): Promise<RouteActiveTripsData> {
   const url = `${BASE_URL}${dataDir}/route_active_trips/${routeId}.json`;
   return cachedFetch(url, async () => {
-    const response = await fetch(url);
+    const response = await dataFetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch active trips for route ${routeId}: ${response.statusText}`);
     }
@@ -322,7 +322,7 @@ export async function fetchRouteActiveTrips(routeId: string, dataDir = 'data'): 
 export async function fetchRouteStops(routeId: string, dataDir = 'data'): Promise<RouteStopsData> {
   const url = `${BASE_URL}${dataDir}/route_stops/${routeId}.json`;
   return cachedFetch(url, async () => {
-    const response = await fetch(url);
+    const response = await dataFetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch route stops for route ${routeId}: ${response.statusText}`);
     }
@@ -333,7 +333,7 @@ export async function fetchRouteStops(routeId: string, dataDir = 'data'): Promis
 export async function fetchStopTimetable(stopId: string, dataDir = 'data'): Promise<StopTimetable> {
   const url = `${BASE_URL}${dataDir}/stop_timetables/${stopId}.json`;
   return cachedFetch(url, async () => {
-    const response = await fetch(url);
+    const response = await dataFetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch stop timetable for ${stopId}: ${response.statusText}`);
     }
