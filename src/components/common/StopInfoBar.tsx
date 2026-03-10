@@ -50,7 +50,7 @@ export function StopInfoBar({
   const [routesExpanded, setRoutesExpanded] = useState(false);
   const [platformsExpanded, setPlatformsExpanded] = useState(false);
 
-  const ROUTES_COLLAPSED_MAX = 6;
+  const ROUTES_COLLAPSED_MAX = 3;
 
   // 1-second tick for live countdown
   useEffect(() => {
@@ -175,35 +175,61 @@ export function StopInfoBar({
       <div className="p-4">
         {/* Header */}
         <div className="mb-2">
-          <div className="flex items-center gap-1 mb-1">
-            <h3 className="font-bold text-base leading-tight text-base-content flex-1 min-w-0 truncate">
-              {stop.name}
-            </h3>
-            <button
-              onClick={() => toggleFavouriteStop(stop.id)}
-              className="btn btn-ghost btn-circle btn-xs shrink-0"
-              title={isFav ? 'Ukloni iz favorita' : 'Dodaj u favorite'}
-            >
-              <Star
-                className="w-4 h-4"
-                fill={isFav ? '#f59e0b' : 'none'}
-                color={isFav ? '#f59e0b' : 'currentColor'}
-              />
-            </button>
-            <button
-              onClick={() => onExpand(stop.id)}
-              className="btn btn-ghost btn-circle btn-xs shrink-0"
-              title="Prikaži detalje"
-            >
-              <Maximize2 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={onClose}
-              className="btn btn-ghost btn-circle btn-xs shrink-0"
-              title="Zatvori"
-            >
-              <X className="w-4 h-4" />
-            </button>
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 flex-1 min-w-0">
+              <h3 className="font-bold text-base leading-tight text-base-content">
+                {stop.name}
+              </h3>
+              {stopRoutes.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1">
+                  {(routesExpanded ? stopRoutes : stopRoutes.slice(0, ROUTES_COLLAPSED_MAX)).map((route) => (
+                    <span
+                      key={route.id}
+                      className={`badge badge-sm font-bold ${route.type === 0 ? 'badge-primary' : 'badge-accent'
+                        }`}
+                    >
+                      {route.shortName}
+                    </span>
+                  ))}
+                  {!routesExpanded && stopRoutes.length > ROUTES_COLLAPSED_MAX && (
+                    <button
+                      type="button"
+                      onClick={() => setRoutesExpanded(true)}
+                      className="badge badge-sm badge-ghost font-semibold cursor-pointer hover:badge-neutral"
+                    >
+                      +{stopRoutes.length - ROUTES_COLLAPSED_MAX}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                onClick={() => toggleFavouriteStop(stop.id)}
+                className="btn btn-ghost btn-circle btn-xs"
+                title={isFav ? 'Ukloni iz favorita' : 'Dodaj u favorite'}
+              >
+                <Star
+                  className="w-4 h-4"
+                  fill={isFav ? '#f59e0b' : 'none'}
+                  color={isFav ? '#f59e0b' : 'currentColor'}
+                />
+              </button>
+              <button
+                onClick={() => onExpand(stop.id)}
+                className="btn btn-ghost btn-circle btn-xs"
+                title="Prikaži detalje"
+              >
+                <Maximize2 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={onClose}
+                className="btn btn-ghost btn-circle btn-xs"
+                title="Zatvori"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
           {(stop.bearing !== undefined || stop.code) && (
             <div className="text-xs text-base-content/60 flex items-center gap-1">
@@ -216,80 +242,59 @@ export function StopInfoBar({
               </span>
             </div>
           )}
-          {stopRoutes.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1.5">
-              {(routesExpanded ? stopRoutes : stopRoutes.slice(0, ROUTES_COLLAPSED_MAX)).map((route) => (
-                <span
-                  key={route.id}
-                  className={`badge badge-sm font-bold ${
-                    route.type === 0 ? 'badge-primary' : 'badge-accent'
-                  }`}
-                >
-                  {route.shortName}
-                </span>
-              ))}
-              {!routesExpanded && stopRoutes.length > ROUTES_COLLAPSED_MAX && (
-                <button
-                  type="button"
-                  onClick={() => setRoutesExpanded(true)}
-                  className="badge badge-sm badge-ghost font-semibold cursor-pointer hover:badge-neutral"
-                >
-                  +{stopRoutes.length - ROUTES_COLLAPSED_MAX}
-                </button>
-              )}
-            </div>
-          )}
           {siblingPlatforms.length > 0 && !isAllTerminus && (
             <div className="mt-1.5">
-              <p className="text-[10px] uppercase tracking-wide text-base-content/40 mb-1">Ostale platforme</p>
-              <div className="flex flex-wrap gap-1">
-                {(platformsExpanded ? sortedSiblingPlatforms : sortedSiblingPlatforms.slice(0, 3)).map((s) => {
-                  const routes = siblingRouteMap.get(s.id) ?? [];
-                  const isTerminus = siblingTerminusSet.has(s.id);
-                  const label = s.bearing !== undefined
-                    ? `Smjer prema ${bearingToDirection(s.bearing)}`
-                    : undefined;
-                  return (
-                    <button
-                      key={s.id}
-                      type="button"
-                      onClick={() => onStopSelect?.(s.id)}
-                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full border text-[11px] text-base-content/70 transition-colors ${
-                        isTerminus
-                          ? 'bg-warning/10 border-warning/40 hover:bg-warning/20 active:bg-warning/30'
-                          : 'bg-base-200/60 border-base-300 hover:bg-base-200 active:bg-base-300'
-                      }`}
-                      title={`Prebaci na: ${s.name}${
-                        s.bearing !== undefined ? ` (${bearingToDirection(s.bearing)})` : ''
-                      }${isTerminus ? ' · odredišna' : ''}`}
-                    >
-                      <Navigation2
-                        className="w-2.5 h-2.5 shrink-0"
-                        style={s.bearing !== undefined ? { transform: `rotate(${s.bearing}deg)` } : undefined}
-                      />
-                      {label && <span>{label}</span>}
-                      {isTerminus && <span className="badge-xs text-warning font-semibold">Odredišna platforma</span>}
-                      {routes.length > 0 && (
-                        <span className="flex gap-0.5 ml-0.5">
-                          {routes.slice(0, 3).map(r => (
-                            <span key={r.id} className={`badge badge-xs font-bold ${r.type === 0 ? 'badge-primary' : 'badge-accent'}`}>{r.shortName}</span>
-                          ))}
-                          {routes.length > 3 && <span className="text-[10px] opacity-50">+{routes.length - 3}</span>}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-                {siblingPlatforms.length > 3 && (
-                  <button
-                    type="button"
-                    onClick={() => setPlatformsExpanded(e => !e)}
-                    className="inline-flex items-center px-2 py-1 rounded-full bg-base-200/60 border border-base-300 hover:bg-base-200 active:bg-base-300 text-[11px] text-base-content/50 transition-colors"
-                  >
-                    {platformsExpanded ? '−' : `+${siblingPlatforms.length - 3}`}
-                  </button>
+              <div
+                className={`flex items-center gap-1.5 mb-1 ${siblingPlatforms.length > 1 ? 'cursor-pointer hover:opacity-80' : ''}`}
+                onClick={siblingPlatforms.length > 1 ? () => setPlatformsExpanded(e => !e) : undefined}
+              >
+                <p className="text-[10px] uppercase tracking-wide text-base-content/40">Ostale platforme</p>
+                {siblingPlatforms.length > 1 && (
+                  <span className="text-[10px] font-medium text-base-content/50 bg-base-200/80 px-1.5 rounded-full flex items-center gap-0.5">
+                    {platformsExpanded ? 'Sakrij' : `Prikaži sve (${siblingPlatforms.length})`}
+                  </span>
                 )}
               </div>
+
+              {(platformsExpanded || siblingPlatforms.length === 1) && (
+                <div className="flex flex-wrap gap-1">
+                  {sortedSiblingPlatforms.map((s) => {
+                    const routes = siblingRouteMap.get(s.id) ?? [];
+                    const isTerminus = siblingTerminusSet.has(s.id);
+                    const label = s.bearing !== undefined
+                      ? `Smjer prema ${bearingToDirection(s.bearing)}`
+                      : undefined;
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => onStopSelect?.(s.id)}
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full border text-[11px] text-base-content/70 transition-colors ${isTerminus
+                          ? 'bg-warning/10 border-warning/40 hover:bg-warning/20 active:bg-warning/30'
+                          : 'bg-base-200/60 border-base-300 hover:bg-base-200 active:bg-base-300'
+                          }`}
+                        title={`Prebaci na: ${s.name}${s.bearing !== undefined ? ` (${bearingToDirection(s.bearing)})` : ''
+                          }${isTerminus ? ' · odredišna' : ''}`}
+                      >
+                        <Navigation2
+                          className="w-2.5 h-2.5 shrink-0"
+                          style={s.bearing !== undefined ? { transform: `rotate(${s.bearing}deg)` } : undefined}
+                        />
+                        {label && <span>{label}</span>}
+                        {isTerminus && <span className="badge-xs text-warning font-semibold">Odredišna platforma</span>}
+                        {routes.length > 0 && (
+                          <span className="flex gap-0.5 ml-0.5">
+                            {routes.slice(0, 3).map(r => (
+                              <span key={r.id} className={`badge badge-xs font-bold ${r.type === 0 ? 'badge-primary' : 'badge-accent'}`}>{r.shortName}</span>
+                            ))}
+                            {routes.length > 3 && <span className="text-[10px] opacity-50">+{routes.length - 3}</span>}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -307,7 +312,7 @@ export function StopInfoBar({
 
         {/* GPS tip banner */}
         {activeTab === 'vehicles' && !vehiclesLoading && !dismissedGpsTip && (
-          <div className="mt-2 p-4 rounded-xl bg-info/10 border border-info/30 flex gap-3 items-start">
+          <div className="mt-2 mb-3 p-4 rounded-xl bg-info/10 border border-info/30 flex gap-3 items-start">
             <Info className="w-5 h-5 text-info shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-base-content/90 mb-1">GPS prikaz vozila</p>
@@ -381,9 +386,9 @@ export function StopInfoBar({
                   <div
                     key={vehicle.tripId}
                     className={`flex items-center gap-2 rounded-lg px-1.5 py-1 -mx-1.5 transition-colors ${vehicle.passedStop ? 'opacity-50' :
-                        isAtStop ? 'bg-success/10 ring-1 ring-success/60' :
-                          (d !== null && d < 100) ? 'bg-success/5 ring-1 ring-success/30' :
-                            ''
+                      isAtStop ? 'bg-success/10 ring-1 ring-success/60' :
+                        (d !== null && d < 100) ? 'bg-success/5 ring-1 ring-success/30' :
+                          ''
                       }`}
                   >
                     <span
