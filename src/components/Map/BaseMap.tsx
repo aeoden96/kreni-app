@@ -75,7 +75,7 @@ export function BaseMap({ children, userLocation, locationPanOffsetY = 0, ...map
     const theme = useSettingsStore((state) => state.theme);
     const detailedMap = useSettingsStore((state) => state.detailedMap);
     const providerId: keyof typeof TILE_PROVIDERS = detailedMap
-        ? (theme === 'dark' ? 'dark-matter' : 'osm')
+        ? 'osm'
         : (theme === 'dark' ? 'dark-matter' : 'positron');
     const tileConfig = TILE_PROVIDERS[providerId];
 

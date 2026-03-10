@@ -3,7 +3,7 @@
  */
 
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Moon, Sun, Map, Database, Trash2, Info } from 'lucide-react';
+import { ArrowLeft, Moon, Sun, Map, Database, Trash2, Info, Mail } from 'lucide-react';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useDataCacheStore } from '../../stores/dataCache';
 import { useInitialData } from '../../hooks/useInitialData';
@@ -19,7 +19,6 @@ export function SettingsPage() {
   const setSandboxVisible = useSettingsStore((state) => state.setSandboxVisible);
   const detailedMap = useSettingsStore((state) => state.detailedMap);
   const setDetailedMap = useSettingsStore((state) => state.setDetailedMap);
-  const setOnboardingCompleted = useSettingsStore((state) => state.setOnboardingCompleted);
 
   const clearCache = useDataCacheStore((state) => state.clearCache);
   const getCacheStats = useDataCacheStore((state) => state.getCacheStats);
@@ -49,14 +48,9 @@ export function SettingsPage() {
     }
   };
 
-  const handleShowOnboarding = () => {
-    // If the appMode is list, we'll reset that, otherwise we'll figure out what mode we are actually in
-    // Since we are in Settings, we'll just reset the default transit view for simplicity, or all of them
-    setOnboardingCompleted('transit', false);
-    setOnboardingCompleted('cycling', false);
-    setOnboardingCompleted('driving', false);
-    setOnboardingCompleted('city', false);
-    setOnboardingCompleted('list', false);
+  const formatGtfsDate = (date: string): string => {
+    if (date.length !== 8) return date;
+    return `${date.slice(6, 8)}.${date.slice(4, 6)}.${date.slice(0, 4)}.`;
   };
 
   const formatBytes = (bytes: number) => {
@@ -88,10 +82,12 @@ export function SettingsPage() {
               {theme === 'light' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               Izgled
             </h2>
-            <div className="flex items-center justify-between">
+            <div className={`flex items-center justify-between`}>
               <div>
                 <p className="font-medium">Tema</p>
-                <p className="text-sm text-base-content/70">Svijetla ili tamna tema</p>
+                <p className="text-sm text-base-content/70">
+                Svijetla ili tamna tema
+                </p>
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
                 <Sun className="w-4 h-4" />
@@ -100,6 +96,7 @@ export function SettingsPage() {
                   className="toggle toggle-primary"
                   checked={theme === 'dark'}
                   onChange={(e) => setTheme(e.target.checked ? 'dark' : 'light')}
+                   
                 />
                 <Moon className="w-4 h-4" />
               </label>
@@ -206,7 +203,7 @@ export function SettingsPage() {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-base-content/70">Verzija aplikacije</span>
-                <span className="font-medium">1.0.0</span>
+                <span className="font-medium">{__APP_VERSION__}</span>
               </div>
               {feedVersion && (
                 <div className="flex justify-between items-center">
@@ -218,16 +215,35 @@ export function SettingsPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-base-content/70">Podaci vrijede</span>
                   <span className="font-medium text-right">
-                    {feedStartDate} - {feedEndDate}
+                    {formatGtfsDate(feedStartDate)} – {formatGtfsDate(feedEndDate)}
                   </span>
                 </div>
               )}
-              <button
-                onClick={handleShowOnboarding}
-                className="btn btn-outline btn-sm w-full mt-2"
-              >
-                Prikaži uvod ponovno
-              </button>
+            </div>
+          </div>
+        </div>
+        {/* Developer Section */}
+        <div className="card bg-base-100 shadow-sm">
+          <div className="card-body">
+            <h2 className="card-title text-lg flex items-center gap-2">
+              <Info className="w-5 h-5" />
+              Developer
+            </h2>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-base-content/70">Developer</span>
+                <span className="font-medium">kreni.app</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-base-content/70">Kontakt</span>
+                <a
+                  href="mailto:contact@kreni.app"
+                  className="flex items-center gap-1.5 font-medium link link-primary"
+                >
+                  <Mail className="w-3.5 h-3.5 shrink-0" />
+                  contact@kreni.app
+                </a>
+              </div>
             </div>
           </div>
         </div>
