@@ -51,6 +51,9 @@ interface SettingsState {
   recentStops: RecentItem[];
   /** User dismissed the GPS-vs-timetable info tip in stop view */
   dismissedGpsTip: boolean;
+  /** Persisted map state across navigations */
+  mapCenter: [number, number];
+  mapZoom: number;
 
   setSandboxVisible: (visible: boolean) => void;
   setMapTileProvider: (provider: MapTileProvider) => void;
@@ -74,6 +77,7 @@ interface SettingsState {
   setShowRailwayStations: (show: boolean) => void;
   setAppMode: (mode: AppMode) => void;
   setDismissedGpsTip: (dismissed: boolean) => void;
+  setMapViewport: (center: [number, number], zoom: number) => void;
   toggleFavouriteRoute: (id: string) => void;
   toggleFavouriteStop: (id: string) => void;
   addRecentRoute: (id: string) => void;
@@ -120,6 +124,8 @@ export const useSettingsStore = create<SettingsState>()(
         recentRoutes: [],
         recentStops: [],
         dismissedGpsTip: false,
+        mapCenter: [45.815, 15.977],
+        mapZoom: 13,
 
         setSandboxVisible: (visible) => set({ sandboxVisible: visible }),
         setDetailedMap: (detailed) => set({ detailedMap: detailed }),
@@ -164,6 +170,7 @@ export const useSettingsStore = create<SettingsState>()(
         setShowRailwayStations: (show) => set({ showRailwayStations: show }),
         setAppMode: (mode) => set({ appMode: mode }),
         setDismissedGpsTip: (dismissed) => set({ dismissedGpsTip: dismissed }),
+        setMapViewport: (mapCenter, mapZoom) => set({ mapCenter, mapZoom }),
 
         toggleFavouriteRoute: (id) =>
           set((s) => ({

@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
 import type { MapContainerProps } from 'react-leaflet';
 import L from 'leaflet';
 import { useSettingsStore } from '../../stores/settingsStore';
@@ -20,8 +20,6 @@ function MapTestRef() {
     return null;
 }
 
-const ZAGREB_CENTER: [number, number] = [45.815, 15.977];
-const DEFAULT_ZOOM = 13;
 
 const TILE_PROVIDERS = {
     osm: {
@@ -66,14 +64,36 @@ function MapLocater({ userLocation, panOffsetY = 0 }: { userLocation?: { lat: nu
                 map.flyTo([userLocation.lat, userLocation.lon], zoom, { duration: 1.5 });
             }
         }
-    // panOffsetY intentionally omitted from deps — read via ref to avoid re-flying when modal closes.
+        // panOffsetY intentionally omitted from deps — read via ref to avoid re-flying when modal closes.
     }, [userLocation, map]);
+    return null;
+}
+
+function MapStateHandler() {
+    const setMapViewport = useSettingsStore(s => s.setMapViewport);
+
+    useMapEvents({
+        moveend: (e) => {
+            const map = e.target;
+            const center = map.getCenter();
+            setMapViewport([center.lat, center.lng], map.getZoom());
+        },
+        zoomend: (e) => {
+            const map = e.target;
+            const center = map.getCenter();
+            setMapViewport([center.lat, center.lng], map.getZoom());
+        }
+    });
+
     return null;
 }
 
 export function BaseMap({ children, userLocation, locationPanOffsetY = 0, ...mapProps }: BaseMapProps) {
     const theme = useSettingsStore((state) => state.theme);
     const detailedMap = useSettingsStore((state) => state.detailedMap);
+    const mapCenter = useSettingsStore((state) => state.mapCenter);
+    const mapZoom = useSettingsStore((state) => state.mapZoom);
+
     const providerId: keyof typeof TILE_PROVIDERS = detailedMap
         ? 'osm'
         : (theme === 'dark' ? 'dark-matter' : 'positron');
@@ -81,8 +101,8 @@ export function BaseMap({ children, userLocation, locationPanOffsetY = 0, ...map
 
     return (
         <MapContainer
-            center={ZAGREB_CENTER}
-            zoom={DEFAULT_ZOOM}
+            center={mapCenter}
+            zoom={mapZoom}
             minZoom={11}
             maxZoom={18}
             className="w-full h-full"
@@ -110,6 +130,7 @@ export function BaseMap({ children, userLocation, locationPanOffsetY = 0, ...map
 
             <MapLocater userLocation={userLocation} panOffsetY={locationPanOffsetY} />
             <MapTestRef />
+            <MapStateHandler />
 
             {children}
         </MapContainer>
