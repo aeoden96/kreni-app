@@ -210,3 +210,12 @@ yarn build
 # Cache-Control: public, max-age=31536000
 # Content-Encoding: gzip
 ```
+# License
+
+MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
+# Legal Disclaimer
+
+This is an unofficial hobby project. Data is provided "as is" and no warranty is given for its accuracy. Not affiliated with any official transport authority.
