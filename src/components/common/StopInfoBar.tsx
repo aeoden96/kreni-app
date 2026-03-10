@@ -10,6 +10,7 @@ import { useApproachingVehicles } from '../../hooks/useApproachingVehicles';
 import { useTimetableDepartures } from '../../hooks/useTimetableDepartures';
 import { useStopRoutes } from '../../hooks/useStopRoutes';
 import { useStopTermini } from '../../hooks/useStopTermini';
+import { useSiblingPlatformRoutes } from '../../hooks/useSiblingPlatformRoutes';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useGTFSMode } from '../../contexts/GTFSModeContext';
 import { StopTabSelector, type StopTab } from './StopTabSelector';
@@ -47,6 +48,7 @@ export function StopInfoBar({
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [activeTab, setActiveTab] = useState<StopTab>(hasRealtime ? 'vehicles' : 'timetable');
   const [routesExpanded, setRoutesExpanded] = useState(false);
+  const [platformsExpanded, setPlatformsExpanded] = useState(false);
 
   const ROUTES_COLLAPSED_MAX = 6;
 
@@ -65,20 +67,21 @@ export function StopInfoBar({
 
   // Sibling platforms — stops at the same parent station, or (fallback) same-named stops
   // when no parent station is set (common for bus stop pairs without GTFS grouping).
-  // Deduplicated by bearing direction so multiple platform IDs in the same direction
-  // don't produce repeated buttons.
+  // Parent-station siblings: deduplicated by code (each platform code is unique).
+  // Same-name fallback siblings: deduplicated by bearing direction (typically 2 opposite platforms).
   const siblingPlatforms: Stop[] = (() => {
-    const raw = stop.parentStation !== null
-      ? Array.from(stopsById.values()).filter(
-          s => s.locationType === 0 && s.parentStation === stop.parentStation && s.id !== stop.id,
-        )
-      : Array.from(stopsById.values()).filter(
-          s =>
-            s.locationType === 0 &&
-            s.id !== stop.id &&
-            s.name === stop.name &&
-            (stop.routeType === undefined || s.routeType === undefined || s.routeType === stop.routeType),
-        );
+    if (stop.parentStation !== null) {
+      return Array.from(stopsById.values()).filter(
+        s => s.locationType === 0 && s.parentStation === stop.parentStation && s.id !== stop.id,
+      );
+    }
+    const raw = Array.from(stopsById.values()).filter(
+      s =>
+        s.locationType === 0 &&
+        s.id !== stop.id &&
+        s.name === stop.name &&
+        (stop.routeType === undefined || s.routeType === undefined || s.routeType === stop.routeType),
+    );
     const seen = new Set<string>();
     return raw.filter(s => {
       const key = s.bearing !== undefined ? bearingToDirection(s.bearing) : (s.code ?? s.id);
@@ -88,27 +91,61 @@ export function StopInfoBar({
     });
   })();
 
+  // Fetch routes for each sibling platform so we can show route badges
+  const { routeMap: siblingRouteMap, terminusSet: siblingTerminusSet } = useSiblingPlatformRoutes(
+    siblingPlatforms.map(s => s.id),
+    routesById,
+  );
+
+  // Terminus stops sorted last
+  const sortedSiblingPlatforms = siblingPlatforms.slice().sort((a, b) => {
+    const aT = siblingTerminusSet.has(a.id) ? 1 : 0;
+    const bT = siblingTerminusSet.has(b.id) ? 1 : 0;
+    return aT - bT;
+  });
+
+  // Whether all siblings share the same display name (common at large terminals)
+  const allSiblingsShareName = siblingPlatforms.length > 0 &&
+    siblingPlatforms.every(s => s.name === stop.name);
+
+  // Filter sibling platforms that actually have departures (for terminus banner)
+  const departingSiblings = siblingPlatforms.filter(s => {
+    const routes = siblingRouteMap.get(s.id);
+    return routes && routes.length > 0;
+  });
+
   const terminusBanner = isAllTerminus ? (
     <div className="rounded-lg bg-warning/10 border border-warning/30 p-3 mt-1">
-      <p className="text-xs font-semibold text-warning mb-1">Odredišna platforma</p>
+      <p className="text-xs font-semibold text-warning mb-1">Ovo je odredišna platforma</p>
       <p className="text-xs text-base-content/70 mb-2">
-        Autobusi ovdje završavaju vožnju — nema polazaka.
-        {siblingPlatforms.length > 0 && ' Polasci su na susjednoj platformi:'}
+        Vozila ovdje završavaju vožnju — nema polazaka.
+        {departingSiblings.length > 0 && ' Odaberite platformu za polazak:'}
       </p>
-      {siblingPlatforms.map(s => (
-        <button
-          key={s.id}
-          type="button"
-          onClick={() => onStopSelect?.(s.id)}
-          className="btn btn-xs btn-warning w-full gap-1.5 mt-1"
-        >
-          <ArrowRight className="w-3 h-3" />
-          {s.name}
-          {s.bearing !== undefined && (
-            <span className="font-normal opacity-70">· smjer {bearingToDirection(s.bearing)}</span>
-          )}
-        </button>
-      ))}
+      {departingSiblings.map(s => {
+        const routes = siblingRouteMap.get(s.id) ?? [];
+        const label = s.bearing !== undefined
+          ? `Smjer prema ${bearingToDirection(s.bearing)}`
+          : undefined;
+        return (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => onStopSelect?.(s.id)}
+            className="btn btn-xs btn-warning w-full gap-1.5 mt-1 flex-wrap justify-start"
+          >
+            <ArrowRight className="w-3 h-3 shrink-0" />
+            {label && <span>{label}</span>}
+            {routes.length > 0 && (
+              <span className="flex flex-wrap gap-0.5 ml-1">
+                {routes.slice(0, 5).map(r => (
+                  <span key={r.id} className="badge badge-xs font-bold badge-ghost opacity-80">{r.shortName}</span>
+                ))}
+                {routes.length > 5 && <span className="text-xs opacity-60">+{routes.length - 5}</span>}
+              </span>
+            )}
+          </button>
+        );
+      })}
     </div>
   ) : null;
   const liveVehicles = allVehicles
@@ -206,31 +243,56 @@ export function StopInfoBar({
               )}
             </div>
           )}
-          {siblingPlatforms.length > 0 && (
+          {siblingPlatforms.length > 0 && !isAllTerminus && (
             <div className="mt-1.5">
-              <p className="text-[10px] uppercase tracking-wide text-base-content/40 mb-1">Ostala stajališta</p>
+              <p className="text-[10px] uppercase tracking-wide text-base-content/40 mb-1">Ostale platforme</p>
               <div className="flex flex-wrap gap-1">
-                {siblingPlatforms.map((s) => (
+                {(platformsExpanded ? sortedSiblingPlatforms : sortedSiblingPlatforms.slice(0, 3)).map((s) => {
+                  const routes = siblingRouteMap.get(s.id) ?? [];
+                  const isTerminus = siblingTerminusSet.has(s.id);
+                  const label = s.bearing !== undefined
+                    ? `Smjer prema ${bearingToDirection(s.bearing)}`
+                    : undefined;
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => onStopSelect?.(s.id)}
+                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full border text-[11px] text-base-content/70 transition-colors ${
+                        isTerminus
+                          ? 'bg-warning/10 border-warning/40 hover:bg-warning/20 active:bg-warning/30'
+                          : 'bg-base-200/60 border-base-300 hover:bg-base-200 active:bg-base-300'
+                      }`}
+                      title={`Prebaci na: ${s.name}${
+                        s.bearing !== undefined ? ` (${bearingToDirection(s.bearing)})` : ''
+                      }${isTerminus ? ' · odredišna' : ''}`}
+                    >
+                      <Navigation2
+                        className="w-2.5 h-2.5 shrink-0"
+                        style={s.bearing !== undefined ? { transform: `rotate(${s.bearing}deg)` } : undefined}
+                      />
+                      {label && <span>{label}</span>}
+                      {isTerminus && <span className="badge badge-xs bg-warning/20 text-warning border-warning/30 font-semibold">odredišna</span>}
+                      {routes.length > 0 && (
+                        <span className="flex gap-0.5 ml-0.5">
+                          {routes.slice(0, 3).map(r => (
+                            <span key={r.id} className={`badge badge-xs font-bold ${r.type === 0 ? 'badge-primary' : 'badge-accent'}`}>{r.shortName}</span>
+                          ))}
+                          {routes.length > 3 && <span className="text-[10px] opacity-50">+{routes.length - 3}</span>}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+                {siblingPlatforms.length > 3 && (
                   <button
-                    key={s.id}
                     type="button"
-                    onClick={() => onStopSelect?.(s.id)}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-base-200/60 border border-base-300 hover:bg-base-200 active:bg-base-300 text-[11px] text-base-content/70 transition-colors"
-                    title={`Prebaci na: ${s.name}${
-                      s.bearing !== undefined ? ` (${bearingToDirection(s.bearing)})` : ''
-                    }`}
+                    onClick={() => setPlatformsExpanded(e => !e)}
+                    className="inline-flex items-center px-2 py-1 rounded-full bg-base-200/60 border border-base-300 hover:bg-base-200 active:bg-base-300 text-[11px] text-base-content/50 transition-colors"
                   >
-                    <Navigation2
-                      className="w-2.5 h-2.5 shrink-0"
-                      style={s.bearing !== undefined ? { transform: `rotate(${s.bearing}deg)` } : undefined}
-                    />
-                    <span>
-                      {s.bearing !== undefined
-                        ? `Smjer prema ${bearingToDirection(s.bearing)}`
-                        : (s.code ?? s.name)}
-                    </span>
+                    {platformsExpanded ? '−' : `+${siblingPlatforms.length - 3}`}
                   </button>
-                ))}
+                )}
               </div>
             </div>
           )}

@@ -120,6 +120,13 @@ export const useDataCacheStore = create<DataCacheState>()(
 );
 
 /**
+ * In-flight request deduplication map.
+ * If the same URL is requested while a fetch is already pending, all callers
+ * share the same Promise so only one network request is made.
+ */
+const inFlight = new Map<string, Promise<unknown>>();
+
+/**
  * Helper function to fetch data with caching
  */
 export async function cachedFetch<T>(
@@ -127,20 +134,30 @@ export async function cachedFetch<T>(
   fetcher: () => Promise<T>
 ): Promise<T> {
   const store = useDataCacheStore.getState();
-  
-  // Check cache first
+
+  // Check persistent cache first
   const cached = store.getEntry<T>(url);
   if (cached !== undefined) {
     return cached;
   }
-  
-  // Cache miss - fetch from network
-  const data = await fetcher();
-  
-  // Store in cache (errors are handled by the custom storage)
-  store.setEntry(url, data);
-  
-  return data;
+
+  // Deduplicate concurrent requests for the same URL
+  const existing = inFlight.get(url);
+  if (existing) {
+    return existing as Promise<T>;
+  }
+
+  // Cache miss — start a new fetch and register it as in-flight
+  const promise = fetcher().then((data) => {
+    store.setEntry(url, data);
+    return data;
+  }).finally(() => {
+    inFlight.delete(url);
+  });
+
+  inFlight.set(url, promise as Promise<unknown>);
+
+  return promise;
 }
 
 /**
