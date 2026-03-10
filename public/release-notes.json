@@ -1,9 +1,11 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "changes": [
-    "Dodane zone parkiranja na karti s detaljnim informacijama",
-    "Poboljšan SEO i pristupačnost (strukturirani podaci, sitemap)",
-    "Zaštita podatkovnih datoteka od masovnog preuzimanja"
+    "Unificirane i osvježene boje javnog prijevoza (tramvaji plavi, autobusi jantarni)",
+    "Poboljšan prikaz stanica s integriranim linijama i preglednijim popisom platformi",
+    "Dodano kontinuirano praćenje lokacije korisnika na karti",
+    "Ažurirani podaci o zonama parkiranja",
+    "Ispravljen bug kod navigacije između prikaza stanica"
   ],
   "force": false
 }
