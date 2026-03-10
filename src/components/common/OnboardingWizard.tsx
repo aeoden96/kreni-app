@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Navigation, MapPin, Smartphone, Map, GitMerge, Coffee, List, MousePointerClick, Layers } from 'lucide-react';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { trackEvent } from '../../utils/analytics';
 
 type OnboardingVariant = 'transit' | 'cycling' | 'driving' | 'city' | 'list' | 'train';
 
@@ -135,6 +136,7 @@ export function OnboardingWizard({ variant }: OnboardingWizardProps) {
   const steps = getStepsForVariant();
 
   const handleClose = () => {
+    trackEvent('onboarding_completed', { variant });
     setOnboardingCompleted(variant, true);
     setOnboardingStep(0);
   };

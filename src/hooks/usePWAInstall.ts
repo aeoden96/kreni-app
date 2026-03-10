@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { trackEvent } from '../utils/analytics';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -43,6 +44,7 @@ export function usePWAInstall() {
     if (!installPrompt) return;
     await installPrompt.prompt();
     const { outcome } = await installPrompt.userChoice;
+    trackEvent('pwa_install_outcome', { outcome });
     if (outcome === 'accepted') {
       setInstallPrompt(null);
     }

@@ -9,6 +9,7 @@ import type { Route, Stop } from '../../utils/gtfs';
 import { isRouteTypeTram, isRouteTypeBus, isRouteTypeRail } from '../../utils/gtfs';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useGTFSMode } from '../../contexts/GTFSModeContext';
+import { trackEvent } from '../../utils/analytics';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -158,11 +159,14 @@ export function SearchModal({
   }, [filter, searchQuery, platformStops]);
 
   const handleSelectRoute = (route: Route) => {
+    const routeType = isRouteTypeTram(route.type) ? 'tram' : isRouteTypeBus(route.type) ? 'bus' : isRouteTypeRail(route.type) ? 'train' : 'other';
+    trackEvent('route_selected', { route_id: route.id, route_name: route.shortName, route_type: routeType });
     onSelectRoute(route.id, route.type, 'A');
     onClose();
   };
 
   const handleSelectStop = (stop: Stop) => {
+    trackEvent('stop_selected', { stop_id: stop.id, stop_name: stop.name });
     onSelectStop(stop.id);
     onClose();
   };
@@ -404,6 +408,7 @@ export function SearchModal({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          trackEvent('favourite_toggled', { item_type: 'route', route_id: route.id, action: favouriteRouteIds.includes(route.id) ? 'remove' : 'add' });
                           toggleFavouriteRoute(route.id);
                         }}
                         className="px-3 py-3 text-base-content/30 hover:text-warning transition-colors min-h-[52px] flex items-center"
@@ -454,6 +459,7 @@ export function SearchModal({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          trackEvent('favourite_toggled', { item_type: 'stop', stop_id: stop.id, action: favouriteStopIds.includes(stop.id) ? 'remove' : 'add' });
                           toggleFavouriteStop(stop.id);
                         }}
                         className="px-3 py-3 text-base-content/30 hover:text-warning transition-colors min-h-[52px] flex items-center"

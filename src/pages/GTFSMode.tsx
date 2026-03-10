@@ -7,6 +7,7 @@
  */
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import { trackEvent } from '../utils/analytics';
 import { Search, X, Train } from 'lucide-react';
 import { useSelectionParams } from '../hooks/useSelectionParams';
 import type { DirectionFilter } from '../hooks/useSelectionParams';
@@ -201,6 +202,9 @@ export function GTFSMode({ config }: GTFSModeProps) {
     tripId?: string,
   ) => {
     const dir: DirectionFilter = df === 'A' || df === 'B' ? df : 'A';
+    if (tripId) {
+      trackEvent('vehicle_clicked', { route_id: routeId, trip_id: tripId });
+    }
     selectRoute(routeId, { dir });
     setSearchModalOpen(false);
     addRecentRoute(routeId);
@@ -604,7 +608,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
           <div className="absolute top-2 left-2 right-32 sm:left-4 sm:right-auto sm:top-4 z-[1000]">
             <div className="w-full sm:w-80 flex items-center gap-2 bg-base-100 rounded-xl px-4 py-3 shadow-lg">
               <button
-                onClick={() => setSearchModalOpen(true)}
+                onClick={() => { trackEvent('search_opened'); setSearchModalOpen(true); }}
                 className="flex-1 flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
               >
                 <Search className="w-5 h-5 text-base-content/50 shrink-0" />

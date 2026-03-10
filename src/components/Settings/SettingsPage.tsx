@@ -7,6 +7,7 @@ import { ArrowLeft, Moon, Sun, Map, Database, Trash2, Info, Mail } from 'lucide-
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useDataCacheStore } from '../../stores/dataCache';
 import { useInitialData } from '../../hooks/useInitialData';
+import { trackEvent } from '../../utils/analytics';
 
 // Map tile providers handled automatically via theme + detailedMap setting
 
@@ -30,6 +31,7 @@ export function SettingsPage() {
 
   const handleClearCache = () => {
     if (window.confirm('Obrisati GTFS predmemoriju? Aplikacija će se ponovo učitati i dohvatiti svježe podatke.')) {
+      trackEvent('cache_cleared');
       clearCache();
       window.location.reload();
     }
@@ -37,6 +39,7 @@ export function SettingsPage() {
 
   const handleDeleteAll = () => {
     if (window.confirm('Obrisati sve podatke aplikacije? Ovo će obrisati sve postavke, favorite i predmemoriju. Aplikacija će se ponovo učitati.')) {
+      trackEvent('all_data_deleted');
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -95,7 +98,7 @@ export function SettingsPage() {
                   type="checkbox"
                   className="toggle toggle-primary"
                   checked={theme === 'dark'}
-                  onChange={(e) => setTheme(e.target.checked ? 'dark' : 'light')}
+                  onChange={(e) => { const t = e.target.checked ? 'dark' : 'light'; trackEvent('theme_changed', { theme: t }); setTheme(t); }}
                    
                 />
                 <Moon className="w-4 h-4" />

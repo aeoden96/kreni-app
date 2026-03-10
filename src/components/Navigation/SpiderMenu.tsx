@@ -17,6 +17,7 @@ import {
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useNavigationStore } from '../../stores/navigationStore';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
+import { trackEvent } from '../../utils/analytics';
 
 export function SpiderMenu() {
     const [isOpen, setIsOpen] = useState(false);
@@ -178,6 +179,7 @@ export function SpiderMenu() {
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
+                                                trackEvent('view_toggled', { view: 'map' });
                                                 setAppMode('map');
                                             }}
                                             className={`
@@ -193,6 +195,7 @@ export function SpiderMenu() {
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
+                                                trackEvent('view_toggled', { view: 'list' });
                                                 setAppMode('list');
                                             }}
                                             className={`
@@ -370,6 +373,7 @@ export function SpiderMenu() {
                                 )}
                                 <NavLink
                                     to={item.to}
+                                    onClick={() => { trackEvent('mode_switched', { mode: item.label }); setIsOpen(false); }}
                                     className={({ isActive }) => `
                                         flex items-center gap-3 px-4 py-2 rounded-full shadow-xl transition-all duration-300
                                         text-white backdrop-blur-md border border-white/20 animate-spider-reveal
@@ -411,6 +415,7 @@ export function SpiderMenu() {
                         {canInstall && (
                             <button
                                 onClick={() => {
+                                    trackEvent('pwa_install_prompted');
                                     install();
                                     setIsOpen(false);
                                 }}
