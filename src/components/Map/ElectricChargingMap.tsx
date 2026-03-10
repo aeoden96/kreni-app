@@ -4,6 +4,7 @@ import L from 'leaflet';
 import { Zap } from 'lucide-react';
 import { renderToString } from 'react-dom/server';
 import type { FeatureCollection, Point } from 'geojson';
+import { cachedFetch } from '../../stores/dataCache';
 
 interface ElectricChargingMapProps {
     show: boolean;
@@ -15,8 +16,8 @@ export const ElectricChargingMap = memo(function ElectricChargingMap({ show }: E
     useEffect(() => {
         if (!show || geoData) return;
 
-        fetch(`${import.meta.env.BASE_URL}static_data/elektricne_punionice.json`)
-            .then(res => res.json())
+        const url = `${import.meta.env.BASE_URL}static_data/elektricne_punionice.json`;
+        cachedFetch(url, () => fetch(url).then(res => res.json()))
             .then(data => setGeoData(data))
             .catch(err => console.error('Failed to load electric charging stations:', err));
     }, [show, geoData]);

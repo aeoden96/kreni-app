@@ -4,6 +4,7 @@ import L from 'leaflet';
 import { Wifi } from 'lucide-react';
 import { renderToString } from 'react-dom/server';
 import type { FeatureCollection, Point } from 'geojson';
+import { cachedFetch } from '../../stores/dataCache';
 
 interface FreeWifiMapProps {
     show: boolean;
@@ -15,8 +16,8 @@ export const FreeWifiMap = memo(function FreeWifiMap({ show }: FreeWifiMapProps)
     useEffect(() => {
         if (!show || geoData) return;
 
-        fetch(`${import.meta.env.BASE_URL}static_data/besplatna_wifi_mreza.json`)
-            .then(res => res.json())
+        const url = `${import.meta.env.BASE_URL}static_data/besplatna_wifi_mreza.json`;
+        cachedFetch(url, () => fetch(url).then(res => res.json()))
             .then(data => setGeoData(data))
             .catch(err => console.error('Failed to load free wifi:', err));
     }, [show, geoData]);

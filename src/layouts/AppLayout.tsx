@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { SpiderMenu } from '../components/Navigation/SpiderMenu';
 import { UpdatePrompt } from '../components/common/UpdatePrompt';
+import { CacheSizeIndicator } from '../components/common/CacheSizeIndicator';
 
 export function AppLayout() {
     return (
@@ -17,6 +18,7 @@ export function AppLayout() {
             */}
             <SpiderMenu />
             <UpdatePrompt />
+            <CacheSizeIndicator />
         </div>
     );
 }

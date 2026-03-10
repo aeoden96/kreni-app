@@ -1,5 +1,6 @@
 import { memo, useEffect, useState } from 'react';
 import { GeoJSON } from 'react-leaflet';
+import { cachedFetch } from '../../stores/dataCache';
 import type { FeatureCollection, LineString, MultiLineString } from 'geojson';
 
 interface BikePathsProps {
@@ -12,8 +13,8 @@ export const BikePaths = memo(function BikePaths({ show }: BikePathsProps) {
     useEffect(() => {
         if (!show || geoData) return;
 
-        fetch(`${import.meta.env.BASE_URL}static_data/bike_paths.geojson`)
-            .then(res => res.json())
+        const url = `${import.meta.env.BASE_URL}static_data/bike_paths.geojson`;
+        cachedFetch(url, () => fetch(url).then(res => res.json()))
             .then(data => setGeoData(data))
             .catch(err => console.error('Failed to load bike paths:', err));
     }, [show, geoData]);

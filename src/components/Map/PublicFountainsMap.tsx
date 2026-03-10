@@ -2,6 +2,7 @@ import { memo, useEffect, useState } from 'react';
 import { Marker, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import type { FeatureCollection, Point } from 'geojson';
+import { cachedFetch } from '../../stores/dataCache';
 
 interface PublicFountainsMapProps {
     show: boolean;
@@ -13,8 +14,8 @@ export const PublicFountainsMap = memo(function PublicFountainsMap({ show }: Pub
     useEffect(() => {
         if (!show || geoData) return;
 
-        fetch(`${import.meta.env.BASE_URL}static_data/javni_zdenci.json`)
-            .then(res => res.json())
+        const url = `${import.meta.env.BASE_URL}static_data/javni_zdenci.json`;
+        cachedFetch(url, () => fetch(url).then(res => res.json()))
             .then(data => setGeoData(data))
             .catch(err => console.error('Failed to load public fountains:', err));
     }, [show, geoData]);

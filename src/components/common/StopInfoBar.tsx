@@ -104,10 +104,6 @@ export function StopInfoBar({
     return aT - bT;
   });
 
-  // Whether all siblings share the same display name (common at large terminals)
-  const allSiblingsShareName = siblingPlatforms.length > 0 &&
-    siblingPlatforms.every(s => s.name === stop.name);
-
   // Filter sibling platforms that actually have departures (for terminus banner)
   const departingSiblings = siblingPlatforms.filter(s => {
     const routes = siblingRouteMap.get(s.id);
@@ -272,7 +268,7 @@ export function StopInfoBar({
                         style={s.bearing !== undefined ? { transform: `rotate(${s.bearing}deg)` } : undefined}
                       />
                       {label && <span>{label}</span>}
-                      {isTerminus && <span className="badge badge-xs bg-warning/20 text-warning border-warning/30 font-semibold">odredišna</span>}
+                      {isTerminus && <span className="badge-xs text-warning font-semibold">Odredišna platforma</span>}
                       {routes.length > 0 && (
                         <span className="flex gap-0.5 ml-0.5">
                           {routes.slice(0, 3).map(r => (

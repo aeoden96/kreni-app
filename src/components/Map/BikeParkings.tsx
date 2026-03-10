@@ -1,6 +1,7 @@
 import { memo, useEffect, useState } from 'react';
 import { Marker, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
+import { cachedFetch } from '../../stores/dataCache';
 
 interface ParkingData {
     id: number;
@@ -21,8 +22,8 @@ export const BikeParkings = memo(function BikeParkings({ show }: BikeParkingsPro
     useEffect(() => {
         if (!show || parkings.length > 0) return;
 
-        fetch(`${import.meta.env.BASE_URL}static_data/bike_parkings.json`)
-            .then(res => res.json())
+        const url = `${import.meta.env.BASE_URL}static_data/bike_parkings.json`;
+        cachedFetch(url, () => fetch(url).then(res => res.json()))
             .then(data => setParkings(data))
             .catch(err => console.error('Failed to load bike parkings:', err));
     }, [show, parkings]);

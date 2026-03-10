@@ -2,6 +2,7 @@ import { memo, useEffect, useState, useMemo } from 'react';
 import { Marker, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import type { FeatureCollection, Point } from 'geojson';
+import { cachedFetch } from '../../stores/dataCache';
 
 interface RailwayStationsMapProps {
     show: boolean;
@@ -13,8 +14,8 @@ export const RailwayStationsMap = memo(function RailwayStationsMap({ show }: Rai
     useEffect(() => {
         if (!show || geoData) return;
 
-        fetch(`${import.meta.env.BASE_URL}static_data/zeljeznicke_postaje.json`)
-            .then(res => res.json())
+        const url = `${import.meta.env.BASE_URL}static_data/zeljeznicke_postaje.json`;
+        cachedFetch(url, () => fetch(url).then(res => res.json()))
             .then(data => setGeoData(data))
             .catch(err => console.error('Failed to load railway stations:', err));
     }, [show, geoData]);
