@@ -7,6 +7,7 @@ export function AppLayout() {
     usePageTracking();
     return (
         <div className="h-svh w-screen overflow-hidden flex flex-col bg-base-100 relative">
+            <h1 className="sr-only">Kreni — Zagreb uživo: ZET, Parking, Bicikli i Gradske usluge</h1>
             <div className="flex-1 relative overflow-hidden">
                 <Outlet />
             </div>

@@ -89,7 +89,7 @@ export function SettingsPage() {
               <div>
                 <p className="font-medium">Tema</p>
                 <p className="text-sm text-base-content/70">
-                Svijetla ili tamna tema
+                  Svijetla ili tamna tema
                 </p>
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
@@ -99,7 +99,7 @@ export function SettingsPage() {
                   className="toggle toggle-primary"
                   checked={theme === 'dark'}
                   onChange={(e) => { const t = e.target.checked ? 'dark' : 'light'; trackEvent('theme_changed', { theme: t }); setTheme(t); }}
-                   
+
                 />
                 <Moon className="w-4 h-4" />
               </label>
