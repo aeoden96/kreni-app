@@ -283,9 +283,6 @@ body {
   display: none !important;
 }
 
-.custom-tooltip {
-  /* Base classes are handled by .leaflet-tooltip above */
-}
 
 /* Hover effects for bike markers */
 .bajs-station-icon:hover>div,
@@ -399,6 +396,46 @@ body {
   100% {
     opacity: 0;
   }
+}
+
+@keyframes gps-active-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.2);
+    transform: scale(1);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+    transform: scale(1.03);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    transform: scale(1);
+  }
+}
+
+.btn-gps-active {
+  background: rgba(22, 101, 52, 0.5) !important;
+  /* Muted deep green glass */
+  color: #86efac !important;
+  /* Softer light green */
+  border: 1.5px solid rgba(134, 239, 172, 0.3) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 12px rgba(34, 197, 94, 0.15) !important;
+  animation: gps-active-pulse 3s infinite ease-in-out;
+  backdrop-filter: blur(12px);
+}
+
+.btn-gps-inactive {
+  background: rgba(0, 0, 0, 0.6) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(12px);
+}
+
+.btn-gps-inactive:hover {
+  background: rgba(0, 0, 0, 0.8) !important;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* Platform stop label shown at max zoom */

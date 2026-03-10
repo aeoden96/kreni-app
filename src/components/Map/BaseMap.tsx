@@ -2,6 +2,7 @@ import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-lea
 import type { MapContainerProps } from 'react-leaflet';
 import L from 'leaflet';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { useNavigationStore } from '../../stores/navigationStore';
 import { useEffect, useRef } from 'react';
 
 /** Exposes the Leaflet map instance on window.__leafletMap for E2E tests. */
@@ -50,8 +51,12 @@ function MapLocater({ userLocation, panOffsetY = 0 }: { userLocation?: { lat: nu
     // Sync the ref after every render (outside of render body to satisfy lint).
     useEffect(() => { panOffsetYRef.current = panOffsetY; });
 
+    const locateTrigger = useNavigationStore(s => s.locateTrigger);
+    const lastTriggerRef = useRef(0);
+
     useEffect(() => {
-        if (userLocation) {
+        if (userLocation && locateTrigger > lastTriggerRef.current) {
+            lastTriggerRef.current = locateTrigger;
             const zoom = 16;
             const offsetY = panOffsetYRef.current;
             if (offsetY !== 0) {
@@ -65,7 +70,7 @@ function MapLocater({ userLocation, panOffsetY = 0 }: { userLocation?: { lat: nu
             }
         }
         // panOffsetY intentionally omitted from deps — read via ref to avoid re-flying when modal closes.
-    }, [userLocation, map]);
+    }, [userLocation, map, locateTrigger]);
     return null;
 }
 

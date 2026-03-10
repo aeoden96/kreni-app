@@ -49,7 +49,7 @@ export function SpiderMenu() {
         showFreeWifi,
         setShowFreeWifi
     } = useSettingsStore();
-    const { onLocateClick, locating } = useNavigationStore();
+    const { onLocateClick, locating, isTracking } = useNavigationStore();
     const { canInstall, install } = usePWAInstall();
 
     const toggleMenu = () => setIsOpen(!isOpen);
@@ -141,8 +141,8 @@ export function SpiderMenu() {
                             onClick={onLocateClick}
                             disabled={locating}
                             style={{ width: 48, height: 48 }}
-                            className="btn btn-circle sm:w-14 sm:h-14 bg-neutral text-neutral-content border-white/10 shadow-lg hover:bg-neutral/80 transition-all duration-300"
-                            title="Moja lokacija"
+                            className={`btn btn-circle sm:w-14 sm:h-14 ${isTracking ? 'btn-gps-active' : 'btn-gps-inactive'} shadow-2xl transition-all duration-300 ring-2 ring-white/5`}
+                            title={isTracking ? "Zaustavi praćenje lokacije" : "Moja lokacija"}
                         >
                             {locating ? (
                                 <span className="loading loading-spinner loading-sm" />
