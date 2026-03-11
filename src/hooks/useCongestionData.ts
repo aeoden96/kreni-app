@@ -34,7 +34,7 @@ export interface CongestionPoint {
     vsHistorical?: number;
 }
 
-export interface HistoricalData {
+interface HistoricalData {
     /** data[dayOfWeek][hour][stopId] = [sumOfDelays, sampleCount] */
     data: Record<string, Record<string, Record<string, [number, number]>>>;
     lastUpdated?: string;
