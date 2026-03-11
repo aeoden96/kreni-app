@@ -9,7 +9,7 @@
  * the dots on the line always align with the corresponding stop rows.
  */
 
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { ArrowLeft, X, Train, Bus } from 'lucide-react';
 import type { Route, Stop } from '../../utils/gtfs';
 import { getDirectionColor } from '../Map/directionColors';
@@ -38,7 +38,7 @@ type DirectionFilter = 'A' | 'B';
 const TRAM_COLOR = '#2563eb'; // blue-600
 const BUS_COLOR = '#d97706'; // amber-600
 
-export function RouteModal({
+export const RouteModal = memo(function RouteModal({
   isOpen,
   route,
   routeStops,
@@ -219,4 +219,4 @@ export function RouteModal({
       </div>
     </>
   );
-}
+});

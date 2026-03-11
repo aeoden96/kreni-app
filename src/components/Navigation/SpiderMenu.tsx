@@ -175,58 +175,67 @@ export function SpiderMenu() {
                         {menuItems.map((item, index) => (
                             <div key={item.to} className="flex items-center gap-3">
                                 {location.pathname === "/" && item.to === "/" && (
-                                    <div
-                                        className="flex p-0.5 bg-neutral/90 backdrop-blur-xl rounded-full border border-white/10 shadow-2xl animate-spider-reveal overflow-hidden"
-                                        style={{ animationDelay: `${index * 50 + 50}ms` }}
-                                    >
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                trackEvent('view_toggled', { view: 'map' });
-                                                setAppMode('map');
-                                            }}
-                                            className={`
-                                                flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest transition-all duration-300
-                                                ${appMode === 'map'
-                                                    ? 'bg-primary text-white shadow-lg scale-105'
-                                                    : 'text-white/40 hover:text-white/60 hover:bg-white/5'}
-                                            `}
+                                    <>
+                                        {appMode === 'map' && (
+                                            <div
+                                                className="flex p-0.5 bg-neutral/90 backdrop-blur-xl rounded-full border border-white/10 shadow-2xl animate-spider-reveal overflow-hidden"
+                                                style={{ animationDelay: `${index * 50 + 100}ms` }}
+                                            >
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setShowCongestionHeatmap(!showCongestionHeatmap);
+                                                    }}
+                                                    className={`
+                                                        flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest transition-all duration-300
+                                                        ${showCongestionHeatmap
+                                                            ? 'bg-orange-500 text-white shadow-lg scale-105'
+                                                            : 'text-white/40 hover:text-white/60 hover:bg-white/5'}
+                                                    `}
+                                                >
+                                                    <Activity className="w-3 h-3" />
+                                                    GUŽVE
+                                                </button>
+                                            </div>
+                                        )}
+                                        <div
+                                            className="flex p-0.5 bg-neutral/90 backdrop-blur-xl rounded-full border border-white/10 shadow-2xl animate-spider-reveal overflow-hidden"
+                                            style={{ animationDelay: `${index * 50 + 50}ms` }}
                                         >
-                                            <Map className="w-3 h-3" />
-                                            KARTA
-                                        </button>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                trackEvent('view_toggled', { view: 'list' });
-                                                setAppMode('list');
-                                            }}
-                                            className={`
-                                                flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest transition-all duration-300
-                                                ${appMode === 'list'
-                                                    ? 'bg-primary text-white shadow-lg scale-105'
-                                                    : 'text-white/40 hover:text-white/60 hover:bg-white/5'}
-                                            `}
-                                        >
-                                            <List className="w-3 h-3" />
-                                            POPIS
-                                        </button>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setShowCongestionHeatmap(!showCongestionHeatmap);
-                                            }}
-                                            className={`
-                                                flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest transition-all duration-300
-                                                ${showCongestionHeatmap
-                                                    ? 'bg-orange-500 text-white shadow-lg scale-105'
-                                                    : 'text-white/40 hover:text-white/60 hover:bg-white/5'}
-                                            `}
-                                        >
-                                            <Activity className="w-3 h-3" />
-                                            GUŽVE
-                                        </button>
-                                    </div>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    trackEvent('view_toggled', { view: 'map' });
+                                                    setAppMode('map');
+                                                }}
+                                                className={`
+                                                    flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest transition-all duration-300
+                                                    ${appMode === 'map'
+                                                        ? 'bg-primary text-white shadow-lg scale-105'
+                                                        : 'text-white/40 hover:text-white/60 hover:bg-white/5'}
+                                                `}
+                                            >
+                                                <Map className="w-3 h-3" />
+                                                KARTA
+                                            </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    trackEvent('view_toggled', { view: 'list' });
+                                                    setAppMode('list');
+                                                }}
+                                                className={`
+                                                    flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest transition-all duration-300
+                                                    ${appMode === 'list'
+                                                        ? 'bg-primary text-white shadow-lg scale-105'
+                                                        : 'text-white/40 hover:text-white/60 hover:bg-white/5'}
+                                                `}
+                                            >
+                                                <List className="w-3 h-3" />
+                                                POPIS
+                                            </button>
+                                        </div>
+                                    </>
                                 )}
                                 {location.pathname === "/driving" && item.to === "/driving" && (
                                     <div

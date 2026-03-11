@@ -3,7 +3,7 @@
  * Opens from the floating search bar on the map.
  */
 
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, memo } from 'react';
 import { Search, X, TrainFront, Bus, MapPin, Star, Clock } from 'lucide-react';
 import type { Route, Stop } from '../../utils/gtfs';
 import { isRouteTypeTram, isRouteTypeBus, isRouteTypeRail } from '../../utils/gtfs';
@@ -26,7 +26,7 @@ type FilterType = 'tram' | 'bus' | 'trains' | 'stanice';
 const POPULAR_TRAMS = ['6', '11', '17', '4', '13', '12'];
 const POPULAR_BUSES = ['101', '102', '106', '140', '268'];
 
-export function SearchModal({
+export const SearchModal = memo(function SearchModal({
   isOpen,
   onClose,
   routes,
@@ -482,4 +482,4 @@ export function SearchModal({
       </div>
     </div>
   );
-}
+});

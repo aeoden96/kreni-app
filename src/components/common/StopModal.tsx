@@ -3,7 +3,7 @@
  * Opened from the map popup expand button.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { X, Clock, Star, ArrowRight, Navigation2, Info } from 'lucide-react';
 import type { Stop, Route } from '../../utils/gtfs';
 import { minutesToTime, bearingToDirection } from '../../utils/gtfs';
@@ -29,7 +29,7 @@ interface StopModalProps {
   onStopSelect?: (stopId: string) => void;
 }
 
-export function StopModal({
+export const StopModal = memo(function StopModal({
   isOpen,
   stop,
   routesById,
@@ -387,4 +387,4 @@ export function StopModal({
       </div>
     </div>
   );
-}
+});

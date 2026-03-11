@@ -2,9 +2,11 @@ import { Outlet } from 'react-router-dom';
 import { SpiderMenu } from '../components/Navigation/SpiderMenu';
 import { UpdatePrompt } from '../components/common/UpdatePrompt';
 import { usePageTracking } from '../hooks/usePageTracking';
+import { useUrlQueryParams } from '../hooks/useUrlQueryParams';
 
 export function AppLayout() {
     usePageTracking();
+    useUrlQueryParams();
     return (
         <div className="h-svh w-screen overflow-hidden flex flex-col bg-base-100 relative">
             <h1 className="sr-only">Kreni — Zagreb uživo: ZET, Parking, Bicikli i Gradske usluge</h1>
