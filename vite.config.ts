@@ -67,6 +67,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        importScripts: ['data:text/javascript,self.__WB_DISABLE_DEV_LOGS=true'],
         // Precache app shell (HTML, JS, CSS, static assets)
         globPatterns: process.env.NODE_ENV === 'production' ? ['**/*.{js,css,html,ico,png,svg,woff2}'] : [],
         globIgnores: ['**/node_modules/**', '**/dev-dist/**'],
