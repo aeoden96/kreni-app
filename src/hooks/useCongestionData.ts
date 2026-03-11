@@ -147,10 +147,12 @@ export function useCongestionData({ enabled, stopsById, routesById }: UseCongest
             }
         }
 
-        // Determine current historical bucket
+        // Determine current historical bucket in Zagreb time context
         const now = new Date();
-        const dayKey = now.getDay().toString();
-        const hourKey = now.getHours().toString();
+        const zagrebTimeStr = now.toLocaleString('en-US', { timeZone: 'Europe/Zagreb' });
+        const zagrebDate = new Date(zagrebTimeStr);
+        const dayKey = zagrebDate.getDay().toString();
+        const hourKey = zagrebDate.getHours().toString();
         const histBucket = historical?.data?.[dayKey]?.[hourKey];
 
         // Convert to CongestionPoints Grouped
