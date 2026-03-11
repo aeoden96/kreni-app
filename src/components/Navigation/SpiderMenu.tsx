@@ -12,7 +12,8 @@ import {
     Map,
     List,
     Train,
-    Download
+    Download,
+    Activity
 } from 'lucide-react';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useNavigationStore } from '../../stores/navigationStore';
@@ -42,6 +43,8 @@ export function SpiderMenu() {
         setShowParkingZones,
         showStudentRestaurants,
         setShowStudentRestaurants,
+        showCongestionHeatmap,
+        setShowCongestionHeatmap,
         showPublicFountains,
         setShowPublicFountains,
         showPedestrianZones,
@@ -207,6 +210,21 @@ export function SpiderMenu() {
                                         >
                                             <List className="w-3 h-3" />
                                             POPIS
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setShowCongestionHeatmap(!showCongestionHeatmap);
+                                            }}
+                                            className={`
+                                                flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest transition-all duration-300
+                                                ${showCongestionHeatmap
+                                                    ? 'bg-orange-500 text-white shadow-lg scale-105'
+                                                    : 'text-white/40 hover:text-white/60 hover:bg-white/5'}
+                                            `}
+                                        >
+                                            <Activity className="w-3 h-3" />
+                                            GUŽVE
                                         </button>
                                     </div>
                                 )}

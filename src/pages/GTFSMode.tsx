@@ -34,6 +34,7 @@ import { useGeolocation } from '../hooks/useGeolocation';
 import { findNearestStops } from '../utils/gtfs';
 import { GTFSModeProvider } from '../contexts/GTFSModeContext';
 import { useRssServiceAlerts } from '../hooks/useRssServiceAlerts';
+import { useCongestionData } from '../hooks/useCongestionData';
 import type { GTFSModeConfig } from '../config/modes';
 
 /** Vertical pixel offset to shift a stop marker below the top StopInfoBar overlay on mobile. */
@@ -82,6 +83,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
   // In train mode there is no "hide all vehicles" toggle — stops are always visible.
   const showAllVehicles = config.hasRealtime ? showAllVehiclesFromStore : true;
   const showRoadClosures = config.hasRealtime && showRoadClosuresFromStore;
+  const showCongestionHeatmap = useSettingsStore((s) => s.showCongestionHeatmap);
 
   // Load initial data from the mode's data directory
   const {
@@ -131,6 +133,13 @@ export function GTFSMode({ config }: GTFSModeProps) {
   // RSS-parsed ZET service alerts (polled by GitHub Actions cron every 30 min)
   const rssAlerts = useRssServiceAlerts(routesById);
   const serviceAlerts = [...rssAlerts, ...gtfsRtAlerts];
+
+  // Congestion heatmap (tram-only, transit mode only)
+  const { congestionPoints, summary: congestionSummary } = useCongestionData({
+    enabled: config.hasRealtime && showCongestionHeatmap,
+    stopsById,
+    routesById,
+  });
 
   // All-vehicles overlay (transit only)
   const { vehicles: allVehicles, loading: allVehiclesLoading } =
@@ -417,6 +426,8 @@ export function GTFSMode({ config }: GTFSModeProps) {
           onVehicleSelect={handleVehicleSelect}
           followedVehiclePos={followedVehiclePos}
           onFollowDisengage={handleFollowDisengage}
+          congestionPoints={congestionPoints}
+          showCongestionHeatmap={config.hasRealtime && showCongestionHeatmap}
         />
 
         {/* Route loading indicator */}
@@ -560,6 +571,29 @@ export function GTFSMode({ config }: GTFSModeProps) {
             <div className="badge badge-neutral gap-1.5 shadow text-[11px] opacity-80">
               <Train className="w-3 h-3" />
               Live praćenje vlakova nije dostupno
+            </div>
+          </div>
+        )}
+
+        {/* Congestion summary badge */}
+        {config.hasRealtime && showCongestionHeatmap && congestionSummary && (
+          <div className="absolute bottom-6 left-4 z-[1000]">
+            <div className="bg-base-100/90 backdrop-blur-sm rounded-xl shadow-lg border border-base-200 px-3 py-2 text-xs space-y-1 max-w-52">
+              <div className="font-bold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+                Zagušenja tramvaja
+              </div>
+              <div className="text-base-content/70">
+                Prosj. kašnjenje: <span className="font-semibold text-base-content">{Math.round(congestionSummary.averageDelay / 60)} min</span>
+              </div>
+              <div className="text-base-content/70">
+                {congestionSummary.stopsWithData} stanica s podacima
+              </div>
+              {(congestionSummary.severeCount > 0 || congestionSummary.highCount > 0) && (
+                <div className="text-error font-semibold">
+                  {congestionSummary.severeCount + congestionSummary.highCount} kritičnih stanica
+                </div>
+              )}
             </div>
           </div>
         )}

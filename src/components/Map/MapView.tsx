@@ -15,8 +15,11 @@ import { SpiderfierProvider } from './SpiderfierContext';
 import { SpiderfierManager } from './SpiderfierManager';
 import { RoadClosures } from './RoadClosures';
 import { VehicleFollower } from './VehicleFollower';
+import { CongestionHeatmap } from './CongestionHeatmap';
 import { useRoadClosures } from '../../hooks/useRoadClosures';
 import { useGTFSMode } from '../../contexts/GTFSModeContext';
+
+import type { CongestionPoint } from '../../hooks/useCongestionData';
 
 
 interface MapViewProps {
@@ -53,6 +56,10 @@ interface MapViewProps {
   followedVehiclePos?: { lat: number; lon: number } | null;
   /** Called when user drags the map while following — parent should clear follow state */
   onFollowDisengage?: () => void;
+  /** Live congestion data points to render */
+  congestionPoints?: CongestionPoint[];
+  /** Whether to show the congestion heatmap overlay */
+  showCongestionHeatmap?: boolean;
 }
 
 
@@ -87,6 +94,8 @@ export function MapView({
   nearbyStopIds,
   followedVehiclePos,
   onFollowDisengage,
+  congestionPoints = [],
+  showCongestionHeatmap = false,
 }: MapViewProps) {
   // Fetch road closures if enabled
   const { closures } = useRoadClosures(showRoadClosures);
@@ -132,6 +141,8 @@ export function MapView({
         )}
 
         <RoadClosures show={showRoadClosures} closures={closures} />
+
+        <CongestionHeatmap points={congestionPoints} show={showCongestionHeatmap} />
 
         {selectedRouteId && (
           <>

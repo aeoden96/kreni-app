@@ -36,6 +36,8 @@ interface SettingsState {
   showElectricCharging: boolean;
   /** Show parking zones layer */
   showParkingZones: boolean;
+  /** Show tram congestion heatmap overlay */
+  showCongestionHeatmap: boolean;
   /** Show railway stations layer */
   showRailwayStations: boolean;
   /** Prefer more detailed map tiles (Standard / HOT) */
@@ -74,6 +76,7 @@ interface SettingsState {
   setShowPublicGarages: (show: boolean) => void;
   setShowElectricCharging: (show: boolean) => void;
   setShowParkingZones: (show: boolean) => void;
+  setShowCongestionHeatmap: (show: boolean) => void;
   setShowRailwayStations: (show: boolean) => void;
   setAppMode: (mode: AppMode) => void;
   setDismissedGpsTip: (dismissed: boolean) => void;
@@ -117,6 +120,7 @@ export const useSettingsStore = create<SettingsState>()(
         showPublicGarages: true,
         showElectricCharging: false,
         showParkingZones: false,
+        showCongestionHeatmap: false,
         showRailwayStations: false,
         appMode: 'map',
         favouriteRouteIds: [],
@@ -167,6 +171,7 @@ export const useSettingsStore = create<SettingsState>()(
         setShowPublicGarages: (show) => set({ showPublicGarages: show }),
         setShowElectricCharging: (show) => set({ showElectricCharging: show }),
         setShowParkingZones: (show) => set({ showParkingZones: show }),
+        setShowCongestionHeatmap: (show) => set({ showCongestionHeatmap: show }),
         setShowRailwayStations: (show) => set({ showRailwayStations: show }),
         setAppMode: (mode) => set({ appMode: mode }),
         setDismissedGpsTip: (dismissed) => set({ dismissedGpsTip: dismissed }),
