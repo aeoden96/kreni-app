@@ -2,7 +2,7 @@
  * Render vehicle position markers on the map
  */
 
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Marker, useMap } from 'react-leaflet';
 import type { VehiclePosition } from '../../utils/vehicles';
 import { makeVehicleIcon } from '../../utils/vehicleIcon';
@@ -19,6 +19,7 @@ interface SpiderfiedVehicleMarkerProps {
   routeShortName: string;
   theme: string;
   onVehicleSelect?: (tripId: string) => void;
+  opacity: number;
 }
 
 function SpiderfiedVehicleMarker({
@@ -27,6 +28,7 @@ function SpiderfiedVehicleMarker({
   routeShortName,
   theme,
   onVehicleSelect,
+  opacity,
 }: SpiderfiedVehicleMarkerProps) {
   const map = useMap();
   const ctx = useSpiderfierContext();
@@ -35,7 +37,7 @@ function SpiderfiedVehicleMarker({
     : vehicle.headsign;
 
   // Compute icon before hooks so iconRef always holds the latest value
-  const icon = makeVehicleIcon(color, vehicle.bearing, vehicle.isRealtime, routeShortName, theme === 'dark');
+  const icon = makeVehicleIcon(color, vehicle.bearing, vehicle.isRealtime, routeShortName, theme === 'dark', opacity);
   const iconRef = useRef(icon);
   useLayoutEffect(() => { iconRef.current = icon; });
 
@@ -77,9 +79,29 @@ interface VehicleMarkersProps {
 }
 
 export function VehicleMarkers({ vehicles, routeType, routeShortName = '', onVehicleSelect }: VehicleMarkersProps) {
-  // Color by direction if available, else fallback to routeType color
+  const map = useMap();
+  const [zoom, setZoom] = useState(map.getZoom());
   const theme = useSettingsStore((s) => s.theme);
   const bounds = useMapBounds();
+
+  useEffect(() => {
+    const handleZoomEnd = () => setZoom(map.getZoom());
+    map.on('zoomend', handleZoomEnd);
+    return () => {
+      map.off('zoomend', handleZoomEnd);
+    };
+  }, [map]);
+
+  const FADE_MIN = 13;
+  const FADE_MAX = 14;
+  const opacityFactor = zoom >= FADE_MAX
+    ? 1
+    : zoom <= FADE_MIN
+      ? 0
+      : (zoom - FADE_MIN) / (FADE_MAX - FADE_MIN);
+
+  if (opacityFactor === 0) return null;
+
   const visible = vehicles.filter((v) => bounds.contains([v.lat, v.lon]));
 
   return (
@@ -94,6 +116,7 @@ export function VehicleMarkers({ vehicles, routeType, routeShortName = '', onVeh
             routeShortName={routeShortName}
             theme={theme}
             onVehicleSelect={onVehicleSelect}
+            opacity={opacityFactor}
           />
         );
       })}

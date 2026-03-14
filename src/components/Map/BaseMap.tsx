@@ -113,12 +113,15 @@ export function BaseMap({ children, userLocation, locationPanOffsetY = 0, ...map
             className="w-full h-full"
             style={{ width: '100%', height: '100%' }}
             zoomControl={false}
+            preferCanvas={true}
             {...mapProps}
         >
             <TileLayer
                 key={providerId}
                 attribution={tileConfig.attribution}
                 url={tileConfig.url}
+                updateWhenIdle={true}
+                keepBuffer={3}
             />
 
             {userLocation && (

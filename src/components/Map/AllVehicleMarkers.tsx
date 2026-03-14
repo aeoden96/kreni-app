@@ -2,7 +2,7 @@
  * Render all vehicle position markers on the map
  */
 
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Marker, useMap } from 'react-leaflet';
 import type { AllVehiclePosition } from '../../utils/vehicles';
 import { makeVehicleIcon } from '../../utils/vehicleIcon';
@@ -16,12 +16,14 @@ interface SpiderfiedAllVehicleMarkerProps {
   vehicle: AllVehiclePosition;
   theme: string;
   onVehicleClick?: (routeId: string, routeType: number, tripId: string) => void;
+  opacity: number;
 }
 
 function SpiderfiedAllVehicleMarker({
   vehicle,
   theme,
   onVehicleClick,
+  opacity,
 }: SpiderfiedAllVehicleMarkerProps) {
   const map = useMap();
   const ctx = useSpiderfierContext();
@@ -31,7 +33,7 @@ function SpiderfiedAllVehicleMarker({
 
   // Compute icon before hooks so iconRef always holds the latest value
   const color = vehicle.routeType === 0 ? '#2337ff' : '#ff6b35';
-  const icon = makeVehicleIcon(color, vehicle.bearing, vehicle.isRealtime, vehicle.routeShortName, theme === 'dark');
+  const icon = makeVehicleIcon(color, vehicle.bearing, vehicle.isRealtime, vehicle.routeShortName, theme === 'dark', opacity);
   const iconRef = useRef(icon);
   useLayoutEffect(() => { iconRef.current = icon; });
 
@@ -71,8 +73,29 @@ interface AllVehicleMarkersProps {
 }
 
 export function AllVehicleMarkers({ vehicles, onVehicleClick }: AllVehicleMarkersProps) {
+  const map = useMap();
+  const [zoom, setZoom] = useState(map.getZoom());
   const bounds = useMapBounds();
   const theme = useSettingsStore((s) => s.theme);
+
+  useEffect(() => {
+    const handleZoomEnd = () => setZoom(map.getZoom());
+    map.on('zoomend', handleZoomEnd);
+    return () => {
+      map.off('zoomend', handleZoomEnd);
+    };
+  }, [map]);
+
+  const FADE_MIN = 13;
+  const FADE_MAX = 14;
+  const opacityFactor = zoom >= FADE_MAX
+    ? 1
+    : zoom <= FADE_MIN
+      ? 0
+      : (zoom - FADE_MIN) / (FADE_MAX - FADE_MIN);
+
+  if (opacityFactor === 0) return null;
+
   const visible = vehicles.filter((v) => bounds.contains([v.lat, v.lon]));
 
   return (
@@ -83,6 +106,7 @@ export function AllVehicleMarkers({ vehicles, onVehicleClick }: AllVehicleMarker
           vehicle={vehicle}
           theme={theme}
           onVehicleClick={onVehicleClick}
+          opacity={opacityFactor}
         />
       ))}
     </>
