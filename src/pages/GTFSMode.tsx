@@ -545,7 +545,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
               onClick={() => setLegendOpen((o) => !o)}
             >
               <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-              ZET podaci stari {timeAgoStr || '...'}
+              ZET podaci osvježeni prije {timeAgoStr || '...'}
             </button>
           </div>
         )}
@@ -561,7 +561,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
         )}
 
         {/* Congestion summary badge */}
-{/* GUŽVE functionality hidden for now
+        {/* GUŽVE functionality hidden for now
         {config.hasRealtime && showCongestionHeatmap && congestionSummary && (
           <div className="absolute bottom-6 left-4 z-[1000]">
             <div className="bg-base-100/90 backdrop-blur-sm rounded-xl shadow-lg border border-base-200 px-3 py-2 text-xs space-y-1 max-w-52">

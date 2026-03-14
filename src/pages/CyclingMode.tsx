@@ -86,7 +86,7 @@ export function CyclingMode() {
                 {showBikeStations && timeAgoStr && (
                     <div className="badge badge-info gap-1 shadow">
                         <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-                        Podaci stari {timeAgoStr}
+                        Podaci osvježeni prije {timeAgoStr}
                     </div>
                 )}
             </div>
