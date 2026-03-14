@@ -13,7 +13,7 @@ import {
     List,
     Train,
     Download,
-    Activity
+//    Activity
 } from 'lucide-react';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useNavigationStore } from '../../stores/navigationStore';
@@ -43,8 +43,8 @@ export function SpiderMenu() {
         setShowParkingZones,
         showStudentRestaurants,
         setShowStudentRestaurants,
-        showCongestionHeatmap,
-        setShowCongestionHeatmap,
+//        showCongestionHeatmap,
+//        setShowCongestionHeatmap,
         showPublicFountains,
         setShowPublicFountains,
         showPedestrianZones,
@@ -176,6 +176,7 @@ export function SpiderMenu() {
                             <div key={item.to} className="flex items-center gap-3">
                                 {location.pathname === "/" && item.to === "/" && (
                                     <>
+{/* GUŽVE functionality hidden for now
                                         {appMode === 'map' && (
                                             <div
                                                 className="flex p-0.5 bg-neutral/90 backdrop-blur-xl rounded-full border border-white/10 shadow-2xl animate-spider-reveal overflow-hidden"
@@ -198,6 +199,7 @@ export function SpiderMenu() {
                                                 </button>
                                             </div>
                                         )}
+                                        */}
                                         <div
                                             className="flex p-0.5 bg-neutral/90 backdrop-blur-xl rounded-full border border-white/10 shadow-2xl animate-spider-reveal overflow-hidden"
                                             style={{ animationDelay: `${index * 50 + 50}ms` }}

@@ -83,7 +83,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
   // In train mode there is no "hide all vehicles" toggle — stops are always visible.
   const showAllVehicles = config.hasRealtime ? showAllVehiclesFromStore : true;
   const showRoadClosures = config.hasRealtime && showRoadClosuresFromStore;
-  const showCongestionHeatmap = useSettingsStore((s) => s.showCongestionHeatmap);
+  const showCongestionHeatmap = false; // useSettingsStore((s) => s.showCongestionHeatmap);
 
   // Load initial data from the mode's data directory
   const {
@@ -135,7 +135,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
   const serviceAlerts = [...rssAlerts, ...gtfsRtAlerts];
 
   // Congestion heatmap (tram-only, transit mode only)
-  const { congestionPoints, summary: congestionSummary } = useCongestionData({
+  const { congestionPoints } = useCongestionData({
     enabled: config.hasRealtime && showCongestionHeatmap,
     stopsById,
     routesById,
@@ -576,6 +576,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
         )}
 
         {/* Congestion summary badge */}
+{/* GUŽVE functionality hidden for now
         {config.hasRealtime && showCongestionHeatmap && congestionSummary && (
           <div className="absolute bottom-6 left-4 z-[1000]">
             <div className="bg-base-100/90 backdrop-blur-sm rounded-xl shadow-lg border border-base-200 px-3 py-2 text-xs space-y-1 max-w-52">
@@ -597,6 +598,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
             </div>
           </div>
         )}
+        */}
 
         {/* Route Info Bar / Vehicle Follow Bar */}
         {selectedRoute && !routeModalOpen && !stopModalOpen && (
