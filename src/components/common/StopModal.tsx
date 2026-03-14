@@ -38,7 +38,7 @@ export const StopModal = memo(function StopModal({
   onRouteClick,
   onStopSelect,
 }: StopModalProps) {
-  const { dataDir, hasRealtime } = useGTFSMode();
+  const { dataDir, hasRealtime, timetableLookaheadMinutes } = useGTFSMode();
   const currentTime = useCurrentTime();
   const { favouriteStopIds, toggleFavouriteStop, dismissedGpsTip, setDismissedGpsTip } = useSettingsStore();
   const isFav = favouriteStopIds.includes(stop.id);
@@ -155,12 +155,12 @@ export const StopModal = memo(function StopModal({
     });
   const liveCount = liveVehicles.filter((v) => !v.passedStop).length;
 
-  // Timetable departures — 60-min window, only active when modal is open
+  // Timetable departures — only active when modal is open
   const { departures: timetableDepartures, loading: timetableLoading } = useTimetableDepartures(
     isOpen ? stop.id : null,
     routesById,
     nowMs,
-    { dataDir }
+    { dataDir, lookaheadMinutes: timetableLookaheadMinutes }
   );
 
   const { routes: stopRoutes } = useStopRoutes(isOpen ? stop.id : null, routesById, { dataDir });
@@ -250,8 +250,8 @@ export const StopModal = memo(function StopModal({
                       type="button"
                       onClick={() => onStopSelect?.(s.id)}
                       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs text-base-content/70 transition-colors ${isTerminus
-                          ? 'bg-warning/10 border-warning/40 hover:bg-warning/20 active:bg-warning/30'
-                          : 'bg-base-200/60 border-base-300 hover:bg-base-200 active:bg-base-300'
+                        ? 'bg-warning/10 border-warning/40 hover:bg-warning/20 active:bg-warning/30'
+                        : 'bg-base-200/60 border-base-300 hover:bg-base-200 active:bg-base-300'
                         }`}
                       title={`Prebaci na: ${s.name}${s.bearing !== undefined ? ` (${bearingToDirection(s.bearing)})` : ''
                         }${isTerminus ? ' · odredišna' : ''}`}
@@ -363,14 +363,14 @@ export const StopModal = memo(function StopModal({
             ) : timetableDepartures.length === 0 ? (
               terminusBanner ?? (
                 <div className="p-8 text-center text-base-content/50">
-                  Nema polazaka u sljedećih 60 min
+                  Nema polazaka u sljedećih {timetableLookaheadMinutes} min
                 </div>
               )
             ) : (
               <div className="p-4 space-y-2">
                 <div className="flex items-center justify-between mb-1">
                   <h3 className="font-semibold">Red vožnje</h3>
-                  <span className="text-xs text-base-content/40">slj. 60 min</span>
+                  <span className="text-xs text-base-content/40">slj. {timetableLookaheadMinutes} min</span>
                 </div>
                 {timetableDepartures.map((dep) => (
                   <TimetableDepartureCard

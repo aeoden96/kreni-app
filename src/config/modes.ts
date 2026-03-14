@@ -29,6 +29,8 @@ export interface GTFSModeConfig {
   initialZoom?: number;
   /** Minimum zoom allowed on the map. Falls back to BaseMap default (11) when undefined. */
   minZoom?: number;
+  /** How many minutes to look ahead when showing the timetable. */
+  timetableLookaheadMinutes: number;
 }
 
 /** ZET bus / tram public transport (default mode). */
@@ -41,6 +43,7 @@ export const TRANSIT_MODE: GTFSModeConfig = {
   loadingText: 'Učitavanje podataka...',
   onboardingVariant: 'transit',
   alwaysShowStops: false,
+  timetableLookaheadMinutes: 60,
 };
 
 /** HŽ Passenger Transport regional / suburban trains. */
@@ -55,4 +58,5 @@ export const TRAIN_MODE: GTFSModeConfig = {
   alwaysShowStops: true,
   initialZoom: 9,
   minZoom: 7,
+  timetableLookaheadMinutes: 300,
 };

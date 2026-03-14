@@ -42,7 +42,7 @@ export function StopInfoBar({
   onStopSelect,
   stackBelow = false,
 }: StopInfoBarProps) {
-  const { dataDir, hasRealtime } = useGTFSMode();
+  const { dataDir, hasRealtime, timetableLookaheadMinutes } = useGTFSMode();
   const { favouriteStopIds, toggleFavouriteStop, dismissedGpsTip, setDismissedGpsTip } = useSettingsStore();
   const isFav = favouriteStopIds.includes(stop.id);
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -160,7 +160,7 @@ export function StopInfoBar({
     stop.id,
     routesById,
     nowMs,
-    { dataDir }
+    { dataDir, lookaheadMinutes: timetableLookaheadMinutes }
   );
   const topDepartures = timetableDepartures.slice(0, 4);
 
@@ -444,7 +444,7 @@ export function StopInfoBar({
           ) : topDepartures.length === 0 ? (
             terminusBanner ?? (
               <div className="text-sm text-base-content/50 py-2 text-center">
-                Nema polazaka u sljedećih 60 min
+                Nema polazaka u sljedećih {timetableLookaheadMinutes} min
               </div>
             )
           ) : (

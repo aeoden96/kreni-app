@@ -30,8 +30,6 @@ export interface TimetableDeparture {
   minutesUntil: number;
 }
 
-/** Look ahead this many minutes from current time */
-const LOOKAHEAD_MINUTES = 60;
 /** Grace period: show departures that left up to this many seconds ago */
 const PAST_GRACE_SECONDS = 30;
 
@@ -39,9 +37,9 @@ export function useTimetableDepartures(
   stopId: string | null,
   routesById: Map<string, Route>,
   nowMs: number,
-  options: { dataDir?: string } = {}
+  options: { dataDir?: string; lookaheadMinutes?: number } = {}
 ): { departures: TimetableDeparture[]; loading: boolean; error: Error | null } {
-  const { dataDir = 'data' } = options;
+  const { dataDir = 'data', lookaheadMinutes = 60 } = options;
   const [stopTimetable, setStopTimetable] = useState<StopTimetable | null>(null);
   const [routeStopsCache, setRouteStopsCache] = useState<Map<string, RouteStopsData>>(new Map());
   const [loading, setLoading] = useState(false);
@@ -111,7 +109,7 @@ export function useTimetableDepartures(
     const todayStr = new Date(nowMs).toISOString().slice(0, 10).replace(/-/g, '');
     const activeServiceId = calendar[todayStr] ?? null;
 
-    const windowEndSeconds = nowSeconds + LOOKAHEAD_MINUTES * 60;
+    const windowEndSeconds = nowSeconds + lookaheadMinutes * 60;
 
     const results: TimetableDeparture[] = [];
 
@@ -185,7 +183,7 @@ export function useTimetableDepartures(
     results.sort((a, b) => a.adjustedMinutes - b.adjustedMinutes);
 
     return results;
-  }, [stopId, stopTimetable, routeStopsCache, tripUpdates, nowMs, routesById, calendar]);
+  }, [stopId, stopTimetable, routeStopsCache, tripUpdates, nowMs, routesById, calendar, lookaheadMinutes]);
 
   return { departures, loading: loading || (!!stopId && !stopTimetable && !error), error };
 }
