@@ -192,6 +192,7 @@ body {
 
 .animate-spider-reveal {
   animation: spider-reveal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  will-change: transform, opacity, filter;
 }
 
 /* Leaflet popup styling for enhanced stop popups */

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
     TramFront,
@@ -22,6 +22,7 @@ import { trackEvent } from '../../utils/analytics';
 
 export function SpiderMenu() {
     const [isOpen, setIsOpen] = useState(false);
+    const [, startTransition] = useTransition();
     const navigate = useNavigate();
     const location = useLocation();
     const {
@@ -116,7 +117,9 @@ export function SpiderMenu() {
             label: "Postavke",
             icon: <Settings className="w-5 h-5" />,
             onClick: () => {
-                navigate('/settings');
+                startTransition(() => {
+                    navigate('/settings');
+                });
             }
         },
     ];
@@ -208,7 +211,9 @@ export function SpiderMenu() {
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     trackEvent('view_toggled', { view: 'map' });
-                                                    setAppMode('map');
+                                                    startTransition(() => {
+                                                        setAppMode('map');
+                                                    });
                                                 }}
                                                 className={`
                                                     flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest transition-all duration-300
@@ -224,7 +229,9 @@ export function SpiderMenu() {
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     trackEvent('view_toggled', { view: 'list' });
-                                                    setAppMode('list');
+                                                    startTransition(() => {
+                                                        setAppMode('list');
+                                                    });
                                                 }}
                                                 className={`
                                                     flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest transition-all duration-300
@@ -402,7 +409,13 @@ export function SpiderMenu() {
                                 )}
                                 <NavLink
                                     to={item.to}
-                                    onClick={() => { trackEvent('mode_switched', { mode: item.label }); }}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        trackEvent('mode_switched', { mode: item.label });
+                                        startTransition(() => {
+                                            navigate(item.to);
+                                        });
+                                    }}
                                     className={({ isActive }) => `
                                         flex items-center gap-3 px-4 py-2 rounded-full shadow-xl transition-all duration-300
                                         text-white backdrop-blur-md border border-white/20 animate-spider-reveal
