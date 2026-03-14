@@ -53,7 +53,9 @@ export function GTFSMode({ config }: GTFSModeProps) {
   const [stopModalOpen, setStopModalOpen] = useState(false);
   const [nearbyOpen, setNearbyOpen] = useState(false);
   const [legendOpen, setLegendOpen] = useState(false);
+  const [realtimeDetailsOpen, setRealtimeDetailsOpen] = useState(false);
   const [timeAgoStr, setTimeAgoStr] = useState<string>('');
+  const [feedAgeStr, setFeedAgeStr] = useState<string>('');
   const [parentStationZoomTarget, setParentStationZoomTarget] = useState<{ lat: number; lon: number; zoom?: number; panOffsetY?: number } | null>(null);
   /** Last vehicle the user clicked — carries both routeId and tripId so the follow button
    *  can be gated by matching routeId without being wiped by the route-change effect. */
@@ -126,6 +128,9 @@ export function GTFSMode({ config }: GTFSModeProps) {
   );
   const gtfsRtAlerts = useRealtimeStore((s) => s.serviceAlerts);
   const lastUpdate = useRealtimeStore((s) => s.lastUpdate);
+  const workerTimestamp = useRealtimeStore((s) => s.workerTimestamp);
+  const cacheStatus = useRealtimeStore((s) => s.cacheStatus);
+  const fetchLatencyMs = useRealtimeStore((s) => (s as any).fetchLatencyMs);
   const vehiclePositions = useRealtimeStore((s) => s.vehiclePositions);
   const tripUpdates = useRealtimeStore((s) => s.tripUpdates);
 
@@ -168,6 +173,22 @@ export function GTFSMode({ config }: GTFSModeProps) {
     const interval = setInterval(updateTimeAgo, 1000);
     return () => clearInterval(interval);
   }, [config.hasRealtime, lastUpdate]);
+
+  useEffect(() => {
+    if (!config.hasRealtime || !realtimeStats?.lastUpdate) {
+      setFeedAgeStr('');
+      return;
+    }
+    const updateFeedAge = () => {
+      const ms = Date.now() - realtimeStats.lastUpdate!.getTime();
+      if (ms < 1000) setFeedAgeStr(`${ms} ms`);
+      else if (ms < 60000) setFeedAgeStr(`${Math.floor(ms / 1000)} s`);
+      else setFeedAgeStr(`${Math.floor(ms / 60000)}m ${Math.round((ms % 60000) / 1000)}s`);
+    };
+    updateFeedAge();
+    const interval = setInterval(updateFeedAge, 1000);
+    return () => clearInterval(interval);
+  }, [config.hasRealtime, realtimeStats?.lastUpdate]);
 
   // Clear follow mode when route changes.
   // lastClickedVehicle is intentionally NOT cleared here — it's already gated
@@ -453,7 +474,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
             />
 
             {legendOpen && (
-              <div className="bg-base-100 rounded-xl shadow-xl border border-base-200 p-3 w-52 text-xs space-y-2">
+              <div className="absolute bottom-16 right-0 bg-base-100 rounded-xl shadow-xl border border-base-200 p-3 w-52 text-xs space-y-2">
                 <p className="font-semibold text-base-content mb-1">Legenda</p>
 
                 {/* Tram */}
@@ -540,13 +561,80 @@ export function GTFSMode({ config }: GTFSModeProps) {
               </div>
             )}
 
-            <button
-              className="badge badge-success gap-1 shadow cursor-pointer hover:badge-outline transition-all"
-              onClick={() => setLegendOpen((o) => !o)}
-            >
-              <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-              ZET podaci osvježeni prije {timeAgoStr || '...'}
-            </button>
+            <div className="flex items-end flex-col gap-2">
+              <button
+                className="badge badge-primary gap-1 shadow cursor-pointer hover:badge-outline transition-all"
+                aria-label="Legenda"
+                onClick={() => {
+                  setRealtimeDetailsOpen(false);
+                  setLegendOpen((o) => !o)
+                
+                }}
+              >
+                <span className="w-2 h-2 rounded-full bg-white"></span>
+                Legenda
+              </button>
+
+              <div className="relative">
+                <button
+                  className="badge badge-success gap-1 shadow cursor-pointer hover:badge-outline transition-all"
+                  onClick={() => {
+                    setLegendOpen(false);
+                    setRealtimeDetailsOpen((o) => !o)}}
+                >
+                  <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                  ZET podaci osvježeni prije {timeAgoStr || '...'}
+                </button>
+
+                {realtimeDetailsOpen && (
+                  <div className="absolute right-0 bottom-12 z-[1100] bg-base-100 rounded-xl shadow-xl border border-base-200 p-3 w-72 text-xs">
+                    <p className="font-semibold text-sm mb-2">Tehnički detalji</p>
+                    <div className="text-[13px] text-base-content/80 space-y-2">
+                      <div>
+                        <div className="flex justify-between"><span className="font-medium">Vrijeme feeda ZET-a</span><span>{realtimeStats?.lastUpdate ? realtimeStats.lastUpdate.toLocaleString() : '—'}</span></div>
+                        <div className="text-[11px] text-base-content/60">Označava kada je feed posljednji put ažuriran od strane ZET-a.</div>
+                        {realtimeStats?.lastUpdate && (
+                          <div className="mt-1 text-[11px] text-base-content/60 flex justify-between">
+                            <span>Starost feeda</span>
+                            <span>{feedAgeStr || '—'}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between"><span className="font-medium">Vrijeme proxy servisa</span><span>{workerTimestamp ? (isNaN(Date.parse(workerTimestamp)) ? workerTimestamp : new Date(workerTimestamp).toLocaleString()) : '—'}</span></div>
+                        <div className="text-[11px] text-base-content/60">Pokazuje kada je proxy preuzeo feed.</div>
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between"><span className="font-medium">Fetch latency</span><span>{fetchLatencyMs != null ? `${fetchLatencyMs} ms` : '—'}</span></div>
+                        <div className="text-[11px] text-base-content/60">Mjeri vrijeme prijenosa između klijenta i proxy servisa.</div>
+                      </div>
+
+ 
+
+                      <div>
+                        <div className="flex justify-between"><span className="font-medium">Vrijeme sinkronizacije (klijent)</span><span>{lastUpdate ? new Date(lastUpdate).toLocaleString() : '—'}</span></div>
+                        <div className="text-[11px] text-base-content/60">Vrijeme kada je ova aplikacija primila i obradila feed.</div>
+                        {realtimeStats && (
+                          <div className="mt-1 text-[11px] text-base-content/60">
+                            <div className="flex justify-between"><span>Entities</span><span>{realtimeStats.totalEntities}</span></div>
+                            <div className="flex justify-between"><span>Vehicle positions</span><span>{realtimeStats.vehiclePositions}</span></div>
+                            <div className="flex justify-between"><span>Trip updates</span><span>{realtimeStats.tripUpdates}</span></div>
+                            <div className="flex justify-between"><span>Service alerts</span><span>{realtimeStats.serviceAlerts}</span></div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between"><span className="font-medium">Status predmemorije</span><span>{cacheStatus ?? '—'}</span></div>
+                        <div className="text-[11px] text-base-content/60"><span className="font-semibold">HIT</span> = posluženo iz predmemorije, <span className="font-semibold">MISS</span> = dohvaćeno iz izvornog feeda.</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 

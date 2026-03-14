@@ -133,12 +133,18 @@ type GtfsRealtimeFeed = InstanceType<typeof GtfsRealtimeBindings.transit_realtim
  * Fetch and protobuf-decode a GTFS-RT feed from the proxy worker.
  *
  * @param endpoint - Which feed to request
- * @returns Decoded protobuf FeedMessage
+ * @returns Decoded protobuf FeedMessage and metadata
  * @throws Error when the proxy URL is not configured or the request fails
  */
 export async function fetchRealtimeFeed(
   endpoint: 'vehicle-positions' | 'trip-updates'
-): Promise<GtfsRealtimeFeed> {
+): Promise<{
+  feed: GtfsRealtimeFeed;
+  metadata: {
+    workerTimestamp: string | null;
+    cacheStatus: string | null;
+  };
+}> {
   if (!GTFS_PROXY_URL) {
     throw new Error(
       'GTFS proxy URL is not configured. Set VITE_GTFS_PROXY_URL in your .env file.'
@@ -151,6 +157,7 @@ export async function fetchRealtimeFeed(
     headers['X-API-Key'] = GTFS_API_KEY;
   }
 
+  const fetchStart = Date.now();
   const response = await fetch(url, { headers });
 
   if (!response.ok) {
@@ -159,10 +166,26 @@ export async function fetchRealtimeFeed(
     );
   }
 
+  const fetchEnd = Date.now();
+  const workerTimestamp = response.headers.get('X-Timestamp');
+  const cacheStatus = response.headers.get('X-Cache-Status');
+  const fetchTimeMs = fetchEnd - fetchStart;
+  const httpStatus = response.status;
+
   const buffer = await response.arrayBuffer();
-  return GtfsRealtimeBindings.transit_realtime.FeedMessage.decode(
+  const feed = GtfsRealtimeBindings.transit_realtime.FeedMessage.decode(
     new Uint8Array(buffer)
   );
+
+  return {
+    feed,
+    metadata: {
+      workerTimestamp,
+      cacheStatus,
+      fetchTimeMs,
+      httpStatus,
+    } as unknown as { workerTimestamp: string | null; cacheStatus: string | null; fetchTimeMs: number; httpStatus: number },
+  };
 }
 
 // ============================================

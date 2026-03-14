@@ -39,7 +39,12 @@ interface RealtimeState {
   loading: boolean;
   /** Error from the last failed fetch, null if last fetch succeeded */
   error: Error | null;
-
+  /** ISO timestamp from the worker's X-Timestamp header */
+  workerTimestamp: string | null;
+  /** HIT/MISS status from the worker's X-Cache-Status header */
+  cacheStatus: string | null;
+  /** Last fetch round-trip time (ms) measured when contacting the proxy */
+  fetchLatencyMs: number | null;
   /** Fetch both vehicle-positions and trip-updates feeds in parallel */
   fetchAll: () => Promise<void>;
   /** Clear all realtime data */
@@ -54,19 +59,21 @@ export const useRealtimeStore = create<RealtimeState>()((set) => ({
   lastUpdate: null,
   loading: false,
   error: null,
+  workerTimestamp: null,
+  cacheStatus: null,
+  fetchLatencyMs: null,
 
   fetchAll: async () => {
     set({ loading: true });
 
     try {
-      // Fetch both endpoints in parallel — ZET currently returns the same
-      // protobuf blob for each, but we poll them separately so each endpoint
-      // gets its own cache entry in the proxy worker and we use them as
-      // intended.
-      const [vehicleFeed, tripFeed] = await Promise.all([
+      const [vehicleRes, tripRes] = await Promise.all([
         fetchRealtimeFeed('vehicle-positions'),
         fetchRealtimeFeed('trip-updates'),
       ]);
+
+      const { feed: vehicleFeed, metadata } = vehicleRes;
+      const { feed: tripFeed } = tripRes;
 
       const positions = parseVehiclePositions(vehicleFeed);
       const updates = parseTripUpdates(tripFeed);
@@ -108,6 +115,9 @@ export const useRealtimeStore = create<RealtimeState>()((set) => ({
         serviceAlerts: alerts,
         stats,
         lastUpdate: Date.now(),
+        workerTimestamp: metadata.workerTimestamp,
+        cacheStatus: metadata.cacheStatus,
+        fetchLatencyMs: (metadata as any).fetchTimeMs ?? null,
         loading: false,
         error: null,
       });
@@ -125,6 +135,9 @@ export const useRealtimeStore = create<RealtimeState>()((set) => ({
       serviceAlerts: [],
       stats: null,
       lastUpdate: null,
+      workerTimestamp: null,
+      cacheStatus: null,
+      fetchLatencyMs: null,
       error: null,
     });
   },
