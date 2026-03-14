@@ -94,8 +94,10 @@ export function useStopDiagnostic(
   stopId: string | null,
   stopsById: Map<string, Stop>,
   routesById: Map<string, Route>,
-  nowMs: number
+  nowMs: number,
+  options: { dataDir?: string } = {}
 ): StopDiagnosticResult {
+  const { dataDir = 'data' } = options;
   const [stopTimetable, setStopTimetable] = useState<StopTimetable | null>(null);
   const [routeStopsCache, setRouteStopsCache] = useState<Map<string, RouteStopsData>>(new Map());
   const [loading, setLoading] = useState(false);
@@ -118,7 +120,7 @@ export function useStopDiagnostic(
     setLoading(true);
     setError(null);
 
-    fetchStopTimetable(stopId)
+    fetchStopTimetable(stopId, dataDir)
       .then(async (timetable) => {
         if (fetchingForStopId.current !== stopId) return;
         setStopTimetable(timetable);
@@ -127,7 +129,7 @@ export function useStopDiagnostic(
         const settled = await Promise.all(
           routeIds.map(async (routeId) => {
             try {
-              const data = await fetchRouteStops(routeId);
+              const data = await fetchRouteStops(routeId, dataDir);
               return [routeId, data] as const;
             } catch {
               return null;
@@ -149,7 +151,7 @@ export function useStopDiagnostic(
         setError(err instanceof Error ? err : new Error(String(err)));
         setLoading(false);
       });
-  }, [stopId]);
+  }, [stopId, dataDir]);
 
   const diagnostics = useMemo<TripDiagnostic[]>(() => {
     if (!stopId || !stopTimetable) return [];

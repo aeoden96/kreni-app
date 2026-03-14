@@ -19,7 +19,9 @@ export function useStopTermini(
   stopsById: Map<string, Stop>,
   /** routesById is accepted but not strictly needed — included for API symmetry */
   _routesById?: Map<string, Route>,
+  options: { dataDir?: string } = {}
 ): { termini: string[]; loading: boolean } {
+  const { dataDir = 'data' } = options;
   const [termini, setTermini] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -33,7 +35,7 @@ export function useStopTermini(
     let cancelled = false;
     setLoading(true);
 
-    fetchStopTimetable(stopId)
+    fetchStopTimetable(stopId, dataDir)
       .then(async (timetable) => {
         if (cancelled) return;
 
@@ -43,7 +45,7 @@ export function useStopTermini(
         const settled = await Promise.all(
           routeIds.map(async (routeId) => {
             try {
-              const data = await fetchRouteStops(routeId);
+              const data = await fetchRouteStops(routeId, dataDir);
               return data;
             } catch {
               return null;
@@ -87,7 +89,7 @@ export function useStopTermini(
     return () => {
       cancelled = true;
     };
-  }, [stopId, stopsById]);
+  }, [stopId, stopsById, dataDir]);
 
   return { termini, loading };
 }

@@ -62,7 +62,8 @@ export function StopInfoBar({
     stop.id,
     stopsById,
     routesById,
-    nowMs
+    nowMs,
+    { dataDir }
   );
 
   // Sibling platforms — stops at the same parent station, or (fallback) same-named stops
@@ -95,6 +96,7 @@ export function StopInfoBar({
   const { routeMap: siblingRouteMap, terminusSet: siblingTerminusSet } = useSiblingPlatformRoutes(
     siblingPlatforms.map(s => s.id),
     routesById,
+    { dataDir }
   );
 
   // Terminus stops sorted last
@@ -162,8 +164,8 @@ export function StopInfoBar({
   );
   const topDepartures = timetableDepartures.slice(0, 4);
 
-  const { routes: stopRoutes } = useStopRoutes(stop.id, routesById);
-  const { termini } = useStopTermini(stop.id, stopsById);
+  const { routes: stopRoutes } = useStopRoutes(stop.id, routesById, { dataDir });
+  const { termini } = useStopTermini(stop.id, stopsById, routesById, { dataDir });
 
   return (
     <div

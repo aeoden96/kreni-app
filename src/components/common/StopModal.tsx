@@ -62,7 +62,8 @@ export const StopModal = memo(function StopModal({
     isOpen ? stop.id : null,
     stopsById,
     routesById,
-    nowMs
+    nowMs,
+    { dataDir }
   );
 
   // Sibling platforms — stops at the same parent station, or (fallback) same-named stops
@@ -95,6 +96,7 @@ export const StopModal = memo(function StopModal({
   const { routeMap: siblingRouteMap, terminusSet: siblingTerminusSet } = useSiblingPlatformRoutes(
     siblingPlatforms.map(s => s.id),
     routesById,
+    { dataDir }
   );
 
   // Terminus stops sorted last
@@ -161,8 +163,8 @@ export const StopModal = memo(function StopModal({
     { dataDir }
   );
 
-  const { routes: stopRoutes } = useStopRoutes(isOpen ? stop.id : null, routesById);
-  const { termini } = useStopTermini(isOpen ? stop.id : null, stopsById);
+  const { routes: stopRoutes } = useStopRoutes(isOpen ? stop.id : null, routesById, { dataDir });
+  const { termini } = useStopTermini(isOpen ? stop.id : null, stopsById, routesById, { dataDir });
 
   if (!isOpen) return null;
 

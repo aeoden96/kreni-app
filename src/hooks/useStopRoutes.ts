@@ -13,7 +13,9 @@ import { fetchStopTimetable } from '../utils/gtfs';
 export function useStopRoutes(
   stopId: string | null,
   routesById: Map<string, Route>,
+  options: { dataDir?: string } = {}
 ): { routes: Route[]; loading: boolean } {
+  const { dataDir = 'data' } = options;
   const [routes, setRoutes] = useState<Route[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -27,7 +29,7 @@ export function useStopRoutes(
     let cancelled = false;
     setLoading(true);
 
-    fetchStopTimetable(stopId)
+    fetchStopTimetable(stopId, dataDir)
       .then((timetable) => {
         if (cancelled) return;
 
@@ -58,7 +60,7 @@ export function useStopRoutes(
     return () => {
       cancelled = true;
     };
-  }, [stopId, routesById]);
+  }, [stopId, routesById, dataDir]);
 
   return { routes, loading };
 }

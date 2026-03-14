@@ -24,7 +24,9 @@ function sortRoutes(routes: Route[]): Route[] {
 export function useSiblingPlatformRoutes(
   stopIds: string[],
   routesById: Map<string, Route>,
+  options: { dataDir?: string } = {}
 ): { routeMap: Map<string, Route[]>; terminusSet: Set<string> } {
+  const { dataDir = 'data' } = options;
   const [routeMap, setRouteMap] = useState<Map<string, Route[]>>(new Map());
   const [terminusSet, setTerminusSet] = useState<Set<string>>(new Set());
 
@@ -43,7 +45,7 @@ export function useSiblingPlatformRoutes(
     Promise.all(
       stopIds.map(async (sid) => {
         try {
-          const timetable = await fetchStopTimetable(sid);
+          const timetable = await fetchStopTimetable(sid, dataDir);
           const routeIds = Object.keys(timetable);
           const resolved: Route[] = [];
           for (const routeId of routeIds) {
@@ -54,7 +56,7 @@ export function useSiblingPlatformRoutes(
           // Detect terminus: fetch route topology and check if sid is last stop in every route
           const routeStopsResults = await Promise.all(
             routeIds.map(async (routeId) => {
-              try { return await fetchRouteStops(routeId); } catch { return null; }
+              try { return await fetchRouteStops(routeId, dataDir); } catch { return null; }
             }),
           );
           let routesInTopology = 0;
@@ -86,7 +88,7 @@ export function useSiblingPlatformRoutes(
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idsKey, routesById]);
+  }, [idsKey, routesById, dataDir]);
 
   return { routeMap, terminusSet };
 }

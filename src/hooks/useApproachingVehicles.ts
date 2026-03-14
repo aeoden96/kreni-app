@@ -68,8 +68,10 @@ export function useApproachingVehicles(
   stopId: string | null,
   stopsById: Map<string, Stop>,
   routesById: Map<string, Route>,
-  nowMs: number   // Date.now() — updated every second by caller for live countdown
+  nowMs: number,   // Date.now() — updated every second by caller for live countdown
+  options: { dataDir?: string } = {}
 ): { vehicles: ApproachingVehicle[]; loading: boolean; error: Error | null; isAllTerminus: boolean } {
+  const { dataDir = 'data' } = options;
   const [stopTimetable, setStopTimetable] = useState<StopTimetable | null>(null);
   const [routeStopsCache, setRouteStopsCache] = useState<Map<string, RouteStopsData>>(new Map());
   const [loading, setLoading] = useState(false);
@@ -93,7 +95,7 @@ export function useApproachingVehicles(
     setLoading(true);
     setError(null);
 
-    fetchStopTimetable(stopId)
+    fetchStopTimetable(stopId, dataDir)
       .then(async (timetable) => {
         // Bail out if the user already switched to a different stop
         if (fetchingForStopId.current !== stopId) return;
@@ -104,7 +106,7 @@ export function useApproachingVehicles(
         const settled = await Promise.all(
           routeIds.map(async (routeId) => {
             try {
-              const data = await fetchRouteStops(routeId);
+              const data = await fetchRouteStops(routeId, dataDir);
               return [routeId, data] as const;
             } catch {
               return null;
@@ -126,7 +128,7 @@ export function useApproachingVehicles(
         setError(err instanceof Error ? err : new Error(String(err)));
         setLoading(false);
       });
-  }, [stopId]);
+  }, [stopId, dataDir]);
 
   const { vehicles, isAllTerminus } = useMemo<{ vehicles: ApproachingVehicle[]; isAllTerminus: boolean }>(() => {
     if (!stopId || !stopTimetable) return { vehicles: [], isAllTerminus: false };

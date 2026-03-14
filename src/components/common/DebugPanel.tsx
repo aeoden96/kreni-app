@@ -12,6 +12,7 @@ import { minutesToTime, timeToMinutes, getCurrentTimeMinutes } from '../../utils
 import type { Stop, Route } from '../../utils/gtfs';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useRealtimeStore } from '../../stores/realtimeStore';
+import { useGTFSMode } from '../../contexts/GTFSModeContext';
 import { useStopDiagnostic } from '../../hooks/useStopDiagnostic';
 import type { TripDiagnostic } from '../../hooks/useStopDiagnostic';
 import type { ParsedVehiclePosition } from '../../utils/realtime';
@@ -394,7 +395,8 @@ export function DebugPanel({
     return () => clearInterval(id);
   }, []);
 
-  const stopDiag = useStopDiagnostic(selectedStopId, stopsById, routesById, nowMs);
+  const { dataDir } = useGTFSMode();
+  const stopDiag = useStopDiagnostic(selectedStopId, stopsById, routesById, nowMs, { dataDir });
 
   useEffect(() => {
     if (!timeInput) {
