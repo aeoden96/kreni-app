@@ -2,7 +2,7 @@
  * Render vehicle position markers on the map
  */
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useMemo, memo } from 'react';
 import { Marker, useMap } from 'react-leaflet';
 import type { VehiclePosition } from '../../utils/vehicles';
 import { makeVehicleIcon } from '../../utils/vehicleIcon';
@@ -71,6 +71,8 @@ function SpiderfiedVehicleMarker({
   );
 }
 
+const MemoSpiderfiedVehicleMarker = memo(SpiderfiedVehicleMarker);
+
 interface VehicleMarkersProps {
   vehicles: VehiclePosition[];
   routeType: number | null;
@@ -92,6 +94,8 @@ export function VehicleMarkers({ vehicles, routeType, routeShortName = '', onVeh
     };
   }, [map]);
 
+  const visible = useMemo(() => vehicles.filter((v) => bounds.contains([v.lat, v.lon])), [vehicles, bounds]);
+
   const FADE_MIN = 13;
   const FADE_MAX = 14;
   const opacityFactor = zoom >= FADE_MAX
@@ -102,14 +106,12 @@ export function VehicleMarkers({ vehicles, routeType, routeShortName = '', onVeh
 
   if (opacityFactor === 0) return null;
 
-  const visible = vehicles.filter((v) => bounds.contains([v.lat, v.lon]));
-
   return (
     <>
       {visible.map((vehicle) => {
         const color = getDirectionColor(routeType, vehicle.direction ?? 0);
         return (
-          <SpiderfiedVehicleMarker
+          <MemoSpiderfiedVehicleMarker
             key={vehicle.tripId}
             vehicle={vehicle}
             color={color}

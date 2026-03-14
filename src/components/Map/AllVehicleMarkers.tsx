@@ -2,7 +2,7 @@
  * Render all vehicle position markers on the map
  */
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useMemo, memo } from 'react';
 import { Marker, useMap } from 'react-leaflet';
 import type { AllVehiclePosition } from '../../utils/vehicles';
 import { makeVehicleIcon } from '../../utils/vehicleIcon';
@@ -67,6 +67,8 @@ function SpiderfiedAllVehicleMarker({
   );
 }
 
+const MemoSpiderfiedAllVehicleMarker = memo(SpiderfiedAllVehicleMarker);
+
 interface AllVehicleMarkersProps {
   vehicles: AllVehiclePosition[];
   onVehicleClick?: (routeId: string, routeType: number, tripId: string) => void;
@@ -77,7 +79,6 @@ export function AllVehicleMarkers({ vehicles, onVehicleClick }: AllVehicleMarker
   const [zoom, setZoom] = useState(map.getZoom());
   const bounds = useMapBounds();
   const theme = useSettingsStore((s) => s.theme);
-
   useEffect(() => {
     const handleZoomEnd = () => setZoom(map.getZoom());
     map.on('zoomend', handleZoomEnd);
@@ -86,6 +87,8 @@ export function AllVehicleMarkers({ vehicles, onVehicleClick }: AllVehicleMarker
     };
   }, [map]);
 
+  const visible = useMemo(() => vehicles.filter((v) => bounds.contains([v.lat, v.lon])), [vehicles, bounds]);
+
   const FADE_MIN = 13;
   const FADE_MAX = 14;
   const opacityFactor = zoom >= FADE_MAX
@@ -93,15 +96,12 @@ export function AllVehicleMarkers({ vehicles, onVehicleClick }: AllVehicleMarker
     : zoom <= FADE_MIN
       ? 0
       : (zoom - FADE_MIN) / (FADE_MAX - FADE_MIN);
-
   if (opacityFactor === 0) return null;
-
-  const visible = vehicles.filter((v) => bounds.contains([v.lat, v.lon]));
 
   return (
     <>
       {visible.map((vehicle) => (
-        <SpiderfiedAllVehicleMarker
+        <MemoSpiderfiedAllVehicleMarker
           key={vehicle.tripId}
           vehicle={vehicle}
           theme={theme}
