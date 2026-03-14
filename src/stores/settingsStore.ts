@@ -104,7 +104,7 @@ export const useSettingsStore = create<SettingsState>()(
         sandboxVisible: false,
         mapTileProvider: initialTheme === 'dark' ? 'dark-matter' : 'osm',
         theme: initialTheme,
-        detailedMap: false,
+        detailedMap: true,
         onboardingCompleted: {},
         onboardingStep: 0,
 
@@ -215,17 +215,13 @@ export const useSettingsStore = create<SettingsState>()(
       // Bump version here whenever a default value changes and you want
       // existing users' stored value to be overridden with the new default.
       // migrate() receives the persisted state and should return the corrected state.
-      version: 1,
+      version: 2,
       migrate: (persisted: unknown, fromVersion: number) => {
         const state = persisted as Partial<SettingsState>;
-        if (fromVersion < 1) {
-          // v0 → v1: detailedMap default changed from true to false.
-          // Only reset if the user never explicitly changed it (i.e. it still
-          // equals the old default). If you want to force ALL users regardless,
-          // just remove the conditional below.
-          if (state.detailedMap === true) {
-            return { ...state, detailedMap: false };
-          }
+        if (fromVersion < 2) {
+          // v1 → v2: detailedMap default changed from false to true.
+          // We force it to true for all existing users to ensure they see the better map.
+          return { ...state, detailedMap: true };
         }
         return state;
       },
