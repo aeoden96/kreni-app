@@ -31,7 +31,6 @@ import { useAllVehiclePositions } from '../hooks/useAllVehiclePositions';
 import { useVehiclePositions } from '../hooks/useVehiclePositions';
 import { useRealtimeData } from '../hooks/useRealtimeData';
 import { useGeolocation } from '../hooks/useGeolocation';
-import { findNearestStops } from '../utils/gtfs';
 import { GTFSModeProvider } from '../contexts/GTFSModeContext';
 import { useRssServiceAlerts } from '../hooks/useRssServiceAlerts';
 import { useCongestionData } from '../hooks/useCongestionData';
@@ -331,19 +330,6 @@ export function GTFSMode({ config }: GTFSModeProps) {
 
   // ── Derived ───────────────────────────────────────────────────────────────
 
-  const nearbyHighlightedStops = useMemo(() => {
-    if (!nearbyOpen || !userLocation) return [];
-    const nearby = findNearestStops(platformStops, userLocation.lat, userLocation.lon, 15);
-    const seen = new Set<string>();
-    return nearby
-      .filter((s) => {
-        if (seen.has(s.name)) return false;
-        seen.add(s.name);
-        return true;
-      })
-      .slice(0, 6)
-      .map((s) => s.id);
-  }, [nearbyOpen, userLocation, platformStops]);
 
   const activeHighlightStopIds = useMemo(
     () => (selectedRouteId && routeStops ? routeStops : []),
@@ -422,7 +408,6 @@ export function GTFSMode({ config }: GTFSModeProps) {
               : undefined
           }
           highlightStopIds={activeHighlightStopIds}
-          nearbyStopIds={nearbyHighlightedStops}
           onVehicleSelect={handleVehicleSelect}
           followedVehiclePos={followedVehiclePos}
           onFollowDisengage={handleFollowDisengage}

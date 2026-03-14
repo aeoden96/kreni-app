@@ -23,6 +23,7 @@ export function useGeolocation(onSuccess?: (lat: number, lon: number) => void) {
 
         if (isTrackingRef.current) {
             setIsTracking(false);
+            setUserLocation(null);
             const cancel = useNavigationStore.getState().cancelTracking;
             if (cancel) {
                 cancel();

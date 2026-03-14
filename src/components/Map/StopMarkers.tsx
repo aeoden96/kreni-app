@@ -32,19 +32,15 @@ function makeStopIcon(
   size: number,
   r: number,
   opacityFactor: number,
-  label?: string,
-  isNearby?: boolean
+  label?: string
 ): L.DivIcon {
   const cx = size / 2;
   const safeLabel = label
     ? String(label).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     : '';
 
-  const pulseHtml = isNearby
-    ? `<div class="pulse" style="width:${size + 16}px;height:${size + 16}px;top:50%;left:50%;position:absolute;transform:translate(-50%,-50%);border-radius:50%;background:rgba(245,158,11,0.3);animation:user-location-pulse 1.8s ease-out infinite;"></div>`
-    : '';
-
-  const nearbyInner = isNearby ? `<circle cx="${cx}" cy="${cx}" r="${Math.max(1, r - 5)}" fill="white" />` : '';
+  const pulseHtml = '';
+  const nearbyInner = '';
 
   if (bearing !== undefined) {
     const pinTipY = cx - r - 4;
@@ -86,7 +82,6 @@ interface PlatformStopMarkerProps {
   stop: Stop;
   isSelected: boolean;
   isHighlighted: boolean;
-  isNearby: boolean;
   color: string;
   effectiveFactor: number;
   routesById: Map<string, Route>;
@@ -97,7 +92,6 @@ function PlatformStopMarker({
   stop,
   isSelected,
   isHighlighted,
-  isNearby,
   color,
   effectiveFactor,
   routesById,
@@ -107,9 +101,9 @@ function PlatformStopMarker({
   const ctx = useSpiderfierContext();
 
   // Compute icon before hooks/effects so iconRef always holds the latest value
-  const size = isSelected ? 30 : isNearby ? 30 : isHighlighted ? 26 : 24;
-  const r = isSelected ? 9 : isNearby ? 9 : isHighlighted ? 8 : 7;
-  const icon = makeStopIcon(color, stop.bearing, size, r, effectiveFactor, undefined, isNearby);
+  const size = isSelected ? 30 : isHighlighted ? 26 : 24;
+  const r = isSelected ? 9 : isHighlighted ? 8 : 7;
+  const icon = makeStopIcon(color, stop.bearing, size, r, effectiveFactor, undefined);
   const iconRef = useRef(icon);
   useLayoutEffect(() => { iconRef.current = icon; });
 
@@ -204,7 +198,6 @@ interface StopMarkersProps {
   parentStations?: Stop[];
   selectedStopId: string | null;
   highlightStopIds: string[];
-  nearbyStopIds?: string[];
   /** Optional mapping stopId -> direction index (0,1,...) for highlighted stops */
   stopDirectionMap?: Record<string, number>;
   onStopClick: (stopId: string) => void;
@@ -222,7 +215,6 @@ export function StopMarkers({
   parentChildCounts,
   selectedStopId,
   highlightStopIds,
-  nearbyStopIds,
   stopDirectionMap,
   onStopClick,
   opacityFactor = 1,
@@ -230,7 +222,6 @@ export function StopMarkers({
   routesById,
 }: StopMarkersProps) {
   const highlightSet = new Set(highlightStopIds as string[]);
-  const nearbySet = new Set(nearbyStopIds || []);
 
   // Build a lookup of parent stations by id for quick access
   const parentMap = new Map<string, Stop>();
@@ -311,7 +302,6 @@ export function StopMarkers({
 
         const isSelected = id === selectedStopId;
         const isHighlighted = highlightSet.has(id);
-        const isNearby = nearbySet.has(id);
 
         // Render grouped parent cluster marker
         if (isParentStationView && isGroup) {
@@ -368,16 +358,14 @@ export function StopMarkers({
 
         // Render regular platform stops
         const stop = s as Stop;
-        // Selected stops AND nearby stops always remain fully visible regardless of opacityFactor
-        const effectiveFactor = (isSelected || isNearby) ? 1 : opacityFactor;
+        // Selected stops always remain fully visible regardless of opacityFactor
+        const effectiveFactor = isSelected ? 1 : opacityFactor;
         // Skip rendering when fully transparent (perf optimisation)
         if (effectiveFactor === 0) return null;
 
         // If highlighted and a direction map is available, use the direction color
         let color = stopFillColor(stop, isSelected, isHighlighted);
-        if (isNearby && !isSelected) {
-          color = '#f59e0b'; // amber/gold
-        } else if (isHighlighted && stopDirectionMap && stopDirectionMap[id] !== undefined) {
+        if (isHighlighted && stopDirectionMap && stopDirectionMap[id] !== undefined) {
           const dirIdx = stopDirectionMap[id];
           color = getDirectionColor(stop.routeType ?? null, dirIdx);
         }
@@ -387,7 +375,6 @@ export function StopMarkers({
             stop={stop}
             isSelected={isSelected}
             isHighlighted={isHighlighted}
-            isNearby={isNearby}
             color={color}
             effectiveFactor={effectiveFactor}
             routesById={routesById}

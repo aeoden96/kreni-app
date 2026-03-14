@@ -51,7 +51,6 @@ interface MapViewProps {
   selectedStop?: Stop | null;
   onFlyToStop?: () => void;
   highlightStopIds?: string[];
-  nearbyStopIds?: string[];
   /** GPS position of the currently followed vehicle (enables auto-pan) */
   followedVehiclePos?: { lat: number; lon: number } | null;
   /** Called when user drags the map while following — parent should clear follow state */
@@ -91,7 +90,6 @@ export function MapView({
   selectedStop,
   onFlyToStop,
   highlightStopIds,
-  nearbyStopIds,
   followedVehiclePos,
   onFollowDisengage,
   congestionPoints = [],
@@ -128,7 +126,6 @@ export function MapView({
             parentChildCounts={parentChildCounts}
             selectedStopId={selectedStopId}
             highlightStopIds={highlightStopIds ?? (selectedRouteId ? routeStops : [])}
-            nearbyStopIds={nearbyStopIds}
             orderedStops={orderedStops}
             routesById={routesById}
             onStopClick={onStopClick}

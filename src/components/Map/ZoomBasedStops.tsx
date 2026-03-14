@@ -16,7 +16,6 @@ interface ZoomBasedStopsProps {
   parentChildCounts: Map<string, number>;
   selectedStopId: string | null;
   highlightStopIds: string[];
-  nearbyStopIds?: string[];
   onStopClick: (stopId: string) => void;
 
   /** Optional ordered stops mapping from useRouteData (direction -> stop ids) */
@@ -31,7 +30,6 @@ export function ZoomBasedStops({
   parentChildCounts,
   selectedStopId,
   highlightStopIds,
-  nearbyStopIds,
   onStopClick,
   orderedStops,
   routesById,
@@ -73,14 +71,13 @@ export function ZoomBasedStops({
   // When a route is selected (highlightStopIds is populated) derive the parent
   // station IDs that belong to that route so grouped-mode can filter correctly.
   const routeParentIds = useMemo<Set<string> | null>(() => {
-    if (highlightSet.size === 0 && (!nearbyStopIds || nearbyStopIds.length === 0)) return null;
+    if (highlightSet.size === 0) return null;
     const parents = new Set<string>();
-    const nearbySet = new Set(nearbyStopIds || []);
     platformStops.forEach((s) => {
-      if ((highlightSet.has(s.id) || nearbySet.has(s.id)) && s.parentStation) parents.add(s.parentStation);
+      if (highlightSet.has(s.id) && s.parentStation) parents.add(s.parentStation);
     });
     return parents;
-  }, [highlightSet, nearbyStopIds, platformStops]);
+  }, [highlightSet, platformStops]);
 
   // Always show platform stops; opacity scales with zoom.
   // zoom >= 17  → factor 1.0 (fully visible)
@@ -98,11 +95,10 @@ export function ZoomBasedStops({
         : (zoom - FADE_MIN) / (FADE_MAX - FADE_MIN);
 
   let visiblePlatforms = platformStops.filter((s) => bounds.contains([s.lat, s.lon]));
-  // When a route is selected or nearby stops exist, only show stops on that route / nearby (always keep the selected stop).
+  // When a route is selected, only show stops on that route (always keep the selected stop).
   if (routeParentIds) {
-    const nearbySet = new Set(nearbyStopIds || []);
     visiblePlatforms = visiblePlatforms.filter(
-      (s) => highlightSet.has(s.id) || nearbySet.has(s.id) || s.id === selectedStopId
+      (s) => highlightSet.has(s.id) || s.id === selectedStopId
     );
   }
 
@@ -114,7 +110,6 @@ export function ZoomBasedStops({
       parentStations={parentStations}
       selectedStopId={selectedStopId}
       highlightStopIds={highlightStopIds}
-      nearbyStopIds={nearbyStopIds}
       stopDirectionMap={stopDirectionMap}
       onStopClick={onStopClick}
       opacityFactor={opacityFactor}

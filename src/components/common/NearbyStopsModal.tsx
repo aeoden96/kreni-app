@@ -46,7 +46,7 @@ export function NearbyStopsModal({
     <div className="fixed top-14 left-2 right-2 sm:top-20 sm:left-4 sm:right-auto sm:w-auto sm:max-w-sm z-[1050]">
       {/* Compact card — top overlay on mobile, top-left card on desktop */}
       <div
-        className="relative w-full bg-base-100 rounded-xl shadow-2xl flex flex-col overflow-hidden max-h-[50vh]"
+        className="relative w-full bg-base-100 rounded-xl shadow-2xl flex flex-col overflow-hidden max-h-[35vh] sm:max-h-[50vh]"
         style={{ animation: 'modal-fade-in 0.18s ease-out' }}
       >
         {/* Header */}
@@ -74,7 +74,7 @@ export function NearbyStopsModal({
             </div>
           ) : (
             <div className="divide-y divide-base-300">
-              {unique.slice(0, 6).map((stop) => (
+              {unique.slice(0, 12).map((stop) => (
                 <button
                   key={stop.id}
                   onClick={() => {
