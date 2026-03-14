@@ -2,7 +2,7 @@
  * Render stop markers on the map
  */
 
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { Marker, Polyline, useMap } from 'react-leaflet';
 import { useSpiderfierContext } from './SpiderfierContext';
 import L from 'leaflet';
@@ -11,8 +11,7 @@ import { getDirectionColor } from './directionColors';
 
 // ── Stop colour by service type ──────────────────────────────────────────────
 function stopFillColor(stop: Stop, isSelected: boolean, isHighlighted: boolean): string {
-  if (isSelected) return '#ff6b6b';
-  if (isHighlighted) return '#2337ff';
+  if (isHighlighted && !isSelected) return '#2337ff';
   switch (stop.routeType) {
     case 0: return '#2563eb';  // tram-only  → blue
     case 3: return '#d97706';  // bus-only   → amber
@@ -32,6 +31,7 @@ function makeStopIcon(
   size: number,
   r: number,
   opacityFactor: number,
+  isSelected: boolean,
   label?: string
 ): L.DivIcon {
   const cx = size / 2;
@@ -39,24 +39,31 @@ function makeStopIcon(
     ? String(label).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     : '';
 
-  const pulseHtml = '';
-  const nearbyInner = '';
+  const extraClass = isSelected ? 'stop-selected-pulse' : '';
 
   if (bearing !== undefined) {
-    const pinTipY = cx - r - 4;
-    const pinBaseY = cx - r;
-    const pinHalfW = 3;
+    // --- UNIFIED ROUNDY ARROW PIN DESIGN ---
+    // Instead of two shapes, we use a single path to create a clean "shield" or "pin" silhouette
+    // and eliminate the "circle inside arrow" visual artifact.
+    const tipY = 0;
+    // Calculate tangent points on the circle to create a smooth transition to the arrow tip
+    const angleRad = (42 * Math.PI) / 180; // 42 degrees from vertical
+    const xOff = r * Math.sin(angleRad);
+    const yOff = r * Math.cos(angleRad);
+
+    const x1 = cx - xOff;
+    const y1 = cx - yOff;
+    const x2 = cx + xOff;
+    const y2 = cx - yOff;
+
+    const pathData = `M ${cx},${tipY} L ${x1},${y1} A ${r},${r} 0 1 0 ${x2},${y2} Z`;
+
     const html =
-      `<div data-testid="stop-marker" style="position:relative;width:${size}px;height:${size}px;opacity:${opacityFactor};">` +
-      pulseHtml +
-      `<svg style="position:absolute;top:0;left:0;transform:rotate(${bearing}deg);transform-origin:${cx}px ${cx}px;"` +
+      `<div data-testid="stop-marker" class="${extraClass}" style="position:relative;width:${size}px;height:${size}px;opacity:${opacityFactor};">` +
+      `<svg style="position:absolute;top:0;left:0;transform:rotate(${bearing}deg);transform-origin:${cx}px ${cx}px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));overflow:visible;"` +
       ` width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">` +
-      `<polygon points="${cx},${pinTipY} ${cx - pinHalfW},${pinBaseY} ${cx + pinHalfW},${pinBaseY}"` +
-      ` fill="${color}" stroke="white" stroke-width="1" stroke-linejoin="round"/>` +
-      `</svg>` +
-      `<svg style="position:absolute;top:0;left:0;" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">` +
-      `<circle cx="${cx}" cy="${cx}" r="${r}" fill="${color}" fill-opacity="0.9" stroke="white" stroke-width="1.5"/>` +
-      nearbyInner +
+      // The Unified Silhouette
+      `<path d="${pathData}" fill="${color}" stroke="white" stroke-width="2.5" stroke-linejoin="round"/>` +
       `</svg>` +
       `${safeLabel ? `<span class="stop-label">${safeLabel}</span>` : ''}` +
       `</div>`;
@@ -64,12 +71,10 @@ function makeStopIcon(
   }
 
   const html =
-    `<div data-testid="stop-marker" style="position:relative;width:${size}px;height:${size}px;">` +
-    pulseHtml +
+    `<div data-testid="stop-marker" class="${extraClass}" style="position:relative;width:${size}px;height:${size}px;">` +
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"` +
-    ` style="opacity:${opacityFactor}">` +
-    `<circle cx="${cx}" cy="${cx}" r="${r}" fill="${color}" fill-opacity="0.9" stroke="white" stroke-width="1.5"/>` +
-    nearbyInner +
+    ` style="opacity:${opacityFactor};filter:drop-shadow(0 2px 3px rgba(0,0,0,0.35));overflow:visible;">` +
+    `<circle cx="${cx}" cy="${cx}" r="${r}" fill="${color}" fill-opacity="0.95" stroke="white" stroke-width="2.5"/>` +
     `</svg>` +
     `${safeLabel ? `<span class="stop-label">${safeLabel}</span>` : ''}` +
     `</div>`;
@@ -101,11 +106,15 @@ function PlatformStopMarker({
   const ctx = useSpiderfierContext();
 
   // Compute icon before hooks/effects so iconRef always holds the latest value
-  const size = isSelected ? 30 : isHighlighted ? 26 : 24;
-  const r = isSelected ? 9 : isHighlighted ? 8 : 7;
-  const icon = makeStopIcon(color, stop.bearing, size, r, effectiveFactor, undefined);
+  // Standard is 32/6, so selected is doubled to 64/12.
+  const size = isSelected ? 64 : isHighlighted ? 38 : 32;
+  const r = isSelected ? 12 : isHighlighted ? 7.5 : 6;
+  const icon = useMemo(
+    () => makeStopIcon(color, stop.bearing, size, r, effectiveFactor, isSelected, undefined),
+    [color, stop.bearing, size, r, effectiveFactor, isSelected]
+  );
   const iconRef = useRef(icon);
-  useLayoutEffect(() => { iconRef.current = icon; });
+  useLayoutEffect(() => { iconRef.current = icon; }, [icon]);
 
   useEffect(() => {
     if (!ctx) return;
@@ -176,6 +185,7 @@ function PlatformStopMarker({
     <Marker
       position={[stop.lat, stop.lon]}
       icon={icon}
+      zIndexOffset={isSelected ? 10000 : isHighlighted ? 500 : 0}
       eventHandlers={{
         click: (e) => {
           e.originalEvent.stopPropagation();
@@ -311,7 +321,7 @@ export function StopMarkers({
           const displayCount = groupPlatformCount > 9 ? '9+' : String(groupPlatformCount || group.count);
 
           const icon = L.divIcon({
-            html: `<div data-testid="stop-marker" class="parent-station-marker ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''}">
+            html: `<div data-testid="stop-marker" class="parent-station-marker ${isSelected ? 'selected stop-selected-pulse' : ''} ${isHighlighted ? 'highlighted' : ''}">
               <span class="count">${displayCount}</span>
             </div>`,
             className: 'parent-station-icon',
@@ -336,7 +346,7 @@ export function StopMarkers({
           const displayCount = childCount > 9 ? '9+' : childCount.toString();
 
           const icon = L.divIcon({
-            html: `<div data-testid="stop-marker" class="parent-station-marker ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''}">
+            html: `<div data-testid="stop-marker" class="parent-station-marker ${isSelected ? 'selected stop-selected-pulse' : ''} ${isHighlighted ? 'highlighted' : ''}">
               <span class="count">${displayCount}</span>
             </div>`,
             className: 'parent-station-icon',
