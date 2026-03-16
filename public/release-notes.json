@@ -1,11 +1,8 @@
 {
-  "version": "1.3.0",
+  "version": "1.3.1",
   "changes": [
-    "Značajno poboljšane performanse karte i glađe pomicanje (Canvas rendering & tile buffering)",
-    "Optimiziran prikaz vozila: pametno blijeđenje i skrivanje ovisno o razini zuma",
-    "Jasnije oznake svježine podataka u stvarnom vremenu",
-    "Precizniji prikaz polazaka vlakova s ispravljenim vremenskim horizontom",
-    "Privremeno skrivena značajka zagušenja prometa radi dorade"
+    "Poboljšano osvježavanje podataka u stvarnom vremenu",
+    "Uklonjen indikator učitavanja vozila"
   ],
   "force": false
 }

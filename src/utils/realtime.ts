@@ -158,7 +158,10 @@ export async function fetchRealtimeFeed(
   }
 
   const fetchStart = Date.now();
-  const response = await fetch(url, { headers });
+  const response = await fetch(url, {
+    headers,
+    cache: 'no-store', // Bypass browser cache so each poll fetches fresh data
+  });
 
   if (!response.ok) {
     throw new Error(

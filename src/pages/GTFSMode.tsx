@@ -65,6 +65,12 @@ export function GTFSMode({ config }: GTFSModeProps) {
 
   const handleZoomComplete = useCallback(() => setParentStationZoomTarget(null), []);
 
+  /** Close Legend and "tehnički detalji" when user performs other actions (stop click, location, etc.) */
+  const closeLegendAndDetails = useCallback(() => {
+    setLegendOpen(false);
+    setRealtimeDetailsOpen(false);
+  }, []);
+
   // URL-backed selection state (route, stop, direction)
   const {
     selectedRouteId,
@@ -146,7 +152,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
   });
 
   // All-vehicles overlay (transit only)
-  const { vehicles: allVehicles, loading: allVehiclesLoading } =
+  const { vehicles: allVehicles } =
     useAllVehiclePositions(
       config.hasRealtime && showAllVehicles,
       serviceId,
@@ -216,9 +222,10 @@ export function GTFSMode({ config }: GTFSModeProps) {
   const onLocateSuccess = useCallback(
     (_lat: number, _lon: number) => {
       clearStop();
+      closeLegendAndDetails();
       setNearbyOpen(true);
     },
-    [clearStop],
+    [clearStop, closeLegendAndDetails],
   );
   const { userLocation, locateError } = useGeolocation(onLocateSuccess);
 
@@ -236,6 +243,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
     }
     selectRoute(routeId, { dir });
     setSearchModalOpen(false);
+    closeLegendAndDetails();
     addRecentRoute(routeId);
     if (tripId) setLastClickedVehicle({ routeId, tripId });
     setRouteModalOpen(false);
@@ -243,6 +251,8 @@ export function GTFSMode({ config }: GTFSModeProps) {
   };
 
   const handleStopClickFromMap = (stopId: string) => {
+    closeLegendAndDetails();
+    setNearbyOpen(false);
     if (stopId.startsWith('group-')) {
       const group = (groupedParentStations || []).find((g) => g.id === stopId);
       if (group) {
@@ -269,6 +279,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
   };
 
   const handleExpandStop = (stopId: string) => {
+    closeLegendAndDetails();
     const stop = stopsById.get(stopId);
     if (stop && stop.locationType === 1) {
       const childPlatform = stops.find(
@@ -283,6 +294,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
   };
 
   const handleStopClickFromRoute = (stopId: string) => {
+    closeLegendAndDetails();
     selectStop(stopId);
     setRouteModalOpen(false);
   };
@@ -322,13 +334,14 @@ export function GTFSMode({ config }: GTFSModeProps) {
   const handleSelectStop = useCallback(
     (stopId: string) => {
       setNearbyOpen(false);
+      closeLegendAndDetails();
       const stop = stopsById.get(stopId);
       selectStop(stopId);
       addRecentStop(stopId);
       if (stop)
         setParentStationZoomTarget({ lat: stop.lat, lon: stop.lon, zoom: config.stopZoom, panOffsetY: stopSelectPanOffsetY() });
     },
-    [selectStop, stopsById, addRecentStop, config.stopZoom],
+    [selectStop, stopsById, addRecentStop, config.stopZoom, closeLegendAndDetails],
   );
 
   /** Same as handleSelectStop but offsets the map so the stop lands in the
@@ -337,6 +350,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
   const handleSelectStopFromNearby = useCallback(
     (stopId: string) => {
       setNearbyOpen(false);
+      closeLegendAndDetails();
       const stop = stopsById.get(stopId);
       selectStop(stopId);
       addRecentStop(stopId);
@@ -346,7 +360,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
         setParentStationZoomTarget({ lat: stop.lat, lon: stop.lon, zoom: config.stopZoom, panOffsetY });
       }
     },
-    [selectStop, stopsById, addRecentStop, config.stopZoom],
+    [selectStop, stopsById, addRecentStop, config.stopZoom, closeLegendAndDetails],
   );
 
   // ── Derived ───────────────────────────────────────────────────────────────
@@ -443,14 +457,6 @@ export function GTFSMode({ config }: GTFSModeProps) {
               <span className="loading loading-spinner loading-sm"></span>
               <span>Učitavanje rute...</span>
             </div>
-          </div>
-        )}
-
-        {/* All-vehicles loading indicator (transit only) */}
-        {config.hasRealtime && allVehiclesLoading && (
-          <div className="absolute bottom-6 left-4 z-[1000] flex items-center gap-2 bg-base-100/90 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-md text-xs text-base-content/70 pointer-events-none">
-            <span className="loading loading-spinner loading-xs"></span>
-            <span>Učitavanje vozila...</span>
           </div>
         )}
 
@@ -587,7 +593,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
                 </button>
 
                 {realtimeDetailsOpen && (
-                  <div className="absolute right-0 bottom-12 z-[1100] bg-base-100 rounded-xl shadow-xl border border-base-200 p-3 w-72 text-xs">
+                  <div className="absolute right-0 bottom-8 z-[1100] bg-base-100 rounded-xl shadow-xl border border-base-200 p-3 w-72 text-xs">
                     <p className="font-semibold text-sm mb-2">Tehnički detalji</p>
                     <div className="text-[13px] text-base-content/80 space-y-2">
                       <div>
