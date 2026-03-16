@@ -20,7 +20,9 @@
     "test:e2e:report": "playwright show-report",
     "pw:server": "docker compose -f docker-compose.playwright.yml up playwright-server",
     "pw:server:down": "docker compose -f docker-compose.playwright.yml down playwright-server",
-    "knip": "knip"
+    "knip": "knip",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "gtfs-realtime-bindings": "^1.1.1",
@@ -64,6 +66,16 @@
     "typescript-eslint": "^8.57.0",
     "vite": "^7.3.1",
     "vite-plugin-pwa": "^1.2.0",
-    "vitest": "^4.0.18"
+    "vitest": "^4.0.18",
+    "storybook": "^10.2.19",
+    "@storybook/react-vite": "^10.2.19",
+    "@chromatic-com/storybook": "^5.0.1",
+    "@storybook/addon-vitest": "^10.2.19",
+    "@storybook/addon-a11y": "^10.2.19",
+    "@storybook/addon-docs": "^10.2.19",
+    "@storybook/addon-onboarding": "^10.2.19",
+    "playwright": "^1.58.2",
+    "@vitest/browser-playwright": "4.0.18",
+    "@vitest/coverage-v8": "4.0.18"
   }
 }
