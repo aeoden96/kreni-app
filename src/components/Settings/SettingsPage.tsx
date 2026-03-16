@@ -3,7 +3,7 @@
  */
 
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Moon, Sun, Map, Database, Trash2, Info, Mail, ExternalLink, Github, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Moon, Sun, Map, Database, Trash2, Info, Mail, ExternalLink } from 'lucide-react';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useDataCacheStore } from '../../stores/dataCache';
 import { useInitialData } from '../../hooks/useInitialData';
@@ -234,15 +234,15 @@ export function SettingsPage() {
             </h2>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-base-content/70">Github</span>
+                <span className="text-sm text-base-content/70">Web</span>
                 <a
-                  href="https://github.com/aeoden96/kreni-app"
+                  href="https://mteo.dev/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 font-medium link link-primary"
                 >
-                  <Github className="w-3.5 h-3.5 shrink-0" />
-                  aeoden96/kreni-app
+                  <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                  mteo.dev
                 </a>
               </div>
               <div className="flex justify-between items-center">
@@ -253,18 +253,6 @@ export function SettingsPage() {
                 >
                   <Mail className="w-3.5 h-3.5 shrink-0" />
                   contact@kreni.app
-                </a>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-base-content/70">Povratne informacije</span>
-                <a
-                  href="https://github.com/aeoden96/kreni-app/issues/new"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 font-medium link link-primary"
-                >
-                  <MessageSquare className="w-3.5 h-3.5 shrink-0" />
-                  Prijavi bug
                 </a>
               </div>
             </div>
