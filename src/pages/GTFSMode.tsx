@@ -85,6 +85,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
   // Settings — realtime-only settings are ignored in train mode
   const showAllVehiclesFromStore = useSettingsStore((s) => s.showAllVehicles);
   const showRoadClosuresFromStore = useSettingsStore((s) => s.showRoadClosures);
+  const mapZoom = useSettingsStore((s) => s.mapZoom);
   const { addRecentRoute, addRecentStop } = useSettingsStore();
 
   // In train mode there is no "hide all vehicles" toggle — stops are always visible.
@@ -129,7 +130,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
   );
 
   // Realtime GTFS-RT polling (no-op when disabled)
-  const { error: realtimeError, stats: realtimeStats } = useRealtimeData(
+  const { error: _realtimeError, stats: realtimeStats } = useRealtimeData(
     config.hasRealtime && showAllVehicles,
   );
   const gtfsRtAlerts = useRealtimeStore((s) => s.serviceAlerts);
@@ -461,16 +462,8 @@ export function GTFSMode({ config }: GTFSModeProps) {
         )}
 
         {/* Realtime status badges (transit only) */}
-        {config.hasRealtime && realtimeError && (
-          <div className="absolute bottom-6 right-4 z-[1000]">
-            <div className="badge badge-error gap-1 shadow text-[10px]">
-              <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
-              GPS uživo: {realtimeError.message}
-            </div>
-          </div>
-        )}
 
-        {config.hasRealtime && showAllVehicles && realtimeStats && !realtimeError && (
+        {config.hasRealtime && showAllVehicles && realtimeStats && (
           <div className="absolute bottom-6 right-4 z-[1000] flex flex-col items-end gap-2">
             <ServiceAlerts
               alerts={serviceAlerts}
@@ -640,6 +633,16 @@ export function GTFSMode({ config }: GTFSModeProps) {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Low-zoom hint when vehicles and stops are hidden (transit only) */}
+        {config.hasRealtime && showAllVehicles && mapZoom <= 14 && (
+          <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[1000]">
+            <div className="badge badge-neutral gap-2 shadow text-xs sm:text-sm opacity-90">
+              <span className="w-2 h-2 rounded-full bg-base-content/60" />
+              Zumiraj za prikaz stanica i vozila
             </div>
           </div>
         )}

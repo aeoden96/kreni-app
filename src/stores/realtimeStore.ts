@@ -64,68 +64,81 @@ export const useRealtimeStore = create<RealtimeState>()((set) => ({
   fetchLatencyMs: null,
 
   fetchAll: async () => {
-    set({ loading: true });
-
-    try {
-      const [vehicleRes, tripRes] = await Promise.all([
-        fetchRealtimeFeed('vehicle-positions'),
-        fetchRealtimeFeed('trip-updates'),
-      ]);
-
-      const { feed: vehicleFeed, metadata } = vehicleRes;
-      const { feed: tripFeed } = tripRes;
-
-      const positions = parseVehiclePositions(vehicleFeed);
-      const updates = parseTripUpdates(tripFeed);
-      const alerts = parseServiceAlerts(vehicleFeed);
-      const stats = getFeedStatistics(vehicleFeed);
-
-      const vehiclePositions = new Map<string, ParsedVehiclePosition>();
-      for (const pos of positions) {
-        // Enrich with dead-reckoning if we have a previous snapshot
-        // Only use history when vehicleId is non-empty (avoids cross-vehicle pollution)
-        const historyKey = pos.vehicleId || pos.tripId;
-        const prev = historyKey ? vehicleHistory.get(historyKey) : undefined;
-        const enriched = prev ? enrichWithDeadReckoning(pos, prev) : pos;
-
-        // Update history with the raw (un-enriched) current position
-        if (historyKey) {
-          vehicleHistory.set(historyKey, {
-            latitude: pos.latitude,
-            longitude: pos.longitude,
-            timestamp: pos.timestamp,
-          });
-        }
-
-        if (enriched.tripId) {
-          vehiclePositions.set(enriched.tripId, enriched);
-        }
+    const run = async (isRetry: boolean) => {
+      if (!isRetry) {
+        set({ loading: true });
       }
 
-      const tripUpdates = new Map<string, ParsedTripUpdate>();
-      for (const update of updates) {
-        if (update.tripId) {
-          tripUpdates.set(update.tripId, update);
+      try {
+        const [vehicleRes, tripRes] = await Promise.all([
+          fetchRealtimeFeed('vehicle-positions'),
+          fetchRealtimeFeed('trip-updates'),
+        ]);
+
+        const { feed: vehicleFeed, metadata } = vehicleRes;
+        const { feed: tripFeed } = tripRes;
+
+        const positions = parseVehiclePositions(vehicleFeed);
+        const updates = parseTripUpdates(tripFeed);
+        const alerts = parseServiceAlerts(vehicleFeed);
+        const stats = getFeedStatistics(vehicleFeed);
+
+        const vehiclePositions = new Map<string, ParsedVehiclePosition>();
+        for (const pos of positions) {
+          // Enrich with dead-reckoning if we have a previous snapshot
+          // Only use history when vehicleId is non-empty (avoids cross-vehicle pollution)
+          const historyKey = pos.vehicleId || pos.tripId;
+          const prev = historyKey ? vehicleHistory.get(historyKey) : undefined;
+          const enriched = prev ? enrichWithDeadReckoning(pos, prev) : pos;
+
+          // Update history with the raw (un-enriched) current position
+          if (historyKey) {
+            vehicleHistory.set(historyKey, {
+              latitude: pos.latitude,
+              longitude: pos.longitude,
+              timestamp: pos.timestamp,
+            });
+          }
+
+          if (enriched.tripId) {
+            vehiclePositions.set(enriched.tripId, enriched);
+          }
+        }
+
+        const tripUpdates = new Map<string, ParsedTripUpdate>();
+        for (const update of updates) {
+          if (update.tripId) {
+            tripUpdates.set(update.tripId, update);
+          }
+        }
+
+        set({
+          vehiclePositions,
+          tripUpdates,
+          serviceAlerts: alerts,
+          stats,
+          lastUpdate: Date.now(),
+          workerTimestamp: metadata.workerTimestamp,
+          cacheStatus: metadata.cacheStatus,
+          fetchLatencyMs: (metadata as any).fetchTimeMs ?? null,
+          loading: false,
+          error: null,
+        });
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error(String(err));
+        console.error('[RealtimeStore] Fetch failed:', error.message, isRetry ? '(retry)' : '');
+        set({ loading: false, error });
+
+        if (!isRetry) {
+          // Silent one-off retry after a short delay (helps with Android resume flakiness)
+          setTimeout(() => {
+            void run(true);
+          }, 3000);
         }
       }
+    };
 
-      set({
-        vehiclePositions,
-        tripUpdates,
-        serviceAlerts: alerts,
-        stats,
-        lastUpdate: Date.now(),
-        workerTimestamp: metadata.workerTimestamp,
-        cacheStatus: metadata.cacheStatus,
-        fetchLatencyMs: (metadata as any).fetchTimeMs ?? null,
-        loading: false,
-        error: null,
-      });
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
-      console.error('[RealtimeStore] Fetch failed:', error.message);
-      set({ loading: false, error });
-    }
+    await run(false);
   },
 
   clear: () => {
