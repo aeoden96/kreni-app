@@ -1,15 +1,8 @@
 {
   "version": "1.5.6",
   "changes": [
-    "Sekcija Nedavno pregledano premještena na dno pretraživanja",
-    "Poboljšan gumb Prikaži/Sakrij za ostale platforme u malom prikazu stajališta",
-    "Pretraživanje smjerova koristi isti popis stanica kao pretraga stajališta; odabir polazišta i odredišta jednim klikom bez proširivanja",
-    "Poboljšan prikaz odredišne platforme: oznaka Terminal s linijama, uklonjen smjer ispod naslova",
-    "Pretraga stanica sada prvo prikazuje stajalište, a zatim proširiv popis terminala po smjerovima s linijama i ikonom tipa (tram/bus)",
-    "Uklonjen brzi pristup (popularne linije) iz pretraživanja",
-    "Dodana kartica Smjerovi u pretraživanju za odabir polazišne i odredišne stanice te prikaz izravnih linija",
-    "Poboljšano osvježavanje podataka u stvarnom vremenu",
-    "Uklonjen indikator učitavanja vozila"
+    "Nova kartica Smjerovi u pretraživanju",
+    "Poboljšan prikaz stajališta i smjerova"
   ],
   "force": false
 }

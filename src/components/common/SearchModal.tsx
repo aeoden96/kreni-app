@@ -109,7 +109,7 @@ export const SearchModal = memo(function SearchModal({
   onSelectStop,
 }: SearchModalProps) {
   const config = useGTFSMode();
-  const [filter, setFilter] = useState<FilterType>(config.id === 'train' ? 'trains' : 'tram');
+  const [filter, setFilter] = useState<FilterType>(config.id === 'train' ? 'trains' : 'stanice');
   const [stopsMode, setStopsMode] = useState<'search' | 'directions'>('search');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedStopKeys, setExpandedStopKeys] = useState<Set<string>>(new Set());
@@ -430,6 +430,13 @@ export const SearchModal = memo(function SearchModal({
               </>
             ) : (
               <>
+              <button
+                  className={`tab flex-1 min-h-[40px] gap-1 text-xs sm:text-sm ${filter === 'stanice' ? 'tab-active' : ''}`}
+                  onClick={() => setFilter('stanice')}
+                >
+                  <MapPin className="w-4 h-4" />
+                  Stanice
+                </button>
                 <button
                   className={`tab flex-1 min-h-[40px] gap-1 text-xs sm:text-sm ${filter === 'tram' ? 'tab-active' : ''}`}
                   onClick={() => setFilter('tram')}
@@ -446,13 +453,7 @@ export const SearchModal = memo(function SearchModal({
                   <span className="hidden sm:inline">Autobusi ({buses.length})</span>
                   <span className="sm:hidden">Bus ({buses.length})</span>
                 </button>
-                <button
-                  className={`tab flex-1 min-h-[40px] gap-1 text-xs sm:text-sm ${filter === 'stanice' ? 'tab-active' : ''}`}
-                  onClick={() => setFilter('stanice')}
-                >
-                  <MapPin className="w-4 h-4" />
-                  Stanice
-                </button>
+                
               </>
             )}
           </div>
