@@ -24,9 +24,6 @@ interface SearchModalProps {
 
 type FilterType = 'tram' | 'bus' | 'trains' | 'stanice' | 'smjerovi';
 
-const POPULAR_TRAMS = ['6', '11', '17', '4', '13', '12'];
-const POPULAR_BUSES = ['101', '102', '106', '140', '268'];
-
 export const SearchModal = memo(function SearchModal({
   isOpen,
   onClose,
@@ -80,15 +77,6 @@ export const SearchModal = memo(function SearchModal({
 
   // Platform stops only (exclude parent stations)
   const platformStops = useMemo(() => stops.filter((s) => s.locationType === 0), [stops]);
-
-  // Popular routes
-  const quickAccessRoutes = useMemo(() => {
-    if (filter === 'trains') return [];
-    const popular = filter === 'tram' ? POPULAR_TRAMS : POPULAR_BUSES;
-    return popular
-      .map((id) => routes.find((r) => r.shortName === id))
-      .filter((r): r is Route => r !== undefined);
-  }, [filter, routes]);
 
   // Favourite routes for current tab
   const favRoutes = useMemo(() => {
@@ -181,7 +169,6 @@ export const SearchModal = memo(function SearchModal({
   if (!isOpen) return null;
 
   const isRouteFilter = filter === 'tram' || filter === 'bus' || filter === 'trains';
-  const isTramOrBus = filter === 'tram' || filter === 'bus';
   const isTram = filter === 'tram';
   const badgeColor = isTram ? '#2563eb' : filter === 'trains' ? '#64748b' : '#d97706';
 
@@ -334,24 +321,6 @@ export const SearchModal = memo(function SearchModal({
                         className="badge badge-outline badge-lg hover:badge-primary transition-colors cursor-pointer text-xs"
                       >
                         {stop.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {/* Popular routes (shown only when no favourites in that tab) */}
-              {isTramOrBus && favRoutes.length === 0 && quickAccessRoutes.length > 0 && (
-                <div className="mt-3">
-                  <div className="text-xs text-base-content/60 mb-1.5">Brzi pristup:</div>
-                  <div className="flex flex-wrap gap-2">
-                    {quickAccessRoutes.map((route) => (
-                      <button
-                        key={route.id}
-                        onClick={() => handleSelectRoute(route)}
-                        className="badge badge-lg font-bold hover:opacity-80 transition-opacity cursor-pointer text-white"
-                        style={{ backgroundColor: badgeColor }}
-                      >
-                        {route.shortName}
                       </button>
                     ))}
                   </div>
