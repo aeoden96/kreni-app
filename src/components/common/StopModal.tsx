@@ -121,9 +121,7 @@ export const StopModal = memo(function StopModal({
       </p>
       {departingSiblings.map(s => {
         const routes = siblingRouteMap.get(s.id) ?? [];
-        const label = s.bearing !== undefined
-          ? `Smjer prema ${bearingToDirection(s.bearing)}`
-          : undefined;
+        const maxBadges = 6;
         return (
           <button
             key={s.id}
@@ -132,13 +130,13 @@ export const StopModal = memo(function StopModal({
             className="btn btn-sm btn-warning w-full gap-2 mb-1 flex-wrap justify-start"
           >
             <ArrowRight className="w-4 h-4 shrink-0" />
-            {label && <span>{label}</span>}
+            <span>Terminal</span>
             {routes.length > 0 && (
               <span className="flex flex-wrap gap-0.5 ml-1">
-                {routes.slice(0, 5).map(r => (
+                {routes.slice(0, maxBadges).map(r => (
                   <span key={r.id} className="badge badge-xs font-bold badge-ghost opacity-80">{r.shortName}</span>
                 ))}
-                {routes.length > 5 && <span className="text-xs opacity-60">+{routes.length - 5}</span>}
+                {routes.length > maxBadges && <span className="text-xs opacity-60">+{routes.length - maxBadges}</span>}
               </span>
             )}
           </button>
@@ -196,7 +194,7 @@ export const StopModal = memo(function StopModal({
           </div>
           <div className="flex items-center justify-between mb-3">
             <div className="text-sm text-base-content/60">
-              {(stop.bearing !== undefined || stop.code) && (
+              {!isAllTerminus && (stop.bearing !== undefined || stop.code) && (
                 <span>
                   {stop.bearing !== undefined
                     ? termini.length > 0

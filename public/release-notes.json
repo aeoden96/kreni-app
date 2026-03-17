@@ -1,6 +1,8 @@
 {
-  "version": "1.5.2",
+  "version": "1.5.4",
   "changes": [
+    "Pretraživanje smjerova koristi isti popis stanica kao pretraga stajališta; odabir polazišta i odredišta jednim klikom bez proširivanja",
+    "Poboljšan prikaz odredišne platforme: oznaka Terminal s linijama, uklonjen smjer ispod naslova",
     "Pretraga stanica sada prvo prikazuje stajalište, a zatim proširiv popis terminala po smjerovima s linijama i ikonom tipa (tram/bus)",
     "Uklonjen brzi pristup (popularne linije) iz pretraživanja",
     "Dodana kartica Smjerovi u pretraživanju za odabir polazišne i odredišne stanice te prikaz izravnih linija",

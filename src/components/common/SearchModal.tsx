@@ -4,13 +4,13 @@
  */
 
 import { useState, useMemo, useRef, useEffect, memo } from 'react';
-import { Search, X, TrainFront, Bus, MapPin, Star, Clock, ArrowLeftRight, ChevronDown, ChevronRight } from 'lucide-react';
+import { Search, X, TrainFront, Bus, MapPin, Star, Clock, ArrowLeftRight, ChevronDown, ChevronRight, ArrowUpDown, Loader2 } from 'lucide-react';
 import type { Route, Stop } from '../../utils/gtfs';
 import { bearingToDirection, isRouteTypeTram, isRouteTypeBus, isRouteTypeRail } from '../../utils/gtfs';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useGTFSMode } from '../../contexts/GTFSModeContext';
 import { trackEvent } from '../../utils/analytics';
-import { DirectionsPanel } from './DirectionsPanel';
+import { useDirections } from '../../hooks/useDirections';
 import { useStopRoutes } from '../../hooks/useStopRoutes';
 import { useStopTermini } from '../../hooks/useStopTermini';
 
@@ -24,7 +24,7 @@ interface SearchModalProps {
   onSelectStop: (stopId: string) => void;
 }
 
-type FilterType = 'tram' | 'bus' | 'trains' | 'stanice' | 'smjerovi';
+type FilterType = 'tram' | 'bus' | 'trains' | 'stanice';
 type ParentStopGroup = {
   key: string;
   representative: Stop;
@@ -110,9 +110,17 @@ export const SearchModal = memo(function SearchModal({
 }: SearchModalProps) {
   const config = useGTFSMode();
   const [filter, setFilter] = useState<FilterType>(config.id === 'train' ? 'trains' : 'tram');
+  const [stopsMode, setStopsMode] = useState<'search' | 'directions'>('search');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedStopKeys, setExpandedStopKeys] = useState<Set<string>>(new Set());
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Directions mode state
+  const [dirFromStop, setDirFromStop] = useState<Stop | null>(null);
+  const [dirToStop, setDirToStop] = useState<Stop | null>(null);
+  const [dirActiveField, setDirActiveField] = useState<'from' | 'to'>('from');
+  const [dirToQuery, setDirToQuery] = useState('');
+  const dirToInputRef = useRef<HTMLInputElement>(null);
 
   const {
     favouriteRouteIds,
@@ -133,8 +141,19 @@ export const SearchModal = memo(function SearchModal({
       setTimeout(() => searchInputRef.current?.focus(), 100);
     } else {
       setSearchQuery('');
+      setStopsMode('search');
     }
   }, [isOpen]);
+
+  // Reset directions state when leaving directions mode
+  useEffect(() => {
+    if (stopsMode !== 'directions') {
+      setDirFromStop(null);
+      setDirToStop(null);
+      setDirActiveField('from');
+      setDirToQuery('');
+    }
+  }, [stopsMode]);
 
   // Routes by type
   const { trams, buses, trainRoutes } = useMemo(
@@ -156,6 +175,19 @@ export const SearchModal = memo(function SearchModal({
 
   // Platform stops only (exclude parent stations)
   const platformStops = useMemo(() => stops.filter((s) => s.locationType === 0), [stops]);
+
+  // Parent stops only (locationType === 1, used for directions selection).
+  // GTFS processing couples parents by name and reparents platforms to a canonical parent,
+  // but keeps all parent records. Filter to canonical parents only (those referenced by
+  // platform stops) so directions mode matches single-stop mode (one entry per station name).
+  const parentStops = useMemo(() => {
+    const canonicalParentIds = new Set(
+      platformStops.map((s) => s.parentStation).filter((id): id is string => id != null)
+    );
+    return stops
+      .filter((s) => s.locationType === 1 && canonicalParentIds.has(s.id))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [stops, platformStops]);
 
   // Favourite routes for current tab
   const favRoutes = useMemo(() => {
@@ -193,7 +225,7 @@ export const SearchModal = memo(function SearchModal({
       })
       .filter((x): x is { type: 'route'; data: Route } | { type: 'stop'; data: Stop } => x !== null);
 
-    // Filter by current tab: tram/bus/trains show matching routes + stops; stanice shows stops only
+    // Filter by current tab: tram/bus/trains show matching routes; stanice shows stops only
     if (filter === 'stanice') {
       return resolved.filter((x) => x.type === 'stop');
     }
@@ -221,9 +253,9 @@ export const SearchModal = memo(function SearchModal({
     );
   }, [filter, searchQuery, trams, buses, trainRoutes]);
 
-  // Filtered parent stop groups with expandable terminal lists
+  // Filtered parent stop groups with expandable terminal lists (search mode only)
   const filteredStopGroups = useMemo(() => {
-    if (filter !== 'stanice') return [];
+    if (filter !== 'stanice' || stopsMode !== 'search') return [];
     const query = searchQuery.trim().toLowerCase();
     const source = query
       ? platformStops.filter((s) => s.name.toLowerCase().includes(query))
@@ -256,10 +288,38 @@ export const SearchModal = memo(function SearchModal({
 
     groups.sort((a, b) => a.representative.name.localeCompare(b.representative.name));
     return groups.slice(0, 100);
-  }, [filter, searchQuery, platformStops]);
+  }, [filter, stopsMode, searchQuery, platformStops]);
+
+  // Filtered parent stops for directions mode stop selection
+  const filteredDirStops = useMemo(() => {
+    if (filter !== 'stanice' || stopsMode !== 'directions') return [];
+    const query = (dirActiveField === 'from' ? searchQuery : dirToQuery).trim().toLowerCase();
+    const source = query
+      ? parentStops.filter((s) => s.name.toLowerCase().includes(query))
+      : parentStops;
+    return source.slice().sort((a, b) => a.name.localeCompare(b.name)).slice(0, 100);
+  }, [filter, stopsMode, dirActiveField, searchQuery, dirToQuery, parentStops]);
+
+  // Directions results
+  const { results: dirResults, loading: dirLoading } = useDirections(
+    dirFromStop?.id ?? null,
+    dirToStop?.id ?? null,
+    routesById,
+    { dataDir: config.dataDir }
+  );
+
+  const dirResultLabel = useMemo(() => {
+    if (!dirFromStop || !dirToStop) return '';
+    if (dirLoading) return 'Traženje direktnih linija...';
+    if (dirResults.length === 0) return 'Nema izravne linije za odabrane stanice';
+    return `${dirResults.length} ${dirResults.length === 1 ? 'linija' : 'linije'}`;
+  }, [dirFromStop, dirToStop, dirLoading, dirResults.length]);
 
   useEffect(() => {
     setExpandedStopKeys(new Set());
+    if (filter !== 'stanice') {
+      setStopsMode('search');
+    }
   }, [filter, searchQuery]);
 
   const handleSelectRoute = (route: Route) => {
@@ -281,6 +341,30 @@ export const SearchModal = memo(function SearchModal({
     onClose();
   };
 
+  const handleDirStopSelect = (stop: Stop) => {
+    if (dirActiveField === 'from') {
+      setDirFromStop(stop);
+      setSearchQuery('');
+      if (!dirToStop) {
+        setDirActiveField('to');
+        setTimeout(() => dirToInputRef.current?.focus(), 50);
+      }
+    } else {
+      setDirToStop(stop);
+      setDirToQuery('');
+    }
+  };
+
+  const handleDirSwap = () => {
+    const newFrom = dirToStop;
+    const newTo = dirFromStop;
+    setDirFromStop(newFrom);
+    setDirToStop(newTo);
+    // carry over queries only when the field ends up without a stop
+    setSearchQuery(newFrom ? '' : dirToQuery);
+    setDirToQuery(newTo ? '' : searchQuery);
+  };
+
   const handleClearRecentsForTab = () => {
     const routeIds = recentItemsMerged.filter((x) => x.type === 'route').map((x) => x.data.id);
     const stopIds = recentItemsMerged.filter((x) => x.type === 'stop').map((x) => x.data.id);
@@ -293,6 +377,7 @@ export const SearchModal = memo(function SearchModal({
   const isRouteFilter = filter === 'tram' || filter === 'bus' || filter === 'trains';
   const isTram = filter === 'tram';
   const badgeColor = isTram ? '#2563eb' : filter === 'trains' ? '#64748b' : '#d97706';
+  const isDirsMode = filter === 'stanice' && stopsMode === 'directions';
 
   return (
     <div className="fixed inset-0 z-[3000] flex items-start justify-center">
@@ -320,8 +405,6 @@ export const SearchModal = memo(function SearchModal({
             </button>
           </div>
 
-
-
           {/* Tabs */}
           <div className="tabs tabs-boxed w-full">
             {config.id === 'train' ? (
@@ -340,13 +423,6 @@ export const SearchModal = memo(function SearchModal({
                 >
                   <MapPin className="w-4 h-4" />
                   Stanice
-                </button>
-                <button
-                  className={`tab flex-1 min-h-[40px] gap-1 text-xs sm:text-sm ${filter === 'smjerovi' ? 'tab-active' : ''}`}
-                  onClick={() => setFilter('smjerovi')}
-                >
-                  <ArrowLeftRight className="w-4 h-4" />
-                  Smjerovi
                 </button>
               </>
             ) : (
@@ -374,37 +450,144 @@ export const SearchModal = memo(function SearchModal({
                   <MapPin className="w-4 h-4" />
                   Stanice
                 </button>
-                <button
-                  className={`tab flex-1 min-h-[40px] gap-1 text-xs sm:text-sm ${filter === 'smjerovi' ? 'tab-active' : ''}`}
-                  onClick={() => setFilter('smjerovi')}
-                >
-                  <ArrowLeftRight className="w-4 h-4" />
-                  Smjerovi
-                </button>
               </>
             )}
           </div>
 
-          {/* Search input */}
-          {filter !== 'smjerovi' && (
-            <div className="relative mt-3 ">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/50" />
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder={filter === 'stanice' ? 'Naziv stanice...' : 'Broj ili naziv linije...'}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="input input-bordered w-full pl-10 pr-10 min-h-[44px] text-base"
-              />
-              {searchQuery && (
+          {/* Row 1: search/from-field input + directions toggle */}
+          {(isRouteFilter || filter === 'stanice') && (
+            <div className="flex items-center gap-2 mt-3">
+              <div className="relative flex-1">
+                {isDirsMode && dirFromStop ? (
+                  // From stop selected — show its name
+                  <div className="input input-bordered w-full min-h-[44px] flex items-center gap-2 px-3 pr-10 text-sm">
+                    <MapPin className="w-4 h-4 text-primary/70 shrink-0" />
+                    <span className="flex-1 truncate">{dirFromStop.name}</span>
+                  </div>
+                ) : (
+                  // Text search input (also serves as from-field in directions mode)
+                  <>
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/50" />
+                    <input
+                      ref={searchInputRef}
+                      type="text"
+                      placeholder={isDirsMode ? 'Odakle?' : filter === 'stanice' ? 'Naziv stanice...' : 'Broj ili naziv linije...'}
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        if (isDirsMode) setDirActiveField('from');
+                      }}
+                      onFocus={() => { if (isDirsMode) setDirActiveField('from'); }}
+                      className="input input-bordered w-full pl-10 pr-10 min-h-[44px] text-base"
+                    />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content/80"
+                        onClick={() => setSearchQuery('')}
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </>
+                )}
+                {/* Clear from-stop button */}
+                {isDirsMode && dirFromStop && (
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content/80"
+                    onClick={() => {
+                      setDirFromStop(null);
+                      setDirActiveField('from');
+                      setTimeout(() => searchInputRef.current?.focus(), 50);
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Directions toggle — always right of row 1 for stanice tab */}
+              {filter === 'stanice' && (
                 <button
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content/80"
-                  onClick={() => setSearchQuery('')}
+                  type="button"
+                  onClick={() => setStopsMode((mode) => (mode === 'search' ? 'directions' : 'search'))}
+                  className={`btn btn-square min-h-[44px] w-[44px] shrink-0 ${
+                    stopsMode === 'directions' ? 'btn-primary' : 'btn-ghost border border-base-300'
+                  }`}
+                  title={
+                    stopsMode === 'search'
+                      ? 'Traži smjer između dvije stanice'
+                      : 'Natrag na pretragu stanice'
+                  }
+                  aria-pressed={stopsMode === 'directions'}
                 >
-                  <X className="w-4 h-4" />
+                  <ArrowLeftRight className="w-4 h-4" />
                 </button>
               )}
+            </div>
+          )}
+
+          {/* Row 2: to-field input + swap button (directions mode only) */}
+          {isDirsMode && (
+            <div className="flex items-center gap-2 mt-2">
+              <div className="relative flex-1">
+                {dirToStop ? (
+                  // To stop selected — show its name
+                  <div className="input input-bordered w-full min-h-[44px] flex items-center gap-2 px-3 pr-10 text-sm">
+                    <MapPin className="w-4 h-4 text-primary/70 shrink-0" />
+                    <span className="flex-1 truncate">{dirToStop.name}</span>
+                  </div>
+                ) : (
+                  // To-field search input
+                  <>
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/50" />
+                    <input
+                      ref={dirToInputRef}
+                      type="text"
+                      placeholder="Kamo?"
+                      value={dirToQuery}
+                      onChange={(e) => { setDirToQuery(e.target.value); setDirActiveField('to'); }}
+                      onFocus={() => setDirActiveField('to')}
+                      className="input input-bordered w-full pl-10 pr-10 min-h-[44px] text-base"
+                    />
+                    {dirToQuery && (
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content/80"
+                        onClick={() => setDirToQuery('')}
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </>
+                )}
+                {/* Clear to-stop button */}
+                {dirToStop && (
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content/80"
+                    onClick={() => {
+                      setDirToStop(null);
+                      setDirActiveField('to');
+                      setTimeout(() => dirToInputRef.current?.focus(), 50);
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Swap button */}
+              <button
+                type="button"
+                className="btn btn-square min-h-[44px] w-[44px] shrink-0 btn-ghost border border-base-300"
+                onClick={handleDirSwap}
+                disabled={!dirFromStop && !dirToStop}
+                aria-label="Zamijeni polazište i odredište"
+              >
+                <ArrowUpDown className="w-4 h-4" />
+              </button>
             </div>
           )}
 
@@ -431,7 +614,7 @@ export const SearchModal = memo(function SearchModal({
                   </div>
                 </div>
               )}
-              {filter === 'stanice' && favStops.length > 0 && (
+              {filter === 'stanice' && stopsMode === 'search' && favStops.length > 0 && (
                 <div className="mt-3">
                   <div className="flex items-center gap-1 text-xs text-base-content/60 mb-1.5">
                     <Star className="w-3 h-3 fill-current text-warning" />
@@ -455,7 +638,7 @@ export const SearchModal = memo(function SearchModal({
         </div>
 
         {/* Recently viewed — collapsible, single-line scroll, clear only active tab items */}
-        {filter !== 'smjerovi' && !searchQuery && hasRecents && (
+        {!(filter === 'stanice' && stopsMode === 'directions') && !searchQuery && hasRecents && (
           <div className="px-4 py-2 border-b border-base-300">
             <div className="flex items-center justify-between">
               <button
@@ -508,13 +691,74 @@ export const SearchModal = memo(function SearchModal({
 
         {/* Content list */}
         <div className="flex-1 overflow-y-auto overscroll-contain">
-          {filter === 'smjerovi' && (
-            <DirectionsPanel
-              stops={stops}
-              routesById={routesById}
-              dataDir={config.dataDir}
-              onRouteClick={handleSelectDirectionsRoute}
-            />
+          {/* Directions mode: flat parent stop list OR results when both stops selected */}
+          {isDirsMode && (
+            dirFromStop && dirToStop ? (
+              <div className="p-4 space-y-3">
+                <div className="text-xs text-base-content/60 px-1">{dirResultLabel}</div>
+                {dirLoading && (
+                  <div className="flex items-center gap-2 text-sm text-base-content/60 px-1">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Učitavanje...
+                  </div>
+                )}
+                {!dirLoading && dirResults.length === 0 && (
+                  <div className="text-center text-base-content/50 py-4 text-sm">
+                    Nema izravne linije za odabrane stanice
+                  </div>
+                )}
+                {!dirLoading && dirResults.length > 0 && (
+                  <div className="divide-y divide-base-300 border border-base-300 rounded-xl overflow-hidden">
+                    {dirResults.map((item) => {
+                      const color = item.route.type === 0 ? '#2563eb' : item.route.type === 3 ? '#d97706' : '#64748b';
+                      const VehicleIcon = item.route.type === 0 ? TrainFront : Bus;
+                      return (
+                        <button
+                          key={`${item.route.id}-${item.directionKey}`}
+                          type="button"
+                          className="w-full px-3 py-3 text-left hover:bg-base-200 transition-colors"
+                          onClick={() => handleSelectDirectionsRoute(item.route.id, item.route.type, item.directionFilter)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="badge font-bold text-white min-w-[3rem] justify-center" style={{ backgroundColor: color }}>
+                              {item.route.shortName}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm line-clamp-1">{item.route.longName}</div>
+                              <div className="text-xs text-base-content/60">
+                                Smjer {item.directionFilter} · {item.stopsBetween + 1} stanica
+                              </div>
+                            </div>
+                            <VehicleIcon className="w-4 h-4 text-base-content/50 shrink-0" />
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Flat parent stop list for from/to selection
+              filteredDirStops.length === 0 ? (
+                <div className="p-8 text-center text-base-content/50">
+                  {(dirActiveField === 'from' ? searchQuery : dirToQuery) ? 'Nema rezultata' : 'Upišite naziv stanice'}
+                </div>
+              ) : (
+                <div className="divide-y divide-base-300">
+                  {filteredDirStops.map((stop) => (
+                    <button
+                      key={stop.id}
+                      type="button"
+                      onClick={() => handleDirStopSelect(stop)}
+                      className="w-full flex items-center gap-3 py-3 px-4 text-left hover:bg-base-200 active:bg-base-300 transition-colors min-h-[52px]"
+                    >
+                      <MapPin className="w-4 h-4 text-base-content/40 shrink-0" />
+                      <span className="text-sm font-medium">{stop.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )
+            )
           )}
 
           {/* Route list */}
@@ -565,8 +809,8 @@ export const SearchModal = memo(function SearchModal({
             )
           )}
 
-          {/* Stop list */}
-          {filter === 'stanice' && (
+          {/* Stop list (search mode only) */}
+          {filter === 'stanice' && stopsMode === 'search' && (
             filteredStopGroups.length === 0 ? (
               <div className="p-8 text-center text-base-content/50">
                 {searchQuery ? 'Nema rezultata' : 'Upišite naziv stanice za pretragu'}

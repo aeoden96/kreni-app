@@ -121,9 +121,7 @@ export function StopInfoBar({
       </p>
       {departingSiblings.map(s => {
         const routes = siblingRouteMap.get(s.id) ?? [];
-        const label = s.bearing !== undefined
-          ? `Smjer prema ${bearingToDirection(s.bearing)}`
-          : undefined;
+        const maxBadges = 6;
         return (
           <button
             key={s.id}
@@ -132,13 +130,13 @@ export function StopInfoBar({
             className="btn btn-xs btn-warning w-full gap-1.5 mt-1 flex-wrap justify-start"
           >
             <ArrowRight className="w-3 h-3 shrink-0" />
-            {label && <span>{label}</span>}
+            <span>Terminal</span>
             {routes.length > 0 && (
               <span className="flex flex-wrap gap-0.5 ml-1">
-                {routes.slice(0, 5).map(r => (
+                {routes.slice(0, maxBadges).map(r => (
                   <span key={r.id} className="badge badge-xs font-bold badge-ghost opacity-80">{r.shortName}</span>
                 ))}
-                {routes.length > 5 && <span className="text-xs opacity-60">+{routes.length - 5}</span>}
+                {routes.length > maxBadges && <span className="text-xs opacity-60">+{routes.length - maxBadges}</span>}
               </span>
             )}
           </button>
@@ -233,7 +231,7 @@ export function StopInfoBar({
               </button>
             </div>
           </div>
-          {(stop.bearing !== undefined || stop.code) && (
+          {!isAllTerminus && (stop.bearing !== undefined || stop.code) && (
             <div className="text-xs text-base-content/60 flex items-center gap-1">
               <span>
                 {stop.bearing !== undefined

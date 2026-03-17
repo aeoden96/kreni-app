@@ -20,6 +20,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from core.gtfs_base import (
     time_to_minutes,
     write_json,
+    haversine_meters as _haversine_meters,
     compute_bearing as _compute_bearing,
     snap_stops_to_shape,
 )
@@ -32,6 +33,9 @@ from core.gtfs_base import (
 DATA_DIR = Path("data")
 OUTPUT_DIR = Path("public/data")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+
+PARENT_NAME_COUPLING_RADIUS_METERS = 400  # meters
 
 
 def read_csv(filename: str) -> list:
@@ -60,7 +64,70 @@ def process_initial_bundle():
             'locationType': int(stop['location_type']) if stop['location_type'] else 0,
             'parentStation': stop['parent_station'] if stop['parent_station'] else None
         })
+
+    # -----------------------------------------------------------------------
+    # Couple parent stations by name + proximity
+    # -----------------------------------------------------------------------
+    # Build mapping parent_id -> canonical_parent_id within each (name, radius) cluster.
+    parents = [s for s in stops if s['locationType'] == 1]
+
+    def _normalize_name(name: str) -> str:
+        return name.strip().lower()
+
+    parent_to_canonical: dict[str, str] = {}
+    if parents:
+        # Group parents by normalized name
+        by_name: dict[str, list[dict]] = {}
+        for p in parents:
+            key = _normalize_name(p['name'])
+            if not key:
+                continue
+            by_name.setdefault(key, []).append(p)
+
+        # For each name group, cluster by proximity and choose canonical parent
+        for name_key, name_parents in by_name.items():
+            n = len(name_parents)
+            if n == 1:
+                pid = name_parents[0]['id']
+                parent_to_canonical[pid] = pid
+                continue
+
+            used = set()
+            for i in range(n):
+                if i in used:
+                    continue
+                base = name_parents[i]
+                cluster = [base]
+                used.add(i)
+                for j in range(i + 1, n):
+                    if j in used:
+                        continue
+                    other = name_parents[j]
+                    d = _haversine_meters(base['lat'], base['lon'], other['lat'], other['lon'])
+                    if d <= PARENT_NAME_COUPLING_RADIUS_METERS:
+                        cluster.append(other)
+                        used.add(j)
+
+                # Choose canonical parent deterministically within this cluster.
+                # For now, use lexicographically smallest stop_id for stability.
+                canonical_id = min(p['id'] for p in cluster)
+                for p in cluster:
+                    parent_to_canonical[p['id']] = canonical_id
     
+    # Reparent platform stops to canonical parents (if any mapping exists)
+    if parent_to_canonical:
+        for stop in stops:
+            if stop['locationType'] != 0:
+                continue
+            parent = stop.get('parentStation')
+            if parent is None:
+                continue
+            canonical = parent_to_canonical.get(parent)
+            if canonical and canonical != parent:
+                stop['parentStation'] = canonical
+    # Note: we deliberately keep all parent station records, including those
+    # that are no longer canonical, to avoid breaking any external references.
+
     # Process routes
     routes_raw = read_csv("routes.txt")
     routes = []
@@ -81,6 +148,18 @@ def process_initial_bundle():
     # Get feed info
     feed_info_raw = read_csv("feed_info.txt")
     feed_info = feed_info_raw[0] if feed_info_raw else {}
+
+    # Basic integrity check: every platform stop with a parentStation must
+    # reference an existing parent station in this stops list.
+    parent_ids = {s['id'] for s in stops if s['locationType'] == 1}
+    for stop in stops:
+        if stop['locationType'] != 0:
+            continue
+        parent = stop.get('parentStation')
+        if parent and parent not in parent_ids:
+            raise RuntimeError(
+                f"Platform stop {stop['id']} references missing parentStation {parent}"
+            )
 
     initial_data = {
         'stops': stops,
