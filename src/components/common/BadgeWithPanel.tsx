@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
-export type BadgeWithPanelVariant = 'popover' | 'fullScreen';
+type BadgeWithPanelVariant = 'popover' | 'fullScreen';
 
-export interface BadgeWithPanelProps {
+interface BadgeWithPanelProps {
   /** Content of the badge button (e.g. icon + label). */
   children: ReactNode;
   /** Extra classes for the badge button (e.g. badge-primary, badge-success). Default: "badge gap-1 shadow cursor-pointer hover:badge-outline transition-all". */

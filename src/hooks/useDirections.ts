@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { Route, RouteParentStopsIndex } from '../utils/gtfs';
 import { fetchRouteParentStops } from '../utils/gtfs';
 
-export interface DirectionResult {
+interface DirectionResult {
   route: Route;
   directionKey: string;
   directionFilter: 'A' | 'B';

@@ -8,7 +8,7 @@ interface ReleaseNotes {
   changes: string[];
 }
 
-export interface UpdatePromptProps {
+interface UpdatePromptProps {
   /** Storybook only: when true, shows the banner with mock data (no real hook/fetch). */
   storybook?: boolean;
   /** Storybook only: override mock notes. Omit version or use wrong version to show fallback bullets. */

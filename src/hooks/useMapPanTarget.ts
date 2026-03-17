@@ -8,14 +8,14 @@ function stopSelectPanOffsetY(): number {
   return -Math.round(window.innerHeight / 4);
 }
 
-export interface MapPanTarget {
+interface MapPanTarget {
   lat: number;
   lon: number;
   zoom?: number;
   panOffsetY?: number;
 }
 
-export interface UseMapPanTargetDeps {
+interface UseMapPanTargetDeps {
   stops: Stop[];
   stopsById: Map<string, Stop>;
   config: GTFSModeConfig;

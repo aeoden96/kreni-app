@@ -5,7 +5,7 @@ import type { Route } from '../../utils/gtfs';
 import type { ParsedServiceAlert } from '../../utils/realtime';
 import type { FeedStatistics } from '../../utils/realtime';
 
-export interface RealtimeStatusPanelProps {
+interface RealtimeStatusPanelProps {
   alerts: ParsedServiceAlert[];
   routesById: Map<string, Route>;
   selectedRouteId: string | null;
