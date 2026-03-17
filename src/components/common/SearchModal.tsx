@@ -133,7 +133,7 @@ export const SearchModal = memo(function SearchModal({
     removeRecentStops,
   } = useSettingsStore();
 
-  const [recentsExpanded, setRecentsExpanded] = useState(true);
+  const [recentsExpanded, setRecentsExpanded] = useState(false);
 
   // Focus search input when modal opens
   useEffect(() => {
@@ -255,7 +255,7 @@ export const SearchModal = memo(function SearchModal({
 
   // Filtered parent stop groups with expandable terminal lists (search mode only)
   const filteredStopGroups = useMemo(() => {
-    if (filter !== 'stanice' || stopsMode !== 'search') return [];
+    if (filter !== 'stanice' || stopsMode !== 'search') return { groups: [] as ParentStopGroup[], hasMore: false };
     const query = searchQuery.trim().toLowerCase();
     const source = query
       ? platformStops.filter((s) => s.name.toLowerCase().includes(query))
@@ -287,17 +287,20 @@ export const SearchModal = memo(function SearchModal({
     }
 
     groups.sort((a, b) => a.representative.name.localeCompare(b.representative.name));
-    return groups.slice(0, 100);
+    const limit = 20;
+    return { groups: groups.slice(0, limit), hasMore: groups.length > limit };
   }, [filter, stopsMode, searchQuery, platformStops]);
 
   // Filtered parent stops for directions mode stop selection
   const filteredDirStops = useMemo(() => {
-    if (filter !== 'stanice' || stopsMode !== 'directions') return [];
+    if (filter !== 'stanice' || stopsMode !== 'directions') return { stops: [] as Stop[], hasMore: false };
     const query = (dirActiveField === 'from' ? searchQuery : dirToQuery).trim().toLowerCase();
     const source = query
       ? parentStops.filter((s) => s.name.toLowerCase().includes(query))
       : parentStops;
-    return source.slice().sort((a, b) => a.name.localeCompare(b.name)).slice(0, 100);
+    const sorted = source.slice().sort((a, b) => a.name.localeCompare(b.name));
+    const limit = 20;
+    return { stops: sorted.slice(0, limit), hasMore: sorted.length > limit };
   }, [filter, stopsMode, dirActiveField, searchQuery, dirToQuery, parentStops]);
 
   // Directions results
@@ -637,58 +640,6 @@ export const SearchModal = memo(function SearchModal({
           )}
         </div>
 
-        {/* Recently viewed — collapsible, single-line scroll, clear only active tab items */}
-        {!(filter === 'stanice' && stopsMode === 'directions') && !searchQuery && hasRecents && (
-          <div className="px-4 py-2 border-b border-base-300">
-            <div className="flex items-center justify-between">
-              <button
-                onClick={() => setRecentsExpanded((e) => !e)}
-                className="flex items-center gap-1 text-xs text-base-content/60 hover:text-base-content/80 transition-colors"
-                aria-expanded={recentsExpanded}
-              >
-                <Clock className="w-3 h-3 shrink-0" />
-                <span>Nedavno pregledano</span>
-                {recentsExpanded ? (
-                  <ChevronDown className="w-3 h-3 shrink-0" />
-                ) : (
-                  <ChevronRight className="w-3 h-3 shrink-0" />
-                )}
-              </button>
-              <button
-                onClick={handleClearRecentsForTab}
-                className="text-xs text-base-content/40 hover:text-base-content/70 transition-colors shrink-0"
-              >
-                Očisti
-              </button>
-            </div>
-            {recentsExpanded && (
-              <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 -mx-1 px-1 mt-1.5">
-                {recentItemsMerged.map((item) =>
-                  item.type === 'route' ? (
-                    <button
-                      key={`recent-r-${item.data.id}`}
-                      onClick={() => handleSelectRoute(item.data)}
-                      className="badge badge-md font-bold hover:opacity-80 transition-opacity cursor-pointer text-white shrink-0"
-                      style={{ backgroundColor: isRouteTypeTram(item.data.type) ? '#2563eb' : isRouteTypeRail(item.data.type) ? '#64748b' : '#d97706' }}
-                    >
-                      {item.data.shortName}
-                    </button>
-                  ) : (
-                    <button
-                      key={`recent-s-${item.data.id}`}
-                      onClick={() => handleSelectStop(item.data)}
-                      className="badge badge-ghost badge-md hover:badge-outline transition-colors cursor-pointer text-xs flex items-center gap-1 shrink-0"
-                    >
-                      <MapPin className="w-2.5 h-2.5 shrink-0" />
-                      <span className="whitespace-nowrap truncate max-w-[120px]">{item.data.name}</span>
-                    </button>
-                  )
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Content list */}
         <div className="flex-1 overflow-y-auto overscroll-contain">
           {/* Directions mode: flat parent stop list OR results when both stops selected */}
@@ -739,24 +690,31 @@ export const SearchModal = memo(function SearchModal({
               </div>
             ) : (
               // Flat parent stop list for from/to selection
-              filteredDirStops.length === 0 ? (
+              filteredDirStops.stops.length === 0 ? (
                 <div className="p-8 text-center text-base-content/50">
                   {(dirActiveField === 'from' ? searchQuery : dirToQuery) ? 'Nema rezultata' : 'Upišite naziv stanice'}
                 </div>
               ) : (
-                <div className="divide-y divide-base-300">
-                  {filteredDirStops.map((stop) => (
-                    <button
-                      key={stop.id}
-                      type="button"
-                      onClick={() => handleDirStopSelect(stop)}
-                      className="w-full flex items-center gap-3 py-3 px-4 text-left hover:bg-base-200 active:bg-base-300 transition-colors min-h-[52px]"
-                    >
-                      <MapPin className="w-4 h-4 text-base-content/40 shrink-0" />
-                      <span className="text-sm font-medium">{stop.name}</span>
-                    </button>
-                  ))}
-                </div>
+                <>
+                  <div className="divide-y divide-base-300">
+                    {filteredDirStops.stops.map((stop) => (
+                      <button
+                        key={stop.id}
+                        type="button"
+                        onClick={() => handleDirStopSelect(stop)}
+                        className="w-full flex items-center gap-3 py-3 px-4 text-left hover:bg-base-200 active:bg-base-300 transition-colors min-h-[52px]"
+                      >
+                        <MapPin className="w-4 h-4 text-base-content/40 shrink-0" />
+                        <span className="text-sm font-medium">{stop.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {filteredDirStops.hasMore && (
+                    <p className="px-4 py-2 text-xs text-base-content/50 text-center">
+                      Prikazano prvih 20. Upišite više u pretragu za bolje filtriranje.
+                    </p>
+                  )}
+                </>
               )
             )
           )}
@@ -811,13 +769,14 @@ export const SearchModal = memo(function SearchModal({
 
           {/* Stop list (search mode only) */}
           {filter === 'stanice' && stopsMode === 'search' && (
-            filteredStopGroups.length === 0 ? (
+            filteredStopGroups.groups.length === 0 ? (
               <div className="p-8 text-center text-base-content/50">
                 {searchQuery ? 'Nema rezultata' : 'Upišite naziv stanice za pretragu'}
               </div>
             ) : (
-              <div className="divide-y divide-base-300">
-                {filteredStopGroups.map((group) => {
+              <>
+                <div className="divide-y divide-base-300">
+                  {filteredStopGroups.groups.map((group) => {
                   const { representative, terminals, key } = group;
                   const isFav = favouriteStopIds.includes(representative.id);
                   const isExpanded = expandedStopKeys.has(key);
@@ -887,10 +846,68 @@ export const SearchModal = memo(function SearchModal({
                     </div>
                   );
                 })}
-              </div>
+                </div>
+                {filteredStopGroups.hasMore && (
+                  <p className="px-4 py-2 text-xs text-base-content/50 text-center">
+                    Prikazano prvih 20. Upišite više u pretragu za bolje filtriranje.
+                  </p>
+                )}
+              </>
             )
           )}
         </div>
+
+        {/* Recently viewed — sticky at bottom, outside scroll */}
+        {!(filter === 'stanice' && stopsMode === 'directions') && !searchQuery && hasRecents && (
+          <div className="shrink-0 px-4 py-3 border-t border-base-300 bg-base-100">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setRecentsExpanded((e) => !e)}
+                className="flex items-center gap-1 text-xs text-base-content/60 hover:text-base-content/80 transition-colors"
+                aria-expanded={recentsExpanded}
+              >
+                <Clock className="w-3 h-3 shrink-0" />
+                <span>Nedavno pregledano</span>
+                {recentsExpanded ? (
+                  <ChevronDown className="w-3 h-3 shrink-0" />
+                ) : (
+                  <ChevronRight className="w-3 h-3 shrink-0" />
+                )}
+              </button>
+              <button
+                onClick={handleClearRecentsForTab}
+                className="text-xs text-base-content/40 hover:text-base-content/70 transition-colors shrink-0"
+              >
+                Očisti
+              </button>
+            </div>
+            {recentsExpanded && (
+              <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 -mx-1 px-1 mt-1.5">
+                {recentItemsMerged.map((item) =>
+                  item.type === 'route' ? (
+                    <button
+                      key={`recent-r-${item.data.id}`}
+                      onClick={() => handleSelectRoute(item.data)}
+                      className="badge badge-md font-bold hover:opacity-80 transition-opacity cursor-pointer text-white shrink-0"
+                      style={{ backgroundColor: isRouteTypeTram(item.data.type) ? '#2563eb' : isRouteTypeRail(item.data.type) ? '#64748b' : '#d97706' }}
+                    >
+                      {item.data.shortName}
+                    </button>
+                  ) : (
+                    <button
+                      key={`recent-s-${item.data.id}`}
+                      onClick={() => handleSelectStop(item.data)}
+                      className="badge badge-ghost badge-md hover:badge-outline transition-colors cursor-pointer text-xs flex items-center gap-1 shrink-0"
+                    >
+                      <MapPin className="w-2.5 h-2.5 shrink-0" />
+                      <span className="whitespace-nowrap truncate max-w-[120px]">{item.data.name}</span>
+                    </button>
+                  )
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

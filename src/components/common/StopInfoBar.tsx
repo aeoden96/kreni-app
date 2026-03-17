@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Maximize2, X, Star, ArrowRight, Navigation2, Info } from 'lucide-react';
+import { Maximize2, X, Star, ArrowRight, Navigation2, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import type { Stop, Route } from '../../utils/gtfs';
 import { bearingToDirection } from '../../utils/gtfs';
 import { useApproachingVehicles } from '../../hooks/useApproachingVehicles';
@@ -244,15 +244,18 @@ export function StopInfoBar({
           )}
           {siblingPlatforms.length > 0 && !isAllTerminus && (
             <div className="mt-1.5">
-              <div
-                className={`flex items-center gap-1.5 mb-1 ${siblingPlatforms.length > 1 ? 'cursor-pointer hover:opacity-80' : ''}`}
-                onClick={siblingPlatforms.length > 1 ? () => setPlatformsExpanded(e => !e) : undefined}
-              >
+              <div className="flex items-center gap-1.5 mb-1">
                 <p className="text-[10px] uppercase tracking-wide text-base-content/40">Ostale platforme</p>
                 {siblingPlatforms.length > 1 && (
-                  <span className="text-[10px] font-medium text-base-content/50 bg-base-200/80 px-1.5 rounded-full flex items-center gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setPlatformsExpanded(e => !e)}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium text-base-content/70 bg-base-200 border border-base-300 hover:bg-base-300 hover:border-base-content/20 active:scale-[0.98] transition-colors"
+                    aria-expanded={platformsExpanded}
+                  >
                     {platformsExpanded ? 'Sakrij' : `Prikaži sve (${siblingPlatforms.length})`}
-                  </span>
+                    {platformsExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  </button>
                 )}
               </div>
 
