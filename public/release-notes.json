@@ -1,6 +1,7 @@
 {
-  "version": "1.4.0",
+  "version": "1.5.0",
   "changes": [
+    "Dodana kartica Smjerovi u pretraživanju za odabir polazišne i odredišne stanice te prikaz izravnih linija",
     "Poboljšano osvježavanje podataka u stvarnom vremenu",
     "Uklonjen indikator učitavanja vozila"
   ],

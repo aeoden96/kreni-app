@@ -104,6 +104,9 @@ export interface RouteStopsData {
   orderedStops?: Record<string, string[]>;
 }
 
+/** routeId -> directionKey -> ordered parent station IDs */
+export type RouteParentStopsIndex = Record<string, Record<string, string[]>>;
+
 export interface AllActiveTripsRoute {
   trips: ActiveTrip[];
   type: number; // 0 = Tram, 3 = Bus
@@ -325,6 +328,17 @@ export async function fetchRouteStops(routeId: string, dataDir = 'data'): Promis
     const response = await dataFetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch route stops for route ${routeId}: ${response.statusText}`);
+    }
+    return response.json();
+  });
+}
+
+export async function fetchRouteParentStops(dataDir = 'data'): Promise<RouteParentStopsIndex> {
+  const url = `${BASE_URL}${dataDir}/route_parent_stops.json`;
+  return cachedFetch(url, async () => {
+    const response = await dataFetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch route parent stops index: ${response.statusText}`);
     }
     return response.json();
   });

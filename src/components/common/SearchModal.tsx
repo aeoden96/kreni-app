@@ -4,12 +4,13 @@
  */
 
 import { useState, useMemo, useRef, useEffect, memo } from 'react';
-import { Search, X, TrainFront, Bus, MapPin, Star, Clock } from 'lucide-react';
+import { Search, X, TrainFront, Bus, MapPin, Star, Clock, ArrowLeftRight } from 'lucide-react';
 import type { Route, Stop } from '../../utils/gtfs';
 import { isRouteTypeTram, isRouteTypeBus, isRouteTypeRail } from '../../utils/gtfs';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useGTFSMode } from '../../contexts/GTFSModeContext';
 import { trackEvent } from '../../utils/analytics';
+import { DirectionsPanel } from './DirectionsPanel';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -21,7 +22,7 @@ interface SearchModalProps {
   onSelectStop: (stopId: string) => void;
 }
 
-type FilterType = 'tram' | 'bus' | 'trains' | 'stanice';
+type FilterType = 'tram' | 'bus' | 'trains' | 'stanice' | 'smjerovi';
 
 const POPULAR_TRAMS = ['6', '11', '17', '4', '13', '12'];
 const POPULAR_BUSES = ['101', '102', '106', '140', '268'];
@@ -171,6 +172,12 @@ export const SearchModal = memo(function SearchModal({
     onClose();
   };
 
+  const handleSelectDirectionsRoute = (routeId: string, routeType: number, direction: 'A' | 'B') => {
+    trackEvent('directions_route_selected', { route_id: routeId, direction });
+    onSelectRoute(routeId, routeType, direction);
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   const isRouteFilter = filter === 'tram' || filter === 'bus' || filter === 'trains';
@@ -205,25 +212,27 @@ export const SearchModal = memo(function SearchModal({
           </div>
 
           {/* Search input */}
-          <div className="relative mb-3">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/50" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              placeholder={filter === 'stanice' ? 'Naziv stanice...' : 'Broj ili naziv linije...'}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="input input-bordered w-full pl-10 pr-10 min-h-[44px] text-base"
-            />
-            {searchQuery && (
-              <button
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content/80"
-                onClick={() => setSearchQuery('')}
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
+          {filter !== 'smjerovi' && (
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/50" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder={filter === 'stanice' ? 'Naziv stanice...' : 'Broj ili naziv linije...'}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="input input-bordered w-full pl-10 pr-10 min-h-[44px] text-base"
+              />
+              {searchQuery && (
+                <button
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content/80"
+                  onClick={() => setSearchQuery('')}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Tabs */}
           <div className="tabs tabs-boxed w-full">
@@ -243,6 +252,13 @@ export const SearchModal = memo(function SearchModal({
                 >
                   <MapPin className="w-4 h-4" />
                   Stanice
+                </button>
+                <button
+                  className={`tab flex-1 min-h-[40px] gap-1 text-xs sm:text-sm ${filter === 'smjerovi' ? 'tab-active' : ''}`}
+                  onClick={() => setFilter('smjerovi')}
+                >
+                  <ArrowLeftRight className="w-4 h-4" />
+                  Smjerovi
                 </button>
               </>
             ) : (
@@ -269,6 +285,13 @@ export const SearchModal = memo(function SearchModal({
                 >
                   <MapPin className="w-4 h-4" />
                   Stanice
+                </button>
+                <button
+                  className={`tab flex-1 min-h-[40px] gap-1 text-xs sm:text-sm ${filter === 'smjerovi' ? 'tab-active' : ''}`}
+                  onClick={() => setFilter('smjerovi')}
+                >
+                  <ArrowLeftRight className="w-4 h-4" />
+                  Smjerovi
                 </button>
               </>
             )}
@@ -339,7 +362,7 @@ export const SearchModal = memo(function SearchModal({
         </div>
 
         {/* Recently viewed — only when query is empty */}
-        {!searchQuery && hasRecents && (
+        {filter !== 'smjerovi' && !searchQuery && hasRecents && (
           <div className="px-4 py-3 border-b border-base-300">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-1 text-xs text-base-content/60">
@@ -380,6 +403,15 @@ export const SearchModal = memo(function SearchModal({
 
         {/* Content list */}
         <div className="flex-1 overflow-y-auto overscroll-contain">
+          {filter === 'smjerovi' && (
+            <DirectionsPanel
+              stops={stops}
+              routesById={routesById}
+              dataDir={config.dataDir}
+              onRouteClick={handleSelectDirectionsRoute}
+            />
+          )}
+
           {/* Route list */}
           {isRouteFilter && (
             filteredRoutes.length === 0 ? (

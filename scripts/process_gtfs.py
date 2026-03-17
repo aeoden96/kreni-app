@@ -359,6 +359,65 @@ def generate_route_stops_index(timetables_by_route, trip_lookup):
     print(f"    ✓ Wrote {len(timetables_by_route)} route stops files")
 
 
+def generate_route_parent_stops_index():
+    """Generate parent-stop ordered lists per route/direction.
+
+    Reads the already-generated route_stops/{routeId}.json files and maps each
+    child platform stop ID to its parent station ID. Writes one compact file:
+    public/data/route_parent_stops.json
+    """
+    print("🧭 Generating route parent stops index...")
+
+    route_stops_dir = OUTPUT_DIR / 'route_stops'
+    initial_file = OUTPUT_DIR / 'initial.json'
+    out_file = OUTPUT_DIR / 'route_parent_stops.json'
+
+    if not route_stops_dir.exists() or not initial_file.exists():
+        print("    ! Skipped (missing route_stops or initial.json)")
+        return
+
+    # Build child->parent lookup from initial.json
+    with open(initial_file, 'r', encoding='utf-8') as f:
+        initial_data = json.load(f)
+    child_to_parent = {}
+    for stop in initial_data.get('stops', []):
+        parent = stop.get('parentStation')
+        if parent:
+            child_to_parent[stop['id']] = parent
+
+    route_parent_stops = {}
+    files = sorted(route_stops_dir.glob('*.json'))
+    for filepath in files:
+        route_id = filepath.stem
+        with open(filepath, 'r', encoding='utf-8') as f:
+            route_data = json.load(f)
+
+        ordered_stops = route_data.get('orderedStops', {})
+        if not ordered_stops:
+            continue
+
+        directions = {}
+        for direction, stop_ids in ordered_stops.items():
+            parent_ids = [child_to_parent.get(stop_id, stop_id) for stop_id in stop_ids]
+
+            # Deduplicate while preserving order
+            seen = set()
+            unique_parent_ids = []
+            for parent_id in parent_ids:
+                if parent_id in seen:
+                    continue
+                seen.add(parent_id)
+                unique_parent_ids.append(parent_id)
+
+            directions[str(direction)] = unique_parent_ids
+
+        if directions:
+            route_parent_stops[route_id] = directions
+
+    write_json(out_file, route_parent_stops)
+    print(f"    ✓ Wrote route_parent_stops.json ({len(route_parent_stops)} routes)")
+
+
 # snap_stops_to_shape is imported from core.gtfs_base above.
 
 
@@ -614,6 +673,7 @@ def generate_manifest():
             'timetables': [],
             'shapes': [],
             'route_stops': [],
+            'route_parent_stops': 'route_parent_stops.json',
             'stop_timetables': [],
             'route_active_trips': []
         }
@@ -705,11 +765,14 @@ def main():
 
     # Step 6: Route stops index (B2 optimization)
     generate_route_stops_index(timetables_by_route, trip_lookup)
-    
-# Step 7: Stop timetables index (A2 optimization)
+
+    # Step 7: Route parent stops index (directions optimization)
+    generate_route_parent_stops_index()
+
+    # Step 8: Stop timetables index (A2 optimization)
     generate_stop_timetables_index(timetables_by_route, trip_lookup)
 
-    # Step 8: Route active trips index (B1 optimization)
+    # Step 9: Route active trips index (B1 optimization)
     generate_route_active_trips_index(timetables_by_route, trip_lookup)
 
 
