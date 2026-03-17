@@ -82,6 +82,13 @@ export interface StopDepartures {
  */
 export type StopTimetable = Record<string, Record<string, { time: number; sequence: number }>>;
 
+/**
+ * Per-route timetable — `public/data/timetables/{routeId}.json`.
+ * Keyed: tripId → ordered list of [stopId, stop_sequence, timeMinutes] tuples.
+ * Indexed in stop-traversal order; times are minutes from midnight.
+ */
+export type RouteTimetable = Record<string, [string, number, number][]>;
+
 export interface ActiveTrip {
   id: string;
   headsign: string;

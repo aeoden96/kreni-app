@@ -17,7 +17,6 @@ import { RouteModal } from '../components/common/RouteModal';
 import { StopModal } from '../components/common/StopModal';
 import { StopInfoBar } from '../components/common/StopInfoBar';
 import { RouteInfoBar } from '../components/common/RouteInfoBar';
-import { VehicleFollowBar } from '../components/common/VehicleFollowBar';
 import { DebugPanel } from '../components/common/DebugPanel';
 import { OnboardingWizard } from '../components/common/OnboardingWizard';
 import { NearbyStopsModal } from '../components/common/NearbyStopsModal';
@@ -26,6 +25,7 @@ import type { RealtimeStatusPanelHandle } from '../components/common/RealtimeSta
 import { useInitialData } from '../hooks/useInitialData';
 import { useCurrentService } from '../hooks/useCurrentService';
 import { useRouteData } from '../hooks/useRouteData';
+import { useRouteTimetable } from '../hooks/useRouteTimetable';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useRealtimeStore } from '../stores/realtimeStore';
 import { useAllVehiclePositions } from '../hooks/useAllVehiclePositions';
@@ -124,6 +124,9 @@ export function GTFSMode({ config }: GTFSModeProps) {
   // Load route-specific data
   const { shapes, routeStops, orderedStops, activeTripsData, loading: routeLoading } =
     useRouteData(selectedRouteId, { dataDir: config.dataDir });
+
+  // Load per-trip stop sequence + times for the "next stops" feature
+  const routeTimetable = useRouteTimetable(selectedRouteId, config.dataDir);
 
   // Scheduled vehicle positions (transit only; null activeTripsData yields [])
   const vehicles = useVehiclePositions(
@@ -413,18 +416,23 @@ export function GTFSMode({ config }: GTFSModeProps) {
         )}
         */}
 
-        {/* Route Info Bar / Vehicle Follow Bar */}
-        {selectedRoute && !routeModalOpen && !stopModalOpen && (
-          followedVehicleTripId ? (
-            <VehicleFollowBar
-              route={selectedRoute}
-              vehiclePos={followedVehicleParsedPos}
-              tripUpdate={followedTripUpdate}
-              stopsById={stopsById}
-              onUnfollow={handleUnfollow}
-              onExpand={handleExpandRoute}
-            />
-          ) : (
+        {/* Route Info Bar */}
+        {selectedRoute && !routeModalOpen && !stopModalOpen && !selectedStopId && (() => {
+          const isFollowing = !!followedVehicleTripId;
+          const clickedTripId =
+            lastClickedVehicle?.routeId === selectedRouteId ? lastClickedVehicle.tripId : null;
+          // When following, surface the followed vehicle's data; otherwise the clicked vehicle's
+          const activeTripId = isFollowing ? followedVehicleTripId : clickedTripId;
+          const activeVehicle = activeTripId
+            ? vehicles.find((v) => v.tripId === activeTripId) ?? null
+            : null;
+          const activeVehiclePos = isFollowing
+            ? followedVehicleParsedPos
+            : (clickedTripId ? vehiclePositions.get(clickedTripId) ?? null : null);
+          const activeTripUpdate = isFollowing
+            ? followedTripUpdate
+            : (clickedTripId ? tripUpdates.get(clickedTripId) ?? null : null);
+          return (
             <RouteInfoBar
               route={selectedRoute}
               vehicles={vehicles}
@@ -432,11 +440,18 @@ export function GTFSMode({ config }: GTFSModeProps) {
               stopsById={stopsById}
               onExpand={handleExpandRoute}
               onClose={handleClearRoute}
-              followCandidateTripId={lastClickedVehicle?.routeId === selectedRouteId ? lastClickedVehicle.tripId : null}
+              followCandidateTripId={isFollowing ? null : clickedTripId}
               onFollowStart={handleFollowStart}
+              clickedVehicle={activeVehicle}
+              clickedVehiclePos={activeVehiclePos}
+              clickedTripUpdate={activeTripUpdate}
+              isFollowing={isFollowing}
+              onUnfollow={handleUnfollow}
+              followedVehiclePos={followedVehicleParsedPos}
+              routeTimetable={routeTimetable}
             />
-          )
-        )}
+          );
+        })()}
 
         {/* Stop Info Bar */}
         {selectedStop && !stopModalOpen && (
@@ -447,7 +462,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
             onExpand={handleExpandStop}
             onClose={handleCloseStopInfo}
             onStopSelect={handleSelectStop}
-            stackBelow={!!(selectedRoute && !routeModalOpen)}
+            stackBelow={false}
           />
         )}
 
