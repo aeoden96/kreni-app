@@ -8,23 +8,43 @@ interface ReleaseNotes {
   changes: string[];
 }
 
+export interface UpdatePromptProps {
+  /** Storybook only: when true, shows the banner with mock data (no real hook/fetch). */
+  storybook?: boolean;
+  /** Storybook only: override mock notes. Omit version or use wrong version to show fallback bullets. */
+  storybookNotes?: ReleaseNotes | null;
+}
+
 /**
  * Fixed banner shown when a new app version has been downloaded in the
  * background. Prompts the user to reload and apply the update.
  * Fetches release-notes.json (cache-busted) to show what changed.
  */
-export function UpdatePrompt() {
-  const { needRefresh, updateApp } = useAppUpdate();
+const noop = () => {};
+
+export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePromptProps = {}) {
+  const hook = useAppUpdate();
+  const needRefresh = storybook || hook.needRefresh;
+  const updateApp = storybook ? noop : hook.updateApp;
   const [dismissed, setDismissed] = useState(false);
   const [notes, setNotes] = useState<ReleaseNotes | null>(null);
 
   useEffect(() => {
     if (!needRefresh) return;
+    if (storybook) {
+      setNotes(
+        storybookNotes ?? {
+          version: __APP_VERSION__,
+          changes: ['Poboljšanja performansi', 'Nove funkcionalnosti', 'Ispravci grešaka'],
+        },
+      );
+      return;
+    }
     fetch(`${import.meta.env.BASE_URL}release-notes.json?t=${Date.now()}`, { cache: 'no-store' })
       .then((r) => r.ok ? r.json() as Promise<ReleaseNotes> : null)
       .then((data) => { if (data) setNotes(data); })
       .catch(() => {/* silently ignore */});
-  }, [needRefresh]);
+  }, [needRefresh, storybook, storybookNotes]);
 
   // Force-update: auto-apply without user interaction
   useEffect(() => {
