@@ -369,16 +369,11 @@ class TestInitialDataLoad(unittest.TestCase):
         self.assertIn('stops', data)
         self.assertIn('routes', data)
         self.assertIn('calendar', data)
-        # New: server-side grouped parent stations should be present
-        self.assertIn('groupedParentStations', data, "groupedParentStations must be present in initial.json")
-        self.assertIsInstance(data['groupedParentStations'], list, "groupedParentStations must be a list")
 
         print(f"🚏 Stops: {len(data['stops'])}")
         print(f"🚌 Routes: {len(data['routes'])}")
         print(f"📅 Calendar entries: {len(data['calendar'])}")
-        print(f"🔢 Parent groups: {len(data['groupedParentStations'])}")
-        
-        # Performance assertion (raised from 500 KB to 600 KB to accommodate groupedParentStations)
+
         self.assertLess(size, 600000, "Initial bundle should be < 600 KB")
         
         print(f"✅ Initial load: {size/1024:.1f} KB")

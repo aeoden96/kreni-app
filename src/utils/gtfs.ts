@@ -60,7 +60,6 @@ export interface InitialData {
   stops: Stop[];
   routes: Route[];
   calendar: Record<string, string>; // date -> service_id
-  groupedParentStations?: ParentGroup[]; // optional precomputed groups added by processor
   feedVersion: string;
   feedStartDate: string;
   feedEndDate: string;
@@ -192,60 +191,6 @@ export function isParentStation(stop: Stop): boolean {
 
 export function isChildPlatform(stop: Stop): boolean {
   return stop.locationType === 0 && stop.parentStation !== null;
-}
-
-// Grouped parent-station (clustering) type and helper
-export interface ParentGroup {
-  id: string;           // synthetic group id (e.g. "group-0")
-  lat: number;          // centroid latitude
-  lon: number;          // centroid longitude
-  childIds: string[];   // ids of parent stations contained in this group
-  count: number;        // number of parent stations in the group
-}
-
-/**
- * Cluster nearby parent stations into groups (greedy single-pass clustering).
- * - parents: array of stops that are parent stations (locationType === 1)
- * - radiusMeters: grouping radius in meters
- */
-export function clusterParentStops(parents: Stop[], radiusMeters = 100): ParentGroup[] {
-  if (!parents || parents.length === 0) return [];
-
-  const used = new Set<string>();
-  const groups: ParentGroup[] = [];
-
-  const toRad = (d: number) => d * Math.PI / 180;
-  const haversine = (aLat: number, aLon: number, bLat: number, bLon: number) => {
-    const R = 6371000; // meters
-    const dLat = toRad(bLat - aLat);
-    const dLon = toRad(bLon - aLon);
-    const lat1 = toRad(aLat), lat2 = toRad(bLat);
-    const sinDlat = Math.sin(dLat / 2), sinDlon = Math.sin(dLon / 2);
-    const h = sinDlat * sinDlat + Math.cos(lat1) * Math.cos(lat2) * sinDlon * sinDlon;
-    return 2 * R * Math.asin(Math.sqrt(h));
-  };
-
-  for (let i = 0; i < parents.length; i++) {
-    const p = parents[i];
-    if (used.has(p.id)) continue;
-    const members = [p];
-    used.add(p.id);
-
-    for (let j = i + 1; j < parents.length; j++) {
-      const q = parents[j];
-      if (used.has(q.id)) continue;
-      if (haversine(p.lat, p.lon, q.lat, q.lon) <= radiusMeters) {
-        members.push(q);
-        used.add(q.id);
-      }
-    }
-
-    const lat = members.reduce((s, x) => s + x.lat, 0) / members.length;
-    const lon = members.reduce((s, x) => s + x.lon, 0) / members.length;
-    groups.push({ id: `group-${groups.length}`, lat, lon, childIds: members.map(m => m.id), count: members.length });
-  }
-
-  return groups;
 }
 
 // Data fetching helpers

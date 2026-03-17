@@ -20,7 +20,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from core.gtfs_base import (
     time_to_minutes,
     write_json,
-    haversine_meters as _haversine_meters,
     compute_bearing as _compute_bearing,
     snap_stops_to_shape,
 )
@@ -42,38 +41,6 @@ def read_csv(filename: str) -> list:
         import csv as _csv
         reader = _csv.DictReader(f)
         return list(reader)
-
-
-def _cluster_parent_stops(parents, radius_meters=150):
-    """Greedy single-pass clustering of parent stations by proximity.
-
-    Returns list of groups: {id, lat, lon, childIds, count}
-    """
-    used = set()
-    groups = []
-
-    for i, p in enumerate(parents):
-        if p['id'] in used:
-            continue
-        members = [p]
-        used.add(p['id'])
-        for j in range(i + 1, len(parents)):
-            q = parents[j]
-            if q['id'] in used:
-                continue
-            if _haversine_meters(p['lat'], p['lon'], q['lat'], q['lon']) <= radius_meters:
-                members.append(q)
-                used.add(q['id'])
-        lat = sum(m['lat'] for m in members) / len(members)
-        lon = sum(m['lon'] for m in members) / len(members)
-        groups.append({
-            'id': f"group-{len(groups)}",
-            'lat': round(lat, 5),
-            'lon': round(lon, 5),
-            'childIds': [m['id'] for m in members],
-            'count': len(members)
-        })
-    return groups
 
 
 def process_initial_bundle():
@@ -114,16 +81,11 @@ def process_initial_bundle():
     # Get feed info
     feed_info_raw = read_csv("feed_info.txt")
     feed_info = feed_info_raw[0] if feed_info_raw else {}
-    
-    # Compute grouped parent stations (server-side clustering)
-    parents = [s for s in stops if s['locationType'] == 1]
-    grouped = _cluster_parent_stops(parents, radius_meters=600) if parents else []
 
     initial_data = {
         'stops': stops,
         'routes': routes,
         'calendar': calendar,
-        'groupedParentStations': grouped,
         'feedVersion': feed_info.get('feed_version', ''),
         'feedStartDate': feed_info.get('feed_start_date', ''),
         'feedEndDate': feed_info.get('feed_end_date', '')

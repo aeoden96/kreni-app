@@ -210,7 +210,6 @@ def process_initial_bundle(zagreb_stop_ids, zagreb_route_ids, service_date_map):
         'stops':               stops,
         'routes':              routes,
         'calendar':            calendar,
-        'groupedParentStations': [],   # trains have no parent-station clusters
         'feedVersion':         f"hzpp-{datetime.now().strftime('%Y%m%d')}",
         'feedStartDate':       '',
         'feedEndDate':         '',

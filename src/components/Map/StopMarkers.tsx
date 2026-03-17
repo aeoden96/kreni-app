@@ -6,7 +6,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { Marker, Polyline, useMap } from 'react-leaflet';
 import { useSpiderfierContext } from './SpiderfierContext';
 import L from 'leaflet';
-import { fetchStopTimetable, type Stop, type ParentGroup, type Route } from '../../utils/gtfs';
+import { fetchStopTimetable, type Stop, type Route } from '../../utils/gtfs';
 import { getDirectionColor } from './directionColors';
 
 // ── Stop colour by service type ──────────────────────────────────────────────
@@ -201,7 +201,7 @@ function PlatformStopMarker({
 }
 
 interface StopMarkersProps {
-  stops: Array<Stop | ParentGroup>;
+  stops: Stop[];
   isParentStationView: boolean;
   parentChildCounts: Map<string, number>; // platform-counts per parent station id
   /** Optional parent station list (used when individual mode wants parent labels/lines) */
@@ -243,7 +243,7 @@ export function StopMarkers({
   type ParentLabelGroup = { label: string; lat: number; lon: number; children: Stop[] };
   const parentLabelGroups: ParentLabelGroup[] = [];
   if (showLabels && parentStations) {
-    const platformStops = stops.filter((s) => (s as Stop).locationType === undefined || (s as Stop).locationType === 0) as Stop[];
+    const platformStops = stops.filter((s) => s.locationType === 0);
     const childrenByParent = new Map<string, Stop[]>();
     platformStops.forEach((st) => {
       if (st.parentStation) {
@@ -305,43 +305,14 @@ export function StopMarkers({
   return (
     <>
       {stops.map((s) => {
-        const isGroup = (s as ParentGroup).childIds !== undefined;
-        const id = (s as any).id as string;
-        const lat = (s as any).lat as number;
-        const lon = (s as any).lon as number;
+        const stop = s as Stop;
+        const id = stop.id;
 
         const isSelected = id === selectedStopId;
         const isHighlighted = highlightSet.has(id);
 
-        // Render grouped parent cluster marker
-        if (isParentStationView && isGroup) {
-          const group = s as ParentGroup;
-          // sum platform counts for all parent stations inside this group
-          const groupPlatformCount = group.childIds.reduce((acc, pid) => acc + (parentChildCounts.get(pid) || 0), 0);
-          const displayCount = groupPlatformCount > 9 ? '9+' : String(groupPlatformCount || group.count);
-
-          const icon = L.divIcon({
-            html: `<div data-testid="stop-marker" class="parent-station-marker ${isSelected ? 'selected stop-selected-pulse' : ''} ${isHighlighted ? 'highlighted' : ''}">
-              <span class="count">${displayCount}</span>
-            </div>`,
-            className: 'parent-station-icon',
-            iconSize: [30, 30],
-            iconAnchor: [15, 15],
-          });
-
-          return (
-            <Marker
-              key={id}
-              position={[lat, lon]}
-              icon={icon}
-              eventHandlers={{ click: () => onStopClick(id) }}
-            />
-          );
-        }
-
-        // Render parent stations (real parent stops) when in parent-station view
-        if (isParentStationView && !isGroup && (s as Stop).locationType === 1) {
-          const stop = s as Stop;
+        // Render parent stations when in parent-station view
+        if (isParentStationView && stop.locationType === 1) {
           const childCount = parentChildCounts.get(stop.id) || 0;
           const displayCount = childCount > 9 ? '9+' : childCount.toString();
 
@@ -367,7 +338,6 @@ export function StopMarkers({
         }
 
         // Render regular platform stops
-        const stop = s as Stop;
         // Selected stops always remain fully visible regardless of opacityFactor
         const effectiveFactor = isSelected ? 1 : opacityFactor;
         // Skip rendering when fully transparent (perf optimisation)

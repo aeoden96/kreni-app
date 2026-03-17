@@ -85,7 +85,6 @@ export function GTFSMode({ config }: GTFSModeProps) {
     routes,
     stopsById,
     routesById,
-    groupedParentStations,
     calendar,
     loading: initialLoading,
     error: initialError,
@@ -113,7 +112,6 @@ export function GTFSMode({ config }: GTFSModeProps) {
   } = useMapPanTarget({
     stops,
     stopsById,
-    groupedParentStations,
     config,
     selectStop,
     addRecentStop,

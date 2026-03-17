@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { GTFSModeConfig } from '../config/modes';
-import type { Stop, ParentGroup } from '../utils/gtfs';
+import type { Stop } from '../utils/gtfs';
 
 /** Vertical pixel offset to shift a stop marker below the top StopInfoBar overlay on mobile. */
 function stopSelectPanOffsetY(): number {
@@ -18,7 +18,6 @@ export interface MapPanTarget {
 export interface UseMapPanTargetDeps {
   stops: Stop[];
   stopsById: Map<string, Stop>;
-  groupedParentStations: ParentGroup[] | undefined;
   config: GTFSModeConfig;
   selectStop: (stopId: string) => void;
   addRecentStop: (stopId: string) => void;
@@ -35,7 +34,6 @@ export function useMapPanTarget(deps: UseMapPanTargetDeps) {
   const {
     stops,
     stopsById,
-    groupedParentStations,
     config,
     selectStop,
     addRecentStop,
@@ -51,23 +49,6 @@ export function useMapPanTarget(deps: UseMapPanTargetDeps) {
     (stopId: string) => {
       closeLegendAndDetails();
       setNearbyOpen(false);
-      if (stopId.startsWith('group-')) {
-        const group = (groupedParentStations || []).find((g) => g.id === stopId);
-        if (group) {
-          setParentStationZoomTarget({
-            lat: group.lat,
-            lon: group.lon,
-            zoom: 15,
-            panOffsetY: stopSelectPanOffsetY(),
-          });
-          const firstParentId = group.childIds[0];
-          const childPlatform = stops.find(
-            (s) => s.parentStation === firstParentId && s.locationType === 0,
-          );
-          selectStop(childPlatform ? childPlatform.id : firstParentId);
-        }
-        return;
-      }
       const stop = stopsById.get(stopId);
       if (stop && stop.locationType === 1) {
         setParentStationZoomTarget({
@@ -86,7 +67,6 @@ export function useMapPanTarget(deps: UseMapPanTargetDeps) {
       }
     },
     [
-      groupedParentStations,
       stops,
       stopsById,
       config.stopZoom,
