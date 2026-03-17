@@ -121,8 +121,11 @@ export const SearchModal = memo(function SearchModal({
     recentStops,
     toggleFavouriteRoute,
     toggleFavouriteStop,
-    clearRecents,
+    removeRecentRoutes,
+    removeRecentStops,
   } = useSettingsStore();
+
+  const [recentsExpanded, setRecentsExpanded] = useState(true);
 
   // Focus search input when modal opens
   useEffect(() => {
@@ -171,26 +174,40 @@ export const SearchModal = memo(function SearchModal({
     [favouriteStopIds, stopsById]
   );
 
-  // Recently viewed routes & stops (up to 8 each)
-  const recentRouteItems = useMemo(
-    () =>
-      recentRoutes
-        .slice(0, 8)
-        .map((r) => routesById.get(r.id))
-        .filter((r): r is Route => r !== undefined),
-    [recentRoutes, routesById]
-  );
+  // Recently viewed routes & stops merged by recency, filtered by current tab
+  const recentItemsMerged = useMemo(() => {
+    const withType = [
+      ...recentRoutes.map((r) => ({ ...r, type: 'route' as const })),
+      ...recentStops.map((s) => ({ ...s, type: 'stop' as const })),
+    ]
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, 12);
+    const resolved = withType
+      .map((item) => {
+        if (item.type === 'route') {
+          const route = routesById.get(item.id);
+          return route ? { type: 'route' as const, data: route } : null;
+        }
+        const stop = stopsById.get(item.id);
+        return stop ? { type: 'stop' as const, data: stop } : null;
+      })
+      .filter((x): x is { type: 'route'; data: Route } | { type: 'stop'; data: Stop } => x !== null);
 
-  const recentStopItems = useMemo(
-    () =>
-      recentStops
-        .slice(0, 8)
-        .map((r) => stopsById.get(r.id))
-        .filter((s): s is Stop => s !== undefined),
-    [recentStops, stopsById]
-  );
+    // Filter by current tab: tram/bus/trains show matching routes + stops; stanice shows stops only
+    if (filter === 'stanice') {
+      return resolved.filter((x) => x.type === 'stop');
+    }
+    if (filter === 'tram' || filter === 'bus' || filter === 'trains') {
+      const routeTypeMatch =
+        filter === 'tram' ? isRouteTypeTram : filter === 'bus' ? isRouteTypeBus : isRouteTypeRail;
+      return resolved.filter(
+        (x) => x.type === 'route' && routeTypeMatch(x.data.type)
+      );
+    }
+    return resolved;
+  }, [recentRoutes, recentStops, routesById, stopsById, filter]);
 
-  const hasRecents = recentRouteItems.length > 0 || recentStopItems.length > 0;
+  const hasRecents = recentItemsMerged.length > 0;
 
   // Filtered routes
   const filteredRoutes = useMemo(() => {
@@ -225,14 +242,14 @@ export const SearchModal = memo(function SearchModal({
       const terminals = key.startsWith('parent:')
         ? terminalsRaw
         : (() => {
-            const seen = new Set<string>();
-            return terminalsRaw.filter((s) => {
-              const directionKey = s.bearing !== undefined ? bearingToDirection(s.bearing) : s.code || s.id;
-              if (seen.has(directionKey)) return false;
-              seen.add(directionKey);
-              return true;
-            });
-          })();
+          const seen = new Set<string>();
+          return terminalsRaw.filter((s) => {
+            const directionKey = s.bearing !== undefined ? bearingToDirection(s.bearing) : s.code || s.id;
+            if (seen.has(directionKey)) return false;
+            seen.add(directionKey);
+            return true;
+          });
+        })();
       const sorted = terminals.slice().sort((a, b) => (a.code || '').localeCompare(b.code || ''));
       groups.push({ key, representative: sorted[0] || terminalsRaw[0], terminals: sorted });
     }
@@ -264,6 +281,13 @@ export const SearchModal = memo(function SearchModal({
     onClose();
   };
 
+  const handleClearRecentsForTab = () => {
+    const routeIds = recentItemsMerged.filter((x) => x.type === 'route').map((x) => x.data.id);
+    const stopIds = recentItemsMerged.filter((x) => x.type === 'stop').map((x) => x.data.id);
+    if (routeIds.length > 0) removeRecentRoutes(routeIds);
+    if (stopIds.length > 0) removeRecentStops(stopIds);
+  };
+
   if (!isOpen) return null;
 
   const isRouteFilter = filter === 'tram' || filter === 'bus' || filter === 'trains';
@@ -279,9 +303,9 @@ export const SearchModal = memo(function SearchModal({
         onClick={onClose}
       />
 
-      {/* Modal */}
+      {/* Modal — use svh so it fits on mobile when browser bar is visible */}
       <div
-        className="relative w-full max-w-lg mx-2 mt-2 sm:mt-8 max-h-[90vh] bg-base-100 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+        className="relative w-full max-w-lg mx-2 mt-2 sm:mt-8 max-h-[90svh] bg-base-100 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
         style={{ animation: 'modal-fade-in 0.2s ease-out' }}
       >
         {/* Header / Search */}
@@ -296,28 +320,7 @@ export const SearchModal = memo(function SearchModal({
             </button>
           </div>
 
-          {/* Search input */}
-          {filter !== 'smjerovi' && (
-            <div className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/50" />
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder={filter === 'stanice' ? 'Naziv stanice...' : 'Broj ili naziv linije...'}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="input input-bordered w-full pl-10 pr-10 min-h-[44px] text-base"
-              />
-              {searchQuery && (
-                <button
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content/80"
-                  onClick={() => setSearchQuery('')}
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          )}
+
 
           {/* Tabs */}
           <div className="tabs tabs-boxed w-full">
@@ -382,6 +385,29 @@ export const SearchModal = memo(function SearchModal({
             )}
           </div>
 
+          {/* Search input */}
+          {filter !== 'smjerovi' && (
+            <div className="relative mt-3 ">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/50" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder={filter === 'stanice' ? 'Naziv stanice...' : 'Broj ili naziv linije...'}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="input input-bordered w-full pl-10 pr-10 min-h-[44px] text-base"
+              />
+              {searchQuery && (
+                <button
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content/80"
+                  onClick={() => setSearchQuery('')}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Favourites quick access */}
           {!searchQuery && (
             <>
@@ -428,43 +454,55 @@ export const SearchModal = memo(function SearchModal({
           )}
         </div>
 
-        {/* Recently viewed — only when query is empty */}
+        {/* Recently viewed — collapsible, single-line scroll, clear only active tab items */}
         {filter !== 'smjerovi' && !searchQuery && hasRecents && (
-          <div className="px-4 py-3 border-b border-base-300">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-1 text-xs text-base-content/60">
-                <Clock className="w-3 h-3" />
-                <span>Nedavno pregledano</span>
-              </div>
+          <div className="px-4 py-2 border-b border-base-300">
+            <div className="flex items-center justify-between">
               <button
-                onClick={clearRecents}
-                className="text-xs text-base-content/40 hover:text-base-content/70 transition-colors"
+                onClick={() => setRecentsExpanded((e) => !e)}
+                className="flex items-center gap-1 text-xs text-base-content/60 hover:text-base-content/80 transition-colors"
+                aria-expanded={recentsExpanded}
+              >
+                <Clock className="w-3 h-3 shrink-0" />
+                <span>Nedavno pregledano</span>
+                {recentsExpanded ? (
+                  <ChevronDown className="w-3 h-3 shrink-0" />
+                ) : (
+                  <ChevronRight className="w-3 h-3 shrink-0" />
+                )}
+              </button>
+              <button
+                onClick={handleClearRecentsForTab}
+                className="text-xs text-base-content/40 hover:text-base-content/70 transition-colors shrink-0"
               >
                 Očisti
               </button>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {recentRouteItems.map((route) => (
-                <button
-                  key={`recent-r-${route.id}`}
-                  onClick={() => handleSelectRoute(route)}
-                  className="badge badge-md font-bold hover:opacity-80 transition-opacity cursor-pointer text-white"
-                  style={{ backgroundColor: isRouteTypeTram(route.type) ? '#2563eb' : isRouteTypeRail(route.type) ? '#64748b' : '#d97706' }}
-                >
-                  {route.shortName}
-                </button>
-              ))}
-              {recentStopItems.map((stop) => (
-                <button
-                  key={`recent-s-${stop.id}`}
-                  onClick={() => handleSelectStop(stop)}
-                  className="badge badge-ghost badge-md hover:badge-outline transition-colors cursor-pointer text-xs flex items-center gap-1"
-                >
-                  <MapPin className="w-2.5 h-2.5" />
-                  {stop.name}
-                </button>
-              ))}
-            </div>
+            {recentsExpanded && (
+              <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 -mx-1 px-1 mt-1.5">
+                {recentItemsMerged.map((item) =>
+                  item.type === 'route' ? (
+                    <button
+                      key={`recent-r-${item.data.id}`}
+                      onClick={() => handleSelectRoute(item.data)}
+                      className="badge badge-md font-bold hover:opacity-80 transition-opacity cursor-pointer text-white shrink-0"
+                      style={{ backgroundColor: isRouteTypeTram(item.data.type) ? '#2563eb' : isRouteTypeRail(item.data.type) ? '#64748b' : '#d97706' }}
+                    >
+                      {item.data.shortName}
+                    </button>
+                  ) : (
+                    <button
+                      key={`recent-s-${item.data.id}`}
+                      onClick={() => handleSelectStop(item.data)}
+                      className="badge badge-ghost badge-md hover:badge-outline transition-colors cursor-pointer text-xs flex items-center gap-1 shrink-0"
+                    >
+                      <MapPin className="w-2.5 h-2.5 shrink-0" />
+                      <span className="whitespace-nowrap truncate max-w-[120px]">{item.data.name}</span>
+                    </button>
+                  )
+                )}
+              </div>
+            )}
           </div>
         )}
 

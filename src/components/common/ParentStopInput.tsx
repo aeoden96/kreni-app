@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { MapPin, X } from 'lucide-react';
 import type { Stop } from '../../utils/gtfs';
 import { useParentStopSearch } from '../../hooks/useParentStopSearch';
@@ -20,6 +21,7 @@ export function ParentStopInput({
 }: ParentStopInputProps) {
   const [query, setQuery] = useState(value?.name ?? '');
   const [open, setOpen] = useState(false);
+  const [dropdownRect, setDropdownRect] = useState<{ top: number; left: number; width: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -49,6 +51,19 @@ export function ParentStopInput({
     () => open && query.trim().length > 0 && matches.length > 0,
     [open, query, matches.length],
   );
+
+  useLayoutEffect(() => {
+    if (!showList || !inputRef.current) {
+      setDropdownRect(null);
+      return;
+    }
+    const rect = inputRef.current.getBoundingClientRect();
+    setDropdownRect({
+      top: rect.bottom + 4,
+      left: rect.left,
+      width: rect.width,
+    });
+  }, [showList, matches]);
 
   return (
     <div ref={containerRef} className="relative">
@@ -81,24 +96,34 @@ export function ParentStopInput({
         </button>
       )}
 
-      {showList && (
-        <div className="absolute z-20 mt-1 w-full rounded-xl border border-base-300 bg-base-100 shadow-lg max-h-64 overflow-y-auto">
-          {matches.map((stop) => (
-            <button
-              key={stop.id}
-              type="button"
-              className="w-full px-3 py-2 text-left text-sm hover:bg-base-200 transition-colors"
-              onClick={() => {
-                onChange(stop);
-                setQuery(stop.name);
-                setOpen(false);
-              }}
-            >
-              {stop.name}
-            </button>
-          ))}
-        </div>
-      )}
+      {showList &&
+        dropdownRect &&
+        createPortal(
+          <div
+            className="fixed z-[3100] rounded-xl border border-base-300 bg-base-100 shadow-lg max-h-64 overflow-y-auto"
+            style={{
+              top: dropdownRect.top,
+              left: dropdownRect.left,
+              width: dropdownRect.width,
+            }}
+          >
+            {matches.map((stop) => (
+              <button
+                key={stop.id}
+                type="button"
+                className="w-full px-3 py-2 text-left text-sm hover:bg-base-200 transition-colors"
+                onClick={() => {
+                  onChange(stop);
+                  setQuery(stop.name);
+                  setOpen(false);
+                }}
+              >
+                {stop.name}
+              </button>
+            ))}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

@@ -86,6 +86,10 @@ interface SettingsState {
   addRecentRoute: (id: string) => void;
   addRecentStop: (id: string) => void;
   clearRecents: () => void;
+  /** Remove specific route IDs from recents */
+  removeRecentRoutes: (ids: string[]) => void;
+  /** Remove specific stop IDs from recents */
+  removeRecentStops: (ids: string[]) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -208,6 +212,14 @@ export const useSettingsStore = create<SettingsState>()(
           }),
 
         clearRecents: () => set({ recentRoutes: [], recentStops: [] }),
+        removeRecentRoutes: (ids) =>
+          set((s) => ({
+            recentRoutes: s.recentRoutes.filter((r) => !ids.includes(r.id)),
+          })),
+        removeRecentStops: (ids) =>
+          set((s) => ({
+            recentStops: s.recentStops.filter((item) => !ids.includes(item.id)),
+          })),
       };
     },
     {
