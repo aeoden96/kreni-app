@@ -13,10 +13,8 @@ export interface GTFSModeConfig {
   hasRealtime: boolean;
   /** Map zoom level used when flying to a single stop. */
   stopZoom: number;
-  /** Placeholder text shown in the search bar. */
-  searchPlaceholder: string;
-  /** Spinner label shown while the initial dataset is loading. */
-  loadingText: string;
+  /** i18n key under `gtfs.*` for the initial load spinner label. */
+  loadingI18nKey: 'loadingTransit' | 'loadingTrain';
   /** Variant passed to <OnboardingWizard>. */
   onboardingVariant: 'transit' | 'train';
   /**
@@ -39,8 +37,7 @@ export const TRANSIT_MODE: GTFSModeConfig = {
   dataDir: 'data',
   hasRealtime: true,
   stopZoom: 17,
-  searchPlaceholder: 'Pretraži linije...',
-  loadingText: 'Učitavanje podataka...',
+  loadingI18nKey: 'loadingTransit',
   onboardingVariant: 'transit',
   alwaysShowStops: false,
   timetableLookaheadMinutes: 60,
@@ -52,8 +49,7 @@ export const TRAIN_MODE: GTFSModeConfig = {
   dataDir: 'data-train',
   hasRealtime: false,
   stopZoom: 15,
-  searchPlaceholder: 'Pretraži vlakove...',
-  loadingText: 'Učitavanje podataka o vlakovima...',
+  loadingI18nKey: 'loadingTrain',
   onboardingVariant: 'train',
   alwaysShowStops: true,
   initialZoom: 9,

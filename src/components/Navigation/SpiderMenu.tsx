@@ -15,16 +15,25 @@ import {
     Download,
 //    Activity
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useNavigationStore } from '../../stores/navigationStore';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 import { trackEvent } from '../../utils/analytics';
+import { getCurrentLanguage, setLanguage, type SupportedLanguage } from '../../i18n';
+import { FlatLanguageFlags } from './FlatLanguageFlags';
 
 export function SpiderMenu() {
     const [isOpen, setIsOpen] = useState(false);
     const [, startTransition] = useTransition();
     const navigate = useNavigate();
     const location = useLocation();
+    const { t } = useTranslation();
+    const currentLang: SupportedLanguage = getCurrentLanguage();
+
+    const switchLanguage = (lang: SupportedLanguage) => {
+        setLanguage(lang);
+    };
     const {
         setOnboardingStep,
         setOnboardingCompleted,
@@ -62,7 +71,7 @@ export function SpiderMenu() {
         {
             to: "/",
             icon: <TramFront className="w-5 h-5" />,
-            label: "Javni prijevoz",
+            label: t('spiderMenu.modes.transit'),
             color: 'bg-primary',
             hoverColor: 'hover:bg-primary/80',
             activeRing: 'ring-primary'
@@ -70,7 +79,7 @@ export function SpiderMenu() {
         {
             to: "/train",
             icon: <Train className="w-5 h-5" />,
-            label: "Vlak",
+            label: t('spiderMenu.modes.train'),
             color: 'bg-red-700',
             hoverColor: 'hover:bg-red-600',
             activeRing: 'ring-red-700'
@@ -78,7 +87,7 @@ export function SpiderMenu() {
         {
             to: "/cycling",
             icon: <Bike className="w-5 h-5" />,
-            label: "Bicikl",
+            label: t('spiderMenu.modes.cycling'),
             color: 'bg-success',
             hoverColor: 'hover:bg-success/80',
             activeRing: 'ring-success'
@@ -86,7 +95,7 @@ export function SpiderMenu() {
         {
             to: "/driving",
             icon: <Car className="w-5 h-5" />,
-            label: "Auto",
+            label: t('spiderMenu.modes.driving'),
             color: 'bg-orange-600',
             hoverColor: 'hover:bg-orange-500',
             activeRing: 'ring-orange-600'
@@ -94,7 +103,7 @@ export function SpiderMenu() {
         {
             to: "/city",
             icon: <Building2 className="w-5 h-5" />,
-            label: "Grad",
+            label: t('spiderMenu.modes.city'),
             color: 'bg-purple-600',
             hoverColor: 'hover:bg-purple-500',
             activeRing: 'ring-purple-600'
@@ -103,7 +112,7 @@ export function SpiderMenu() {
 
     const actionItems = [
         {
-            label: "Pomoć",
+            label: t('spiderMenu.actions.help'),
             icon: <HelpCircle className="w-5 h-5" />,
             onClick: () => {
                 const variant = location.pathname === '/'
@@ -114,7 +123,7 @@ export function SpiderMenu() {
             }
         },
         {
-            label: "Postavke",
+            label: t('spiderMenu.actions.settings'),
             icon: <Settings className="w-5 h-5" />,
             onClick: () => {
                 startTransition(() => {
@@ -130,7 +139,10 @@ export function SpiderMenu() {
     const showLocate = !!onLocateClick;
     const isHeaderMode = (location.pathname === '/' && appMode === 'list') || location.pathname === '/settings';
 
+    const spiderActionsBaseDelay = menuItems.length * 50 + 100;
+
     return (
+        <>
         <div className={`fixed ${isHeaderMode ? 'top-[10px] right-2' : 'top-2 right-2 sm:top-4 sm:right-4'} z-[2000] flex flex-col items-end`}>
             {isOpen && (
                 <div
@@ -148,7 +160,7 @@ export function SpiderMenu() {
                             disabled={locating}
                             style={{ width: 48, height: 48 }}
                             className={`btn btn-circle sm:w-14 sm:h-14 ${isTracking ? 'btn-gps-active' : 'btn-gps-inactive'} shadow-2xl transition-all duration-300 ring-2 ring-white/5`}
-                            title={isTracking ? "Zaustavi praćenje lokacije" : "Moja lokacija"}
+                            title={isTracking ? t('spiderMenu.actions.stopTracking') : t('spiderMenu.actions.locate')}
                         >
                             {locating ? (
                                 <span className="loading loading-spinner loading-sm" />
@@ -223,7 +235,7 @@ export function SpiderMenu() {
                                                 `}
                                             >
                                                 <Map className="w-3 h-3" />
-                                                KARTA
+                                                {t('spiderMenu.toggles.map').toUpperCase()}
                                             </button>
                                             <button
                                                 onClick={(e) => {
@@ -241,7 +253,7 @@ export function SpiderMenu() {
                                                 `}
                                             >
                                                 <List className="w-3 h-3" />
-                                                POPIS
+                                                {t('spiderMenu.toggles.list').toUpperCase()}
                                             </button>
                                         </div>
                                     </>
@@ -263,7 +275,7 @@ export function SpiderMenu() {
                                                     : 'text-white/40 hover:text-white/60 hover:bg-white/5'}
                                             `}
                                         >
-                                            GARAŽE
+                                            {t('spiderMenu.toggles.garages').toUpperCase()}
                                         </button>
                                         <button
                                             onClick={(e) => {
@@ -277,7 +289,7 @@ export function SpiderMenu() {
                                                     : 'text-white/40 hover:text-white/60 hover:bg-white/5'}
                                             `}
                                         >
-                                            EV
+                                            {t('spiderMenu.toggles.ev').toUpperCase()}
                                         </button>
                                         <button
                                             onClick={(e) => {
@@ -291,7 +303,7 @@ export function SpiderMenu() {
                                                     : 'text-white/40 hover:text-white/60 hover:bg-white/5'}
                                             `}
                                         >
-                                            ZONE
+                                            {t('spiderMenu.toggles.zones').toUpperCase()}
                                         </button>
                                     </div>
                                 )}
@@ -312,7 +324,7 @@ export function SpiderMenu() {
                                                     : 'text-white/40 hover:text-white/60 hover:bg-white/5'}
                                             `}
                                         >
-                                            BAJS
+                                            {t('spiderMenu.toggles.bikeStations').toUpperCase()}
                                         </button>
                                         <button
                                             onClick={(e) => {
@@ -326,7 +338,7 @@ export function SpiderMenu() {
                                                     : 'text-white/40 hover:text-white/60 hover:bg-white/5'}
                                             `}
                                         >
-                                            PARKING
+                                            {t('spiderMenu.toggles.bikeParkings').toUpperCase()}
                                         </button>
                                         <button
                                             onClick={(e) => {
@@ -340,7 +352,7 @@ export function SpiderMenu() {
                                                     : 'text-white/40 hover:text-white/60 hover:bg-white/5'}
                                             `}
                                         >
-                                            STAZE
+                                            {t('spiderMenu.toggles.bikePaths').toUpperCase()}
                                         </button>
                                     </div>
                                 )}
@@ -361,7 +373,7 @@ export function SpiderMenu() {
                                                     : 'text-white/40 hover:text-white/60 hover:bg-white/5'}
                                             `}
                                         >
-                                            MENZE
+                                            {t('spiderMenu.toggles.studentRestaurants').toUpperCase()}
                                         </button>
                                         <button
                                             onClick={(e) => {
@@ -375,7 +387,7 @@ export function SpiderMenu() {
                                                     : 'text-white/40 hover:text-white/60 hover:bg-white/5'}
                                             `}
                                         >
-                                            ZDENCI
+                                            {t('spiderMenu.toggles.fountains').toUpperCase()}
                                         </button>
                                         <button
                                             onClick={(e) => {
@@ -389,7 +401,7 @@ export function SpiderMenu() {
                                                     : 'text-white/40 hover:text-white/60 hover:bg-white/5'}
                                             `}
                                         >
-                                            ZONA
+                                            {t('spiderMenu.toggles.pedestrianZones').toUpperCase()}
                                         </button>
                                         <button
                                             onClick={(e) => {
@@ -403,7 +415,7 @@ export function SpiderMenu() {
                                                     : 'text-white/40 hover:text-white/60 hover:bg-white/5'}
                                             `}
                                         >
-                                            WIFI
+                                            {t('spiderMenu.toggles.freeWifi').toUpperCase()}
                                         </button>
                                     </div>
                                 )}
@@ -447,7 +459,7 @@ export function SpiderMenu() {
                                     className="flex items-center justify-center w-11 h-11 rounded-full bg-neutral/90 text-neutral-content shadow-lg border border-white/10 hover:bg-neutral hover:scale-110 transition-all duration-300 animate-spider-reveal"
                                     title={item.label}
                                     style={{
-                                        animationDelay: `${(menuItems.length * 50) + 100 + (index * 50)}ms`
+                                        animationDelay: `${spiderActionsBaseDelay + index * 50}ms`
                                     }}
                                 >
                                     {item.icon}
@@ -462,13 +474,13 @@ export function SpiderMenu() {
                                     setIsOpen(false);
                                 }}
                                 className="flex flex-row items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-neutral/90 text-neutral-content shadow-lg border border-white/10 hover:bg-neutral hover:scale-105 transition-all duration-300 animate-spider-reveal self-end"
-                                title="Instaliraj aplikaciju"
+                                title={t('spiderMenu.actions.install')}
                                 style={{
-                                    animationDelay: `${(menuItems.length * 50) + 100 + (actionItems.length * 50)}ms`
+                                    animationDelay: `${spiderActionsBaseDelay + actionItems.length * 50}ms`
                                 }}
                             >
                                 <Download className="w-5 h-5" />
-                                <span className="text-[9px] font-black tracking-widest">INSTALIRAJ</span>
+                                <span className="text-[9px] font-black tracking-widest">{t('spiderMenu.actions.install').toUpperCase()}</span>
                             </button>
                         )}
                     </div>
@@ -478,5 +490,22 @@ export function SpiderMenu() {
 
             </div >
         </div >
+        {isOpen && (
+            <div
+                className="fixed right-3 sm:right-4 z-[2001] flex gap-2.5 animate-spider-reveal"
+                style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.875rem)' }}
+            >
+                <FlatLanguageFlags
+                    currentLang={currentLang}
+                    onSelectHr={() => switchLanguage('hr')}
+                    onSelectEn={() => switchLanguage('en')}
+                    onSelectDe={() => switchLanguage('de')}
+                    titleHr={t('spiderMenu.actions.languageCroatian')}
+                    titleEn={t('spiderMenu.actions.languageEnglish')}
+                    titleDe={t('spiderMenu.actions.languageGerman')}
+                />
+            </div>
+        )}
+        </>
     );
 }

@@ -1,4 +1,5 @@
-import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BadgeWithPanel } from './BadgeWithPanel';
 import { ServiceAlerts } from './ServiceAlerts';
 import { RealtimeFeedToggleIcon } from './RealtimeFeedToggleIcon';
@@ -38,9 +39,10 @@ const detailsPopoverClass =
   'absolute right-0 bottom-10 z-[1100] bg-base-100 rounded-xl shadow-xl border border-base-200 p-3 w-72 text-xs';
 
 function LegendPanelContent() {
+  const { t } = useTranslation();
   return (
     <>
-      <p className="font-semibold text-base-content mb-1">Legenda</p>
+      <p className="font-semibold text-base-content mb-1">{t('realtimePanel.legendTitle')}</p>
 
       {/* Tram */}
       <div className="flex items-center gap-2">
@@ -53,14 +55,14 @@ function LegendPanelContent() {
             <text x="11" y="14" textAnchor="middle" fontSize="7" fontWeight="bold" fill="white" fontFamily="system-ui,sans-serif">T1</text>
           </svg>
         </div>
-        <span className="text-base-content/80">Tramvaj (GPS, smjer poznat)</span>
+        <span className="text-base-content/80">{t('realtimePanel.legend.tramGpsKnown')}</span>
       </div>
       <div className="flex items-center gap-2">
         <svg width="20" height="20" viewBox="0 0 20 20">
           <circle cx="10" cy="10" r="7" fill="#2337ff" fillOpacity="0.85" stroke="white" strokeWidth="2" />
           <text x="10" y="13" textAnchor="middle" fontSize="7" fontWeight="bold" fill="white" fontFamily="system-ui,sans-serif">T1</text>
         </svg>
-        <span className="text-base-content/80">Tramvaj (u mirovanju)</span>
+        <span className="text-base-content/80">{t('realtimePanel.legend.tramStopped')}</span>
       </div>
 
       <div className="divider my-0.5" />
@@ -76,14 +78,14 @@ function LegendPanelContent() {
             <text x="11" y="14" textAnchor="middle" fontSize="6" fontWeight="bold" fill="white" fontFamily="system-ui,sans-serif">109</text>
           </svg>
         </div>
-        <span className="text-base-content/80">Autobus (GPS, smjer poznat)</span>
+        <span className="text-base-content/80">{t('realtimePanel.legend.busGpsKnown')}</span>
       </div>
       <div className="flex items-center gap-2">
         <svg width="20" height="20" viewBox="0 0 20 20">
           <circle cx="10" cy="10" r="7" fill="#d97706" fillOpacity="0.85" stroke="white" strokeWidth="2" />
           <text x="10" y="13" textAnchor="middle" fontSize="6" fontWeight="bold" fill="white" fontFamily="system-ui,sans-serif">109</text>
         </svg>
-        <span className="text-base-content/80">Autobus (u mirovanju)</span>
+        <span className="text-base-content/80">{t('realtimePanel.legend.busStopped')}</span>
       </div>
 
       <div className="divider my-0.5" />
@@ -98,7 +100,7 @@ function LegendPanelContent() {
             <circle cx="9" cy="9" r="5" fill="#2563eb" fillOpacity="0.9" stroke="white" strokeWidth="1.5" />
           </svg>
         </div>
-        <span className="text-base-content/80">Tramvajska stanica</span>
+        <span className="text-base-content/80">{t('realtimePanel.legend.stopTram')}</span>
       </div>
       <div className="flex items-center gap-2">
         <div style={{ position: 'relative', width: 18, height: 18, flexShrink: 0 }}>
@@ -109,19 +111,19 @@ function LegendPanelContent() {
             <circle cx="9" cy="9" r="5" fill="#d97706" fillOpacity="0.9" stroke="white" strokeWidth="1.5" />
           </svg>
         </div>
-        <span className="text-base-content/80">Autobusna stanica</span>
+        <span className="text-base-content/80">{t('realtimePanel.legend.stopBus')}</span>
       </div>
       <div className="flex items-center gap-2">
         <svg width="18" height="18" viewBox="0 0 18 18">
           <circle cx="9" cy="9" r="5" fill="#475569" fillOpacity="0.9" stroke="white" strokeWidth="1.5" />
         </svg>
-        <span className="text-base-content/80">Mješovita stanica</span>
+        <span className="text-base-content/80">{t('realtimePanel.legend.stopMixed')}</span>
       </div>
       <div className="flex items-center gap-2">
         <svg width="18" height="18" viewBox="0 0 18 18">
           <circle cx="9" cy="9" r="7" fill="#ff6b6b" fillOpacity="1" stroke="white" strokeWidth="2" />
         </svg>
-        <span className="text-base-content/80">Odabrana stanica</span>
+        <span className="text-base-content/80">{t('realtimePanel.legend.stopSelected')}</span>
       </div>
     </>
   );
@@ -148,6 +150,7 @@ export const RealtimeStatusPanel = forwardRef<
     realtimeLoading,
   } = props;
 
+  const { t } = useTranslation();
   const [legendOpen, setLegendOpen] = useState(false);
   const [realtimeDetailsOpen, setRealtimeDetailsOpen] = useState(false);
   const [nowTick, setNowTick] = useState(() => Date.now());
@@ -190,64 +193,117 @@ export const RealtimeStatusPanel = forwardRef<
   const nextPingClock =
     nextPollAtMs != null ? new Date(nextPollAtMs).toLocaleTimeString() : null;
 
-  const detailsPanelContent = (
-    <div className="text-[13px] text-base-content/80 space-y-2">
-      <div>
-        <div className="flex justify-between"><span className="font-medium">Vrijeme feeda ZET-a</span><span>{realtimeStats?.lastUpdate ? realtimeStats.lastUpdate.toLocaleString() : '—'}</span></div>
-        <div className="text-[11px] text-base-content/60">Označava kada je feed posljednji put ažuriran od strane ZET-a.</div>
-        {realtimeStats?.lastUpdate && (
-          <div className="mt-1 text-[11px] text-base-content/60 flex justify-between">
-            <span>Starost feeda</span>
-            <span>{feedAgeStr || '—'}</span>
+  const detailsPanelContent = useMemo(
+    () => (
+      <div className="text-[13px] text-base-content/80 space-y-2">
+        <div>
+          <div className="flex justify-between">
+            <span className="font-medium">{t('realtimePanel.tech.zetFeedTime')}</span>
+            <span>{realtimeStats?.lastUpdate ? realtimeStats.lastUpdate.toLocaleString() : '—'}</span>
           </div>
-        )}
-      </div>
+          <div className="text-[11px] text-base-content/60">{t('realtimePanel.tech.zetFeedTimeHint')}</div>
+          {realtimeStats?.lastUpdate && (
+            <div className="mt-1 text-[11px] text-base-content/60 flex justify-between">
+              <span>{t('realtimePanel.tech.feedAge')}</span>
+              <span>{feedAgeStr || '—'}</span>
+            </div>
+          )}
+        </div>
 
-      <div>
-        <div className="flex justify-between"><span className="font-medium">Vrijeme proxy servisa</span><span>{workerTimestamp ? (isNaN(Date.parse(workerTimestamp)) ? workerTimestamp : new Date(workerTimestamp).toLocaleString()) : '—'}</span></div>
-        <div className="text-[11px] text-base-content/60">Pokazuje kada je proxy preuzeo feed.</div>
-      </div>
-
-      <div>
-        <div className="flex justify-between"><span className="font-medium">Fetch latency</span><span>{fetchLatencyMs != null ? `${fetchLatencyMs} ms` : '—'}</span></div>
-        <div className="text-[11px] text-base-content/60">Mjeri vrijeme prijenosa između klijenta i proxy servisa.</div>
-      </div>
-
-      <div>
-        <div className="flex justify-between">
-          <span className="font-medium">Sljedeći ping</span>
-          <span>
-            {nextPollAtMs != null
-              ? `za ${nextPingLabel} (~${nextPingClock})`
-              : realtimeLoading
-                ? 'u tijeku…'
+        <div>
+          <div className="flex justify-between">
+            <span className="font-medium">{t('realtimePanel.tech.proxyTime')}</span>
+            <span>
+              {workerTimestamp
+                ? isNaN(Date.parse(workerTimestamp))
+                  ? workerTimestamp
+                  : new Date(workerTimestamp).toLocaleString()
                 : '—'}
-          </span>
-        </div>
-        <div className="text-[11px] text-base-content/60">
-          Procijenjeno vrijeme sljedećeg zahtjeva prema proxyju (prilagođeno predmemoriji).
-        </div>
-      </div>
-
-      <div>
-        <div className="flex justify-between"><span className="font-medium">Vrijeme sinkronizacije (klijent)</span><span>{lastUpdate ? new Date(lastUpdate).toLocaleString() : '—'}</span></div>
-        <div className="text-[11px] text-base-content/60">Vrijeme kada je ova aplikacija primila i obradila feed.</div>
-        {realtimeStats && (
-          <div className="mt-1 text-[11px] text-base-content/60">
-            <div className="flex justify-between"><span>Entities</span><span>{realtimeStats.totalEntities}</span></div>
-            <div className="flex justify-between"><span>Vehicle positions</span><span>{realtimeStats.vehiclePositions}</span></div>
-            <div className="flex justify-between"><span>Trip updates</span><span>{realtimeStats.tripUpdates}</span></div>
-            <div className="flex justify-between"><span>Service alerts</span><span>{realtimeStats.serviceAlerts}</span></div>
+            </span>
           </div>
-        )}
-      </div>
+          <div className="text-[11px] text-base-content/60">{t('realtimePanel.tech.proxyTimeHint')}</div>
+        </div>
 
-      <div>
-        <div className="flex justify-between"><span className="font-medium">Status predmemorije</span><span>{cacheStatus ?? '—'}</span></div>
-        <div className="flex justify-between"><span>Cache age</span><span>{cacheAgeSeconds != null ? `${cacheAgeSeconds} s` : '—'}</span></div>
-        <div className="text-[11px] text-base-content/60"><span className="font-semibold">HIT</span> = posluženo iz predmemorije, <span className="font-semibold">MISS</span> = dohvaćeno iz izvornog feeda.</div>
+        <div>
+          <div className="flex justify-between">
+            <span className="font-medium">{t('realtimePanel.tech.fetchLatency')}</span>
+            <span>{fetchLatencyMs != null ? `${fetchLatencyMs} ms` : '—'}</span>
+          </div>
+          <div className="text-[11px] text-base-content/60">{t('realtimePanel.tech.fetchLatencyHint')}</div>
+        </div>
+
+        <div>
+          <div className="flex justify-between">
+            <span className="font-medium">{t('realtimePanel.tech.nextPing')}</span>
+            <span>
+              {nextPollAtMs != null
+                ? t('realtimePanel.tech.nextPingScheduled', {
+                    remain: nextPingLabel,
+                    clock: nextPingClock ?? '—',
+                  })
+                : realtimeLoading
+                  ? t('realtimePanel.tech.nextPingInProgress')
+                  : '—'}
+            </span>
+          </div>
+          <div className="text-[11px] text-base-content/60">{t('realtimePanel.tech.nextPingHint')}</div>
+        </div>
+
+        <div>
+          <div className="flex justify-between">
+            <span className="font-medium">{t('realtimePanel.tech.clientSync')}</span>
+            <span>{lastUpdate ? new Date(lastUpdate).toLocaleString() : '—'}</span>
+          </div>
+          <div className="text-[11px] text-base-content/60">{t('realtimePanel.tech.clientSyncHint')}</div>
+          {realtimeStats && (
+            <div className="mt-1 text-[11px] text-base-content/60">
+              <div className="flex justify-between">
+                <span>{t('realtimePanel.tech.entities')}</span>
+                <span>{realtimeStats.totalEntities}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>{t('realtimePanel.tech.vehiclePositions')}</span>
+                <span>{realtimeStats.vehiclePositions}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>{t('realtimePanel.tech.tripUpdates')}</span>
+                <span>{realtimeStats.tripUpdates}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>{t('realtimePanel.tech.serviceAlerts')}</span>
+                <span>{realtimeStats.serviceAlerts}</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div>
+          <div className="flex justify-between">
+            <span className="font-medium">{t('realtimePanel.tech.cacheStatus')}</span>
+            <span>{cacheStatus ?? '—'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>{t('realtimePanel.tech.cacheAge')}</span>
+            <span>{cacheAgeSeconds != null ? `${cacheAgeSeconds} s` : '—'}</span>
+          </div>
+          <div className="text-[11px] text-base-content/60">{t('realtimePanel.tech.cacheLegend')}</div>
+        </div>
       </div>
-    </div>
+    ),
+    [
+      t,
+      realtimeStats,
+      feedAgeStr,
+      workerTimestamp,
+      fetchLatencyMs,
+      nextPollAtMs,
+      nextPingLabel,
+      nextPingClock,
+      realtimeLoading,
+      lastUpdate,
+      cacheStatus,
+      cacheAgeSeconds,
+    ],
   );
 
   const pollSec = Math.round(REALTIME_POLL_INTERVAL / 1000);
@@ -280,8 +336,8 @@ export const RealtimeStatusPanel = forwardRef<
         open={legendOpen}
         onOpenChange={handleLegendOpenChange}
         badgeClassName={legendBtnClass}
-        ariaLabel="Prikaži legendu"
-        title="Legenda"
+        ariaLabel={t('realtimePanel.showLegendAria')}
+        title={t('realtimePanel.legendTitle')}
         panelContent={<LegendPanelContent />}
         popoverClassName={legendPopoverClass}
       >
@@ -293,11 +349,14 @@ export const RealtimeStatusPanel = forwardRef<
         open={realtimeDetailsOpen}
         onOpenChange={handleDetailsOpenChange}
         badgeClassName={realtimeBtnClass}
-        ariaLabel="Prikaži tehničke detalje podataka"
-        title={`ZET podaci osvježeni prije ${timeAgoStr || '...'} (osvježavanje svakih ${pollSec} s)`}
+        ariaLabel={t('realtimePanel.showDetailsAria')}
+        title={t('realtimePanel.detailsTitle', {
+          timeAgo: timeAgoStr || '...',
+          pollSec,
+        })}
         panelContent={
           <>
-            <p className="font-semibold text-sm mb-2">Tehnički detalji</p>
+            <p className="font-semibold text-sm mb-2">{t('realtimePanel.detailsHeading')}</p>
             {detailsPanelContent}
           </>
         }

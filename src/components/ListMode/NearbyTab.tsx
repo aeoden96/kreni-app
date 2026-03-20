@@ -3,6 +3,8 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { LocateFixed, MapPin, Navigation } from 'lucide-react';
 import type { Stop, Route } from '../../utils/gtfs';
 import { findNearestStops } from '../../utils/gtfs';
@@ -15,9 +17,9 @@ interface NearbyTabProps {
   onSelectStop: (stopId: string) => void;
 }
 
-function formatDistance(km: number): string {
-  if (km < 1) return `${Math.round(km * 1000)} metara`;
-  return `${km.toFixed(1)} km`;
+function formatDistanceKm(km: number, t: TFunction): string {
+  if (km < 1) return t('nearbyStops.distanceMeters', { meters: Math.round(km * 1000) });
+  return t('nearbyStops.distanceKm', { km: km.toFixed(1) });
 }
 
 /** Mini card for a nearby stop with live vehicle badges */
@@ -34,6 +36,7 @@ function NearbyStopCard({
   routesById: Map<string, Route>;
   onSelect: () => void;
 }) {
+  const { t } = useTranslation();
   const [nowMs, setNowMs] = useState(() => Date.now());
   useEffect(() => {
     const interval = setInterval(() => setNowMs(Date.now()), 5000);
@@ -54,7 +57,7 @@ function NearbyStopCard({
           <span className="font-semibold text-sm flex-1 truncate">{stop.name}</span>
           <span className="text-xs text-base-content/50 flex items-center gap-1 shrink-0">
             <Navigation className="w-3 h-3" />
-            {formatDistance(distanceKm)}
+            {formatDistanceKm(distanceKm, t)}
           </span>
         </div>
         {loading ? (
@@ -72,13 +75,15 @@ function NearbyStopCard({
                   style={{ backgroundColor: v.routeType === 0 ? '#2563eb' : '#d97706' }}
                 >
                   {v.routeShortName}
-                  <span className="opacity-80">{mins === 0 ? 'dolazi' : `${mins} min`}</span>
+                  <span className="opacity-80">
+                    {mins === 0 ? t('nearbyTab.arrivingNow') : t('nearbyTab.minutes', { count: mins })}
+                  </span>
                 </span>
               );
             })}
           </div>
         ) : (
-          <span className="text-xs text-base-content/40 mt-1">Nema vozila u blizini</span>
+          <span className="text-xs text-base-content/40 mt-1">{t('nearbyTab.noVehiclesNearby')}</span>
         )}
       </div>
     </button>
@@ -86,6 +91,7 @@ function NearbyStopCard({
 }
 
 export function NearbyTab({ stops, stopsById, routesById, onSelectStop }: NearbyTabProps) {
+  const { t } = useTranslation();
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [locating, setLocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,7 +105,7 @@ export function NearbyTab({ stops, stopsById, routesById, onSelectStop }: Nearby
 
   const handleLocate = () => {
     if (!navigator.geolocation) {
-      setError('Geolokacija nije dostupna u ovom pregledniku.');
+      setError(t('nearbyTab.geoNotSupported'));
       return;
     }
     setLocating(true);
@@ -110,7 +116,7 @@ export function NearbyTab({ stops, stopsById, routesById, onSelectStop }: Nearby
         setLocating(false);
       },
       () => {
-        setError('Lokacija nije dostupna. Provjerite dozvole preglednika.');
+        setError(t('nearbyTab.geoPermissionDenied'));
         setLocating(false);
         setTimeout(() => setError(null), 4000);
       },
@@ -128,13 +134,11 @@ export function NearbyTab({ stops, stopsById, routesById, onSelectStop }: Nearby
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center min-h-[50vh]">
         <LocateFixed className="w-12 h-12 text-base-content/20 mb-4" />
-        <p className="text-lg font-semibold text-base-content/60">Stanice u blizini</p>
-        <p className="text-sm text-base-content/40 mt-1 mb-4">
-          Dopustite pristup lokaciji za prikaz najbližih stanica
-        </p>
+        <p className="text-lg font-semibold text-base-content/60">{t('nearbyTab.emptyTitle')}</p>
+        <p className="text-sm text-base-content/40 mt-1 mb-4">{t('nearbyTab.emptyHint')}</p>
         <button onClick={handleLocate} className="btn btn-primary btn-sm gap-2">
           <LocateFixed className="w-4 h-4" />
-          Pronađi moju lokaciju
+          {t('nearbyTab.findMyLocation')}
         </button>
       </div>
     );
@@ -145,7 +149,7 @@ export function NearbyTab({ stops, stopsById, routesById, onSelectStop }: Nearby
       {/* Locate button + status */}
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-semibold uppercase text-base-content/50 px-1">
-          Najbliže stanice
+          {t('nearbyTab.sectionTitle')}
         </h3>
         <button
           onClick={handleLocate}
@@ -157,7 +161,7 @@ export function NearbyTab({ stops, stopsById, routesById, onSelectStop }: Nearby
           ) : (
             <LocateFixed className="w-3.5 h-3.5" />
           )}
-          Osvježi
+          {t('nearbyTab.refresh')}
         </button>
       </div>
 

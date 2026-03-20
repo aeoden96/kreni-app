@@ -6,6 +6,8 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import type { ApproachingVehicle } from '../../hooks/useApproachingVehicles';
 import { minutesToTime } from '../../utils/gtfs';
 
@@ -18,17 +20,17 @@ interface ApproachingVehicleCardProps {
 const WINDOW_SECONDS = 30 * 60;
 
 /** Format distance: metres below 1000, km above */
-function formatDistance(meters: number): string {
-  if (meters < 1000) return `${meters} metara`;
-  return `${(meters / 1000).toFixed(1)} km`;
+function formatDistance(meters: number, t: TFunction): string {
+  if (meters < 1000) return t('common.metresShort', { metres: meters });
+  return t('common.kilometres', { km: (meters / 1000).toFixed(1) });
 }
 
 /** Format GPS-derived ETA as a short string */
-function formatGpsEta(seconds: number): string {
-  if (seconds < 30) return 'Dolazi';
-  if (seconds < 120) return `~${Math.round(seconds)} sek`;
+function formatGpsEta(seconds: number, t: TFunction): string {
+  if (seconds < 30) return t('vehicleCard.arriving');
+  if (seconds < 120) return t('vehicleCard.secondsTilde', { secs: Math.round(seconds) });
   const mins = Math.round(seconds / 60);
-  return `~${mins} min`;
+  return t('vehicleCard.minutesTilde', { mins });
 }
 
 /** Format schedule-based ETA */
@@ -36,18 +38,28 @@ function formatScheduleEta(
   seconds: number,
   isScheduled: boolean,
   etaMinutes: number,
-  delaySeconds: number | null
+  delaySeconds: number | null,
+  t: TFunction,
 ): string {
-  const prefix = isScheduled ? '~' : '';
-  if (seconds <= 0) return 'Sada';
-  if (seconds < 120) return `${prefix}za ${Math.round(seconds)} sek`;
+  if (seconds <= 0) return t('vehicleCard.nowTilde');
+  if (seconds < 120) {
+    const s = Math.round(seconds);
+    return isScheduled
+      ? t('vehicleCard.secondsTilde', { secs: s })
+      : t('vehicleCard.inSeconds', { secs: s });
+  }
   const mins = Math.round(seconds / 60);
-  if (mins < 60) return `${prefix}za ${mins} min`;
+  if (mins < 60) {
+    return isScheduled
+      ? t('vehicleCard.minutesTilde', { mins })
+      : t('vehicleCard.inMinutes', { mins });
+  }
   const adjusted = etaMinutes + (delaySeconds ?? 0) / 60;
-  return `${prefix}${minutesToTime(adjusted)}`;
+  return `${isScheduled ? '~' : ''}${minutesToTime(adjusted)}`;
 }
 
 export function ApproachingVehicleCard({ vehicle, onRouteClick }: ApproachingVehicleCardProps) {
+  const { t } = useTranslation();
   const isScheduled = vehicle.confidence === 'scheduled';
   const isArriving = !vehicle.passedStop && vehicle.arrivingInSeconds <= 0;
   const isAtStop = vehicle.distanceMeters !== null && vehicle.distanceMeters < 15;
@@ -89,17 +101,20 @@ export function ApproachingVehicleCard({ vehicle, onRouteClick }: ApproachingVeh
   let primaryText: string;
   let primaryColorClass: string;
   if (vehicle.passedStop) {
-    primaryText = vehicle.distanceMeters !== null ? `${formatDistance(vehicle.distanceMeters)} ↑` : 'Prošao';
+    primaryText =
+      vehicle.distanceMeters !== null
+        ? `${formatDistance(vehicle.distanceMeters, t)} ↑`
+        : t('vehicleCard.passed');
     primaryColorClass = 'text-base-content/40';
   } else if (isAtStop) {
-    primaryText = 'Na stajalištu';
+    primaryText = t('vehicleCard.atStop');
     primaryColorClass = 'text-success';
   } else if (vehicle.distanceMeters !== null) {
-    primaryText = formatDistance(vehicle.distanceMeters);
+    primaryText = formatDistance(vehicle.distanceMeters, t);
     primaryColorClass = isArriving ? 'text-success' : isScheduled ? 'text-base-content/50' : isNear ? 'text-success' : 'text-base-content';
   } else {
     // No GPS — fall back to schedule ETA as primary
-    primaryText = formatScheduleEta(vehicle.arrivingInSeconds, isScheduled, vehicle.etaMinutes, vehicle.delaySeconds);
+    primaryText = formatScheduleEta(vehicle.arrivingInSeconds, isScheduled, vehicle.etaMinutes, vehicle.delaySeconds, t);
     primaryColorClass = isArriving ? 'text-success' : isScheduled ? 'text-base-content/50' : 'text-base-content';
   }
 
@@ -107,8 +122,8 @@ export function ApproachingVehicleCard({ vehicle, onRouteClick }: ApproachingVeh
   let secondaryText: string | null = null;
   if (!vehicle.passedStop && !isAtStop && vehicle.distanceMeters !== null) {
     secondaryText = vehicle.etaFromGpsSeconds !== null
-      ? formatGpsEta(vehicle.etaFromGpsSeconds)
-      : formatScheduleEta(vehicle.arrivingInSeconds, isScheduled, vehicle.etaMinutes, vehicle.delaySeconds);
+      ? formatGpsEta(vehicle.etaFromGpsSeconds, t)
+      : formatScheduleEta(vehicle.arrivingInSeconds, isScheduled, vehicle.etaMinutes, vehicle.delaySeconds, t);
   }
 
   const dimClass = isScheduled || vehicle.passedStop ? 'opacity-50' : '';
@@ -142,7 +157,7 @@ export function ApproachingVehicleCard({ vehicle, onRouteClick }: ApproachingVeh
               {vehicle.passedStop ? (
                 <>
                   <span className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />
-                  <span>Prošao stajalište</span>
+                  <span>{t('vehicleCard.passedStop')}</span>
                 </>
               ) : vehicle.confidence === 'realtime' ? (
                 <>
@@ -150,17 +165,17 @@ export function ApproachingVehicleCard({ vehicle, onRouteClick }: ApproachingVeh
                   {vehicle.stopsAway !== null ? (
                     <span>
                       {vehicle.stopsAway <= 1
-                        ? 'na stajalištu'
-                        : `${vehicle.stopsAway - 1} ${vehicle.stopsAway - 1 === 1 ? 'stajalište' : 'stajališta'}`}
+                        ? t('vehicleCard.atPlatform')
+                        : t('vehicleCard.stopsAway', { count: vehicle.stopsAway - 1 })}
                     </span>
                   ) : (
-                    <span>GPS uživo</span>
+                    <span>{t('vehicleCard.gpsLive')}</span>
                   )}
                 </>
               ) : (
                 <>
                   <span className="w-1.5 h-1.5 rounded-full bg-base-content/30 shrink-0" />
-                  <span>prema redu vožnje</span>
+                  <span>{t('vehicleCard.perSchedule')}</span>
                 </>
               )}
             </div>
@@ -181,7 +196,7 @@ export function ApproachingVehicleCard({ vehicle, onRouteClick }: ApproachingVeh
               </div>
             )}
             {vehicle.distanceMeters === null && vehicle.delaySeconds !== null && !isLate && !isEarly && (
-              <div className="text-xs text-success font-medium">Na vrij.</div>
+              <div className="text-xs text-success font-medium">{t('vehicleCard.onTimeShort')}</div>
             )}
           </div>
         </div>

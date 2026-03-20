@@ -19,7 +19,9 @@ interface CacheData {
 }
 
 const CACHE_KEY = 'kreni-nextbike-cache';
-const CACHE_DURATION_MS = 60 * 1000; // 1 minute
+
+/** How long Nextbike data is considered fresh; also the poll interval when the hook is enabled. */
+export const NEXTBIKE_CACHE_TTL_MS = 60 * 1000;
 const API_URL = 'https://maps.nextbike.net/maps/nextbike-live.json?city=1172&domains=hd&list_cities=0&bikes=0';
 
 export function useNextbikeData(enabled: boolean) {
@@ -56,7 +58,7 @@ export function useNextbikeData(enabled: boolean) {
                 if (cacheStr) {
                     try {
                         const cache: CacheData = JSON.parse(cacheStr);
-                        if (Date.now() - cache.timestamp < CACHE_DURATION_MS) {
+                        if (Date.now() - cache.timestamp < NEXTBIKE_CACHE_TTL_MS) {
                             if (isMounted) {
                                 setStations(cache.stations);
                                 setLastFetched(cache.timestamp);
@@ -107,7 +109,7 @@ export function useNextbikeData(enabled: boolean) {
         };
 
         fetchData();
-        intervalRef.current = window.setInterval(fetchData, CACHE_DURATION_MS);
+        intervalRef.current = window.setInterval(fetchData, NEXTBIKE_CACHE_TTL_MS);
 
         return () => {
             isMounted = false;

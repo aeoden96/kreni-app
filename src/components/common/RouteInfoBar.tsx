@@ -9,6 +9,8 @@
  *  3. Following (isFollowing) — same as #2 but with colored border, distance, pulse icon
  */
 
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Maximize2, X, Train, Bus, Star, Navigation, MapPin } from 'lucide-react';
 import type { Route, Stop, RouteTimetable } from '../../utils/gtfs';
 import type { VehiclePosition } from '../../utils/vehicles';
@@ -48,16 +50,16 @@ interface RouteInfoBarProps {
 const TRAM_COLOR = '#2563eb'; // blue-600
 const BUS_COLOR = '#d97706';  // amber-600
 
-function formatDelay(seconds: number): { text: string; positive: boolean } {
+function formatDelay(seconds: number, t: TFunction): { text: string; positive: boolean } {
   const abs = Math.abs(seconds);
   const mins = Math.floor(abs / 60);
   const secs = abs % 60;
-  const label = mins > 0 ? `${mins} min ${secs} s` : `${secs} s`;
+  const time = mins > 0 ? `${mins} min ${secs} s` : `${secs} s`;
   return seconds > 30
-    ? { text: `+${label} kašnjenje`, positive: false }
+    ? { text: t('routeBar.delayLate', { time }), positive: false }
     : seconds < -30
-      ? { text: `${label} ispred`, positive: true }
-      : { text: 'na vrijeme', positive: true };
+      ? { text: t('routeBar.delayEarly', { time }), positive: true }
+      : { text: t('routeBar.onTime'), positive: true };
 }
 
 function haversineMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -103,6 +105,7 @@ export function RouteInfoBar({
   followedVehiclePos,
   routeTimetable,
 }: RouteInfoBarProps) {
+  const { t } = useTranslation();
   const color = route.type === 0 ? TRAM_COLOR : BUS_COLOR;
   const isTram = route.type === 0;
   const { favouriteRouteIds, toggleFavouriteRoute } = useSettingsStore();
@@ -166,21 +169,21 @@ export function RouteInfoBar({
   let stopLabel = '';
   let stopDetail = '';
   if (gpsNextStop) {
-    stopLabel = 'Sljedeća postaja';
+    stopLabel = t('routeBar.nextStop');
     stopDetail = gpsNextStop.name;
   } else if (currentStop) {
     if (stopStatus === VehicleStopStatus.STOPPED_AT) {
-      stopLabel = 'Na postaji';
+      stopLabel = t('routeBar.atStop');
       stopDetail = currentStop.name;
     } else if (stopStatus === VehicleStopStatus.INCOMING_AT) {
-      stopLabel = 'Dolazi na';
+      stopLabel = t('routeBar.arrivingAt');
       stopDetail = currentStop.name;
     } else {
-      stopLabel = 'Sljedeća postaja';
+      stopLabel = t('routeBar.nextStop');
       stopDetail = currentStop.name;
     }
   } else if (derivedNextStop) {
-    stopLabel = 'Sljedeća postaja';
+    stopLabel = t('routeBar.nextStop');
     stopDetail = derivedNextStop.name;
   }
 
@@ -213,7 +216,7 @@ export function RouteInfoBar({
   })();
 
   // ── Delay ─────────────────────────────────────────────────────────────────
-  const delayInfo = delaySeconds !== null ? formatDelay(delaySeconds) : null;
+  const delayInfo = delaySeconds !== null ? formatDelay(delaySeconds, t) : null;
 
   // ── Distance to next stop (follow mode only) ───────────────────────────────
   const distanceTargetStop: Stop | null = (() => {
@@ -286,7 +289,7 @@ export function RouteInfoBar({
             <button
               onClick={() => toggleFavouriteRoute(route.id)}
               className="btn btn-ghost btn-circle btn-xs min-h-[32px] min-w-[32px]"
-              title={isFav ? 'Ukloni iz favorita' : 'Dodaj u favorite'}
+              title={isFav ? t('search.favouriteRemove') : t('search.favouriteAdd')}
             >
               <Star
                 className="w-4 h-4"
@@ -299,7 +302,7 @@ export function RouteInfoBar({
               <button
                 onClick={() => onFollowStart(followCandidateTripId)}
                 className="btn btn-ghost btn-circle btn-xs min-h-[32px] min-w-[32px]"
-                title="Prati ovo vozilo"
+                title={t('common.followVehicle')}
               >
                 <Navigation className="w-4 h-4" />
               </button>
@@ -307,14 +310,14 @@ export function RouteInfoBar({
             <button
               onClick={onExpand}
               className="btn btn-ghost btn-circle btn-xs min-h-[32px] min-w-[32px]"
-              title="Prikaži detalje rute"
+              title={t('common.showRouteDetails')}
             >
               <Maximize2 className="w-4 h-4" />
             </button>
             <button
               onClick={() => { onUnfollow?.(); onClose(); }}
               className="btn btn-ghost btn-circle btn-xs min-h-[32px] min-w-[32px]"
-              title={isFollowing ? 'Prestani pratiti vozilo' : 'Zatvori'}
+              title={isFollowing ? t('common.stopFollowingVehicle') : t('common.close')}
             >
               <X className="w-4 h-4" />
             </button>
@@ -433,7 +436,7 @@ export function RouteInfoBar({
             ) : (
               <Bus className="w-3.5 h-3.5 shrink-0" />
             )}
-            <span>Nema aktivnih vozila</span>
+            <span>{t('routeBar.noActiveVehicles')}</span>
           </div>
         ) : null}
       </div>

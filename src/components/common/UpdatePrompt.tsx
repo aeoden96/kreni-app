@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { RefreshCw, X } from 'lucide-react';
 import { useAppUpdate } from '../../hooks/useAppUpdate';
 
@@ -23,6 +24,7 @@ interface UpdatePromptProps {
 const noop = () => {};
 
 export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePromptProps = {}) {
+  const { t } = useTranslation();
   const hook = useAppUpdate();
   const needRefresh = storybook || hook.needRefresh;
   const updateApp = storybook ? noop : hook.updateApp;
@@ -35,7 +37,7 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
       setNotes(
         storybookNotes ?? {
           version: __APP_VERSION__,
-          changes: ['Poboljšanja performansi', 'Nove funkcionalnosti', 'Ispravci grešaka'],
+          changes: [t('updatePrompt.storyPerf'), t('updatePrompt.storyFeatures'), t('updatePrompt.storyFixes')],
         },
       );
       return;
@@ -44,7 +46,7 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
       .then((r) => r.ok ? r.json() as Promise<ReleaseNotes> : null)
       .then((data) => { if (data) setNotes(data); })
       .catch(() => {/* silently ignore */});
-  }, [needRefresh, storybook, storybookNotes]);
+  }, [needRefresh, storybook, storybookNotes, t]);
 
   // Force-update: auto-apply without user interaction
   useEffect(() => {
@@ -74,7 +76,7 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
             </div>
             <div className="flex-1 min-w-0 overflow-y-auto pr-1">
               <p id="update-prompt-title" className="text-lg sm:text-xl font-semibold text-base-content leading-snug">
-                Nova verzija je dostupna
+                {t('updatePrompt.title')}
                 <span className="block mt-1 text-sm font-normal text-base-content/55">
                   v{__APP_VERSION__}
                 </span>
@@ -92,11 +94,11 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
                 <ul className="mt-4 space-y-2 text-base text-base-content/70 leading-relaxed">
                   <li className="flex gap-2.5">
                     <span className="shrink-0 text-primary font-bold leading-[1.4]">·</span>
-                    <span>Razna poboljšanja i ispravci grešaka</span>
+                    <span>{t('updatePrompt.fallbackGeneral')}</span>
                   </li>
                   <li className="flex gap-2.5">
                     <span className="shrink-0 text-primary font-bold leading-[1.4]">·</span>
-                    <span>Bolje performanse aplikacije</span>
+                    <span>{t('updatePrompt.fallbackPerformance')}</span>
                   </li>
                 </ul>
               )}
@@ -105,7 +107,7 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
               type="button"
               onClick={() => setDismissed(true)}
               className="btn btn-ghost btn-circle btn-sm shrink-0 touch-target -mr-1 -mt-1"
-              aria-label="Zatvori"
+              aria-label={t('common.close')}
             >
               <X size={20} />
             </button>
@@ -116,14 +118,14 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
               onClick={() => setDismissed(true)}
               className="btn btn-outline border-2 border-base-300 bg-base-200/40 hover:bg-base-200/70 w-full sm:w-auto sm:btn-sm min-h-12 sm:min-h-0 font-medium"
             >
-              Kasnije
+              {t('updatePrompt.later')}
             </button>
             <button
               type="button"
               onClick={updateApp}
               className="btn btn-primary shadow-md shadow-primary/25 hover:shadow-lg hover:shadow-primary/30 w-full sm:w-auto sm:btn-sm min-h-12 sm:min-h-0 font-semibold transition-[box-shadow,filter]"
             >
-              Osvježi aplikaciju
+              {t('updatePrompt.refreshApp')}
             </button>
           </div>
         </div>

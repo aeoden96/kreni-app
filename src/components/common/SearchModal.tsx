@@ -4,9 +4,11 @@
  */
 
 import { useState, useMemo, useRef, useEffect, memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Search, X, TrainFront, Bus, MapPin, Star, Clock, ArrowLeftRight, ChevronDown, ChevronRight, ArrowUpDown, Loader2 } from 'lucide-react';
 import type { Route, Stop } from '../../utils/gtfs';
-import { bearingToDirection, isRouteTypeTram, isRouteTypeBus, isRouteTypeRail } from '../../utils/gtfs';
+import { compassLabelForBearing } from '../../utils/localizedCompass';
+import { bearingToCompassKey, isRouteTypeTram, isRouteTypeBus, isRouteTypeRail } from '../../utils/gtfs';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useGTFSMode } from '../../contexts/GTFSModeContext';
 import { trackEvent } from '../../utils/analytics';
@@ -31,10 +33,10 @@ type ParentStopGroup = {
   terminals: Stop[];
 };
 
-function getStopTypeVisuals(routeType?: number): { Icon: typeof TrainFront; color: string; label: string } {
-  if (routeType === 3) return { Icon: Bus, color: '#d97706', label: 'Autobusna stanica' };
-  if (routeType === 2) return { Icon: TrainFront, color: '#dc2626', label: 'Željeznička stanica' };
-  return { Icon: TrainFront, color: '#2563eb', label: 'Tramvajska stanica' };
+function getStopTypeIcons(routeType?: number): { Icon: typeof TrainFront; color: string } {
+  if (routeType === 3) return { Icon: Bus, color: '#d97706' };
+  if (routeType === 2) return { Icon: TrainFront, color: '#dc2626' };
+  return { Icon: TrainFront, color: '#2563eb' };
 }
 
 const TerminalStopRow = memo(function TerminalStopRow({
@@ -50,16 +52,23 @@ const TerminalStopRow = memo(function TerminalStopRow({
   dataDir: string;
   onSelect: (stop: Stop) => void;
 }) {
+  const { t } = useTranslation();
   const { routes, loading: routesLoading } = useStopRoutes(stop.id, routesById, { dataDir });
   const { termini } = useStopTermini(stop.id, stopsById, routesById, { dataDir });
-  const { Icon, color, label } = getStopTypeVisuals(stop.routeType);
+  const { Icon, color } = getStopTypeIcons(stop.routeType);
+  const label =
+    stop.routeType === 3
+      ? t('search.stopTypes.bus')
+      : stop.routeType === 2
+        ? t('search.stopTypes.rail')
+        : t('search.stopTypes.tram');
   const heading = termini.length > 0
-    ? `Smjer prema ${termini.join(', ')}`
+    ? t('search.headingTowards', { place: termini.join(', ') })
     : stop.bearing !== undefined
-      ? `Smjer prema ${bearingToDirection(stop.bearing)}`
+      ? t('search.headingTowards', { place: compassLabelForBearing(stop.bearing, t) })
       : stop.code
-        ? `Smjer ${stop.code}`
-        : 'Smjer nije dostupan';
+        ? t('search.headingCode', { code: stop.code })
+        : t('search.headingUnknown');
 
   return (
     <button
@@ -91,7 +100,7 @@ const TerminalStopRow = memo(function TerminalStopRow({
               )}
             </div>
           ) : (
-            <div className="text-[11px] text-base-content/50 mt-0.5">Nema linija za prikaz</div>
+            <div className="text-[11px] text-base-content/50 mt-0.5">{t('search.noLinesForStop')}</div>
           )}
         </div>
       </div>
@@ -108,6 +117,7 @@ export const SearchModal = memo(function SearchModal({
   onSelectRoute,
   onSelectStop,
 }: SearchModalProps) {
+  const { t } = useTranslation();
   const config = useGTFSMode();
   const [filter, setFilter] = useState<FilterType>(config.id === 'train' ? 'trains' : 'stanice');
   const [stopsMode, setStopsMode] = useState<'search' | 'directions'>('search');
@@ -276,7 +286,7 @@ export const SearchModal = memo(function SearchModal({
         : (() => {
           const seen = new Set<string>();
           return terminalsRaw.filter((s) => {
-            const directionKey = s.bearing !== undefined ? bearingToDirection(s.bearing) : s.code || s.id;
+            const directionKey = s.bearing !== undefined ? bearingToCompassKey(s.bearing) : s.code || s.id;
             if (seen.has(directionKey)) return false;
             seen.add(directionKey);
             return true;
@@ -313,10 +323,11 @@ export const SearchModal = memo(function SearchModal({
 
   const dirResultLabel = useMemo(() => {
     if (!dirFromStop || !dirToStop) return '';
-    if (dirLoading) return 'Traženje direktnih linija...';
-    if (dirResults.length === 0) return 'Nema izravne linije za odabrane stanice';
-    return `${dirResults.length} ${dirResults.length === 1 ? 'linija' : 'linije'}`;
-  }, [dirFromStop, dirToStop, dirLoading, dirResults.length]);
+    if (dirLoading) return t('search.searchingDirectRoutes');
+    if (dirResults.length === 0) return t('search.noDirectRoutes');
+    if (dirResults.length === 1) return t('search.directRoutesSingle');
+    return t('search.directRoutesMany', { count: dirResults.length });
+  }, [dirFromStop, dirToStop, dirLoading, dirResults.length, t]);
 
   useEffect(() => {
     setExpandedStopKeys(new Set());
@@ -399,7 +410,7 @@ export const SearchModal = memo(function SearchModal({
         {/* Header / Search */}
         <div className="p-4 border-b border-base-300">
           <div className="flex items-center gap-2 mb-3">
-            <h2 className="text-lg font-bold flex-1">Pretraži</h2>
+            <h2 className="text-lg font-bold flex-1">{t('search.title')}</h2>
             <button
               onClick={onClose}
               className="btn btn-ghost btn-circle btn-sm min-h-[44px] min-w-[44px]"
@@ -417,15 +428,15 @@ export const SearchModal = memo(function SearchModal({
                   onClick={() => setFilter('trains')}
                 >
                   <TrainFront className="w-4 h-4" />
-                  <span className="hidden sm:inline">Vlakovi ({trainRoutes.length})</span>
-                  <span className="sm:hidden">Vlak ({trainRoutes.length})</span>
+                  <span className="hidden sm:inline">{t('search.tabs.trains', { count: trainRoutes.length })}</span>
+                  <span className="sm:hidden">{t('search.tabs.trainsShort', { count: trainRoutes.length })}</span>
                 </button>
                 <button
                   className={`tab flex-1 min-h-[40px] gap-1 text-xs sm:text-sm ${filter === 'stanice' ? 'tab-active' : ''}`}
                   onClick={() => setFilter('stanice')}
                 >
                   <MapPin className="w-4 h-4" />
-                  Stanice
+                  {t('search.tabs.stations')}
                 </button>
               </>
             ) : (
@@ -435,23 +446,23 @@ export const SearchModal = memo(function SearchModal({
                   onClick={() => setFilter('stanice')}
                 >
                   <MapPin className="w-4 h-4" />
-                  Stanice
+                  {t('search.tabs.stations')}
                 </button>
                 <button
                   className={`tab flex-1 min-h-[40px] gap-1 text-xs sm:text-sm ${filter === 'tram' ? 'tab-active' : ''}`}
                   onClick={() => setFilter('tram')}
                 >
                   <TrainFront className="w-4 h-4" />
-                  <span className="hidden sm:inline">Tramvaji ({trams.length})</span>
-                  <span className="sm:hidden">Tram ({trams.length})</span>
+                  <span className="hidden sm:inline">{t('search.tabs.trams', { count: trams.length })}</span>
+                  <span className="sm:hidden">{t('search.tabs.tramsShort', { count: trams.length })}</span>
                 </button>
                 <button
                   className={`tab flex-1 min-h-[40px] gap-1 text-xs sm:text-sm ${filter === 'bus' ? 'tab-active' : ''}`}
                   onClick={() => setFilter('bus')}
                 >
                   <Bus className="w-4 h-4" />
-                  <span className="hidden sm:inline">Autobusi ({buses.length})</span>
-                  <span className="sm:hidden">Bus ({buses.length})</span>
+                  <span className="hidden sm:inline">{t('search.tabs.buses', { count: buses.length })}</span>
+                  <span className="sm:hidden">{t('search.tabs.busesShort', { count: buses.length })}</span>
                 </button>
                 
               </>
@@ -475,7 +486,13 @@ export const SearchModal = memo(function SearchModal({
                     <input
                       ref={searchInputRef}
                       type="text"
-                      placeholder={isDirsMode ? 'Odakle?' : filter === 'stanice' ? 'Naziv stanice...' : 'Broj ili naziv linije...'}
+                      placeholder={
+                        isDirsMode
+                          ? t('search.placeholder.fromWhere')
+                          : filter === 'stanice'
+                            ? t('search.placeholder.stopName')
+                            : t('search.placeholder.routeQuery')
+                      }
                       value={searchQuery}
                       onChange={(e) => {
                         setSearchQuery(e.target.value);
@@ -520,9 +537,7 @@ export const SearchModal = memo(function SearchModal({
                     stopsMode === 'directions' ? 'btn-primary' : 'btn-ghost border border-base-300'
                   }`}
                   title={
-                    stopsMode === 'search'
-                      ? 'Traži smjer između dvije stanice'
-                      : 'Natrag na pretragu stanice'
+                    stopsMode === 'search' ? t('search.directionsToggleOn') : t('search.directionsToggleOff')
                   }
                   aria-pressed={stopsMode === 'directions'}
                 >
@@ -549,7 +564,7 @@ export const SearchModal = memo(function SearchModal({
                     <input
                       ref={dirToInputRef}
                       type="text"
-                      placeholder="Kamo?"
+                      placeholder={t('search.placeholder.toWhere')}
                       value={dirToQuery}
                       onChange={(e) => { setDirToQuery(e.target.value); setDirActiveField('to'); }}
                       onFocus={() => setDirActiveField('to')}
@@ -588,7 +603,7 @@ export const SearchModal = memo(function SearchModal({
                 className="btn btn-square min-h-[44px] w-[44px] shrink-0 btn-ghost border border-base-300"
                 onClick={handleDirSwap}
                 disabled={!dirFromStop && !dirToStop}
-                aria-label="Zamijeni polazište i odredište"
+                aria-label={t('search.swapStopsAria')}
               >
                 <ArrowUpDown className="w-4 h-4" />
               </button>
@@ -602,7 +617,7 @@ export const SearchModal = memo(function SearchModal({
                 <div className="mt-3">
                   <div className="flex items-center gap-1 text-xs text-base-content/60 mb-1.5">
                     <Star className="w-3 h-3 fill-current text-warning" />
-                    <span>Favoriti:</span>
+                    <span>{t('search.favourites')}</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {favRoutes.map((route) => (
@@ -622,7 +637,7 @@ export const SearchModal = memo(function SearchModal({
                 <div className="mt-3">
                   <div className="flex items-center gap-1 text-xs text-base-content/60 mb-1.5">
                     <Star className="w-3 h-3 fill-current text-warning" />
-                    <span>Favoriti:</span>
+                    <span>{t('search.favourites')}</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {favStops.map((stop) => (
@@ -651,12 +666,12 @@ export const SearchModal = memo(function SearchModal({
                 {dirLoading && (
                   <div className="flex items-center gap-2 text-sm text-base-content/60 px-1">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Učitavanje...
+                    {t('search.loading')}
                   </div>
                 )}
                 {!dirLoading && dirResults.length === 0 && (
                   <div className="text-center text-base-content/50 py-4 text-sm">
-                    Nema izravne linije za odabrane stanice
+                    {t('search.noDirectRoutes')}
                   </div>
                 )}
                 {!dirLoading && dirResults.length > 0 && (
@@ -678,7 +693,10 @@ export const SearchModal = memo(function SearchModal({
                             <div className="min-w-0 flex-1">
                               <div className="text-sm line-clamp-1">{item.route.longName}</div>
                               <div className="text-xs text-base-content/60">
-                                Smjer {item.directionFilter} · {item.stopsBetween + 1} stanica
+                                {t('search.routeDirectionMeta', {
+                                  direction: item.directionFilter,
+                                  count: item.stopsBetween + 1,
+                                })}
                               </div>
                             </div>
                             <VehicleIcon className="w-4 h-4 text-base-content/50 shrink-0" />
@@ -693,7 +711,9 @@ export const SearchModal = memo(function SearchModal({
               // Flat parent stop list for from/to selection
               filteredDirStops.stops.length === 0 ? (
                 <div className="p-8 text-center text-base-content/50">
-                  {(dirActiveField === 'from' ? searchQuery : dirToQuery) ? 'Nema rezultata' : 'Upišite naziv stanice'}
+                  {(dirActiveField === 'from' ? searchQuery : dirToQuery)
+                    ? t('search.emptyNoResults')
+                    : t('search.emptyTypeStopName')}
                 </div>
               ) : (
                 <>
@@ -712,7 +732,7 @@ export const SearchModal = memo(function SearchModal({
                   </div>
                   {filteredDirStops.hasMore && (
                     <p className="px-4 py-2 text-xs text-base-content/50 text-center">
-                      Prikazano prvih 20. Upišite više u pretragu za bolje filtriranje.
+                      {t('search.listFirst20Hint')}
                     </p>
                   )}
                 </>
@@ -724,7 +744,7 @@ export const SearchModal = memo(function SearchModal({
           {isRouteFilter && (
             filteredRoutes.length === 0 ? (
               <div className="p-8 text-center text-base-content/50">
-                {searchQuery ? 'Nema rezultata' : 'Nema linija'}
+                {searchQuery ? t('search.emptyNoResults') : t('search.emptyNoRoutes')}
               </div>
             ) : (
               <div className="divide-y divide-base-300">
@@ -753,7 +773,7 @@ export const SearchModal = memo(function SearchModal({
                           toggleFavouriteRoute(route.id);
                         }}
                         className="px-3 py-3 text-base-content/30 hover:text-warning transition-colors min-h-[52px] flex items-center"
-                        title={isFav ? 'Ukloni iz favorita' : 'Dodaj u favorite'}
+                        title={isFav ? t('search.favouriteRemove') : t('search.favouriteAdd')}
                       >
                         <Star
                           className="w-4 h-4"
@@ -772,7 +792,7 @@ export const SearchModal = memo(function SearchModal({
           {filter === 'stanice' && stopsMode === 'search' && (
             filteredStopGroups.groups.length === 0 ? (
               <div className="p-8 text-center text-base-content/50">
-                {searchQuery ? 'Nema rezultata' : 'Upišite naziv stanice za pretragu'}
+                {searchQuery ? t('search.emptyNoResults') : t('search.emptyTypeStopToSearch')}
               </div>
             ) : (
               <>
@@ -803,7 +823,7 @@ export const SearchModal = memo(function SearchModal({
                               <div>
                                 <div className="text-sm font-medium">{representative.name}</div>
                                 <div className="text-xs text-base-content/50">
-                                  {terminals.length} {terminals.length === 1 ? 'terminal' : 'terminala'}
+                                  {t('search.terminalsCount', { count: terminals.length })}
                                 </div>
                               </div>
                             </div>
@@ -819,7 +839,7 @@ export const SearchModal = memo(function SearchModal({
                             toggleFavouriteStop(representative.id);
                           }}
                           className="px-3 py-3 text-base-content/30 hover:text-warning transition-colors min-h-[52px] flex items-center"
-                          title={isFav ? 'Ukloni iz favorita' : 'Dodaj u favorite'}
+                          title={isFav ? t('search.favouriteRemove') : t('search.favouriteAdd')}
                         >
                           <Star
                             className="w-4 h-4"
@@ -850,7 +870,7 @@ export const SearchModal = memo(function SearchModal({
                 </div>
                 {filteredStopGroups.hasMore && (
                   <p className="px-4 py-2 text-xs text-base-content/50 text-center">
-                    Prikazano prvih 20. Upišite više u pretragu za bolje filtriranje.
+                    {t('search.listFirst20Hint')}
                   </p>
                 )}
               </>
@@ -868,7 +888,7 @@ export const SearchModal = memo(function SearchModal({
                 aria-expanded={recentsExpanded}
               >
                 <Clock className="w-3 h-3 shrink-0" />
-                <span>Nedavno pregledano</span>
+                <span>{t('search.recentSection')}</span>
                 {recentsExpanded ? (
                   <ChevronDown className="w-3 h-3 shrink-0" />
                 ) : (
@@ -879,7 +899,7 @@ export const SearchModal = memo(function SearchModal({
                 onClick={handleClearRecentsForTab}
                 className="text-xs text-base-content/40 hover:text-base-content/70 transition-colors shrink-0"
               >
-                Očisti
+                {t('search.recentClear')}
               </button>
             </div>
             {recentsExpanded && (

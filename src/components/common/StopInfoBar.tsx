@@ -3,9 +3,12 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Maximize2, X, Star, ArrowRight, Navigation2, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import type { Stop, Route } from '../../utils/gtfs';
-import { bearingToDirection } from '../../utils/gtfs';
+import { bearingToCompassKey } from '../../utils/gtfs';
+import { compassLabelForBearing } from '../../utils/localizedCompass';
 import { useApproachingVehicles } from '../../hooks/useApproachingVehicles';
 import { useTimetableDepartures } from '../../hooks/useTimetableDepartures';
 import { useStopRoutes } from '../../hooks/useStopRoutes';
@@ -17,9 +20,9 @@ import { StopTabSelector, type StopTab } from './StopTabSelector';
 import { TimetableDepartureCard } from './TimetableDepartureCard';
 
 /** Format distance: metres below 1000, km above */
-function formatDist(meters: number): string {
-  if (meters < 1000) return `${meters} metara`;
-  return `${(meters / 1000).toFixed(1)} km`;
+function formatDist(meters: number, t: TFunction): string {
+  if (meters < 1000) return t('common.metresShort', { metres: meters });
+  return t('common.kilometres', { km: (meters / 1000).toFixed(1) });
 }
 
 interface StopInfoBarProps {
@@ -42,6 +45,7 @@ export function StopInfoBar({
   onStopSelect,
   stackBelow = false,
 }: StopInfoBarProps) {
+  const { t } = useTranslation();
   const { dataDir, hasRealtime, timetableLookaheadMinutes } = useGTFSMode();
   const { favouriteStopIds, toggleFavouriteStop, dismissedGpsTip, setDismissedGpsTip } = useSettingsStore();
   const isFav = favouriteStopIds.includes(stop.id);
@@ -85,7 +89,7 @@ export function StopInfoBar({
     );
     const seen = new Set<string>();
     return raw.filter(s => {
-      const key = s.bearing !== undefined ? bearingToDirection(s.bearing) : (s.code ?? s.id);
+      const key = s.bearing !== undefined ? bearingToCompassKey(s.bearing) : (s.code ?? s.id);
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
@@ -114,10 +118,10 @@ export function StopInfoBar({
 
   const terminusBanner = isAllTerminus ? (
     <div className="rounded-lg bg-warning/10 border border-warning/30 p-3 mt-1">
-      <p className="text-xs font-semibold text-warning mb-1">Ovo je odredišna platforma</p>
+      <p className="text-xs font-semibold text-warning mb-1">{t('stopView.terminusTitle')}</p>
       <p className="text-xs text-base-content/70 mb-2">
-        Vozila ovdje završavaju vožnju — nema polazaka.
-        {departingSiblings.length > 0 && ' Odaberite platformu za polazak:'}
+        {t('stopView.terminusBody')}
+        {departingSiblings.length > 0 && ` ${t('stopView.terminusPickPlatform')}`}
       </p>
       {departingSiblings.map(s => {
         const routes = siblingRouteMap.get(s.id) ?? [];
@@ -130,7 +134,7 @@ export function StopInfoBar({
             className="btn btn-xs btn-warning w-full gap-1.5 mt-1 flex-wrap justify-start"
           >
             <ArrowRight className="w-3 h-3 shrink-0" />
-            <span>Terminal</span>
+            <span>{t('stopView.terminalButton')}</span>
             {routes.length > 0 && (
               <span className="flex flex-wrap gap-0.5 ml-1">
                 {routes.slice(0, maxBadges).map(r => (
@@ -208,7 +212,7 @@ export function StopInfoBar({
               <button
                 onClick={() => toggleFavouriteStop(stop.id)}
                 className="btn btn-ghost btn-circle btn-xs"
-                title={isFav ? 'Ukloni iz favorita' : 'Dodaj u favorite'}
+                title={isFav ? t('search.favouriteRemove') : t('search.favouriteAdd')}
               >
                 <Star
                   className="w-4 h-4"
@@ -219,14 +223,14 @@ export function StopInfoBar({
               <button
                 onClick={() => onExpand(stop.id)}
                 className="btn btn-ghost btn-circle btn-xs"
-                title="Prikaži detalje"
+                title={t('common.showDetails')}
               >
                 <Maximize2 className="w-4 h-4" />
               </button>
               <button
                 onClick={onClose}
                 className="btn btn-ghost btn-circle btn-xs"
-                title="Zatvori"
+                title={t('common.close')}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -237,16 +241,16 @@ export function StopInfoBar({
               <span>
                 {stop.bearing !== undefined
                   ? termini.length > 0
-                    ? `Smjer prema ${termini.join(', ')}`
-                    : `Smjer prema ${bearingToDirection(stop.bearing)}`
-                  : `Smjer ${stop.code}`}
+                    ? t('search.headingTowards', { place: termini.join(', ') })
+                    : t('search.headingTowards', { place: compassLabelForBearing(stop.bearing, t) })
+                  : t('search.headingCode', { code: stop.code ?? '' })}
               </span>
             </div>
           )}
           {siblingPlatforms.length > 0 && !isAllTerminus && (
             <div className="mt-1.5">
               <div className="flex items-center gap-1.5 mb-1">
-                <p className="text-[10px] uppercase tracking-wide text-base-content/40">Ostale platforme</p>
+                <p className="text-[10px] uppercase tracking-wide text-base-content/40">{t('stopView.otherPlatforms')}</p>
                 {siblingPlatforms.length > 1 && (
                   <button
                     type="button"
@@ -254,7 +258,7 @@ export function StopInfoBar({
                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium text-base-content/70 bg-base-200 border border-base-300 hover:bg-base-300 hover:border-base-content/20 active:scale-[0.98] transition-colors"
                     aria-expanded={platformsExpanded}
                   >
-                    {platformsExpanded ? 'Sakrij' : `Prikaži sve (${siblingPlatforms.length})`}
+                    {platformsExpanded ? t('common.hide') : t('common.showAllCount', { count: siblingPlatforms.length })}
                     {platformsExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                   </button>
                 )}
@@ -266,7 +270,7 @@ export function StopInfoBar({
                     const routes = siblingRouteMap.get(s.id) ?? [];
                     const isTerminus = siblingTerminusSet.has(s.id);
                     const label = s.bearing !== undefined
-                      ? `Smjer prema ${bearingToDirection(s.bearing)}`
+                      ? t('search.headingTowards', { place: compassLabelForBearing(s.bearing, t) })
                       : undefined;
                     return (
                       <button
@@ -277,15 +281,15 @@ export function StopInfoBar({
                           ? 'bg-warning/10 border-warning/40 hover:bg-warning/20 active:bg-warning/30'
                           : 'bg-base-200/60 border-base-300 hover:bg-base-200 active:bg-base-300'
                           }`}
-                        title={`Prebaci na: ${s.name}${s.bearing !== undefined ? ` (${bearingToDirection(s.bearing)})` : ''
-                          }${isTerminus ? ' · odredišna' : ''}`}
+                        title={`${t('stopView.switchToStop', { name: s.name })}${s.bearing !== undefined ? t('stopView.bearingInTitle', { direction: compassLabelForBearing(s.bearing, t) }) : ''
+                          }${isTerminus ? t('stopView.terminusInTitle') : ''}`}
                       >
                         <Navigation2
                           className="w-2.5 h-2.5 shrink-0"
                           style={s.bearing !== undefined ? { transform: `rotate(${s.bearing}deg)` } : undefined}
                         />
                         {label && <span>{label}</span>}
-                        {isTerminus && <span className="badge-xs text-warning font-semibold">Odredišna platforma</span>}
+                        {isTerminus && <span className="badge-xs text-warning font-semibold">{t('stopView.terminusBadgeLong')}</span>}
                         {routes.length > 0 && (
                           <span className="flex gap-0.5 ml-auto">
                             {routes.slice(0, 3).map(r => (
@@ -319,19 +323,19 @@ export function StopInfoBar({
           <div className="mt-2 mb-3 p-4 rounded-xl bg-info/10 border border-info/30 flex gap-3 items-start">
             <Info className="w-5 h-5 text-info shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-base-content/90 mb-1">GPS prikaz vozila</p>
+              <p className="text-sm font-semibold text-base-content/90 mb-1">{t('stopView.gpsTipTitle')}</p>
               <p className="text-sm text-base-content/70 leading-snug mb-1.5">
-                Prikazuju se <strong>vozila koja se približavaju</strong> ovom stajalištu u stvarnom vremenu.
+                {t('stopView.gpsTipBodyBar')}
               </p>
               <p className="text-sm text-base-content/50 leading-snug">
-                Temelji se na GPS signalu — može se razlikovati od &ldquo;Red vožnje&rdquo;.
+                {t('stopView.gpsTipFootnoteBar')}
               </p>
             </div>
             <button
               type="button"
               onClick={() => setDismissedGpsTip(true)}
               className="btn btn-ghost btn-circle btn-sm shrink-0"
-              title="Ne prikazuj više"
+              title={t('stopView.gpsTipDismiss')}
             >
               <X className="w-4 h-4" />
             </button>
@@ -342,12 +346,12 @@ export function StopInfoBar({
           vehiclesLoading ? (
             <div className="flex items-center gap-2 py-2">
               <span className="loading loading-spinner loading-sm" />
-              <span className="text-sm text-base-content/60">Tražim vozila...</span>
+              <span className="text-sm text-base-content/60">{t('stopView.searchingVehicles')}</span>
             </div>
           ) : topVehicles.length === 0 ? (
             terminusBanner ?? (
               <div className="text-sm text-base-content/50 py-2 text-center">
-                Nema GPS vozila u blizini
+                {t('stopView.noGpsVehiclesNearby')}
               </div>
             )
           ) : (
@@ -360,17 +364,22 @@ export function StopInfoBar({
                 let primaryText: string;
                 let primaryColor: string;
                 if (vehicle.passedStop) {
-                  primaryText = d !== null ? `${formatDist(d)} ↑` : 'Prošao';
+                  primaryText = d !== null ? `${formatDist(d, t)} ↑` : t('vehicleCard.passed');
                   primaryColor = 'text-base-content/40';
                 } else if (isAtStop) {
-                  primaryText = 'Na stajalištu';
+                  primaryText = t('vehicleCard.atStop');
                   primaryColor = 'text-success font-bold';
                 } else if (d !== null) {
-                  primaryText = formatDist(d);
+                  primaryText = formatDist(d, t);
                   primaryColor = d < 100 ? 'text-success' : 'text-base-content';
                 } else {
                   const secs = Math.round(vehicle.arrivingInSeconds);
-                  primaryText = secs <= 0 ? 'Sada' : secs < 120 ? `za ${secs} sek` : `za ${Math.round(secs / 60)} min`;
+                  primaryText =
+                    secs <= 0
+                      ? t('timetableCard.departsNow')
+                      : secs < 120
+                        ? t('vehicleCard.inSeconds', { secs })
+                        : t('vehicleCard.inMinutes', { mins: Math.round(secs / 60) });
                   primaryColor = secs <= 0 ? 'text-success' : 'text-base-content';
                 }
 
@@ -379,10 +388,18 @@ export function StopInfoBar({
                 if (!vehicle.passedStop && !isAtStop && d !== null) {
                   const gpsSecs = vehicle.etaFromGpsSeconds;
                   if (gpsSecs !== null) {
-                    secondaryText = gpsSecs < 30 ? 'Dolazi' : gpsSecs < 120 ? `~${Math.round(gpsSecs)} sek` : `~${Math.round(gpsSecs / 60)} min`;
+                    secondaryText =
+                      gpsSecs < 30
+                        ? t('vehicleCard.arriving')
+                        : gpsSecs < 120
+                          ? t('vehicleCard.secondsTilde', { secs: Math.round(gpsSecs) })
+                          : t('vehicleCard.minutesTilde', { mins: Math.round(gpsSecs / 60) });
                   } else {
                     const secs = Math.round(vehicle.arrivingInSeconds);
-                    secondaryText = secs < 120 ? `~${secs} sek` : `~${Math.round(secs / 60)} min`;
+                    secondaryText =
+                      secs < 120
+                        ? t('vehicleCard.secondsTilde', { secs })
+                        : t('vehicleCard.minutesTilde', { mins: Math.round(secs / 60) });
                   }
                 }
 
@@ -414,10 +431,10 @@ export function StopInfoBar({
                         )}
                         <span>
                           {vehicle.passedStop
-                            ? 'Prošao stajalište'
+                            ? t('vehicleCard.passedStop')
                             : vehicle.stopsAway !== null && vehicle.stopsAway > 1
-                              ? `${vehicle.stopsAway - 1} stajališta`
-                              : 'iduće stajalište'}
+                              ? t('vehicleCard.stopsAway', { count: vehicle.stopsAway - 1 })
+                              : t('vehicleCard.nextStop')}
                         </span>
                       </div>
                     </div>
@@ -441,12 +458,12 @@ export function StopInfoBar({
           timetableLoading ? (
             <div className="flex items-center gap-2 py-2">
               <span className="loading loading-spinner loading-sm" />
-              <span className="text-sm text-base-content/60">Učitavam red vožnje...</span>
+              <span className="text-sm text-base-content/60">{t('stopView.loadingTimetable')}</span>
             </div>
           ) : topDepartures.length === 0 ? (
             terminusBanner ?? (
               <div className="text-sm text-base-content/50 py-2 text-center">
-                Nema polazaka u sljedećih {timetableLookaheadMinutes} min
+                {t('stopView.noDeparturesInMins', { minutes: timetableLookaheadMinutes })}
               </div>
             )
           ) : (

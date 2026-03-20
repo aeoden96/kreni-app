@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Navigation, MapPin, Smartphone, Map, GitMerge, Coffee, List, MousePointerClick, Layers } from 'lucide-react';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { trackEvent } from '../../utils/analytics';
@@ -10,6 +11,7 @@ interface OnboardingWizardProps {
 }
 
 export function OnboardingWizard({ variant }: OnboardingWizardProps) {
+  const { t } = useTranslation();
   const onboardingCompleted = useSettingsStore((s) => s.onboardingCompleted);
   const setOnboardingCompleted = useSettingsStore((s) => s.setOnboardingCompleted);
   const onboardingStep = useSettingsStore((s) => s.onboardingStep);
@@ -47,86 +49,85 @@ export function OnboardingWizard({ variant }: OnboardingWizardProps) {
 
   if (onboardingCompleted[variant]) return null;
 
-  const modeSwitchStep = {
-    title: 'Promjena načina rada',
-    body: 'Klikni na glavni gumb gore desno (Spider izbornik) za brzo prebacivanje između javnog prijevoza, bicikla, auta ili gradskog sadržaja.',
-    icon: <Layers className="w-6 h-6 text-primary" />,
-    video: '/onboarding/switch_views.webm'
-  };
-
   const getStepsForVariant = (): Array<{ title: string; body: string; icon: React.ReactNode; image?: string; video?: string }> => {
+    const modeSwitchStep = {
+      title: t('onboarding.modeSwitchTitle'),
+      body: t('onboarding.modeSwitchBody'),
+      icon: <Layers className="w-6 h-6 text-primary" />,
+      video: '/onboarding/switch_views.webm',
+    };
     switch (variant) {
       case 'transit':
         return [
           {
-            title: 'Javni prijevoz',
-            body: 'Prati ZET tramvaje i autobuse uživo na karti.',
-            icon: <Navigation className="w-6 h-6 text-primary" />
+            title: t('onboarding.transitTitle0'),
+            body: t('onboarding.transitBody0'),
+            icon: <Navigation className="w-6 h-6 text-primary" />,
           },
           {
-            title: 'Pregled stanice',
-            body: 'Klikni na stanicu na karti kako bi otvorio detalje i provjerio raspored dolazaka i odlazećih linija.',
+            title: t('onboarding.transitTitle1'),
+            body: t('onboarding.transitBody1'),
             icon: <MapPin className="w-6 h-6 text-primary" />,
-            video: '/onboarding/station_view.webm'
+            video: '/onboarding/station_view.webm',
           },
           {
-            title: 'Precizan odabir',
-            body: 'Kada klikneš na grupu stanica ili vozila, otvara se izbornik iz kojeg lako možeš odabrati točno ono što želiš pratiti.',
+            title: t('onboarding.transitTitle2'),
+            body: t('onboarding.transitBody2'),
             icon: <MousePointerClick className="w-6 h-6 text-primary" />,
-            video: '/onboarding/spider_selector.webm'
+            video: '/onboarding/spider_selector.webm',
           },
           {
-            title: 'Karta ili Lista',
-            body: 'Uz kartu, dostupan je i prikaz u obliku liste. Korisno kada samo želiš pronaći liniju bez gledanja u kartu.',
+            title: t('onboarding.transitTitle3'),
+            body: t('onboarding.transitBody3'),
             icon: <List className="w-6 h-6 text-primary" />,
-            video: '/onboarding/public_transport_switch_views.webm'
+            video: '/onboarding/public_transport_switch_views.webm',
           },
-          modeSwitchStep
+          modeSwitchStep,
         ];
       case 'cycling':
         return [
           {
-            title: 'Biciklizam',
-            body: 'Istraži biciklističke staze, Bajs (Nextbike) stanice i javna parkirališta za bicikle.',
-            icon: <GitMerge className="w-6 h-6 text-primary" /> // Using GitMerge as a placeholder for a path/bike icon
+            title: t('onboarding.cyclingTitle0'),
+            body: t('onboarding.cyclingBody0'),
+            icon: <GitMerge className="w-6 h-6 text-primary" />,
           },
-          modeSwitchStep
+          modeSwitchStep,
         ];
       case 'driving':
         return [
           {
-            title: 'Vožnja Auta',
-            body: 'Provjeri stanje u prometu i aktualna zatvaranja cesta prije polaska.',
-            icon: <Map className="w-6 h-6 text-primary" />
+            title: t('onboarding.drivingTitle0'),
+            body: t('onboarding.drivingBody0'),
+            icon: <Map className="w-6 h-6 text-primary" />,
           },
-          modeSwitchStep
+          modeSwitchStep,
         ];
       case 'city':
         return [
           {
-            title: 'Gradski Život',
-            body: 'Pronađi javne fontane za pitku vodu, studentske restorane i druge gradske sadržaje.',
-            icon: <Coffee className="w-6 h-6 text-primary" />
+            title: t('onboarding.cityTitle0'),
+            body: t('onboarding.cityBody0'),
+            icon: <Coffee className="w-6 h-6 text-primary" />,
           },
-          modeSwitchStep
+          modeSwitchStep,
         ];
       case 'list':
         return [
           {
-            title: 'Prikaz Liste',
-            body: 'Brzi pregled svih linija i stanica u jednostavnom tekstualnom formatu, bez učitavanja karte.',
-            icon: <Smartphone className="w-6 h-6 text-primary" />
+            title: t('onboarding.listTitle0'),
+            body: t('onboarding.listBody0'),
+            icon: <Smartphone className="w-6 h-6 text-primary" />,
           },
-          modeSwitchStep
+          modeSwitchStep,
         ];
       case 'train':
         return [
           {
-            title: 'Vlakovi HŽ',
-            body: 'Pregledaj vozni red HŽ Putničkog prijevoza za željezničke stanice u Zagrebu i okolici. Odaberi stanicu ili prugu za detalje.',
-            icon: <Navigation className="w-6 h-6 text-primary" />
+            title: t('onboarding.trainTitle0'),
+            body: t('onboarding.trainBody0'),
+            icon: <Navigation className="w-6 h-6 text-primary" />,
           },
-          modeSwitchStep
+          modeSwitchStep,
         ];
       default:
         return [modeSwitchStep];
@@ -213,20 +214,20 @@ export function OnboardingWizard({ variant }: OnboardingWizardProps) {
           <div className="flex justify-between gap-3">
             {step === 0 ? (
               <button onClick={handleClose} className="btn btn-outline flex-1">
-                Zatvori
+                {t('common.close')}
               </button>
             ) : (
               <button onClick={back} className="btn btn-outline flex-1">
-                Natrag
+                {t('common.back')}
               </button>
             )}
             {step < steps.length - 1 ? (
               <button onClick={next} className="btn btn-primary flex-1">
-                Sljedeće
+                {t('common.next')}
               </button>
             ) : (
               <button onClick={handleClose} className="btn btn-primary flex-1">
-                Završi
+                {t('common.done')}
               </button>
             )}
           </div>

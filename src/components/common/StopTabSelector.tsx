@@ -2,6 +2,7 @@
  * Tab selector for stop view: "Vozila" (live GPS) and "Red vožnje" (timetable).
  */
 
+import { useTranslation } from 'react-i18next';
 import { Bus, Clock } from 'lucide-react';
 
 export type StopTab = 'vehicles' | 'timetable';
@@ -24,6 +25,7 @@ export function StopTabSelector({
   compact = false,
   hideVehicles = false,
 }: StopTabSelectorProps) {
+  const { t } = useTranslation();
   const tabClass = compact
     ? 'tab text-[11px] px-2 py-0.5 rounded-full'
     : 'tab text-xs px-3 py-1 rounded-full';
@@ -39,7 +41,7 @@ export function StopTabSelector({
           onClick={() => onTabChange('vehicles')}
         >
           <Bus className={iconSize} />
-          <span>Vozila u blizini</span>
+          <span>{t('stopView.tabVehiclesNearby')}</span>
           {liveVehicleCount !== undefined && liveVehicleCount > 0 && (
             <span className={`badge badge-success badge-xs font-bold tabular-nums`}>
               {liveVehicleCount}
@@ -53,7 +55,7 @@ export function StopTabSelector({
         onClick={() => onTabChange('timetable')}
       >
         <Clock className={iconSize} />
-        <span>Red vožnje</span>
+        <span>{t('stopView.tabTimetable')}</span>
       </button>
     </div>
   );

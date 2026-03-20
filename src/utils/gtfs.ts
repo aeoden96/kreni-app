@@ -21,24 +21,17 @@ export interface Stop {
   bearing?: number;
 }
 
+/** Eight compass sectors — stable keys for grouping (locale-independent). */
+export const COMPASS_KEY_ORDER = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'] as const;
+export type CompassKey = (typeof COMPASS_KEY_ORDER)[number];
+
 /**
- * Convert a compass bearing (degrees clockwise from North) to a Croatian
- * direction label in the dative case, e.g. "sjeveru", "jugoistoku".
- * Suitable for display as "Smjer prema …".
+ * Map bearing to a stable key (e.g. for deduplicating platforms). Use i18n
+ * `search.compass.*` via `compassLabelForBearing` for display text.
  */
-export function bearingToDirection(bearing: number): string {
-  const labels = [
-    'sjeveru',       // N    0°
-    'sjeveroistoku', // NE  45°
-    'istoku',        // E   90°
-    'jugoistoku',    // SE 135°
-    'jugu',          // S  180°
-    'jugozapadu',    // SW 225°
-    'zapadu',        // W  270°
-    'sjeverozapadu', // NW 315°
-  ];
-  const idx = Math.round(((bearing % 360) + 360) % 360 / 45) % 8;
-  return labels[idx];
+export function bearingToCompassKey(bearing: number): CompassKey {
+  const idx = Math.round((((bearing % 360) + 360) % 360) / 45) % 8;
+  return COMPASS_KEY_ORDER[idx];
 }
 
 export interface Route {

@@ -5,6 +5,8 @@
  * Secondary: clock time (HH:MM), with delay indication when realtime data present.
  */
 
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import type { TimetableDeparture } from '../../hooks/useTimetableDepartures';
 import { minutesToTime } from '../../utils/gtfs';
 
@@ -16,13 +18,15 @@ interface TimetableDepartureCardProps {
 }
 
 /** Format "minutes until" as a human-readable countdown */
-function formatMinutesUntil(mins: number): string {
-  if (mins <= 0) return 'Sada';
-  if (mins === 1) return '1 min';
-  if (mins < 60) return `za ${mins} min`;
+function formatMinutesUntil(mins: number, t: TFunction): string {
+  if (mins <= 0) return t('timetableCard.departsNow');
+  if (mins === 1) return t('timetableCard.inOneMin');
+  if (mins < 60) return t('timetableCard.inMinutes', { count: mins });
   const h = Math.floor(mins / 60);
   const m = mins % 60;
-  return m === 0 ? `za ${h} h` : `za ${h} h ${m} min`;
+  return m === 0
+    ? t('timetableCard.inHours', { hours: h })
+    : t('timetableCard.inHoursMinutes', { hours: h, mins: m });
 }
 
 export function TimetableDepartureCard({
@@ -30,6 +34,7 @@ export function TimetableDepartureCard({
   onRouteClick,
   compact = false,
 }: TimetableDepartureCardProps) {
+  const { t } = useTranslation();
   const { delaySeconds, scheduledMinutes, adjustedMinutes, realtimeSource, minutesUntil } = departure;
   const hasRealtime = realtimeSource !== null && delaySeconds !== null;
   const delaySec = delaySeconds ?? 0;
@@ -39,7 +44,7 @@ export function TimetableDepartureCard({
   const isOnTime = hasRealtime && !isLate && !isEarly;
 
   const badgeColor = departure.routeType === 0 ? '#2563eb' : '#d97706';
-  const countdownText = formatMinutesUntil(minutesUntil);
+  const countdownText = formatMinutesUntil(minutesUntil, t);
   // Clock time: show adjusted if there's a delay, else scheduled
   const clockTime = minutesToTime(hasRealtime ? adjustedMinutes : scheduledMinutes);
   const scheduledClockTime = minutesToTime(scheduledMinutes);
@@ -61,7 +66,7 @@ export function TimetableDepartureCard({
             ) : (
               <span className="w-1.5 h-1.5 rounded-full bg-base-content/30 shrink-0" />
             )}
-            <span>{hasRealtime ? 'GPS uživo' : 'red vožnje'}</span>
+            <span>{hasRealtime ? t('timetableCard.gpsLive') : t('timetableCard.scheduleOnly')}</span>
           </div>
         </div>
         <div className="text-right shrink-0">
@@ -114,12 +119,12 @@ export function TimetableDepartureCard({
               {hasRealtime ? (
                 <>
                   <span className="w-1.5 h-1.5 rounded-full bg-success shrink-0 animate-pulse" />
-                  <span>GPS uživo</span>
+                  <span>{t('timetableCard.gpsLive')}</span>
                 </>
               ) : (
                 <>
                   <span className="w-1.5 h-1.5 rounded-full bg-base-content/30 shrink-0" />
-                  <span>prema redu vožnje</span>
+                  <span>{t('timetableCard.perSchedule')}</span>
                 </>
               )}
             </div>

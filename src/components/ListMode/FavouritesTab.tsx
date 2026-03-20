@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Star, MapPin, ChevronRight, Clock } from 'lucide-react';
 import type { Stop, Route } from '../../utils/gtfs';
 import { isRouteTypeTram } from '../../utils/gtfs';
@@ -29,6 +30,7 @@ function FavouriteStopCard({
   routesById: Map<string, Route>;
   onSelect: () => void;
 }) {
+  const { t } = useTranslation();
   const [nowMs, setNowMs] = useState(() => Date.now());
   useEffect(() => {
     const interval = setInterval(() => setNowMs(Date.now()), 5000);
@@ -53,7 +55,7 @@ function FavouriteStopCard({
         {loading ? (
           <div className="flex items-center gap-2 mt-1">
             <span className="loading loading-dots loading-xs" />
-            <span className="text-xs text-base-content/50">Učitavanje...</span>
+            <span className="text-xs text-base-content/50">{t('favouritesTab.loading')}</span>
           </div>
         ) : upcoming.length > 0 ? (
           <div className="flex flex-wrap gap-1.5 mt-1">
@@ -67,14 +69,14 @@ function FavouriteStopCard({
                 >
                   {v.routeShortName}
                   <span className="opacity-80">
-                    {mins === 0 ? 'dolazi' : `${mins} min`}
+                    {mins === 0 ? t('nearbyTab.arrivingNow') : t('nearbyTab.minutes', { count: mins })}
                   </span>
                 </span>
               );
             })}
           </div>
         ) : (
-          <span className="text-xs text-base-content/40 mt-1">Nema vozila u blizini</span>
+          <span className="text-xs text-base-content/40 mt-1">{t('nearbyTab.noVehiclesNearby')}</span>
         )}
       </div>
     </button>
@@ -82,6 +84,7 @@ function FavouriteStopCard({
 }
 
 export function FavouritesTab({ stopsById, routesById, onSelectStop, onSelectRoute }: FavouritesTabProps) {
+  const { t } = useTranslation();
   const { favouriteStopIds, favouriteRouteIds, recentStops, recentRoutes } = useSettingsStore();
 
   const favStops = useMemo(
@@ -110,9 +113,9 @@ export function FavouritesTab({ stopsById, routesById, onSelectStop, onSelectRou
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center min-h-[50vh]">
         <Star className="w-12 h-12 text-base-content/20 mb-4" />
-        <p className="text-lg font-semibold text-base-content/60">Nema favorita</p>
+        <p className="text-lg font-semibold text-base-content/60">{t('favouritesTab.noFavourites')}</p>
         <p className="text-sm text-base-content/40 mt-1 max-w-xs">
-          Dodajte stanice i linije u favorite koristeći ⭐ ikonu za brzi pristup
+          {t('favouritesTab.emptyHint')}
         </p>
       </div>
     );
@@ -124,7 +127,7 @@ export function FavouritesTab({ stopsById, routesById, onSelectStop, onSelectRou
       {favStops.length > 0 && (
         <section>
           <h3 className="text-xs font-semibold uppercase text-base-content/50 mb-2 px-1 flex items-center gap-1.5">
-            <Star className="w-3.5 h-3.5" /> Omiljene stanice
+            <Star className="w-3.5 h-3.5" /> {t('favouritesTab.favouriteStops')}
           </h3>
           <div className="space-y-2">
             {favStops.map((stop) => (
@@ -144,7 +147,7 @@ export function FavouritesTab({ stopsById, routesById, onSelectStop, onSelectRou
       {favRoutes.length > 0 && (
         <section>
           <h3 className="text-xs font-semibold uppercase text-base-content/50 mb-2 px-1 flex items-center gap-1.5">
-            <Star className="w-3.5 h-3.5" /> Omiljene linije
+            <Star className="w-3.5 h-3.5" /> {t('favouritesTab.favouriteRoutes')}
           </h3>
           <div className="flex flex-wrap gap-2">
             {favRoutes.map((route) => (
@@ -166,7 +169,7 @@ export function FavouritesTab({ stopsById, routesById, onSelectStop, onSelectRou
       {recentStopItems.length > 0 && (
         <section>
           <h3 className="text-xs font-semibold uppercase text-base-content/50 mb-2 px-1 flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5" /> Nedavne stanice
+            <Clock className="w-3.5 h-3.5" /> {t('favouritesTab.recentStops')}
           </h3>
           <div className="space-y-1">
             {recentStopItems.map((stop) => (
@@ -187,7 +190,7 @@ export function FavouritesTab({ stopsById, routesById, onSelectStop, onSelectRou
       {recentRouteItems.length > 0 && (
         <section>
           <h3 className="text-xs font-semibold uppercase text-base-content/50 mb-2 px-1 flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5" /> Nedavne linije
+            <Clock className="w-3.5 h-3.5" /> {t('favouritesTab.recentRoutes')}
           </h3>
           <div className="flex flex-wrap gap-2">
             {recentRouteItems.map((route) => (

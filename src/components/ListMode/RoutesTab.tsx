@@ -4,6 +4,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Search, TrainFront, Bus, Star } from 'lucide-react';
 import type { Route } from '../../utils/gtfs';
 import { isRouteTypeTram, isRouteTypeBus } from '../../utils/gtfs';
@@ -24,6 +25,7 @@ const ROUTE_TYPE_SORT = (a: Route, b: Route) => {
 };
 
 export function RoutesTab({ routes, onSelectRoute }: RoutesTabProps) {
+  const { t } = useTranslation();
   const [filter, setFilter] = useState<FilterType>('tram');
   const [searchQuery, setSearchQuery] = useState('');
   const { favouriteRouteIds, toggleFavouriteRoute } = useSettingsStore();
@@ -63,7 +65,7 @@ export function RoutesTab({ routes, onSelectRoute }: RoutesTabProps) {
           <Search className="w-4 h-4 text-base-content/50" />
           <input
             type="text"
-            placeholder="Pretraži linije..."
+            placeholder={t('search.barPlaceholderLines')}
             className="flex-1 bg-transparent outline-none text-sm"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -75,14 +77,14 @@ export function RoutesTab({ routes, onSelectRoute }: RoutesTabProps) {
             className={`btn btn-sm flex-1 gap-1.5 ${filter === 'tram' ? 'btn-primary' : 'btn-ghost'}`}
           >
             <TrainFront className="w-4 h-4" />
-            Tramvaji ({trams.length})
+            {t('search.tabs.trams', { count: trams.length })}
           </button>
           <button
             onClick={() => setFilter('bus')}
             className={`btn btn-sm flex-1 gap-1.5 ${filter === 'bus' ? 'btn-warning' : 'btn-ghost'}`}
           >
             <Bus className="w-4 h-4" />
-            Autobusi ({buses.length})
+            {t('search.tabs.buses', { count: buses.length })}
           </button>
         </div>
       </div>
@@ -91,7 +93,7 @@ export function RoutesTab({ routes, onSelectRoute }: RoutesTabProps) {
       <div className="flex-1 overflow-y-auto overscroll-contain pb-24">
         {filtered.length === 0 ? (
           <div className="p-8 text-center text-base-content/50 text-sm">
-            Nema rezultata za &quot;{searchQuery}&quot;
+            {t('search.listNoResultsForQuery', { query: searchQuery })}
           </div>
         ) : (
           <div className="divide-y divide-base-200">

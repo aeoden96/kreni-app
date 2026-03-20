@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BaseMap } from '../components/Map/BaseMap';
 import { BikeStations } from '../components/Map/BikeStations';
 import { BikeParkings } from '../components/Map/BikeParkings';
 import { BikePaths } from '../components/Map/BikePaths';
-import { useNextbikeData } from '../hooks/useNextbikeData';
+import { useNextbikeData, NEXTBIKE_CACHE_TTL_MS } from '../hooks/useNextbikeData';
 import { OnboardingWizard } from '../components/common/OnboardingWizard';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { useSettingsStore } from '../stores/settingsStore';
 
 export function CyclingMode() {
+    const { t } = useTranslation();
     const { userLocation } = useGeolocation();
     const [legendOpen, setLegendOpen] = useState(false);
 
@@ -18,27 +20,28 @@ export function CyclingMode() {
 
     const { lastFetched } = useNextbikeData(showBikeStations);
 
-    const [timeAgoStr, setTimeAgoStr] = useState<string>('');
+    const [nextbikeBadgeText, setNextbikeBadgeText] = useState('');
 
     useEffect(() => {
         if (!lastFetched) {
-            setTimeAgoStr('');
+            setNextbikeBadgeText('');
             return;
         }
 
-        const updateTimeAgo = () => {
-            const seconds = Math.floor((Date.now() - lastFetched) / 1000);
-            if (seconds < 60) {
-                setTimeAgoStr(`${seconds} s`);
+        const tick = () => {
+            const msLeft = lastFetched + NEXTBIKE_CACHE_TTL_MS - Date.now();
+            const seconds = Math.ceil(msLeft / 1000);
+            if (seconds <= 0) {
+                setNextbikeBadgeText(t('cyclingMode.nextbikeRefreshing'));
             } else {
-                setTimeAgoStr(`${Math.floor(seconds / 60)}m ${seconds % 60} s`);
+                setNextbikeBadgeText(t('cyclingMode.nextbikeRefreshIn', { seconds }));
             }
         };
 
-        updateTimeAgo();
-        const interval = setInterval(updateTimeAgo, 1000);
+        tick();
+        const interval = window.setInterval(tick, 1000);
         return () => clearInterval(interval);
-    }, [lastFetched]);
+    }, [lastFetched, t]);
 
     return (
         <div className="h-full w-full relative">
@@ -83,10 +86,10 @@ export function CyclingMode() {
                     </button>
                 )}
 
-                {showBikeStations && timeAgoStr && (
+                {showBikeStations && nextbikeBadgeText && (
                     <div className="badge badge-info gap-1 shadow">
                         <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-                        Podaci osvježeni prije {timeAgoStr}
+                        {nextbikeBadgeText}
                     </div>
                 )}
             </div>

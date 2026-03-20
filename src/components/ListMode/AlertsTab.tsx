@@ -2,21 +2,11 @@
  * Alerts tab — full-page list of GTFS-RT service alerts.
  */
 
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle, ChevronRight } from 'lucide-react';
 import type { ParsedServiceAlert } from '../../utils/realtime';
 import type { Route } from '../../utils/gtfs';
-
-const EFFECT_HR: Record<string, string> = {
-  NO_SERVICE: 'Nema usluge',
-  REDUCED_SERVICE: 'Smanjena usluga',
-  SIGNIFICANT_DELAYS: 'Velika kašnjenja',
-  DETOUR: 'Preusmjeravanje',
-  ADDITIONAL_SERVICE: 'Dodatna usluga',
-  MODIFIED_SERVICE: 'Izmijenjena usluga',
-  STOP_MOVED: 'Stanica premještena',
-  OTHER_EFFECT: 'Ostalo',
-  UNKNOWN_EFFECT: 'Nepoznato',
-};
+import { serviceAlertEffectLabel } from '../../utils/serviceAlertEffectLabel';
 
 interface AlertsTabProps {
   alerts: ParsedServiceAlert[];
@@ -25,13 +15,14 @@ interface AlertsTabProps {
 }
 
 export function AlertsTab({ alerts, routesById, onRouteClick }: AlertsTabProps) {
+  const { t } = useTranslation();
   if (alerts.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center min-h-[50vh]">
         <AlertTriangle className="w-12 h-12 text-base-content/20 mb-4" />
-        <p className="text-lg font-semibold text-base-content/60">Nema obavijesti</p>
+        <p className="text-lg font-semibold text-base-content/60">{t('alertsTab.emptyTitle')}</p>
         <p className="text-sm text-base-content/40 mt-1">
-          Trenutno nema aktivnih prometnih obavijesti
+          {t('alertsTab.emptySubtitle')}
         </p>
       </div>
     );
@@ -44,7 +35,7 @@ export function AlertsTab({ alerts, routesById, onRouteClick }: AlertsTabProps) 
           {/* Effect badge */}
           <div className="flex items-start gap-2 mb-2">
             <span className="badge badge-warning badge-sm shrink-0 mt-0.5">
-              {EFFECT_HR[alert.effect] ?? alert.effect}
+              {serviceAlertEffectLabel(alert.effect, t)}
             </span>
           </div>
 

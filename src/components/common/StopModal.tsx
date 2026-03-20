@@ -4,9 +4,11 @@
  */
 
 import { useState, useEffect, memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Clock, Star, ArrowRight, Navigation2, Info } from 'lucide-react';
 import type { Stop, Route } from '../../utils/gtfs';
-import { minutesToTime, bearingToDirection } from '../../utils/gtfs';
+import { minutesToTime, bearingToCompassKey } from '../../utils/gtfs';
+import { compassLabelForBearing } from '../../utils/localizedCompass';
 import { useCurrentTime } from '../../hooks/useCurrentTime';
 import { useApproachingVehicles } from '../../hooks/useApproachingVehicles';
 import { useTimetableDepartures } from '../../hooks/useTimetableDepartures';
@@ -38,6 +40,7 @@ export const StopModal = memo(function StopModal({
   onRouteClick,
   onStopSelect,
 }: StopModalProps) {
+  const { t } = useTranslation();
   const { dataDir, hasRealtime, timetableLookaheadMinutes } = useGTFSMode();
   const currentTime = useCurrentTime();
   const { favouriteStopIds, toggleFavouriteStop, dismissedGpsTip, setDismissedGpsTip } = useSettingsStore();
@@ -85,7 +88,7 @@ export const StopModal = memo(function StopModal({
     );
     const seen = new Set<string>();
     return raw.filter(s => {
-      const key = s.bearing !== undefined ? bearingToDirection(s.bearing) : (s.code ?? s.id);
+      const key = s.bearing !== undefined ? bearingToCompassKey(s.bearing) : (s.code ?? s.id);
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
@@ -114,10 +117,10 @@ export const StopModal = memo(function StopModal({
 
   const terminusBanner = isAllTerminus ? (
     <div className="rounded-xl bg-warning/10 border border-warning/30 p-4 m-4">
-      <p className="text-sm font-semibold text-warning mb-1">Ovo je odredišna platforma</p>
+      <p className="text-sm font-semibold text-warning mb-1">{t('stopView.terminusTitle')}</p>
       <p className="text-sm text-base-content/70 mb-3">
-        Vozila ovdje završavaju vožnju — nema polazaka.
-        {departingSiblings.length > 0 && ' Odaberite platformu za polazak:'}
+        {t('stopView.terminusBody')}
+        {departingSiblings.length > 0 && ` ${t('stopView.terminusPickPlatform')}`}
       </p>
       {departingSiblings.map(s => {
         const routes = siblingRouteMap.get(s.id) ?? [];
@@ -130,7 +133,7 @@ export const StopModal = memo(function StopModal({
             className="btn btn-sm btn-warning w-full gap-2 mb-1 flex-wrap justify-start"
           >
             <ArrowRight className="w-4 h-4 shrink-0" />
-            <span>Terminal</span>
+            <span>{t('stopView.terminalButton')}</span>
             {routes.length > 0 && (
               <span className="flex flex-wrap gap-0.5 ml-1">
                 {routes.slice(0, maxBadges).map(r => (
@@ -181,7 +184,7 @@ export const StopModal = memo(function StopModal({
             <button
               onClick={() => toggleFavouriteStop(stop.id)}
               className="btn btn-ghost btn-circle btn-sm"
-              title={isFav ? 'Ukloni iz favorita' : 'Dodaj u favorite'}
+              title={isFav ? t('search.favouriteRemove') : t('search.favouriteAdd')}
             >
               <Star
                 className="w-5 h-5"
@@ -199,9 +202,9 @@ export const StopModal = memo(function StopModal({
                 <span>
                   {stop.bearing !== undefined
                     ? termini.length > 0
-                      ? `Smjer prema ${termini.join(', ')}`
-                      : `Smjer prema ${bearingToDirection(stop.bearing)}`
-                    : `Smjer ${stop.code}`}
+                      ? t('search.headingTowards', { place: termini.join(', ') })
+                      : t('search.headingTowards', { place: compassLabelForBearing(stop.bearing, t) })
+                    : t('search.headingCode', { code: stop.code ?? '' })}
                 </span>
               )}
             </div>
@@ -235,13 +238,13 @@ export const StopModal = memo(function StopModal({
           )}
           {siblingPlatforms.length > 0 && !isAllTerminus && (
             <div className="mb-3">
-              <p className="text-[10px] uppercase tracking-wide text-base-content/40 mb-1.5">Ostale platforme</p>
+              <p className="text-[10px] uppercase tracking-wide text-base-content/40 mb-1.5">{t('stopView.otherPlatforms')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {(platformsExpanded ? sortedSiblingPlatforms : sortedSiblingPlatforms.slice(0, PLATFORMS_COLLAPSED_MAX)).map((s) => {
                   const routes = siblingRouteMap.get(s.id) ?? [];
                   const isTerminus = siblingTerminusSet.has(s.id);
                   const label = s.bearing !== undefined
-                    ? `Smjer prema ${bearingToDirection(s.bearing)}`
+                    ? t('search.headingTowards', { place: compassLabelForBearing(s.bearing, t) })
                     : undefined;
                   return (
                     <button
@@ -252,15 +255,15 @@ export const StopModal = memo(function StopModal({
                         ? 'bg-warning/10 border-warning/40 hover:bg-warning/20 active:bg-warning/30'
                         : 'bg-base-200/60 border-base-300 hover:bg-base-200 active:bg-base-300'
                         }`}
-                      title={`Prebaci na: ${s.name}${s.bearing !== undefined ? ` (${bearingToDirection(s.bearing)})` : ''
-                        }${isTerminus ? ' · odredišna' : ''}`}
+                      title={`${t('stopView.switchToStop', { name: s.name })}${s.bearing !== undefined ? t('stopView.bearingInTitle', { direction: compassLabelForBearing(s.bearing, t) }) : ''
+                        }${isTerminus ? t('stopView.terminusInTitle') : ''}`}
                     >
                       <Navigation2
                         className="w-3.5 h-3.5 shrink-0"
                         style={s.bearing !== undefined ? { transform: `rotate(${s.bearing}deg)` } : undefined}
                       />
                       {label && <span>{label}</span>}
-                      {isTerminus && <span className="badge badge-xs bg-warning/20 text-warning border-warning/30 font-semibold">odredišna</span>}
+                      {isTerminus && <span className="badge badge-xs bg-warning/20 text-warning border-warning/30 font-semibold">{t('stopView.terminusBadge')}</span>}
                       {routes.length > 0 && (
                         <span className="flex gap-0.5 ml-0.5">
                           {routes.slice(0, 3).map(r => (
@@ -301,19 +304,19 @@ export const StopModal = memo(function StopModal({
             <div className="mx-4 mt-4 mb-3 p-4 rounded-xl bg-info/10 border border-info/30 flex gap-3 items-start">
               <Info className="w-5 h-5 text-info shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-base-content/90 mb-1">GPS prikaz vozila</p>
+                <p className="text-sm font-semibold text-base-content/90 mb-1">{t('stopView.gpsTipTitle')}</p>
                 <p className="text-sm text-base-content/70 leading-snug mb-1.5">
-                  Ovdje možeš vidjeti <strong>vozila koja se stvarno približavaju</strong> ovom stajalištu — udaljenost i smjer u stvarnom vremenu.
+                  {t('stopView.gpsTipBodyModal')}
                 </p>
                 <p className="text-sm text-base-content/50 leading-snug">
-                  Prikaz se temelji na GPS signalu, neovisno o voznom redu, pa može odstupati od taba &ldquo;Red vožnje&rdquo;.
+                  {t('stopView.gpsTipFootnoteModal')}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setDismissedGpsTip(true)}
                 className="btn btn-ghost btn-circle btn-sm shrink-0"
-                title="Ne prikazuj više"
+                title={t('stopView.gpsTipDismiss')}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -324,19 +327,19 @@ export const StopModal = memo(function StopModal({
             vehiclesLoading ? (
               <div className="flex items-center justify-center gap-3 p-8 text-base-content/50">
                 <span className="loading loading-spinner loading-sm" />
-                <span>Tražim vozila...</span>
+                <span>{t('stopView.searchingVehicles')}</span>
               </div>
             ) : liveVehicles.length === 0 ? (
               terminusBanner ?? (
                 <div className="p-8 text-center text-base-content/50">
-                  Nema GPS vozila u blizini
+                  {t('stopView.noGpsVehiclesNearby')}
                 </div>
               )
             ) : (
               <div className="px-4 pb-4 space-y-2">
                 <div className="flex items-center justify-between mb-1">
-                  <h3 className="font-semibold">Nadolazeća vozila</h3>
-                  <span className="text-xs text-base-content/40">GPS uživo</span>
+                  <h3 className="font-semibold">{t('stopView.upcomingVehicles')}</h3>
+                  <span className="text-xs text-base-content/40">{t('stopView.gpsLiveShort')}</span>
                 </div>
                 {liveVehicles.map((vehicle) => (
                   <ApproachingVehicleCard
@@ -357,19 +360,19 @@ export const StopModal = memo(function StopModal({
             timetableLoading ? (
               <div className="flex items-center justify-center gap-3 p-8 text-base-content/50">
                 <span className="loading loading-spinner loading-sm" />
-                <span>Učitavam red vožnje...</span>
+                <span>{t('stopView.loadingTimetable')}</span>
               </div>
             ) : timetableDepartures.length === 0 ? (
               terminusBanner ?? (
                 <div className="p-8 text-center text-base-content/50">
-                  Nema polazaka u sljedećih {timetableLookaheadMinutes} min
+                  {t('stopView.noDeparturesInMins', { minutes: timetableLookaheadMinutes })}
                 </div>
               )
             ) : (
               <div className="p-4 space-y-2">
                 <div className="flex items-center justify-between mb-1">
-                  <h3 className="font-semibold">Red vožnje</h3>
-                  <span className="text-xs text-base-content/40">slj. {timetableLookaheadMinutes} min</span>
+                  <h3 className="font-semibold">{t('stopView.timetableHeading')}</h3>
+                  <span className="text-xs text-base-content/40">{t('stopView.timetableNextMins', { minutes: timetableLookaheadMinutes })}</span>
                 </div>
                 {timetableDepartures.map((dep) => (
                   <TimetableDepartureCard

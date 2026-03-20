@@ -7,6 +7,7 @@
  */
 
 import { useState, useCallback, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { trackEvent } from '../utils/analytics';
 import { Search, X, Train } from 'lucide-react';
 import { useSelectionParams } from '../hooks/useSelectionParams';
@@ -45,6 +46,7 @@ interface GTFSModeProps {
 }
 
 export function GTFSMode({ config }: GTFSModeProps) {
+  const { t } = useTranslation();
   // Modal states
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [routeModalOpen, setRouteModalOpen] = useState(false);
@@ -275,7 +277,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
       <div className="min-h-svh flex items-center justify-center">
         <div className="text-center">
           <div className="loading loading-spinner loading-lg"></div>
-          <div className="mt-4">{config.loadingText}</div>
+          <div className="mt-4">{t(`gtfs.${config.loadingI18nKey}`)}</div>
         </div>
       </div>
     );
@@ -285,7 +287,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
     return (
       <div className="min-h-svh flex items-center justify-center p-4">
         <div className="alert alert-error max-w-md">
-          <span>Greška pri učitavanju podataka: {initialError.message}</span>
+          <span>{t('gtfs.initialError', { message: initialError.message })}</span>
         </div>
       </div>
     );
@@ -352,7 +354,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
           <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[1000]">
             <div className="alert alert-info py-2 px-4 shadow-lg">
               <span className="loading loading-spinner loading-sm"></span>
-              <span>Učitavanje rute...</span>
+              <span>{t('gtfs.loadingRoute')}</span>
             </div>
           </div>
         )}
@@ -383,7 +385,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
           <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[1000]">
             <div className="badge badge-neutral gap-2 shadow text-xs sm:text-sm opacity-90">
               <span className="w-2 h-2 rounded-full bg-base-content/60" />
-              Zumiraj za prikaz stanica i vozila
+              {t('gtfs.zoomForStopsAndVehicles')}
             </div>
           </div>
         )}
@@ -393,7 +395,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
           <div className="absolute bottom-6 right-4 z-[1000]">
             <div className="badge badge-neutral gap-1.5 shadow text-[11px] opacity-80">
               <Train className="w-3 h-3" />
-              Live praćenje vlakova nije dostupno
+              {t('gtfs.trainNoLiveTracking')}
             </div>
           </div>
         )}
@@ -494,7 +496,9 @@ export function GTFSMode({ config }: GTFSModeProps) {
                   </span>
                 ) : (
                   <span className="text-base-content/50 text-sm flex-1">
-                    {config.searchPlaceholder}
+                    {config.id === 'train'
+                      ? t('search.barPlaceholderTrains')
+                      : t('search.barPlaceholderLines')}
                   </span>
                 )}
               </button>
@@ -502,7 +506,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
                 <button
                   onClick={handleClearRoute}
                   className="btn btn-ghost btn-circle btn-xs min-h-[32px] min-w-[32px]"
-                  aria-label="Očisti odabir"
+                  aria-label={t('search.clearSelectionAria')}
                 >
                   <X className="w-4 h-4" />
                 </button>

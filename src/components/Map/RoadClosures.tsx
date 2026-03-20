@@ -1,14 +1,23 @@
 import { Polyline, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
+import { useTranslation } from 'react-i18next';
 import type { RoadClosure } from '../../hooks/useRoadClosures';
 import { useSettingsStore } from '../../stores/settingsStore';
+import i18n from '../../i18n';
 
 interface RoadClosuresProps {
     show: boolean;
     closures: RoadClosure[];
 }
 
+function closureReasonLabel(reason: string, t: (k: string) => string): string {
+    if (reason === 'ROAD_CLOSED_CONSTRUCTION') return t('roadClosures.reasonConstruction');
+    if (reason === 'ROAD_CLOSED') return t('roadClosures.reasonClosed');
+    return reason;
+}
+
 export function RoadClosures({ show, closures }: RoadClosuresProps) {
+    const { t } = useTranslation();
     const theme = useSettingsStore((s) => s.theme);
 
     if (!show || closures.length === 0) return null;
@@ -52,13 +61,13 @@ export function RoadClosures({ show, closures }: RoadClosuresProps) {
                                 <div className="p-1">
                                     <h3 className="font-bold text-sm mb-1">{closure.streetName}</h3>
                                     {closure.crossStreet && (
-                                        <p className="text-xs text-base-content/70 mb-2">Do: {closure.crossStreet}</p>
+                                        <p className="text-xs text-base-content/70 mb-2">{t('roadClosures.untilCross', { street: closure.crossStreet })}</p>
                                     )}
                                     <div className="text-xs space-y-1">
-                                        <p><strong>Razlog:</strong> {closure.reason.replace('ROAD_CLOSED_CONSTRUCTION', 'Radovi').replace('ROAD_CLOSED', 'Zatvoreno')}</p>
-                                        <p><strong>Smjer:</strong> {closure.direction === 'BOTH_DIRECTIONS' ? 'Oba smjera' : closure.direction}</p>
+                                        <p><strong>{t('roadClosures.reasonLabel')}</strong> {closureReasonLabel(closure.reason, t)}</p>
+                                        <p><strong>{t('roadClosures.directionLabel')}</strong> {closure.direction === 'BOTH_DIRECTIONS' ? t('roadClosures.bothDirections') : closure.direction}</p>
                                         {closure.endDate && (
-                                            <p><strong>Zatvoreno do:</strong> {new Date(closure.endDate).toLocaleDateString('hr-HR')}</p>
+                                            <p><strong>{t('roadClosures.closedUntil')}</strong> {new Date(closure.endDate).toLocaleDateString(i18n.language)}</p>
                                         )}
                                     </div>
                                 </div>
@@ -76,13 +85,13 @@ export function RoadClosures({ show, closures }: RoadClosuresProps) {
                                 <div className="p-1">
                                     <h3 className="font-bold text-sm mb-1">{closure.streetName}</h3>
                                     {closure.crossStreet && (
-                                        <p className="text-xs text-base-content/70 mb-2">Do: {closure.crossStreet}</p>
+                                        <p className="text-xs text-base-content/70 mb-2">{t('roadClosures.untilCross', { street: closure.crossStreet })}</p>
                                     )}
                                     <div className="text-xs space-y-1">
-                                        <p><strong>Razlog:</strong> {closure.reason.replace('ROAD_CLOSED_CONSTRUCTION', 'Radovi').replace('ROAD_CLOSED', 'Zatvoreno')}</p>
-                                        <p><strong>Smjer:</strong> {closure.direction === 'BOTH_DIRECTIONS' ? 'Oba smjera' : closure.direction}</p>
+                                        <p><strong>{t('roadClosures.reasonLabel')}</strong> {closureReasonLabel(closure.reason, t)}</p>
+                                        <p><strong>{t('roadClosures.directionLabel')}</strong> {closure.direction === 'BOTH_DIRECTIONS' ? t('roadClosures.bothDirections') : closure.direction}</p>
                                         {closure.endDate && (
-                                            <p><strong>Zatvoreno do:</strong> {new Date(closure.endDate).toLocaleDateString('hr-HR')}</p>
+                                            <p><strong>{t('roadClosures.closedUntil')}</strong> {new Date(closure.endDate).toLocaleDateString(i18n.language)}</p>
                                         )}
                                     </div>
                                 </div>

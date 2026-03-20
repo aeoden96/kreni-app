@@ -4,23 +4,12 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BadgeWithPanel } from './BadgeWithPanel';
+import { serviceAlertEffectLabel } from '../../utils/serviceAlertEffectLabel';
 import { AlertTriangle, X, ChevronRight, Bus, MapPin, Ban, Plus, Info, Calendar, ArrowRight } from 'lucide-react';
 import type { ParsedServiceAlert } from '../../utils/realtime';
 import type { Route } from '../../utils/gtfs';
-
-// ── Effect labels ──────────────────────────────────────────────────────────
-const EFFECT_HR: Record<string, string> = {
-  NO_SERVICE: 'Nema usluge',
-  REDUCED_SERVICE: 'Smanjena usluga',
-  SIGNIFICANT_DELAYS: 'Velika kašnjenja',
-  DETOUR: 'Preusmjeravanje',
-  ADDITIONAL_SERVICE: 'Dodatna usluga',
-  MODIFIED_SERVICE: 'Izmijenjena usluga',
-  STOP_MOVED: 'Stanica premještena',
-  OTHER_EFFECT: 'Ostalo',
-  UNKNOWN_EFFECT: 'Nepoznato',
-};
 
 // ── Per-effect visual config ───────────────────────────────────────────────
 type EffectStyle = {
@@ -95,6 +84,7 @@ interface ServiceAlertsProps {
 }
 
 export function ServiceAlerts({ alerts, routesById, selectedRouteId, onRouteClick }: ServiceAlertsProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
   if (alerts.length === 0) return null;
@@ -151,7 +141,7 @@ export function ServiceAlerts({ alerts, routesById, selectedRouteId, onRouteClic
                 <div className="flex items-center gap-2 mb-2">
                   {style.icon}
                   <span className={`badge badge-sm ${style.badge}`}>
-                    {EFFECT_HR[alert.effect] ?? alert.effect}
+                    {serviceAlertEffectLabel(alert.effect, t)}
                   </span>
                   {alert.url && (
                     <a

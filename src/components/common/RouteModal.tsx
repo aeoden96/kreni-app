@@ -10,6 +10,7 @@
  */
 
 import { useState, memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, X, Train, Bus } from 'lucide-react';
 import type { Route, Stop } from '../../utils/gtfs';
 import { getDirectionColor } from '../Map/directionColors';
@@ -49,6 +50,7 @@ export const RouteModal = memo(function RouteModal({
   onClose,
   onStopClick,
 }: RouteModalProps) {
+  const { t } = useTranslation();
 
   // Compute direction keys and labels from orderedStops
   const directionKeys = orderedStops
@@ -111,7 +113,7 @@ export const RouteModal = memo(function RouteModal({
             <button
               onClick={onClose}
               className="btn btn-ghost btn-sm p-1.5 min-h-[36px] min-w-[36px]"
-              aria-label="Zatvori"
+              aria-label={t('common.close')}
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
@@ -134,7 +136,7 @@ export const RouteModal = memo(function RouteModal({
             <button
               onClick={onClose}
               className="btn btn-ghost btn-circle btn-sm p-1.5 min-h-[36px] min-w-[36px]"
-              aria-label="Zatvori"
+              aria-label={t('common.close')}
             >
               <X className="w-4 h-4" />
             </button>
@@ -210,7 +212,7 @@ export const RouteModal = memo(function RouteModal({
 
               {stopRows.length === 0 && (
                 <div className="text-sm text-base-content/50 px-3 py-8 text-center">
-                  Nema dostupnih stajališta
+                  {t('routeModal.noStops')}
                 </div>
               )}
             </div>

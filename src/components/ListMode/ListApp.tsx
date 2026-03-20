@@ -12,6 +12,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Star, Route as RouteIcon, MapPin, AlertTriangle } from 'lucide-react';
 import { useInitialData } from '../../hooks/useInitialData';
 import { useCurrentService } from '../../hooks/useCurrentService';
@@ -33,6 +34,7 @@ type Tab = 'favourites' | 'routes' | 'nearby' | 'alerts';
 type DirectionFilter = 'A' | 'B';
 
 export function ListApp() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<Tab>('favourites');
 
   // Modal / selection state
@@ -112,7 +114,7 @@ export function ListApp() {
       <div className="min-h-svh flex items-center justify-center">
         <div className="text-center">
           <div className="loading loading-spinner loading-lg" />
-          <div className="mt-4">Učitavanje podataka...</div>
+          <div className="mt-4">{t('gtfs.loadingTransit')}</div>
         </div>
       </div>
     );
@@ -123,7 +125,7 @@ export function ListApp() {
     return (
       <div className="min-h-svh flex items-center justify-center p-4">
         <div className="alert alert-error max-w-md">
-          <span>Greška pri učitavanju podataka: {initialError.message}</span>
+          <span>{t('gtfs.initialError', { message: initialError.message })}</span>
         </div>
       </div>
     );
@@ -133,13 +135,13 @@ export function ListApp() {
   const selectedRoute = selectedRouteId ? routesById.get(selectedRouteId) : null;
 
   const tabs: { id: Tab; icon: typeof Star; label: string; badge?: number }[] = [
-    { id: 'favourites', icon: Star, label: 'Favoriti' },
-    { id: 'routes', icon: RouteIcon, label: 'Linije' },
-    { id: 'nearby', icon: MapPin, label: 'U blizini' },
+    { id: 'favourites', icon: Star, label: t('listApp.tabFavourites') },
+    { id: 'routes', icon: RouteIcon, label: t('listApp.tabRoutes') },
+    { id: 'nearby', icon: MapPin, label: t('listApp.tabNearby') },
     {
       id: 'alerts',
       icon: AlertTriangle,
-      label: 'Obavijesti',
+      label: t('listApp.tabAlerts'),
       badge: serviceAlerts.length || undefined,
     },
   ];
@@ -154,11 +156,11 @@ export function ListApp() {
         {realtimeStats && !realtimeError && (
           <span className="badge badge-success badge-sm gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-            {realtimeStats.vehiclePositions} uživo
+            {t('listApp.liveVehicles', { count: realtimeStats.vehiclePositions })}
           </span>
         )}
         {realtimeError && (
-          <span className="badge badge-error badge-sm gap-1">GPS greška</span>
+          <span className="badge badge-error badge-sm gap-1">{t('listApp.gpsError')}</span>
         )}
 
 
