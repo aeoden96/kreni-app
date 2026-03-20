@@ -8,6 +8,12 @@ import { useSpiderfierContext } from './SpiderfierContext';
 import L from 'leaflet';
 import { fetchStopTimetable, type Stop, type Route } from '../../utils/gtfs';
 import { getDirectionColor } from './directionColors';
+import {
+  MARKER_Z_STOP_DEFAULT,
+  MARKER_Z_STOP_HIGHLIGHTED,
+  MARKER_Z_STOP_PARENT_LABEL,
+  MARKER_Z_STOP_SELECTED,
+} from './mapMarkerZIndex';
 
 // ── Stop colour by service type ──────────────────────────────────────────────
 function stopFillColor(stop: Stop, isSelected: boolean, isHighlighted: boolean): string {
@@ -42,21 +48,23 @@ function makeStopIcon(
   const extraClass = isSelected ? 'stop-selected-pulse' : '';
 
   if (bearing !== undefined) {
-    // --- UNIFIED ROUNDY ARROW PIN DESIGN ---
-    // Instead of two shapes, we use a single path to create a clean "shield" or "pin" silhouette
-    // and eliminate the "circle inside arrow" visual artifact.
+    // Unified pin: tip at top, circular cap below. Cone sides must be tangent to the arc
+    // (same center as the non-directional marker: (cx, cx)) — using a raw `r` here left the
+    // join visibly “shouldered” because r ≠ cx·cos(halfAngle).
     const tipY = 0;
-    // Calculate tangent points on the circle to create a smooth transition to the arrow tip
-    const angleRad = (42 * Math.PI) / 180; // 42 degrees from vertical
-    const xOff = r * Math.sin(angleRad);
-    const yOff = r * Math.cos(angleRad);
-
+    // Angle from vertical to the tangent radius at the circle; larger ⇒ sharper tip (180°−2θ)
+    // and smaller arc (cx·cos θ), so the pin reads less blunt / “fat”.
+    const halfAngleRad = (48 * Math.PI) / 180;
+    const circleCy = cx;
+    const arcR = circleCy * Math.cos(halfAngleRad);
+    const xOff = arcR * Math.sin(halfAngleRad);
+    const yOff = arcR * Math.cos(halfAngleRad);
     const x1 = cx - xOff;
-    const y1 = cx - yOff;
+    const y1 = circleCy - yOff;
     const x2 = cx + xOff;
-    const y2 = cx - yOff;
+    const y2 = circleCy - yOff;
 
-    const pathData = `M ${cx},${tipY} L ${x1},${y1} A ${r},${r} 0 1 0 ${x2},${y2} Z`;
+    const pathData = `M ${cx},${tipY} L ${x1},${y1} A ${arcR},${arcR} 0 1 0 ${x2},${y2} Z`;
 
     const html =
       `<div data-testid="stop-marker" class="${extraClass}" style="position:relative;width:${size}px;height:${size}px;opacity:${opacityFactor};">` +
@@ -330,6 +338,13 @@ export function StopMarkers({
               key={stop.id}
               position={[stop.lat, stop.lon]}
               icon={icon}
+              zIndexOffset={
+                isSelected
+                  ? MARKER_Z_STOP_SELECTED
+                  : isHighlighted
+                    ? MARKER_Z_STOP_HIGHLIGHTED
+                    : MARKER_Z_STOP_DEFAULT
+              }
               eventHandlers={{
                 click: () => onStopClick(stop.id)
               }}
@@ -367,6 +382,7 @@ export function StopMarkers({
         <span key={`parent-label-${idx}`}>
           <Marker
             position={[lat, lon]}
+            zIndexOffset={MARKER_Z_STOP_PARENT_LABEL}
             icon={L.divIcon({
               html: `<span class="parent-station-label">${String(label).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>`,
               className: '',

@@ -10,6 +10,7 @@ import { getDirectionColor } from './directionColors';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useMapBounds } from '../../hooks/useMapBounds';
 import { useSpiderfierContext } from './SpiderfierContext';
+import { MARKER_Z_VEHICLE } from './mapMarkerZIndex';
 
 // ── Spiderfied vehicle sub-component ──────────────────────────────────
 
@@ -61,6 +62,7 @@ function SpiderfiedVehicleMarker({
     <Marker
       position={[vehicle.lat, vehicle.lon]}
       icon={icon}
+      zIndexOffset={MARKER_Z_VEHICLE}
       eventHandlers={{
         click: (e) => {
           e.originalEvent.stopPropagation();

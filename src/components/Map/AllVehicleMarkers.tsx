@@ -9,6 +9,7 @@ import { makeVehicleIcon } from '../../utils/vehicleIcon';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useMapBounds } from '../../hooks/useMapBounds';
 import { useSpiderfierContext } from './SpiderfierContext';
+import { MARKER_Z_VEHICLE } from './mapMarkerZIndex';
 
 // ── Spiderfied sub-component for all-vehicles view ───────────────────────
 
@@ -57,6 +58,7 @@ function SpiderfiedAllVehicleMarker({
     <Marker
       position={[vehicle.lat, vehicle.lon]}
       icon={icon}
+      zIndexOffset={MARKER_Z_VEHICLE}
       eventHandlers={{
         click: (e) => {
           e.originalEvent.stopPropagation();
