@@ -34,7 +34,13 @@ const hr = {
         languageCroatian: 'Promijeni jezik na Hrvatski',
         languageEnglish: 'Promijeni jezik na Engleski',
         languageGerman: 'Promijeni jezik na Njemački',
+        feedback: 'Povratna informacija',
       },
+    },
+    feedbackPage: {
+      title: 'Povratne informacije',
+      iframeTitle: 'Povratne informacije',
+      unconfigured: 'Obrazac za povratnu informacije još nije postavljen.',
     },
     search: {
       title: 'Pretraži',

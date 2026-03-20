@@ -1,4 +1,4 @@
-import { useState, useTransition } from 'react';
+import { useState, useTransition, type ReactNode } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
     TramFront,
@@ -7,6 +7,7 @@ import {
     Building2,
     Settings,
     HelpCircle,
+    MessageSquare,
     X,
     LocateFixed,
     Map,
@@ -22,6 +23,14 @@ import { usePWAInstall } from '../../hooks/usePWAInstall';
 import { trackEvent } from '../../utils/analytics';
 import { getCurrentLanguage, setLanguage, type SupportedLanguage } from '../../i18n';
 import { FlatLanguageFlags } from './FlatLanguageFlags';
+
+type SpiderActionItem = {
+    label: string;
+    icon: ReactNode;
+    onClick?: () => void;
+    /** Primary CTA styling — stands out from neutral help/settings icons. */
+    callout?: boolean;
+};
 
 export function SpiderMenu() {
     const [isOpen, setIsOpen] = useState(false);
@@ -110,7 +119,17 @@ export function SpiderMenu() {
         }
     ];
 
-    const actionItems = [
+    const actionItems: SpiderActionItem[] = [
+        {
+            label: t('spiderMenu.actions.feedback'),
+            icon: <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6" />,
+            callout: true,
+            onClick: () => {
+                startTransition(() => {
+                    navigate('/feedback');
+                });
+            },
+        },
         {
             label: t('spiderMenu.actions.help'),
             icon: <HelpCircle className="w-5 h-5" />,
@@ -131,6 +150,7 @@ export function SpiderMenu() {
                 });
             }
         },
+      
     ];
 
     const activeItem = menuItems.find(item => item.to === location.pathname) || menuItems[0];
@@ -143,15 +163,15 @@ export function SpiderMenu() {
 
     return (
         <>
-        <div className={`fixed ${isHeaderMode ? 'top-[10px] right-2' : 'top-2 right-2 sm:top-4 sm:right-4'} z-[2000] flex flex-col items-end`}>
-            {isOpen && (
-                <div
-                    className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[1999]"
-                    onClick={() => setIsOpen(false)}
-                />
-            )}
-
-            <div className={`relative z-[2000] flex flex-col items-end ${isOpen ? 'gap-3' : 'gap-0'}`}>
+        {isOpen && (
+            <div
+                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[1999] cursor-pointer"
+                onClick={() => setIsOpen(false)}
+                aria-hidden
+            />
+        )}
+        <div className={`fixed ${isHeaderMode ? 'top-[10px] right-2' : 'top-2 right-2 sm:top-4 sm:right-4'} z-[2000] flex flex-col items-end pointer-events-none`}>
+            <div className={`pointer-events-auto flex flex-col items-end ${isOpen ? 'gap-3' : 'gap-0'}`}>
                 <div className="flex items-center gap-2">
                     {/* Locate Button */}
                     {showLocate && !isOpen && (
@@ -186,7 +206,7 @@ export function SpiderMenu() {
 
                 {/* MENU ITEMS (STACKED VERTICALLY) */}
                 {isOpen && (
-                    <div className="flex flex-col items-end gap-3 pointer-events-auto">
+                    <div className="flex flex-col items-end gap-3 pointer-events-auto w-fit" onClick={() => setIsOpen(false)}>
                         {menuItems.map((item, index) => (
                             <div key={item.to} className="flex items-center gap-3">
                                 {location.pathname === "/" && item.to === "/" && (
@@ -423,6 +443,7 @@ export function SpiderMenu() {
                                     to={item.to}
                                     onClick={(e) => {
                                         e.preventDefault();
+                                        e.stopPropagation();
                                         trackEvent('mode_switched', { mode: item.label });
                                         startTransition(() => {
                                             navigate(item.to);
@@ -448,15 +469,16 @@ export function SpiderMenu() {
 
                         <div className="h-px w-12 bg-white/20 my-1 mr-2 animate-spider-reveal" style={{ animationDelay: `${menuItems.length * 50}ms` }} />
 
-                        <div className="flex gap-3 pr-1">
-                            {actionItems.map((item, index) => (
+                        <div className="flex gap-3 pr-1 items-center">
+                            {actionItems.filter(item => !item.callout).map((item, index) => (
                                 <button
                                     key={item.label}
+                                    type="button"
                                     onClick={() => {
                                         item.onClick?.();
                                         setIsOpen(false);
                                     }}
-                                    className="flex items-center justify-center w-11 h-11 rounded-full bg-neutral/90 text-neutral-content shadow-lg border border-white/10 hover:bg-neutral hover:scale-110 transition-all duration-300 animate-spider-reveal"
+                                    className="flex items-center justify-center w-11 h-11 rounded-full shadow-lg transition-all duration-300 animate-spider-reveal bg-neutral/90 text-neutral-content border border-white/10 hover:bg-neutral hover:scale-110"
                                     title={item.label}
                                     style={{
                                         animationDelay: `${spiderActionsBaseDelay + index * 50}ms`
@@ -491,20 +513,44 @@ export function SpiderMenu() {
             </div >
         </div >
         {isOpen && (
-            <div
-                className="fixed right-3 sm:right-4 z-[2001] flex gap-2.5 animate-spider-reveal"
-                style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.875rem)' }}
-            >
-                <FlatLanguageFlags
-                    currentLang={currentLang}
-                    onSelectHr={() => switchLanguage('hr')}
-                    onSelectEn={() => switchLanguage('en')}
-                    onSelectDe={() => switchLanguage('de')}
-                    titleHr={t('spiderMenu.actions.languageCroatian')}
-                    titleEn={t('spiderMenu.actions.languageEnglish')}
-                    titleDe={t('spiderMenu.actions.languageGerman')}
-                />
-            </div>
+            <>
+                <div
+                    className="fixed left-3 sm:left-4 z-[2001] flex items-center gap-2.5 animate-spider-reveal"
+                    style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.875rem)' }}
+                >
+                    {actionItems.filter(item => item.callout).map(item => (
+                        <button
+                            key={item.label}
+                            type="button"
+                            onClick={() => {
+                                item.onClick?.();
+                                setIsOpen(false);
+                            }}
+                            className="flex items-center gap-2 px-3 py-2 rounded-full shadow-lg transition-all duration-300 bg-neutral/90 text-neutral-content border border-white/10 hover:bg-neutral hover:scale-105"
+                            title={item.label}
+                        >
+                            {item.icon}
+                            <span className="text-[10px] font-black tracking-widest uppercase whitespace-nowrap">
+                                {item.label}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+                <div
+                    className="fixed right-3 sm:right-4 z-[2001] flex items-center gap-2.5 animate-spider-reveal"
+                    style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.875rem)' }}
+                >
+                    <FlatLanguageFlags
+                        currentLang={currentLang}
+                        onSelectHr={() => switchLanguage('hr')}
+                        onSelectEn={() => switchLanguage('en')}
+                        onSelectDe={() => switchLanguage('de')}
+                        titleHr={t('spiderMenu.actions.languageCroatian')}
+                        titleEn={t('spiderMenu.actions.languageEnglish')}
+                        titleDe={t('spiderMenu.actions.languageGerman')}
+                    />
+                </div>
+            </>
         )}
         </>
     );

@@ -11,6 +11,7 @@ import { CyclingMode } from './pages/CyclingMode.tsx'
 import { DrivingMode } from './pages/DrivingMode.tsx'
 import { CityLifeMode } from './pages/CityLifeMode.tsx'
 import { TrainMode } from './pages/TrainMode.tsx'
+import { TallyFeedbackPage } from './pages/TallyFeedbackPage.tsx'
 
 
 createRoot(document.getElementById('root')!).render(
@@ -18,6 +19,7 @@ createRoot(document.getElementById('root')!).render(
     <DebugProvider>
       <BrowserRouter basename={import.meta.env.BASE_URL}>
         <Routes>
+          <Route path="/feedback" element={<TallyFeedbackPage />} />
           <Route element={<AppLayout />}>
             <Route path="/" element={<AppModeSwitch />} />
             <Route path="/train" element={<TrainMode />} />

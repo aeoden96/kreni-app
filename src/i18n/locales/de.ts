@@ -34,7 +34,13 @@ const de = {
         languageCroatian: 'Kroatisch',
         languageEnglish: 'Englisch',
         languageGerman: 'Deutsch',
+        feedback: 'Feedback',
       },
+    },
+    feedbackPage: {
+      title: 'Feedback',
+      iframeTitle: 'Feedback',
+      unconfigured: 'Das Feedback-Formular ist noch nicht eingerichtet.',
     },
     search: {
       title: 'Suche',

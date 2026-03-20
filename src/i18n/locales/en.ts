@@ -34,7 +34,13 @@ const en = {
         languageCroatian: 'Switch to Croatian',
         languageEnglish: 'Switch to English',
         languageGerman: 'Switch to German',
+        feedback: 'Feedback',
       },
+    },
+    feedbackPage: {
+      title: 'Feedback',
+      iframeTitle: 'Feedback',
+      unconfigured: 'The feedback form is not set up yet.',
     },
     search: {
       title: 'Search',

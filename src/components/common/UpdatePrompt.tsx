@@ -69,35 +69,35 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
         aria-labelledby="update-prompt-title"
         className="fixed z-[9999] inset-x-4 bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:inset-x-auto sm:bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] w-auto sm:w-[min(100%,28rem)] max-w-lg mx-auto safe-left safe-right animate-[modal-fade-in_0.2s_ease-out]"
       >
-        <div className="rounded-2xl bg-base-100 border border-base-300 shadow-2xl px-5 py-5 sm:px-6 sm:py-6 max-h-[min(70svh,32rem)] flex flex-col">
-          <div className="flex items-start gap-4 min-h-0">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-              <RefreshCw size={22} className="text-primary" aria-hidden />
+        <div className="rounded-2xl bg-base-100 border border-base-300 shadow-2xl px-5 py-5 sm:px-6 sm:py-6 max-h-[min(70svh,32rem)] flex flex-col overflow-hidden">
+          <div className="flex flex-1 min-h-0 items-start gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+              <RefreshCw size={20} className="text-primary" aria-hidden />
             </div>
-            <div className="flex-1 min-w-0 overflow-y-auto pr-1">
-              <p id="update-prompt-title" className="text-lg sm:text-xl font-semibold text-base-content leading-snug">
+            <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain pr-1 -mr-0.5 [scrollbar-gutter:stable]">
+              <p id="update-prompt-title" className="text-base sm:text-lg font-semibold text-base-content leading-snug">
                 {t('updatePrompt.title')}
-                <span className="block mt-1 text-sm font-normal text-base-content/55">
+                <span className="block mt-0.5 text-xs font-normal text-base-content/55">
                   v{__APP_VERSION__}
                 </span>
               </p>
               {notes?.version === __APP_VERSION__ && notes.changes.length > 0 ? (
-                <ul className="mt-4 space-y-2 text-base text-base-content/70 leading-relaxed">
+                <ul className="mt-3 space-y-1.5 text-sm text-base-content/70 leading-relaxed">
                   {notes.changes.map((c, i) => (
-                    <li key={i} className="flex gap-2.5">
-                      <span className="shrink-0 text-primary font-bold leading-[1.4]">·</span>
+                    <li key={i} className="flex gap-2">
+                      <span className="shrink-0 text-primary font-bold leading-[1.35]">·</span>
                       <span>{c}</span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <ul className="mt-4 space-y-2 text-base text-base-content/70 leading-relaxed">
-                  <li className="flex gap-2.5">
-                    <span className="shrink-0 text-primary font-bold leading-[1.4]">·</span>
+                <ul className="mt-3 space-y-1.5 text-sm text-base-content/70 leading-relaxed">
+                  <li className="flex gap-2">
+                    <span className="shrink-0 text-primary font-bold leading-[1.35]">·</span>
                     <span>{t('updatePrompt.fallbackGeneral')}</span>
                   </li>
-                  <li className="flex gap-2.5">
-                    <span className="shrink-0 text-primary font-bold leading-[1.4]">·</span>
+                  <li className="flex gap-2">
+                    <span className="shrink-0 text-primary font-bold leading-[1.35]">·</span>
                     <span>{t('updatePrompt.fallbackPerformance')}</span>
                   </li>
                 </ul>
@@ -112,7 +112,7 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
               <X size={20} />
             </button>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-5 sm:mt-6 pt-4 border-t border-base-200 sm:justify-end sm:items-center">
+          <div className="shrink-0 flex flex-col sm:flex-row gap-2 sm:gap-3 mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-base-200 sm:justify-end sm:items-center">
             <button
               type="button"
               onClick={() => setDismissed(true)}
