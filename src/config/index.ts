@@ -11,5 +11,5 @@ export const GTFS_PROXY_URL =
 export const GTFS_API_KEY: string | undefined =
   import.meta.env.VITE_GTFS_API_KEY;
 
-/** How often to poll the realtime feed (ms). Worker edge cache TTL is 10s. */
-export const REALTIME_POLL_INTERVAL = 10_000;
+/** How often to poll the realtime feed (ms). Keep in sync with worker CACHE_TTL_SECONDS. */
+export const REALTIME_POLL_INTERVAL = 7_000;

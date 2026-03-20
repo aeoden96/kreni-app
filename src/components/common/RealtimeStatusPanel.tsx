@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { BadgeWithPanel } from './BadgeWithPanel';
 import { ServiceAlerts } from './ServiceAlerts';
 import { RealtimeFeedToggleIcon } from './RealtimeFeedToggleIcon';
@@ -17,9 +17,14 @@ interface RealtimeStatusPanelProps {
   timeAgoStr: string;
   feedAgeStr: string;
   workerTimestamp: string | null;
+  cacheAgeSeconds: number | null;
   fetchLatencyMs: number | null;
   lastUpdate: number | null;
-  cacheStatus: string | null;
+  cacheStatus: 'HIT' | 'MISS' | null;
+  /** Estimated wall-clock time (ms) when the next poll runs; null while a fetch is in flight or polling off */
+  nextPollAtMs: number | null;
+  /** True while fetchAll is running */
+  realtimeLoading: boolean;
 }
 
 export interface RealtimeStatusPanelHandle {
@@ -135,13 +140,23 @@ export const RealtimeStatusPanel = forwardRef<
     timeAgoStr,
     feedAgeStr,
     workerTimestamp,
+    cacheAgeSeconds,
     fetchLatencyMs,
     lastUpdate,
     cacheStatus,
+    nextPollAtMs,
+    realtimeLoading,
   } = props;
 
   const [legendOpen, setLegendOpen] = useState(false);
   const [realtimeDetailsOpen, setRealtimeDetailsOpen] = useState(false);
+  const [nowTick, setNowTick] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!realtimeDetailsOpen || nextPollAtMs == null) return;
+    const id = window.setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [realtimeDetailsOpen, nextPollAtMs]);
 
   useImperativeHandle(ref, () => ({
     closeLegends: () => {
@@ -157,8 +172,23 @@ export const RealtimeStatusPanel = forwardRef<
 
   const handleDetailsOpenChange = (open: boolean) => {
     setRealtimeDetailsOpen(open);
-    if (open) setLegendOpen(false);
+    if (open) {
+      setLegendOpen(false);
+      setNowTick(Date.now());
+    }
   };
+
+  const nextPingRemainMs =
+    nextPollAtMs != null ? Math.max(0, nextPollAtMs - nowTick) : null;
+  let nextPingLabel = '—';
+  if (nextPollAtMs != null && nextPingRemainMs != null) {
+    nextPingLabel =
+      nextPingRemainMs < 1000 ? '<1 s' : `${Math.ceil(nextPingRemainMs / 1000)} s`;
+  } else if (realtimeLoading) {
+    nextPingLabel = '…';
+  }
+  const nextPingClock =
+    nextPollAtMs != null ? new Date(nextPollAtMs).toLocaleTimeString() : null;
 
   const detailsPanelContent = (
     <div className="text-[13px] text-base-content/80 space-y-2">
@@ -184,6 +214,22 @@ export const RealtimeStatusPanel = forwardRef<
       </div>
 
       <div>
+        <div className="flex justify-between">
+          <span className="font-medium">Sljedeći ping</span>
+          <span>
+            {nextPollAtMs != null
+              ? `za ${nextPingLabel} (~${nextPingClock})`
+              : realtimeLoading
+                ? 'u tijeku…'
+                : '—'}
+          </span>
+        </div>
+        <div className="text-[11px] text-base-content/60">
+          Procijenjeno vrijeme sljedećeg zahtjeva prema proxyju (prilagođeno predmemoriji).
+        </div>
+      </div>
+
+      <div>
         <div className="flex justify-between"><span className="font-medium">Vrijeme sinkronizacije (klijent)</span><span>{lastUpdate ? new Date(lastUpdate).toLocaleString() : '—'}</span></div>
         <div className="text-[11px] text-base-content/60">Vrijeme kada je ova aplikacija primila i obradila feed.</div>
         {realtimeStats && (
@@ -198,6 +244,7 @@ export const RealtimeStatusPanel = forwardRef<
 
       <div>
         <div className="flex justify-between"><span className="font-medium">Status predmemorije</span><span>{cacheStatus ?? '—'}</span></div>
+        <div className="flex justify-between"><span>Cache age</span><span>{cacheAgeSeconds != null ? `${cacheAgeSeconds} s` : '—'}</span></div>
         <div className="text-[11px] text-base-content/60"><span className="font-semibold">HIT</span> = posluženo iz predmemorije, <span className="font-semibold">MISS</span> = dohvaćeno iz izvornog feeda.</div>
       </div>
     </div>

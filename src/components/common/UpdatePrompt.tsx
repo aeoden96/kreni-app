@@ -56,43 +56,78 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
   if (!needRefresh || dismissed) return null;
 
   return (
-    <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[9999] w-[calc(100%-2rem)] max-w-sm rounded-xl bg-base-100 border border-base-300 shadow-lg px-4 py-3 text-sm">
-      <div className="flex items-start gap-3">
-        <RefreshCw size={16} className="shrink-0 text-primary mt-0.5" />
-        <div className="flex-1 min-w-0">
-          <p className="font-medium text-base-content">
-            Nova verzija je dostupna
-            <span className="ml-1 text-base-content/50 font-normal">({__APP_VERSION__})</span>
-          </p>
-          {notes?.version === __APP_VERSION__ && notes.changes.length > 0 ? (
-            <ul className="mt-1 space-y-0.5 text-base-content/60">
-              {notes.changes.map((c, i) => (
-                <li key={i} className="flex gap-1.5"><span className="shrink-0">·</span>{c}</li>
-              ))}
-            </ul>
-          ) : (
-            <ul className="mt-1 space-y-0.5 text-base-content/60">
-              <li className="flex gap-1.5"><span className="shrink-0">·</span>Razna poboljšanja i ispravci grešaka</li>
-              <li className="flex gap-1.5"><span className="shrink-0">·</span>Bolje performanse aplikacije</li>
-            </ul>
-          )}
+    <>
+      <div
+        className="fixed inset-0 z-[9998] bg-base-content/40 backdrop-blur-[2px]"
+        aria-hidden
+      />
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="update-prompt-title"
+        className="fixed z-[9999] inset-x-4 bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:inset-x-auto sm:bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] w-auto sm:w-[min(100%,28rem)] max-w-lg mx-auto safe-left safe-right animate-[modal-fade-in_0.2s_ease-out]"
+      >
+        <div className="rounded-2xl bg-base-100 border border-base-300 shadow-2xl px-5 py-5 sm:px-6 sm:py-6 max-h-[min(70svh,32rem)] flex flex-col">
+          <div className="flex items-start gap-4 min-h-0">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+              <RefreshCw size={22} className="text-primary" aria-hidden />
+            </div>
+            <div className="flex-1 min-w-0 overflow-y-auto pr-1">
+              <p id="update-prompt-title" className="text-lg sm:text-xl font-semibold text-base-content leading-snug">
+                Nova verzija je dostupna
+                <span className="block mt-1 text-sm font-normal text-base-content/55">
+                  v{__APP_VERSION__}
+                </span>
+              </p>
+              {notes?.version === __APP_VERSION__ && notes.changes.length > 0 ? (
+                <ul className="mt-4 space-y-2 text-base text-base-content/70 leading-relaxed">
+                  {notes.changes.map((c, i) => (
+                    <li key={i} className="flex gap-2.5">
+                      <span className="shrink-0 text-primary font-bold leading-[1.4]">·</span>
+                      <span>{c}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <ul className="mt-4 space-y-2 text-base text-base-content/70 leading-relaxed">
+                  <li className="flex gap-2.5">
+                    <span className="shrink-0 text-primary font-bold leading-[1.4]">·</span>
+                    <span>Razna poboljšanja i ispravci grešaka</span>
+                  </li>
+                  <li className="flex gap-2.5">
+                    <span className="shrink-0 text-primary font-bold leading-[1.4]">·</span>
+                    <span>Bolje performanse aplikacije</span>
+                  </li>
+                </ul>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setDismissed(true)}
+              className="btn btn-ghost btn-circle btn-sm shrink-0 touch-target -mr-1 -mt-1"
+              aria-label="Zatvori"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-5 sm:mt-6 pt-4 border-t border-base-200 sm:justify-end sm:items-center">
+            <button
+              type="button"
+              onClick={() => setDismissed(true)}
+              className="btn btn-outline border-2 border-base-300 bg-base-200/40 hover:bg-base-200/70 w-full sm:w-auto sm:btn-sm min-h-12 sm:min-h-0 font-medium"
+            >
+              Kasnije
+            </button>
+            <button
+              type="button"
+              onClick={updateApp}
+              className="btn btn-primary shadow-md shadow-primary/25 hover:shadow-lg hover:shadow-primary/30 w-full sm:w-auto sm:btn-sm min-h-12 sm:min-h-0 font-semibold transition-[box-shadow,filter]"
+            >
+              Osvježi aplikaciju
+            </button>
+          </div>
         </div>
-        <button
-          onClick={() => setDismissed(true)}
-          className="btn btn-ghost btn-circle btn-xs shrink-0"
-          aria-label="Zatvori"
-        >
-          <X size={14} />
-        </button>
       </div>
-      <div className="flex gap-2 mt-3 justify-end">
-        <button onClick={() => setDismissed(true)} className="btn btn-ghost btn-xs">
-          Kasnije
-        </button>
-        <button onClick={updateApp} className="btn btn-primary btn-xs">
-          Osvježi
-        </button>
-      </div>
-    </div>
+    </>
   );
 }

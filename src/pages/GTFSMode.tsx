@@ -135,14 +135,18 @@ export function GTFSMode({ config }: GTFSModeProps) {
   );
 
   // Realtime GTFS-RT polling (no-op when disabled)
-  const { error: _realtimeError, stats: realtimeStats } = useRealtimeData(
-    config.hasRealtime && showAllVehicles,
-  );
+  const {
+    error: _realtimeError,
+    stats: realtimeStats,
+    loading: realtimeLoading,
+    nextPollAtMs,
+  } = useRealtimeData(config.hasRealtime && showAllVehicles);
   const gtfsRtAlerts = useRealtimeStore((s) => s.serviceAlerts);
   const lastUpdate = useRealtimeStore((s) => s.lastUpdate);
   const workerTimestamp = useRealtimeStore((s) => s.workerTimestamp);
   const cacheStatus = useRealtimeStore((s) => s.cacheStatus);
-  const fetchLatencyMs = useRealtimeStore((s) => (s as any).fetchLatencyMs);
+  const cacheAgeSeconds = useRealtimeStore((s) => s.cacheAgeSeconds);
+  const fetchLatencyMs = useRealtimeStore((s) => s.fetchLatencyMs);
   const vehiclePositions = useRealtimeStore((s) => s.vehiclePositions);
   const tripUpdates = useRealtimeStore((s) => s.tripUpdates);
 
@@ -365,9 +369,12 @@ export function GTFSMode({ config }: GTFSModeProps) {
             timeAgoStr={timeAgoStr}
             feedAgeStr={feedAgeStr}
             workerTimestamp={workerTimestamp}
+            cacheAgeSeconds={cacheAgeSeconds}
             fetchLatencyMs={fetchLatencyMs}
             lastUpdate={lastUpdate}
             cacheStatus={cacheStatus}
+            nextPollAtMs={nextPollAtMs}
+            realtimeLoading={realtimeLoading}
           />
         )}
 

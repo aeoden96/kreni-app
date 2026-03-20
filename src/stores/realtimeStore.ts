@@ -42,7 +42,9 @@ interface RealtimeState {
   /** ISO timestamp from the worker's X-Timestamp header */
   workerTimestamp: string | null;
   /** HIT/MISS status from the worker's X-Cache-Status header */
-  cacheStatus: string | null;
+  cacheStatus: 'HIT' | 'MISS' | null;
+  /** Age header from worker cache response, in whole seconds */
+  cacheAgeSeconds: number | null;
   /** Last fetch round-trip time (ms) measured when contacting the proxy */
   fetchLatencyMs: number | null;
   /** Fetch both vehicle-positions and trip-updates feeds in parallel */
@@ -61,84 +63,73 @@ export const useRealtimeStore = create<RealtimeState>()((set) => ({
   error: null,
   workerTimestamp: null,
   cacheStatus: null,
+  cacheAgeSeconds: null,
   fetchLatencyMs: null,
 
   fetchAll: async () => {
-    const run = async (isRetry: boolean) => {
-      if (!isRetry) {
-        set({ loading: true });
-      }
+    set({ loading: true });
 
-      try {
-        const [vehicleRes, tripRes] = await Promise.all([
-          fetchRealtimeFeed('vehicle-positions'),
-          fetchRealtimeFeed('trip-updates'),
-        ]);
+    try {
+      const [vehicleRes, tripRes] = await Promise.all([
+        fetchRealtimeFeed('vehicle-positions'),
+        fetchRealtimeFeed('trip-updates'),
+      ]);
 
-        const { feed: vehicleFeed, metadata } = vehicleRes;
-        const { feed: tripFeed } = tripRes;
+      const { feed: vehicleFeed, metadata } = vehicleRes;
+      const { feed: tripFeed } = tripRes;
 
-        const positions = parseVehiclePositions(vehicleFeed);
-        const updates = parseTripUpdates(tripFeed);
-        const alerts = parseServiceAlerts(vehicleFeed);
-        const stats = getFeedStatistics(vehicleFeed);
+      const positions = parseVehiclePositions(vehicleFeed);
+      const updates = parseTripUpdates(tripFeed);
+      const alerts = parseServiceAlerts(vehicleFeed);
+      const stats = getFeedStatistics(vehicleFeed);
 
-        const vehiclePositions = new Map<string, ParsedVehiclePosition>();
-        for (const pos of positions) {
-          // Enrich with dead-reckoning if we have a previous snapshot
-          // Only use history when vehicleId is non-empty (avoids cross-vehicle pollution)
-          const historyKey = pos.vehicleId || pos.tripId;
-          const prev = historyKey ? vehicleHistory.get(historyKey) : undefined;
-          const enriched = prev ? enrichWithDeadReckoning(pos, prev) : pos;
+      const vehiclePositions = new Map<string, ParsedVehiclePosition>();
+      for (const pos of positions) {
+        // Enrich with dead-reckoning if we have a previous snapshot
+        // Only use history when vehicleId is non-empty (avoids cross-vehicle pollution)
+        const historyKey = pos.vehicleId || pos.tripId;
+        const prev = historyKey ? vehicleHistory.get(historyKey) : undefined;
+        const enriched = prev ? enrichWithDeadReckoning(pos, prev) : pos;
 
-          // Update history with the raw (un-enriched) current position
-          if (historyKey) {
-            vehicleHistory.set(historyKey, {
-              latitude: pos.latitude,
-              longitude: pos.longitude,
-              timestamp: pos.timestamp,
-            });
-          }
-
-          if (enriched.tripId) {
-            vehiclePositions.set(enriched.tripId, enriched);
-          }
+        // Update history with the raw (un-enriched) current position
+        if (historyKey) {
+          vehicleHistory.set(historyKey, {
+            latitude: pos.latitude,
+            longitude: pos.longitude,
+            timestamp: pos.timestamp,
+          });
         }
 
-        const tripUpdates = new Map<string, ParsedTripUpdate>();
-        for (const update of updates) {
-          if (update.tripId) {
-            tripUpdates.set(update.tripId, update);
-          }
-        }
-
-        set({
-          vehiclePositions,
-          tripUpdates,
-          serviceAlerts: alerts,
-          stats,
-          lastUpdate: Date.now(),
-          workerTimestamp: metadata.workerTimestamp,
-          cacheStatus: metadata.cacheStatus,
-          fetchLatencyMs: (metadata as any).fetchTimeMs ?? null,
-          loading: false,
-          error: null,
-        });
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        console.error('[RealtimeStore] Fetch failed:', error.message, isRetry ? '(retry)' : '');
-        set({ loading: false, error });
-
-        if (!isRetry) {
-          // Silent one-off retry after a short delay (helps with Android resume flakiness)
-          setTimeout(() => {
-            void run(true);
-          }, 3000);
+        if (enriched.tripId) {
+          vehiclePositions.set(enriched.tripId, enriched);
         }
       }
-    };
 
-    await run(false);
+      const tripUpdates = new Map<string, ParsedTripUpdate>();
+      for (const update of updates) {
+        if (update.tripId) {
+          tripUpdates.set(update.tripId, update);
+        }
+      }
+
+      set({
+        vehiclePositions,
+        tripUpdates,
+        serviceAlerts: alerts,
+        stats,
+        lastUpdate: Date.now(),
+        workerTimestamp: metadata.workerTimestamp,
+        cacheStatus: metadata.cacheStatus,
+        cacheAgeSeconds: metadata.cacheAgeSeconds,
+        fetchLatencyMs: metadata.fetchTimeMs ?? null,
+        loading: false,
+        error: null,
+      });
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      console.error('[RealtimeStore] Fetch failed:', error.message);
+      set({ loading: false, error });
+    }
   },
 
   clear: () => {
@@ -150,6 +141,7 @@ export const useRealtimeStore = create<RealtimeState>()((set) => ({
       lastUpdate: null,
       workerTimestamp: null,
       cacheStatus: null,
+      cacheAgeSeconds: null,
       fetchLatencyMs: null,
       error: null,
     });

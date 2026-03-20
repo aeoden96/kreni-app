@@ -129,6 +129,14 @@ export interface ParsedServiceAlert {
 
 type GtfsRealtimeFeed = InstanceType<typeof GtfsRealtimeBindings.transit_realtime.FeedMessage>;
 
+export interface RealtimeFetchMetadata {
+  workerTimestamp: string | null;
+  cacheStatus: 'HIT' | 'MISS' | null;
+  cacheAgeSeconds: number | null;
+  fetchTimeMs: number;
+  httpStatus: number;
+}
+
 /**
  * Fetch and protobuf-decode a GTFS-RT feed from the proxy worker.
  *
@@ -140,10 +148,7 @@ export async function fetchRealtimeFeed(
   endpoint: 'vehicle-positions' | 'trip-updates'
 ): Promise<{
   feed: GtfsRealtimeFeed;
-  metadata: {
-    workerTimestamp: string | null;
-    cacheStatus: string | null;
-  };
+  metadata: RealtimeFetchMetadata;
 }> {
   if (!GTFS_PROXY_URL) {
     throw new Error(
@@ -171,7 +176,12 @@ export async function fetchRealtimeFeed(
 
   const fetchEnd = Date.now();
   const workerTimestamp = response.headers.get('X-Timestamp');
-  const cacheStatus = response.headers.get('X-Cache-Status');
+  const rawCacheStatus = response.headers.get('X-Cache-Status');
+  const cacheStatus: RealtimeFetchMetadata['cacheStatus'] =
+    rawCacheStatus === 'HIT' || rawCacheStatus === 'MISS' ? rawCacheStatus : null;
+  const ageHeader = response.headers.get('Age');
+  const parsedAge = ageHeader != null ? Number.parseInt(ageHeader, 10) : Number.NaN;
+  const cacheAgeSeconds = Number.isFinite(parsedAge) && parsedAge >= 0 ? parsedAge : null;
   const fetchTimeMs = fetchEnd - fetchStart;
   const httpStatus = response.status;
 
@@ -185,9 +195,10 @@ export async function fetchRealtimeFeed(
     metadata: {
       workerTimestamp,
       cacheStatus,
+      cacheAgeSeconds,
       fetchTimeMs,
       httpStatus,
-    } as unknown as { workerTimestamp: string | null; cacheStatus: string | null; fetchTimeMs: number; httpStatus: number },
+    },
   };
 }
 
