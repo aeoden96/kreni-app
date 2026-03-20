@@ -143,6 +143,13 @@ const de = {
     cyclingMode: {
       nextbikeRefreshIn: 'Nächste Aktualisierung in {{seconds}} s',
       nextbikeRefreshing: 'Wird aktualisiert…',
+      favouriteNextbikeTitle: 'Lieblings-Bajs-Stationen',
+      favouriteNextbikeRentableBikes_one: '{{count}} Fahrrad',
+      favouriteNextbikeRentableBikes_other: '{{count}} Fahrräder',
+      favouriteNextbikeUnknown: 'Unbekannte Station',
+      nextbikePopupRentableLabel: 'Fahrräder',
+      nextbikePopupRacksLabel: 'Stellplätze',
+      nextbikePopupMaintenance: 'Station in Wartung',
     },
     listApp: {
       tabFavourites: 'Favoriten',

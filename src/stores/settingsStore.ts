@@ -47,6 +47,8 @@ interface SettingsState {
   favouriteRouteIds: string[];
   /** Favourite stop IDs */
   favouriteStopIds: string[];
+  /** Favourite Nextbike / Bajs station UIDs (cycling map) */
+  favouriteNextbikeStationUids: number[];
   /** Recently viewed routes (newest first, max 10) */
   recentRoutes: RecentItem[];
   /** Recently viewed stops (newest first, max 10) */
@@ -83,6 +85,7 @@ interface SettingsState {
   setMapViewport: (center: [number, number], zoom: number) => void;
   toggleFavouriteRoute: (id: string) => void;
   toggleFavouriteStop: (id: string) => void;
+  toggleFavouriteNextbikeStation: (uid: number) => void;
   addRecentRoute: (id: string) => void;
   addRecentStop: (id: string) => void;
   clearRecents: () => void;
@@ -129,6 +132,7 @@ export const useSettingsStore = create<SettingsState>()(
         appMode: 'map',
         favouriteRouteIds: [],
         favouriteStopIds: [],
+        favouriteNextbikeStationUids: [],
         recentRoutes: [],
         recentStops: [],
         dismissedGpsTip: false,
@@ -193,6 +197,13 @@ export const useSettingsStore = create<SettingsState>()(
             favouriteStopIds: s.favouriteStopIds.includes(id)
               ? s.favouriteStopIds.filter((r) => r !== id)
               : [...s.favouriteStopIds, id],
+          })),
+
+        toggleFavouriteNextbikeStation: (uid) =>
+          set((s) => ({
+            favouriteNextbikeStationUids: s.favouriteNextbikeStationUids.includes(uid)
+              ? s.favouriteNextbikeStationUids.filter((u) => u !== uid)
+              : [...s.favouriteNextbikeStationUids, uid],
           })),
 
         addRecentRoute: (id) =>

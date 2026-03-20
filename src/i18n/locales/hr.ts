@@ -144,6 +144,14 @@ const hr = {
     cyclingMode: {
       nextbikeRefreshIn: 'Sljedeće osvježavanje za {{seconds}} s',
       nextbikeRefreshing: 'Osvježavanje…',
+      favouriteNextbikeTitle: 'Omiljene Bajs stanice',
+      favouriteNextbikeRentableBikes_one: '{{count}} bicikl',
+      favouriteNextbikeRentableBikes_few: '{{count}} bicikla',
+      favouriteNextbikeRentableBikes_other: '{{count}} bicikala',
+      favouriteNextbikeUnknown: 'Nepoznata stanica',
+      nextbikePopupRentableLabel: 'bicikala',
+      nextbikePopupRacksLabel: 'mjesta',
+      nextbikePopupMaintenance: 'Stanica u održavanju',
     },
     listApp: {
       tabFavourites: 'Favoriti',

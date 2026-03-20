@@ -143,6 +143,13 @@ const en = {
     cyclingMode: {
       nextbikeRefreshIn: 'Next refresh in {{seconds}} s',
       nextbikeRefreshing: 'Refreshing…',
+      favouriteNextbikeTitle: 'Favourite Bajs stations',
+      favouriteNextbikeRentableBikes_one: '{{count}} bike',
+      favouriteNextbikeRentableBikes_other: '{{count}} bikes',
+      favouriteNextbikeUnknown: 'Unknown station',
+      nextbikePopupRentableLabel: 'bikes',
+      nextbikePopupRacksLabel: 'docks',
+      nextbikePopupMaintenance: 'Station under maintenance',
     },
     listApp: {
       tabFavourites: 'Favourites',

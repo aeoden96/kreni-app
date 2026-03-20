@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BaseMap } from '../components/Map/BaseMap';
 import { BikeStations } from '../components/Map/BikeStations';
+import { FavouriteNextbikePanel } from '../components/Map/FavouriteNextbikePanel';
 import { BikeParkings } from '../components/Map/BikeParkings';
 import { BikePaths } from '../components/Map/BikePaths';
 import { useNextbikeData, NEXTBIKE_CACHE_TTL_MS } from '../hooks/useNextbikeData';
@@ -45,6 +46,7 @@ export function CyclingMode() {
 
     return (
         <div className="h-full w-full relative">
+            <FavouriteNextbikePanel show={showBikeStations} stations={stations} />
             <BaseMap userLocation={userLocation}>
                 <BikeStations show={showBikeStations} stations={stations} />
                 <BikeParkings show={showBikeParkings} />
@@ -53,7 +55,7 @@ export function CyclingMode() {
 
             {/* Map Controls */}
             <OnboardingWizard variant="cycling" />
-            <div className="absolute bottom-6 right-4 z-[1000] flex flex-col items-end gap-2">
+            <div className="absolute bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-[1000] flex flex-col items-end gap-2">
                 {showBikePaths && legendOpen && (
                     <div className="bg-base-100 rounded-xl shadow-xl border border-base-200 p-3 w-64 text-xs space-y-2 mb-2">
                         <p className="font-semibold text-base-content mb-1">Legenda Biciklističkih Staza</p>
