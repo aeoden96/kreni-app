@@ -7,24 +7,22 @@ import { useEffect, useRef, useState } from 'react';
 import { useRealtimeStore } from '../stores/realtimeStore';
 import { REALTIME_POLL_INTERVAL } from '../config';
 
-const CACHE_POST_EXPIRY_BUFFER_MS = 250;
+// Extra time to wait after the cache TTL before polling again.
+// Must be large enough to absorb: cache.put write latency on the worker side
+// (~100-500 ms) plus any client/server clock skew (~0-1000 ms).
+// Using server-relative Age avoids the skew problem for the main branch, but
+// a generous buffer prevents a HIT on the very next request in edge cases.
+const CACHE_POST_EXPIRY_BUFFER_MS = 1500;
 const MIN_RETRY_DELAY_MS = 1000;
 const ERROR_RETRY_DELAY_MS = 3000;
 const RESUME_COALESCE_WINDOW_MS = 1200;
 
-function getAdaptiveDelayMs(
-  workerTimestamp: string | null,
-  cacheAgeSeconds: number | null
-): number {
-  const now = Date.now();
-  const fromTimestamp = workerTimestamp ? Date.parse(workerTimestamp) : Number.NaN;
-
-  if (!Number.isNaN(fromTimestamp)) {
-    const targetMs =
-      fromTimestamp + REALTIME_POLL_INTERVAL + CACHE_POST_EXPIRY_BUFFER_MS;
-    return Math.max(MIN_RETRY_DELAY_MS, targetMs - now);
-  }
-
+// Uses the Age header (server-derived, clock-skew-safe) to estimate how much
+// of the cache TTL has already elapsed, then waits for the remainder plus a
+// buffer. X-Timestamp is intentionally NOT used here: comparing a server
+// timestamp against Date.now() is sensitive to client/server clock skew and
+// consistently causes the poll to arrive before the cache has expired.
+function getAdaptiveDelayMs(cacheAgeSeconds: number | null): number {
   if (cacheAgeSeconds != null && cacheAgeSeconds >= 0) {
     const remainingMs =
       REALTIME_POLL_INTERVAL - cacheAgeSeconds * 1000 + CACHE_POST_EXPIRY_BUFFER_MS;
@@ -96,10 +94,7 @@ export function useRealtimeData(enabled: boolean = true) {
       }
 
       didErrorRetryRef.current = false;
-      const adaptiveDelayMs = getAdaptiveDelayMs(
-        state.workerTimestamp,
-        state.cacheAgeSeconds
-      );
+      const adaptiveDelayMs = getAdaptiveDelayMs(state.cacheAgeSeconds);
       scheduleNext(adaptiveDelayMs, runRound);
     };
 
