@@ -99,6 +99,7 @@ jobs:
         env:
           VITE_GTFS_PROXY_URL: ${{ secrets.VITE_GTFS_PROXY_URL }}
           VITE_GTFS_API_KEY: ${{ secrets.VITE_GTFS_API_KEY }}
+          VITE_TALLY_FEEDBACK_FORM_ID: ${{ secrets.VITE_TALLY_FEEDBACK_FORM_ID }}
         run: yarn build
 
       - name: Deploy to Cloudflare Pages
