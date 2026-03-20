@@ -1,9 +1,10 @@
 {
-  "version": "1.5.6",
+  "version": "1.5.7",
   "changes": [
-    "Nova kartica Smjerovi u pretraživanju",
-    "Poboljšan prikaz stajališta i smjerova",
-    "Ispravljen prikaz sljedećih postaja pri odabiru vozila (GPS umjesto zastarjelog ZET GTFS-RT). Napomena: ranije se pogrešno pretpostavilo da su ZET GTFS podaci u tom kontekstu pouzdani."
+    "Obnovljen brzi izbornik",
+    "Dodana podrška za nove jezike: njemački i engleski",
+    "Dodana je forma za povratnu informaciju",
+    "ZET live feed poboljšan"
   ],
   "force": false
 }
