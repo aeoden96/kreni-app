@@ -180,6 +180,46 @@ body {
   }
 }
 
+/* One-shot pulse on realtime status icon when client receives a new feed (~10s poll) */
+@keyframes realtime-data-refresh-tick {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+
+  35% {
+    transform: scale(1.22);
+    filter: brightness(1.35);
+  }
+
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+.realtime-data-refresh-tick {
+  animation: realtime-data-refresh-tick 0.75s cubic-bezier(0.34, 1.4, 0.64, 1) 1;
+  transform-origin: center;
+  will-change: transform, filter;
+}
+
+/* Dot flash on same remount as feed icon (keyed by lastUpdate) */
+@keyframes realtime-feed-dot-flash {
+  0%,
+  100% {
+    background-color: #ffffff;
+  }
+
+  40% {
+    background-color: #fbbf24;
+  }
+}
+
+.realtime-feed-dot-refresh {
+  animation: realtime-feed-dot-flash 0.75s ease-out 1;
+}
+
 @keyframes spider-reveal {
   0% {
     opacity: 0;

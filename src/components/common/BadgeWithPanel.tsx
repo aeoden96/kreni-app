@@ -45,6 +45,7 @@ export function BadgeWithPanel({
       onClick={() => onOpenChange(!open)}
       className={badgeClassName}
       aria-label={ariaLabel}
+      aria-expanded={variant === 'popover' ? open : undefined}
       title={title}
     >
       {children}
@@ -65,7 +66,7 @@ export function BadgeWithPanel({
 
   // popover: panel is positioned relative to a wrapper (panelContent is ReactNode)
   return (
-    <div className="relative">
+    <div className=" ">
       {button}
       {open && (
         <div className={popoverClassName} role="dialog" aria-label={ariaLabel}>

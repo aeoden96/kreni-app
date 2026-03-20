@@ -1,9 +1,12 @@
 import { forwardRef, useImperativeHandle, useState } from 'react';
 import { BadgeWithPanel } from './BadgeWithPanel';
 import { ServiceAlerts } from './ServiceAlerts';
+import { RealtimeFeedToggleIcon } from './RealtimeFeedToggleIcon';
+import { RealtimeLegendToggleIcon } from './RealtimeLegendToggleIcon';
 import type { Route } from '../../utils/gtfs';
 import type { ParsedServiceAlert } from '../../utils/realtime';
 import type { FeedStatistics } from '../../utils/realtime';
+import { REALTIME_POLL_INTERVAL } from '../../config';
 
 interface RealtimeStatusPanelProps {
   alerts: ParsedServiceAlert[];
@@ -24,10 +27,10 @@ export interface RealtimeStatusPanelHandle {
 }
 
 const legendPopoverClass =
-  'absolute bottom-16 right-0 bg-base-100 rounded-xl shadow-xl border border-base-200 p-3 w-52 text-xs space-y-2';
+  'absolute bottom-10 right-0 bg-base-100 rounded-xl shadow-xl border border-base-200 p-3 w-52 text-xs space-y-2';
 
 const detailsPopoverClass =
-  'absolute right-0 bottom-8 z-[1100] bg-base-100 rounded-xl shadow-xl border border-base-200 p-3 w-72 text-xs';
+  'absolute right-0 bottom-10 z-[1100] bg-base-100 rounded-xl shadow-xl border border-base-200 p-3 w-72 text-xs';
 
 function LegendPanelContent() {
   return (
@@ -200,8 +203,24 @@ export const RealtimeStatusPanel = forwardRef<
     </div>
   );
 
+  const pollSec = Math.round(REALTIME_POLL_INTERVAL / 1000);
+
+  const legendBtnClass = [
+    'btn btn-circle btn-sm btn-primary shadow border-none min-h-8 min-w-8 transition-[box-shadow,transform,filter] duration-200',
+    legendOpen
+      ? 'btn-active ring-2 ring-primary/70 ring-offset-2 ring-offset-base-100 scale-105'
+      : 'hover:brightness-110 active:scale-95',
+  ].join(' ');
+
+  const realtimeBtnClass = [
+    'btn btn-circle btn-sm btn-success shadow border-none min-h-8 min-w-8 relative transition-[box-shadow,transform,filter] duration-200',
+    realtimeDetailsOpen
+      ? 'btn-active ring-2 ring-success/80 ring-offset-2 ring-offset-base-100 scale-105'
+      : 'hover:brightness-110 active:scale-95',
+  ].join(' ');
+
   return (
-    <div className="absolute bottom-6 right-4 z-[1000] flex flex-col items-end gap-2">
+    <div className="absolute bottom-6 right-4 z-[1000] flex items-center gap-2">
       <ServiceAlerts
         alerts={alerts}
         routesById={routesById}
@@ -209,37 +228,36 @@ export const RealtimeStatusPanel = forwardRef<
         onRouteClick={onRouteClick}
       />
 
-      <div className="flex items-end flex-col gap-2">
-        <BadgeWithPanel
-          variant="popover"
-          open={legendOpen}
-          onOpenChange={handleLegendOpenChange}
-          badgeClassName="badge badge-primary gap-1 shadow cursor-pointer hover:badge-outline transition-all"
-          ariaLabel="Legenda"
-          panelContent={<LegendPanelContent />}
-          popoverClassName={legendPopoverClass}
-        >
-          <span className="w-2 h-2 rounded-full bg-white" />
-          Legenda
-        </BadgeWithPanel>
+      <BadgeWithPanel
+        variant="popover"
+        open={legendOpen}
+        onOpenChange={handleLegendOpenChange}
+        badgeClassName={legendBtnClass}
+        ariaLabel="Prikaži legendu"
+        title="Legenda"
+        panelContent={<LegendPanelContent />}
+        popoverClassName={legendPopoverClass}
+      >
+        <RealtimeLegendToggleIcon open={legendOpen} />
+      </BadgeWithPanel>
 
-        <BadgeWithPanel
-          variant="popover"
-          open={realtimeDetailsOpen}
-          onOpenChange={handleDetailsOpenChange}
-          badgeClassName="badge badge-success gap-1 shadow cursor-pointer hover:badge-outline transition-all"
-          panelContent={
-            <>
-              <p className="font-semibold text-sm mb-2">Tehnički detalji</p>
-              {detailsPanelContent}
-            </>
-          }
-          popoverClassName={detailsPopoverClass}
-        >
-          <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-          ZET podaci osvježeni prije {timeAgoStr || '...'}
-        </BadgeWithPanel>
-      </div>
+      <BadgeWithPanel
+        variant="popover"
+        open={realtimeDetailsOpen}
+        onOpenChange={handleDetailsOpenChange}
+        badgeClassName={realtimeBtnClass}
+        ariaLabel="Prikaži tehničke detalje podataka"
+        title={`ZET podaci osvježeni prije ${timeAgoStr || '...'} (osvježavanje svakih ${pollSec} s)`}
+        panelContent={
+          <>
+            <p className="font-semibold text-sm mb-2">Tehnički detalji</p>
+            {detailsPanelContent}
+          </>
+        }
+        popoverClassName={detailsPopoverClass}
+      >
+        <RealtimeFeedToggleIcon open={realtimeDetailsOpen} lastUpdate={lastUpdate} />
+      </BadgeWithPanel>
     </div>
   );
 });
