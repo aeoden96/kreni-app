@@ -12,6 +12,7 @@
 import { Maximize2, X, Train, Bus, Star, Navigation, MapPin } from 'lucide-react';
 import type { Route, Stop, RouteTimetable } from '../../utils/gtfs';
 import type { VehiclePosition } from '../../utils/vehicles';
+import { computeVehicleStopProgress } from '../../utils/vehicles';
 import type { ParsedVehiclePosition, ParsedTripUpdate } from '../../utils/realtime';
 import { VehicleStopStatus } from '../../utils/realtime';
 import { getDirectionColor } from '../Map/directionColors';
@@ -127,9 +128,47 @@ export function RouteInfoBar({
   const derivedNextStop =
     derivedNextStopId && stopsById ? stopsById.get(derivedNextStopId) ?? null : null;
 
+  // ── GPS-based position in the trip's stop sequence ─────────────────────────
+  // ZET's GTFS-RT trip updates only carry 2 upcoming stops and become stale
+  // quickly. We use GPS geometry (same method as "Vozila u blizini") as the
+  // primary anchor so the upcoming-stops list always reflects the vehicle's
+  // actual real-time position.
+  const delaySeconds = clickedTripUpdate?.delay ?? clickedVehicle?.delay ?? null;
+  const tripId = clickedVehicle?.tripId;
+  const tripStops = tripId ? routeTimetable?.[tripId] ?? null : null;
+
+  const gpsPrimaryIdx = (() => {
+    if (!clickedVehiclePos || !tripStops || !stopsById) return -1;
+    const coords: Array<{ lat: number; lon: number }> = [];
+    for (const [stopId] of tripStops) {
+      const s = stopsById.get(stopId);
+      if (!s) return -1; // abort if any stop is missing coords
+      coords.push({ lat: s.lat, lon: s.lon });
+    }
+    if (coords.length < 2) return -1;
+    const progress = computeVehicleStopProgress(
+      clickedVehiclePos.latitude,
+      clickedVehiclePos.longitude,
+      coords,
+    );
+    // Math.ceil gives the next stop the vehicle hasn't reached yet.
+    // Clamp to valid range so terminus vehicles don't overflow.
+    return Math.min(Math.ceil(progress), tripStops.length - 1);
+  })();
+
+  // Resolve what stop name to display in the bold primary row.
+  // Prefer GPS-derived next stop; fall back to GTFS-RT currentStop / derivedNextStop.
+  const gpsNextStop =
+    gpsPrimaryIdx !== -1 && tripStops && stopsById
+      ? (stopsById.get(tripStops[gpsPrimaryIdx][0]) ?? null)
+      : null;
+
   let stopLabel = '';
   let stopDetail = '';
-  if (currentStop) {
+  if (gpsNextStop) {
+    stopLabel = 'Sljedeća postaja';
+    stopDetail = gpsNextStop.name;
+  } else if (currentStop) {
     if (stopStatus === VehicleStopStatus.STOPPED_AT) {
       stopLabel = 'Na postaji';
       stopDetail = currentStop.name;
@@ -146,19 +185,18 @@ export function RouteInfoBar({
   }
 
   // ── Upcoming stops from static timetable ──────────────────────────────────
-  // The "primary" stop is what shows on the bold row (current stop or derived next).
+  // primaryIdx is the GPS-based next stop (preferred) or the GTFS-RT anchor.
   // Upcoming starts from the stop AFTER that in the trip's static stop sequence.
-  const delaySeconds = clickedTripUpdate?.delay ?? clickedVehicle?.delay ?? null;
-
   const { primaryStopTime, upcomingStops } = (() => {
-    const tripId = clickedVehicle?.tripId;
-    const tripStops = tripId ? routeTimetable?.[tripId] ?? null : null;
     if (!tripStops || !stopsById) return { primaryStopTime: null, upcomingStops: [] };
 
-    const primaryId = currentStopId || derivedNextStopId;
-    const primaryIdx = primaryId
-      ? tripStops.findIndex(([id]) => id === primaryId)
-      : -1;
+    // GPS anchor (most accurate); fall back to GTFS-RT only when GPS fails.
+    let primaryIdx = gpsPrimaryIdx;
+    if (primaryIdx === -1) {
+      const primaryId = currentStopId || derivedNextStopId;
+      primaryIdx = primaryId ? tripStops.findIndex(([id]) => id === primaryId) : -1;
+    }
+
     if (primaryIdx === -1) return { primaryStopTime: null, upcomingStops: [] };
 
     const primaryStopTime = formatMinutes(tripStops[primaryIdx][2], delaySeconds ?? 0);
@@ -180,10 +218,10 @@ export function RouteInfoBar({
   // ── Distance to next stop (follow mode only) ───────────────────────────────
   const distanceTargetStop: Stop | null = (() => {
     if (!isFollowing || !stopsById) return null;
+    // Prefer GPS-derived next stop; fall back to GTFS-RT when GPS unavailable
+    if (gpsNextStop) return gpsNextStop;
     // When stopped, aim at the first upcoming stop from the timetable
     if (stopStatus === VehicleStopStatus.STOPPED_AT && upcomingStops.length > 0) {
-      const tripId = clickedVehicle?.tripId;
-      const tripStops = tripId ? routeTimetable?.[tripId] ?? null : null;
       if (tripStops && currentStopId) {
         const idx = tripStops.findIndex(([id]) => id === currentStopId);
         if (idx !== -1 && idx + 1 < tripStops.length) {
