@@ -133,10 +133,10 @@ export function ApproachingVehicleCard({ vehicle, onRouteClick }: ApproachingVeh
                 onClick={() => onRouteClick(vehicle.routeId, vehicle.routeType)}
                 className="text-sm font-medium truncate leading-tight text-left hover:opacity-70 transition-opacity w-full block"
               >
-                {vehicle.routeLongName}
+                {vehicle.tripDestinationName}
               </button>
             ) : (
-              <div className="text-sm font-medium truncate leading-tight">{vehicle.routeLongName}</div>
+              <div className="text-sm font-medium truncate leading-tight">{vehicle.tripDestinationName}</div>
             )}
             <div className="text-xs text-base-content/50 mt-0.5 flex items-center gap-1.5">
               {vehicle.passedStop ? (

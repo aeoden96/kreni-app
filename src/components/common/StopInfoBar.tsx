@@ -157,6 +157,7 @@ export function StopInfoBar({
   const { departures: timetableDepartures, loading: timetableLoading } = useTimetableDepartures(
     stop.id,
     routesById,
+    stopsById,
     nowMs,
     { dataDir, lookaheadMinutes: timetableLookaheadMinutes }
   );
@@ -404,7 +405,7 @@ export function StopInfoBar({
                       {vehicle.routeShortName}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs text-base-content/80 truncate">{vehicle.routeLongName}</div>
+                      <div className="text-xs text-base-content/80 truncate">{vehicle.tripDestinationName}</div>
                       <div className="text-[11px] text-base-content/45 leading-tight flex items-center gap-1">
                         {vehicle.passedStop ? (
                           <span className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />

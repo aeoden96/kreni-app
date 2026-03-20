@@ -157,6 +157,7 @@ export const StopModal = memo(function StopModal({
   const { departures: timetableDepartures, loading: timetableLoading } = useTimetableDepartures(
     isOpen ? stop.id : null,
     routesById,
+    stopsById,
     nowMs,
     { dataDir, lookaheadMinutes: timetableLookaheadMinutes }
   );

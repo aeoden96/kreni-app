@@ -25,6 +25,8 @@ export interface ApproachingVehicle {
   routeShortName: string;
   routeType: number; // 0 = Tram, 3 = Bus
   routeLongName: string;
+  /** Trip terminus for this direction (last stop name), for display instead of route long name */
+  tripDestinationName: string;
   /** Scheduled arrival time at this stop (minutes from midnight) */
   etaMinutes: number;
   /** Realtime delay in seconds at this stop; null = schedule only */
@@ -265,6 +267,15 @@ export function useApproachingVehicles(
           etaFromGpsSeconds = Math.round(distanceMeters / Math.max(speed, 1));
         }
 
+        const dirStopIds =
+          directionKey !== null ? (routeStopsData?.orderedStops?.[directionKey] ?? []) : [];
+        const destLastStopId =
+          dirStopIds.length > 0 ? dirStopIds[dirStopIds.length - 1] : null;
+        const tripDestinationName =
+          destLastStopId !== null
+            ? (stopsById.get(destLastStopId)?.name ?? route.longName)
+            : route.longName;
+
         results.push({
           tripId,
           vehicleId: vehiclePos?.vehicleId ?? null,
@@ -272,6 +283,7 @@ export function useApproachingVehicles(
           routeShortName: route.shortName,
           routeType: route.type,
           routeLongName: route.longName,
+          tripDestinationName,
           etaMinutes: scheduledMinutes,
           delaySeconds,
           arrivingInSeconds,
@@ -325,8 +337,36 @@ export function useApproachingVehicles(
       }
       deduped.push(v);
     }
+
+    // At most one "passed this stop" realtime row: keep the closest by GPS distance
+    const realtimePassed = deduped.filter((v) => v.passedStop);
+    const withoutPassed = deduped.filter((v) => !v.passedStop);
+    let singlePassed: ApproachingVehicle[] = [];
+    if (realtimePassed.length > 1) {
+      const keeper = realtimePassed.reduce((a, b) => {
+        const da = a.distanceMeters ?? Number.POSITIVE_INFINITY;
+        const db = b.distanceMeters ?? Number.POSITIVE_INFINITY;
+        if (da !== db) return da < db ? a : b;
+        return a.arrivingInSeconds > b.arrivingInSeconds ? a : b;
+      });
+      singlePassed = [keeper];
+    } else {
+      singlePassed = realtimePassed;
+    }
+    const merged = [...singlePassed, ...withoutPassed];
+    const resorted = merged.sort((a, b) => {
+      if (a.passedStop !== b.passedStop) return a.passedStop ? -1 : 1;
+      if (a.passedStop && b.passedStop) {
+        return (b.distanceMeters ?? 0) - (a.distanceMeters ?? 0);
+      }
+      if (a.arrivingInSeconds !== b.arrivingInSeconds) return a.arrivingInSeconds - b.arrivingInSeconds;
+      const aRT = a.confidence === 'realtime' ? 0 : 1;
+      const bRT = b.confidence === 'realtime' ? 0 : 1;
+      return aRT - bRT;
+    });
+
     const isAllTerminus = routesInTopology > 0 && terminusRoutes === routesInTopology;
-    return { vehicles: deduped, isAllTerminus };
+    return { vehicles: resorted, isAllTerminus };
   }, [
     stopId,
     stopTimetable,

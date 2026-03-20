@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import type { Route, StopTimetable, RouteStopsData } from '../utils/gtfs';
+import type { Route, Stop, StopTimetable, RouteStopsData } from '../utils/gtfs';
 import { fetchStopTimetable, fetchRouteStops } from '../utils/gtfs';
 import { useRealtimeStore } from '../stores/realtimeStore';
 import { useInitialData } from './useInitialData';
@@ -18,6 +18,8 @@ export interface TimetableDeparture {
   routeShortName: string;
   routeType: number; // 0 = Tram, 3 = Bus
   routeLongName: string;
+  /** Last stop on this direction (same idea as trip headsign), for display */
+  tripDestinationName: string;
   /** Scheduled minutes from midnight */
   scheduledMinutes: number;
   /** Realtime delay in seconds; null = no realtime data */
@@ -36,6 +38,7 @@ const PAST_GRACE_SECONDS = 30;
 export function useTimetableDepartures(
   stopId: string | null,
   routesById: Map<string, Route>,
+  stopsById: Map<string, Stop>,
   nowMs: number,
   options: { dataDir?: string; lookaheadMinutes?: number } = {}
 ): { departures: TimetableDeparture[]; loading: boolean; error: Error | null } {
@@ -133,6 +136,24 @@ export function useTimetableDepartures(
       }
       if (isTerminus) continue;
 
+      let directionStopList: string[] | null = null;
+      if (routeStopsData?.orderedStops) {
+        for (const stopList of Object.values(routeStopsData.orderedStops)) {
+          if (stopList.indexOf(stopId) !== -1) {
+            directionStopList = stopList;
+            break;
+          }
+        }
+      }
+      const lastStopForDirection =
+        directionStopList && directionStopList.length > 0
+          ? directionStopList[directionStopList.length - 1]
+          : null;
+      const tripDestinationName =
+        lastStopForDirection !== null
+          ? (stopsById.get(lastStopForDirection)?.name ?? route.longName)
+          : route.longName;
+
       for (const [tripId, { time: scheduledMinutes }] of Object.entries(trips)) {
         // Skip trips that don't belong to today's service
         if (activeServiceId && !tripId.startsWith(activeServiceId + '_')) continue;
@@ -170,6 +191,7 @@ export function useTimetableDepartures(
           routeShortName: route.shortName,
           routeType: route.type,
           routeLongName: route.longName,
+          tripDestinationName,
           scheduledMinutes,
           delaySeconds,
           adjustedMinutes,
@@ -183,7 +205,7 @@ export function useTimetableDepartures(
     results.sort((a, b) => a.adjustedMinutes - b.adjustedMinutes);
 
     return results;
-  }, [stopId, stopTimetable, routeStopsCache, tripUpdates, nowMs, routesById, calendar, lookaheadMinutes]);
+  }, [stopId, stopTimetable, routeStopsCache, tripUpdates, nowMs, routesById, stopsById, calendar, lookaheadMinutes]);
 
   return { departures, loading: loading || (!!stopId && !stopTimetable && !error), error };
 }

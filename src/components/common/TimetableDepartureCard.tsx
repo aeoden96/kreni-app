@@ -54,7 +54,7 @@ export function TimetableDepartureCard({
           {departure.routeShortName}
         </span>
         <div className="flex-1 min-w-0">
-          <div className="text-xs text-base-content/80 truncate">{departure.routeLongName}</div>
+          <div className="text-xs text-base-content/80 truncate">{departure.tripDestinationName}</div>
           <div className="text-[11px] text-base-content/45 leading-tight flex items-center gap-1">
             {hasRealtime ? (
               <span className="w-1.5 h-1.5 rounded-full bg-success shrink-0 animate-pulse" />
@@ -105,10 +105,10 @@ export function TimetableDepartureCard({
                 onClick={() => onRouteClick(departure.routeId, departure.routeType)}
                 className="text-sm font-medium truncate leading-tight text-left hover:opacity-70 transition-opacity w-full block"
               >
-                {departure.routeLongName}
+                {departure.tripDestinationName}
               </button>
             ) : (
-              <div className="text-sm font-medium truncate leading-tight">{departure.routeLongName}</div>
+              <div className="text-sm font-medium truncate leading-tight">{departure.tripDestinationName}</div>
             )}
             <div className="text-xs text-base-content/50 mt-0.5 flex items-center gap-1.5">
               {hasRealtime ? (

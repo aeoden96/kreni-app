@@ -9,6 +9,7 @@ const baseVehicle: ApproachingVehicle = {
   routeShortName: '4',
   routeType: 0,
   routeLongName: 'Dubec – Savski most – Mirogoj',
+  tripDestinationName: 'Mirogoj',
   etaMinutes: 9 * 60 + 20,
   delaySeconds: 0,
   arrivingInSeconds: 300,
@@ -77,6 +78,7 @@ const mockBus: ApproachingVehicle = {
   routeShortName: '106',
   routeType: 3,
   routeLongName: 'Savski most – Zapruđe',
+  tripDestinationName: 'Zapruđe',
 };
 
 const meta = {
