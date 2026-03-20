@@ -2,13 +2,16 @@
  * Settings page
  */
 
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Moon, Sun, Map, Database, Trash2, Info, Mail, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Moon, Sun, Map, Database, Trash2, Info, Mail, ExternalLink, MessageSquare, Download, Languages } from 'lucide-react';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useDataCacheStore } from '../../stores/dataCache';
 import { useInitialData } from '../../hooks/useInitialData';
 import { trackEvent } from '../../utils/analytics';
+import { getCurrentLanguage, setLanguage, type SupportedLanguage } from '../../i18n';
+import { FlatLanguageFlags } from '../Navigation/FlatLanguageFlags';
+import { usePWAInstall } from '../../hooks/usePWAInstall';
 
 // Map tile providers handled automatically via theme + detailedMap setting
 
@@ -16,6 +19,7 @@ import { trackEvent } from '../../utils/analytics';
 
 export function SettingsPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const theme = useSettingsStore((state) => state.theme);
   const setTheme = useSettingsStore((state) => state.setTheme);
   const sandboxVisible = useSettingsStore((state) => state.sandboxVisible);
@@ -26,6 +30,9 @@ export function SettingsPage() {
   const clearCache = useDataCacheStore((state) => state.clearCache);
   const getCacheStats = useDataCacheStore((state) => state.getCacheStats);
   const cacheVersion = useDataCacheStore((state) => state.version);
+
+  const currentLang: SupportedLanguage = getCurrentLanguage();
+  const { canInstall, install } = usePWAInstall();
 
   const { feedVersion, feedStartDate, feedEndDate } = useInitialData();
 
@@ -80,6 +87,74 @@ export function SettingsPage() {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto p-4 space-y-4">
+        {/* Language Section */}
+        <div className="card bg-base-100 shadow-sm">
+          <div className="card-body">
+            <h2 className="card-title text-lg flex items-center gap-2">
+              <Languages className="w-5 h-5" />
+              {t('settings.languageTitle')}
+            </h2>
+            <div className="flex items-center justify-between">
+              <p className="font-medium text-sm text-base-content/70">{t('settings.languageHint')}</p>
+              <FlatLanguageFlags
+                currentLang={currentLang}
+                onSelectHr={() => setLanguage('hr')}
+                onSelectEn={() => setLanguage('en')}
+                onSelectDe={() => setLanguage('de')}
+                titleHr={t('spiderMenu.actions.languageCroatian')}
+                titleEn={t('spiderMenu.actions.languageEnglish')}
+                titleDe={t('spiderMenu.actions.languageGerman')}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Feedback Section */}
+        <div className="card bg-base-100 shadow-sm">
+          <div className="card-body">
+            <h2 className="card-title text-lg flex items-center gap-2">
+              <MessageSquare className="w-5 h-5" />
+              {t('settings.feedbackTitle')}
+            </h2>
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-base-content/70">{t('settings.feedbackHint')}</p>
+              <button
+                onClick={() => {
+                  trackEvent('feedback_opened', { source: 'settings' });
+                  navigate('/feedback');
+                }}
+                className="btn btn-sm btn-outline"
+              >
+                {t('spiderMenu.actions.feedback')}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Install App Section */}
+        {canInstall && (
+          <div className="card bg-base-100 shadow-sm">
+            <div className="card-body">
+              <h2 className="card-title text-lg flex items-center gap-2">
+                <Download className="w-5 h-5" />
+                {t('settings.installTitle')}
+              </h2>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-base-content/70">{t('settings.installHint')}</p>
+                <button
+                  onClick={() => {
+                    trackEvent('pwa_install_prompted', { source: 'settings' });
+                    install();
+                  }}
+                  className="btn btn-sm btn-primary"
+                >
+                  {t('spiderMenu.actions.install')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Appearance Section */}
         <div className="card bg-base-100 shadow-sm">
           <div className="card-body">
