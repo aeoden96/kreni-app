@@ -1,15 +1,14 @@
 import { memo } from 'react';
 import { Marker, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
-import { useNextbikeData } from '../../hooks/useNextbikeData';
+import type { BajsStation } from '../../hooks/useNextbikeData';
 
 interface BikeStationsProps {
     show: boolean;
+    stations: BajsStation[];
 }
 
-export const BikeStations = memo(function BikeStations({ show }: BikeStationsProps) {
-    const { stations } = useNextbikeData(show);
-
+export const BikeStations = memo(function BikeStations({ show, stations }: BikeStationsProps) {
     if (!show || !stations.length) return null;
 
     return (

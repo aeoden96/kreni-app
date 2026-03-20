@@ -18,7 +18,7 @@ export function CyclingMode() {
     const showBikeParkings = useSettingsStore(s => s.showBikeParkings);
     const showBikePaths = useSettingsStore(s => s.showBikePaths);
 
-    const { lastFetched } = useNextbikeData(showBikeStations);
+    const { stations, lastFetched } = useNextbikeData(showBikeStations);
 
     const [nextbikeBadgeText, setNextbikeBadgeText] = useState('');
 
@@ -46,7 +46,7 @@ export function CyclingMode() {
     return (
         <div className="h-full w-full relative">
             <BaseMap userLocation={userLocation}>
-                <BikeStations show={showBikeStations} />
+                <BikeStations show={showBikeStations} stations={stations} />
                 <BikeParkings show={showBikeParkings} />
                 <BikePaths show={showBikePaths} />
             </BaseMap>

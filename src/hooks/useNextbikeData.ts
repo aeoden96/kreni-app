@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-interface BajsStation {
+export interface BajsStation {
     uid: number;
     lat: number;
     lng: number;
@@ -23,6 +23,12 @@ const CACHE_KEY = 'kreni-nextbike-cache';
 /** How long Nextbike data is considered fresh; also the poll interval when the hook is enabled. */
 export const NEXTBIKE_CACHE_TTL_MS = 60 * 1000;
 const API_URL = 'https://maps.nextbike.net/maps/nextbike-live.json?city=1172&domains=hd&list_cities=0&bikes=0';
+
+/**
+ * Module-level guard so concurrent effect invocations (e.g. React Strict Mode
+ * double-invoke) never fire more than one real network request at a time.
+ */
+let networkFetchInFlight = false;
 
 export function useNextbikeData(enabled: boolean) {
     const [stations, setStations] = useState<BajsStation[]>([]);
@@ -51,12 +57,17 @@ export function useNextbikeData(enabled: boolean) {
 
         let isMounted = true;
 
-        const fetchData = async () => {
-            try {
-                // Check cache first
-                const cacheStr = localStorage.getItem(CACHE_KEY);
-                if (cacheStr) {
-                    try {
+        /**
+         * @param force – when true (scheduled interval) always fetch from the
+         *   network, bypassing the localStorage freshness check. This avoids the
+         *   countdown getting stuck because a timer fired a few ms early.
+         */
+        const fetchData = async (force = false) => {
+            if (!force) {
+                // On-mount path: serve from localStorage if still fresh
+                try {
+                    const cacheStr = localStorage.getItem(CACHE_KEY);
+                    if (cacheStr) {
                         const cache: CacheData = JSON.parse(cacheStr);
                         if (Date.now() - cache.timestamp < NEXTBIKE_CACHE_TTL_MS) {
                             if (isMounted) {
@@ -65,13 +76,19 @@ export function useNextbikeData(enabled: boolean) {
                             }
                             return;
                         }
-                    } catch (e) {
-                        console.error('Failed to parse nextbike cache', e);
                     }
+                } catch (e) {
+                    console.error('Failed to parse nextbike cache', e);
                 }
+            }
 
-                if (isMounted) setLoading(true);
+            // Prevent concurrent fetches (e.g. Strict Mode double-invoke)
+            if (networkFetchInFlight) return;
+            networkFetchInFlight = true;
 
+            if (isMounted) setLoading(true);
+
+            try {
                 const response = await fetch(API_URL);
                 if (!response.ok) {
                     throw new Error(`Failed to fetch nextbike data: ${response.status}`);
@@ -81,11 +98,13 @@ export function useNextbikeData(enabled: boolean) {
 
                 // Extract Zagreb stations
                 let newStations: BajsStation[] = [];
-                if (data.countries && data.countries[0] && data.countries[0].cities && data.countries[0].cities[0]) {
+                if (data.countries?.[0]?.cities?.[0]) {
                     newStations = data.countries[0].cities[0].places || [];
                 }
 
                 const now = Date.now();
+
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: now, stations: newStations }));
 
                 if (isMounted) {
                     setStations(newStations);
@@ -93,23 +112,20 @@ export function useNextbikeData(enabled: boolean) {
                     setLoading(false);
                     setError(null);
                 }
-
-                // Update cache
-                localStorage.setItem(CACHE_KEY, JSON.stringify({
-                    timestamp: now,
-                    stations: newStations
-                }));
-
             } catch (err) {
                 if (isMounted) {
                     setError(err instanceof Error ? err : new Error('Unknown error fetching nextbike data'));
                     setLoading(false);
                 }
+            } finally {
+                networkFetchInFlight = false;
             }
         };
 
-        fetchData();
-        intervalRef.current = window.setInterval(fetchData, NEXTBIKE_CACHE_TTL_MS);
+        fetchData(false);
+        // Always force a real network request on the scheduled interval so the
+        // countdown never gets stuck when the timer fires a few ms early.
+        intervalRef.current = window.setInterval(() => fetchData(true), NEXTBIKE_CACHE_TTL_MS);
 
         return () => {
             isMounted = false;
