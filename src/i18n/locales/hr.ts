@@ -14,6 +14,7 @@ const hr = {
       toggles: {
         map: 'Karta',
         list: 'Popis',
+        closures: 'Zatv. ceste',
         garages: 'Garaže',
         ev: 'EV',
         zones: 'Zone',

@@ -20,6 +20,7 @@ interface DataCacheState {
   // Actions
   setEntry: (key: string, data: unknown) => void;
   getEntry: <T>(key: string) => T | undefined;
+  getEntryWithTTL: <T>(key: string, ttlMs: number) => T | undefined;
   clearCache: () => void;
   setVersion: (version: string) => void;
   setVersionForKey: (key: string, version: string) => void;
@@ -77,6 +78,13 @@ export const useDataCacheStore = create<DataCacheState>()(
       getEntry: <T,>(key: string): T | undefined => {
         const entry = get().cache[key];
         return entry?.data as T | undefined;
+      },
+
+      getEntryWithTTL: <T,>(key: string, ttlMs: number): T | undefined => {
+        const entry = get().cache[key];
+        if (!entry) return undefined;
+        if (Date.now() - entry.timestamp > ttlMs) return undefined;
+        return entry.data as T;
       },
 
       clearCache: () => {
@@ -168,6 +176,39 @@ export async function cachedFetch<T>(
   }
 
   // Cache miss — start a new fetch and register it as in-flight
+  const promise = fetcher().then((data) => {
+    store.setEntry(url, data);
+    return data;
+  }).finally(() => {
+    inFlight.delete(url);
+  });
+
+  inFlight.set(url, promise as Promise<unknown>);
+
+  return promise;
+}
+
+/**
+ * Like cachedFetch, but respects a TTL (in ms). Cached entries older than
+ * ttlMs are treated as misses and re-fetched.
+ */
+export async function cachedFetchWithTTL<T>(
+  url: string,
+  fetcher: () => Promise<T>,
+  ttlMs: number
+): Promise<T> {
+  const store = useDataCacheStore.getState();
+
+  const cached = store.getEntryWithTTL<T>(url, ttlMs);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  const existing = inFlight.get(url);
+  if (existing) {
+    return existing as Promise<T>;
+  }
+
   const promise = fetcher().then((data) => {
     store.setEntry(url, data);
     return data;

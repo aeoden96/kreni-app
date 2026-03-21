@@ -14,6 +14,7 @@ const de = {
       toggles: {
         map: 'Karte',
         list: 'Liste',
+        closures: 'Sperrungen',
         garages: 'Garagen',
         ev: 'EV',
         zones: 'Zonen',

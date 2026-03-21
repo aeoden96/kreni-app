@@ -72,13 +72,11 @@ export function GTFSMode({ config }: GTFSModeProps) {
 
   // Settings — realtime-only settings are ignored in train mode
   const showAllVehiclesFromStore = useSettingsStore((s) => s.showAllVehicles);
-  const showRoadClosuresFromStore = useSettingsStore((s) => s.showRoadClosures);
   const mapZoom = useSettingsStore((s) => s.mapZoom);
   const { addRecentRoute, addRecentStop } = useSettingsStore();
 
   // In train mode there is no "hide all vehicles" toggle — stops are always visible.
   const showAllVehicles = config.hasRealtime ? showAllVehiclesFromStore : true;
-  const showRoadClosures = config.hasRealtime && showRoadClosuresFromStore;
   const showCongestionHeatmap = false; // useSettingsStore((s) => s.showCongestionHeatmap);
 
   // Load initial data from the mode's data directory
@@ -314,7 +312,6 @@ export function GTFSMode({ config }: GTFSModeProps) {
           onStopClick={handleStopClickFromMap}
           onVehicleClick={(routeId, routeType, tripId) => handleSelectRoute(routeId, routeType, undefined, tripId)}
           showAllVehicles={showAllVehicles}
-          showRoadClosures={showRoadClosures}
           allVehicles={
             showAllVehicles && selectedRouteId
               ? allVehicles.filter((v) => v.routeId === selectedRouteId)

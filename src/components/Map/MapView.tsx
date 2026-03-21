@@ -13,10 +13,8 @@ import { ParentStationZoomController } from './ParentStationZoomController';
 import { OffScreenStopIndicator } from './OffScreenStopIndicator';
 import { SpiderfierProvider } from './SpiderfierContext';
 import { SpiderfierManager } from './SpiderfierManager';
-import { RoadClosures } from './RoadClosures';
 import { VehicleFollower } from './VehicleFollower';
 import { CongestionHeatmap } from './CongestionHeatmap';
-import { useRoadClosures } from '../../hooks/useRoadClosures';
 import { useGTFSMode } from '../../contexts/GTFSModeContext';
 
 import type { CongestionPoint } from '../../hooks/useCongestionData';
@@ -39,7 +37,6 @@ interface MapViewProps {
   /** Called when a vehicle in the selected-route view is clicked (selects the trip for follow mode) */
   onVehicleSelect?: (tripId: string) => void;
   showAllVehicles?: boolean;
-  showRoadClosures?: boolean;
   allVehicles?: AllVehiclePosition[];
   routesById: Map<string, Route>;
   serviceId: string | null;
@@ -78,7 +75,6 @@ export function MapView({
   onVehicleClick,
   onVehicleSelect,
   showAllVehicles = false,
-  showRoadClosures = false,
   allVehicles = [],
   routesById,
   userLocation,
@@ -95,8 +91,6 @@ export function MapView({
   congestionPoints = [],
   showCongestionHeatmap = false,
 }: MapViewProps) {
-  // Fetch road closures if enabled
-  const { closures } = useRoadClosures(showRoadClosures);
   const { initialZoom, minZoom } = useGTFSMode();
 
   return (
@@ -136,8 +130,6 @@ export function MapView({
         {showAllVehicles && (
           <AllVehicleMarkers vehicles={allVehicles} onVehicleClick={onVehicleClick} />
         )}
-
-        <RoadClosures show={showRoadClosures} closures={closures} />
 
         <CongestionHeatmap points={congestionPoints} show={showCongestionHeatmap} />
 

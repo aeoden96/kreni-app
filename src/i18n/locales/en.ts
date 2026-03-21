@@ -14,6 +14,7 @@ const en = {
       toggles: {
         map: 'Map',
         list: 'List',
+        closures: 'Closures',
         garages: 'Garages',
         ev: 'EV',
         zones: 'Zones',

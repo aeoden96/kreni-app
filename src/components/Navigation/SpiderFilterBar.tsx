@@ -47,6 +47,8 @@ export function SpiderFilterBar({ routePath, animationDelay = 0 }: Props) {
         setShowBikeParkings,
         showBikePaths,
         setShowBikePaths,
+        showRoadClosures,
+        setShowRoadClosures,
         showPublicGarages,
         setShowPublicGarages,
         showElectricCharging,
@@ -97,6 +99,15 @@ export function SpiderFilterBar({ routePath, animationDelay = 0 }: Props) {
     if (routePath === '/driving') {
         return (
             <PillContainer animationDelay={animationDelay}>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setShowRoadClosures(!showRoadClosures);
+                    }}
+                    className={`${pillBase} ${showRoadClosures ? pillActive : pillInactive}`}
+                >
+                    {t('spiderMenu.toggles.closures').toUpperCase()}
+                </button>
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
