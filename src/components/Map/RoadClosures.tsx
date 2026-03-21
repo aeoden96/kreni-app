@@ -1,6 +1,7 @@
 import { Polyline, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import type { RoadClosure } from '../../hooks/useRoadClosures';
 import { useSettingsStore } from '../../stores/settingsStore';
 import i18n from '../../i18n';
@@ -14,6 +15,52 @@ function closureReasonLabel(reason: string, t: (k: string) => string): string {
     if (reason === 'ROAD_CLOSED_CONSTRUCTION') return t('roadClosures.reasonConstruction');
     if (reason === 'ROAD_CLOSED') return t('roadClosures.reasonClosed');
     return reason;
+}
+
+/** ISO 8601 from Zagreb feed (`expectedStartTime` / `expectedEndTime`) → locale date+time, or null if invalid. */
+function formatClosureInstant(iso: string | undefined, locale: string): string | null {
+    if (!iso?.trim()) return null;
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return null;
+    return d.toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+function RoadClosurePopupBody({
+    closure,
+    t,
+    locale,
+}: {
+    closure: RoadClosure;
+    t: TFunction;
+    locale: string;
+}) {
+    const until = formatClosureInstant(closure.endDate, locale);
+    const from = formatClosureInstant(closure.startDate, locale);
+
+    return (
+        <div className="p-1">
+            <h3 className="font-bold text-sm mb-1">{closure.streetName}</h3>
+            <div className="text-xs space-y-1">
+                <p>
+                    <strong>{t('roadClosures.reasonLabel')}</strong> {closureReasonLabel(closure.reason, t)}
+                </p>
+                <p>
+                    <strong>{t('roadClosures.directionLabel')}</strong>{' '}
+                    {closure.direction === 'BOTH_DIRECTIONS' ? t('roadClosures.bothDirections') : closure.direction}
+                </p>
+                {from ? (
+                    <p>
+                        <strong>{t('roadClosures.closedFrom')}</strong> {from}
+                    </p>
+                ) : null}
+                {until ? (
+                    <p>
+                        <strong>{t('roadClosures.closedUntil')}</strong> {until}
+                    </p>
+                ) : null}
+            </div>
+        </div>
+    );
 }
 
 export function RoadClosures({ show, closures }: RoadClosuresProps) {
@@ -58,19 +105,7 @@ export function RoadClosures({ show, closures }: RoadClosuresProps) {
                             }}
                         >
                             <Popup className="road-closure-popup">
-                                <div className="p-1">
-                                    <h3 className="font-bold text-sm mb-1">{closure.streetName}</h3>
-                                    {closure.crossStreet && (
-                                        <p className="text-xs text-base-content/70 mb-2">{t('roadClosures.untilCross', { street: closure.crossStreet })}</p>
-                                    )}
-                                    <div className="text-xs space-y-1">
-                                        <p><strong>{t('roadClosures.reasonLabel')}</strong> {closureReasonLabel(closure.reason, t)}</p>
-                                        <p><strong>{t('roadClosures.directionLabel')}</strong> {closure.direction === 'BOTH_DIRECTIONS' ? t('roadClosures.bothDirections') : closure.direction}</p>
-                                        {closure.endDate && (
-                                            <p><strong>{t('roadClosures.closedUntil')}</strong> {new Date(closure.endDate).toLocaleDateString(i18n.language)}</p>
-                                        )}
-                                    </div>
-                                </div>
+                                <RoadClosurePopupBody closure={closure} t={t} locale={i18n.language} />
                             </Popup>
                         </Polyline>
                     );
@@ -82,19 +117,7 @@ export function RoadClosures({ show, closures }: RoadClosuresProps) {
                     return (
                         <Marker key={closure.id} position={point} icon={createConstructionIcon()}>
                             <Popup>
-                                <div className="p-1">
-                                    <h3 className="font-bold text-sm mb-1">{closure.streetName}</h3>
-                                    {closure.crossStreet && (
-                                        <p className="text-xs text-base-content/70 mb-2">{t('roadClosures.untilCross', { street: closure.crossStreet })}</p>
-                                    )}
-                                    <div className="text-xs space-y-1">
-                                        <p><strong>{t('roadClosures.reasonLabel')}</strong> {closureReasonLabel(closure.reason, t)}</p>
-                                        <p><strong>{t('roadClosures.directionLabel')}</strong> {closure.direction === 'BOTH_DIRECTIONS' ? t('roadClosures.bothDirections') : closure.direction}</p>
-                                        {closure.endDate && (
-                                            <p><strong>{t('roadClosures.closedUntil')}</strong> {new Date(closure.endDate).toLocaleDateString(i18n.language)}</p>
-                                        )}
-                                    </div>
-                                </div>
+                                <RoadClosurePopupBody closure={closure} t={t} locale={i18n.language} />
                             </Popup>
                         </Marker>
                     );
