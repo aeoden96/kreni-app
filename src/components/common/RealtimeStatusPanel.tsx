@@ -157,9 +157,22 @@ export const RealtimeStatusPanel = forwardRef<
 
   useEffect(() => {
     if (!realtimeDetailsOpen || nextPollAtMs == null) return;
+    // Sync immediately so the display is accurate the moment a new poll is
+    // scheduled (not 1 s later when the interval first fires).
+    setNowTick(Date.now());
     const id = window.setInterval(() => setNowTick(Date.now()), 1000);
     return () => clearInterval(id);
   }, [realtimeDetailsOpen, nextPollAtMs]);
+
+  // Reset the clock immediately whenever the page becomes visible (handles
+  // bfcache restore and tab switching where nowTick may be stale).
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') setNowTick(Date.now());
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []);
 
   useImperativeHandle(ref, () => ({
     closeLegends: () => {
@@ -187,11 +200,18 @@ export const RealtimeStatusPanel = forwardRef<
   if (nextPollAtMs != null && nextPingRemainMs != null) {
     nextPingLabel =
       nextPingRemainMs < 1000 ? '<1 s' : `${Math.ceil(nextPingRemainMs / 1000)} s`;
-  } else if (realtimeLoading) {
-    nextPingLabel = '…';
   }
   const nextPingClock =
     nextPollAtMs != null ? new Date(nextPollAtMs).toLocaleTimeString() : null;
+
+  // Preserve the last scheduled-ping snapshot so we can freeze it (dimmed)
+  // while a fetch is in progress, instead of switching to a different string.
+  const [lastNextPing, setLastNextPing] = useState<{ label: string; clock: string } | null>(null);
+  useEffect(() => {
+    if (nextPollAtMs != null) {
+      setLastNextPing({ label: nextPingLabel, clock: nextPingClock ?? '—' });
+    }
+  }, [nextPingLabel, nextPingClock, nextPollAtMs]);
 
   const detailsPanelContent = useMemo(
     () => (
@@ -235,14 +255,17 @@ export const RealtimeStatusPanel = forwardRef<
         <div>
           <div className="flex justify-between">
             <span className="font-medium">{t('realtimePanel.tech.nextPing')}</span>
-            <span>
+            <span className={nextPollAtMs == null && realtimeLoading ? 'opacity-40' : undefined}>
               {nextPollAtMs != null
                 ? t('realtimePanel.tech.nextPingScheduled', {
                     remain: nextPingLabel,
                     clock: nextPingClock ?? '—',
                   })
-                : realtimeLoading
-                  ? t('realtimePanel.tech.nextPingInProgress')
+                : lastNextPing != null
+                  ? t('realtimePanel.tech.nextPingScheduled', {
+                      remain: lastNextPing.label,
+                      clock: lastNextPing.clock,
+                    })
                   : '—'}
             </span>
           </div>
@@ -303,6 +326,7 @@ export const RealtimeStatusPanel = forwardRef<
       lastUpdate,
       cacheStatus,
       cacheAgeSeconds,
+      lastNextPing,
     ],
   );
 

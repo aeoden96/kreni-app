@@ -121,7 +121,11 @@ export function useRealtimeData(enabled: boolean = true) {
 
     const onOnline = () => requestResync();
     const onPageShow = (event: PageTransitionEvent) => {
-      if (event.persisted) requestResync();
+      if (event.persisted) {
+        // bfcache restore: all React state and refs are frozen from before the
+        // kill. Reloading is the only reliable way to get a clean slate.
+        window.location.reload();
+      }
     };
 
     void runRound();
