@@ -88,6 +88,7 @@ const hr = {
       emptyNoRoutes: 'Nema linija',
       listFirst20Hint: 'Prikazano prvih 20. Upišite više u pretragu za bolje filtriranje.',
       terminalsCount_one: '{{count}} terminal',
+      terminalsCount_few: '{{count}} terminala',
       terminalsCount_other: '{{count}} terminala',
       favouriteAdd: 'Dodaj u favorite',
       favouriteRemove: 'Ukloni iz favorita',
