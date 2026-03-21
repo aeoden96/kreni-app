@@ -4,6 +4,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, useMemo, memo } from 'react';
 import { Marker, useMap } from 'react-leaflet';
+import type L from 'leaflet';
 import type { VehiclePosition } from '../../utils/vehicles';
 import { makeVehicleIcon } from '../../utils/vehicleIcon';
 import { getDirectionColor } from './directionColors';
@@ -11,6 +12,7 @@ import { useSettingsStore } from '../../stores/settingsStore';
 import { useMapBounds } from '../../hooks/useMapBounds';
 import { useSpiderfierContext } from './SpiderfierContext';
 import { MARKER_Z_VEHICLE } from './mapMarkerZIndex';
+import { useAnimatedVehiclePosition } from '../../hooks/useAnimatedVehiclePosition';
 
 // ── Spiderfied vehicle sub-component ──────────────────────────────────
 
@@ -42,6 +44,12 @@ function SpiderfiedVehicleMarker({
   const iconRef = useRef(icon);
   useLayoutEffect(() => { iconRef.current = icon; });
 
+  // Stable initial position — kept constant so React-Leaflet never calls
+  // setLatLng() on the Marker, leaving all position updates to the rAF loop.
+  const [initPos] = useState<[number, number]>([vehicle.lat, vehicle.lon]);
+  const markerRef = useRef<L.Marker | null>(null);
+  useAnimatedVehiclePosition(markerRef, vehicle.lat, vehicle.lon);
+
   useEffect(() => {
     if (!ctx) return;
     ctx.register({
@@ -60,7 +68,8 @@ function SpiderfiedVehicleMarker({
 
   return (
     <Marker
-      position={[vehicle.lat, vehicle.lon]}
+      ref={markerRef}
+      position={initPos}
       icon={icon}
       zIndexOffset={MARKER_Z_VEHICLE}
       eventHandlers={{
