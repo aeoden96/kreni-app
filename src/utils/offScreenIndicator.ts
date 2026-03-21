@@ -12,7 +12,7 @@ export interface OffScreenIndicatorPosition {
   angle: number;
 }
 
-export interface MapViewportBounds {
+interface MapViewportBounds {
   north: number;
   south: number;
   east: number;

@@ -1,6 +1,6 @@
 import { Map } from 'lucide-react';
 
-export interface RealtimeLegendToggleIconProps {
+interface RealtimeLegendToggleIconProps {
   /** Popover / panel is open — stronger emphasis on the icon */
   open: boolean;
 }

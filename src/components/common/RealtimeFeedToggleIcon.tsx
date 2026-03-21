@@ -1,6 +1,6 @@
 import { Activity } from 'lucide-react';
 
-export interface RealtimeFeedToggleIconProps {
+interface RealtimeFeedToggleIconProps {
   /** Technical details popover is open */
   open: boolean;
   /**
