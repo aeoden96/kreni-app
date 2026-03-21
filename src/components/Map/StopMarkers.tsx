@@ -43,7 +43,6 @@ function makeStopIcon(
   size: number,
   r: number,
   opacityFactor: number,
-  isSelected: boolean,
   label?: string
 ): L.DivIcon {
   const cx = size / 2;
@@ -51,13 +50,11 @@ function makeStopIcon(
     ? String(label).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     : '';
 
-  const extraClass = isSelected ? 'stop-selected-pulse' : '';
-
   if (bearing !== undefined) {
     const pathData = buildDirectionalStopPinPathData(cx);
 
     const html =
-      `<div data-testid="stop-marker" class="${extraClass}" style="position:relative;width:${size}px;height:${size}px;opacity:${opacityFactor};">` +
+      `<div data-testid="stop-marker" class="stop-marker-pin" style="position:relative;width:${size}px;height:${size}px;opacity:${opacityFactor};">` +
       `<svg style="position:absolute;top:0;left:0;transform:rotate(${bearing}deg);transform-origin:${cx}px ${cx}px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));overflow:visible;"` +
       ` width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">` +
       // The Unified Silhouette
@@ -69,7 +66,7 @@ function makeStopIcon(
   }
 
   const html =
-    `<div data-testid="stop-marker" class="${extraClass}" style="position:relative;width:${size}px;height:${size}px;">` +
+    `<div data-testid="stop-marker" class="stop-marker-pin" style="position:relative;width:${size}px;height:${size}px;">` +
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"` +
     ` style="opacity:${opacityFactor};filter:drop-shadow(0 2px 3px rgba(0,0,0,0.35));overflow:visible;">` +
     `<circle cx="${cx}" cy="${cx}" r="${r}" fill="${color}" fill-opacity="0.95" stroke="white" stroke-width="2.5"/>` +
@@ -108,8 +105,8 @@ function PlatformStopMarker({
   const size = isSelected ? 64 : isHighlighted ? 38 : 32;
   const r = isSelected ? 12 : isHighlighted ? 7.5 : 6;
   const icon = useMemo(
-    () => makeStopIcon(color, stop.bearing, size, r, effectiveFactor, isSelected, undefined),
-    [color, stop.bearing, size, r, effectiveFactor, isSelected]
+    () => makeStopIcon(color, stop.bearing, size, r, effectiveFactor, undefined),
+    [color, stop.bearing, size, r, effectiveFactor]
   );
   const iconRef = useRef(icon);
   useLayoutEffect(() => { iconRef.current = icon; }, [icon]);
@@ -246,7 +243,7 @@ export function StopMarkers({
           const displayCount = childCount > 9 ? '9+' : childCount.toString();
 
           const icon = L.divIcon({
-            html: `<div data-testid="stop-marker" class="parent-station-marker ${isSelected ? 'selected stop-selected-pulse' : ''} ${isHighlighted ? 'highlighted' : ''}">
+            html: `<div data-testid="stop-marker" class="parent-station-marker ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''}">
               <span class="count">${displayCount}</span>
             </div>`,
             className: 'parent-station-icon',

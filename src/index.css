@@ -359,13 +359,19 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transform-origin: center center;
+  transition: transform 0.1s ease-out, box-shadow 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .parent-station-marker:hover {
   transform: scale(1.1);
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+.parent-station-marker:active {
+  transform: scale(0.92);
+  transition-duration: 0.08s;
 }
 
 .parent-station-marker.selected {
@@ -461,17 +467,16 @@ body {
   }
 }
 
-@keyframes stop-selected-pulse {
-  0% { transform: scale3d(1, 1, 1); }
-  50% { transform: scale3d(1.15, 1.15, 1); }
-  100% { transform: scale3d(1, 1, 1); }
+/* Platform stop: press-only scale (no idle animation) */
+.stop-marker-pin {
+  cursor: pointer;
+  transform-origin: center center;
+  transition: transform 0.1s ease-out;
 }
 
-.stop-selected-pulse {
-  animation: stop-selected-pulse 2.2s infinite ease-in-out;
-  z-index: 9999 !important; /* Extremely high to combat any Leaflet layer issues */
-  will-change: transform;
-  transform-origin: center;
+.stop-marker-pin:active {
+  transform: scale(0.88);
+  transition-duration: 0.08s;
 }
 
 .btn-gps-active {
