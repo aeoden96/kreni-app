@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect } from 'react';
+import React, { Fragment, useEffect, useRef } from 'react';
 import { Circle, Marker, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useSpiderfierContext } from './SpiderfierContext';
@@ -76,6 +76,8 @@ const SpiderNode = React.memo(function SpiderNode({
   map,
   isDark
 }: SpiderNodeProps) {
+  const markerRef = useRef<L.Marker | null>(null);
+
   const itemPx = map.latLngToContainerPoint([item.spiderfiedLat, item.spiderfiedLon]);
   const dxPx = itemPx.x - centerPx.x;
   const dyPx = itemPx.y - centerPx.y;
@@ -86,11 +88,30 @@ const SpiderNode = React.memo(function SpiderNode({
   const lx = Math.cos(angle) * distPx;
   const ly = Math.sin(angle) * distPx;
 
-  // Memoize the icon so React Leaflet doesn't reset the marker DOM (and CSS animation) on every context update
+  // item.label is the initial stop name and never changes (enrichment no longer
+  // flows through spiderfied state). All deps are properly declared; the icon
+  // is stable for the lifetime of the fan.
   const icon = React.useMemo(
     () => animatedSpiderIcon(item.icon, item.label, i, item.hideLabel, lx, ly),
     [item.icon, item.label, i, item.hideLabel, lx, ly]
   );
+
+  // Asynchronously resolve and patch the label HTML (e.g. route badges) directly
+  // in the DOM, bypassing React state entirely so no re-render occurs and the
+  // pop-in animation is never replayed.
+  useEffect(() => {
+    if (!item.resolveLabel || item.hideLabel) return;
+    let cancelled = false;
+    item.resolveLabel().then((enriched: string) => {
+      if (cancelled) return;
+      const el = markerRef.current?.getElement?.();
+      if (!el) return;
+      const labelEl = el.querySelector<HTMLElement>('.spider-node-label');
+      if (!labelEl) return;
+      labelEl.innerHTML = enriched;
+    }).catch(() => { /* silent — label stays as stop name */ });
+    return () => { cancelled = true; };
+  }, [item]);
 
   return (
     <Fragment>
@@ -112,6 +133,7 @@ const SpiderNode = React.memo(function SpiderNode({
       />
       {/* Clickable node at spiderfied position – uses the real marker icon */}
       <Marker
+        ref={markerRef}
         position={[item.spiderfiedLat, item.spiderfiedLon]}
         icon={icon}
         pane="spiderNodePane"

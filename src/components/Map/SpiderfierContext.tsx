@@ -34,6 +34,7 @@ interface SpiderfierEntry {
 
 interface SpiderfiedItem {
   id: string;
+  /** Initial label (stop name). Never mutated — enrichment happens inside SpiderNode. */
   label: string;
   originalLat: number;
   originalLon: number;
@@ -43,6 +44,8 @@ interface SpiderfiedItem {
   onClick: () => void;
   /** When true, the text label bubble is hidden in the spider fan (icon is sufficient). */
   hideLabel?: boolean;
+  /** Optional: resolve an enriched label (e.g. with route badges) asynchronously. */
+  resolveLabel?: () => Promise<string>;
 }
 
 interface SpiderfiedGroup {
@@ -95,11 +98,11 @@ function circlePositions(count: number, center: L.Point, map: L.Map): L.LatLng[]
 }
 
 /**
- * Pan the map to [lat, lon], shifting the target downward on mobile so the
+ * Compute the pan target for [lat, lon], shifting downward on mobile so the
  * selected stop marker ends up in the lower half of the viewport — below the
  * StopInfoBar that appears at the top of the screen.
  */
-function panToWithOffset(map: L.Map, lat: number, lon: number): void {
+function getOffsetTarget(map: L.Map, lat: number, lon: number): L.LatLng {
   const offsetPx =
     typeof window !== 'undefined' && window.innerWidth < 640
       ? -Math.round(window.innerHeight / 4)
@@ -107,11 +110,9 @@ function panToWithOffset(map: L.Map, lat: number, lon: number): void {
   if (offsetPx !== 0) {
     const zoom = map.getZoom();
     const pt = map.project([lat, lon] as [number, number], zoom);
-    const adjusted = map.unproject(L.point(pt.x, pt.y + offsetPx), zoom);
-    map.panTo(adjusted);
-  } else {
-    map.panTo([lat, lon]);
+    return map.unproject(L.point(pt.x, pt.y + offsetPx), zoom);
   }
+  return L.latLng(lat, lon);
 }
 
 
@@ -122,6 +123,8 @@ export function SpiderfierProvider({ children }: { children: ReactNode }) {
   const [spiderfied, setSpiderfied] = useState<SpiderfiedGroup | null>(null);
   // Ref so isHidden reads the latest set without causing extra renders
   const spiderfiedIdsRef = useRef<Set<string>>(new Set());
+  // Tracks any in-flight moveend handler so a subsequent click can cancel it
+  const pendingPanRef = useRef<{ map: L.Map; handler: () => void } | null>(null);
 
   const register = useCallback((entry: SpiderfierEntry) => {
     registryRef.current.set(entry.id, entry);
@@ -132,6 +135,10 @@ export function SpiderfierProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const collapse = useCallback(() => {
+    if (pendingPanRef.current) {
+      pendingPanRef.current.map.off('moveend', pendingPanRef.current.handler);
+      pendingPanRef.current = null;
+    }
     spiderfiedIdsRef.current = new Set();
     setSpiderfied(null);
   }, []);
@@ -142,22 +149,16 @@ export function SpiderfierProvider({ children }: { children: ReactNode }) {
       const clicked = registry.get(id);
       if (!clicked) return;
 
-      // Always collapse any existing spider first.
-      // If we clicked an ID that is already part of the current spider, 
-      // collapse() will handles it and we return early.
       if (spiderfiedIdsRef.current.has(id)) {
         collapse();
         return;
       }
-      collapse();
+      collapse(); // also cancels any in-flight pan via updated collapse
 
       const clickedPx = map.latLngToContainerPoint([clicked.lat, clicked.lon]);
 
-      // Auto-center the map on the spider origin, offset downward on mobile
-      // so the stop marker sits below the StopInfoBar overlay.
-      panToWithOffset(map, clicked.lat, clicked.lon);
-
-      // Gather all entries within OVERLAP_PX of the clicked position
+      // Gather overlap based on current pixel positions — BEFORE panning,
+      // so coordinates are still accurate to what the user tapped.
       const nearby: SpiderfierEntry[] = [];
       registry.forEach((entry) => {
         const px = map.latLngToContainerPoint([entry.lat, entry.lon]);
@@ -168,69 +169,77 @@ export function SpiderfierProvider({ children }: { children: ReactNode }) {
         }
       });
 
-      // No overlap – fire original handler directly
-      if (nearby.length <= 1) {
-        clicked.onClick();
-        return;
-      }
+      // Executed after the pan animation settles — keeps UI renders off the
+      // critical path of the map animation so there's no jitter.
+      const executeAction = () => {
+        pendingPanRef.current = null;
 
-      // Large cluster – zoom in instead of spiderfying
-      if (nearby.length > MAX_SPIDER_FAN) {
-        const targetZoom = map.getZoom() + 1;
-        const offsetPx =
-          typeof window !== 'undefined' && window.innerWidth < 640
-            ? -Math.round(window.innerHeight / 4)
-            : 0;
-        if (offsetPx !== 0) {
-          const pt = map.project([clicked.lat, clicked.lon] as [number, number], targetZoom);
-          const adjusted = map.unproject(L.point(pt.x, pt.y + offsetPx), targetZoom);
-          map.setView(adjusted, targetZoom);
-        } else {
-          map.setView([clicked.lat, clicked.lon], targetZoom);
+        if (nearby.length <= 1) {
+          clicked.onClick();
+          return;
         }
-        return;
-      }
 
-      // Fan positions (always circle since count is <= MAX_SPIDER_FAN)
-      const positions = circlePositions(nearby.length, clickedPx, map);
-
-      const items: SpiderfiedItem[] = nearby.map((entry, i) => ({
-        id: entry.id,
-        label: entry.label,
-        originalLat: entry.lat,
-        originalLon: entry.lon,
-        spiderfiedLat: positions[i].lat,
-        spiderfiedLon: positions[i].lng,
-        icon: entry.getIcon?.() ?? null,
-        hideLabel: entry.hideLabel,
-        onClick: () => {
-          collapse();
-          entry.onClick();
-        },
-      }));
-
-      spiderfiedIdsRef.current = new Set(nearby.map((e) => e.id));
-      const group: SpiderfiedGroup = { centerLat: clicked.lat, centerLon: clicked.lon, items };
-      setSpiderfied(group);
-
-      // On-demand label enrichment
-      nearby.forEach(async (entry, i) => {
-        if (!entry.resolveLabel) return;
-        try {
-          const enrichedLabel = await entry.resolveLabel();
-          setSpiderfied(current => {
-            if (!current || current.centerLat !== group.centerLat || current.centerLon !== group.centerLon) return current;
-            const newItems = [...current.items];
-            if (newItems[i] && newItems[i].id === entry.id) {
-              newItems[i] = { ...newItems[i], label: enrichedLabel };
-              return { ...current, items: newItems };
-            }
-            return current;
-          });
-        } catch (e) {
-          console.error('Failed to resolve spider label', e);
+        // Large cluster – zoom in instead of spiderfying
+        if (nearby.length > MAX_SPIDER_FAN) {
+          const targetZoom = map.getZoom() + 1;
+          const offsetPx =
+            typeof window !== 'undefined' && window.innerWidth < 640
+              ? -Math.round(window.innerHeight / 4)
+              : 0;
+          if (offsetPx !== 0) {
+            const pt = map.project([clicked.lat, clicked.lon] as [number, number], targetZoom);
+            const adjusted = map.unproject(L.point(pt.x, pt.y + offsetPx), targetZoom);
+            map.setView(adjusted, targetZoom);
+          } else {
+            map.setView([clicked.lat, clicked.lon], targetZoom);
+          }
+          return;
         }
-      });
+
+        // Spider fan — recalculate pixel positions using the post-pan center
+        const newClickedPx = map.latLngToContainerPoint([clicked.lat, clicked.lon]);
+        const positions = circlePositions(nearby.length, newClickedPx, map);
+
+        const items: SpiderfiedItem[] = nearby.map((entry, i) => ({
+          id: entry.id,
+          label: entry.label,
+          originalLat: entry.lat,
+          originalLon: entry.lon,
+          spiderfiedLat: positions[i].lat,
+          spiderfiedLon: positions[i].lng,
+          icon: entry.getIcon?.() ?? null,
+          hideLabel: entry.hideLabel,
+          // Pass resolveLabel through so SpiderNode enriches its own DOM directly,
+          // avoiding a setSpiderfied call that would re-render all nodes and
+          // replay the pop-in animation for every item in the fan.
+          resolveLabel: entry.resolveLabel,
+          onClick: () => {
+            collapse();
+            entry.onClick();
+          },
+        }));
+
+        spiderfiedIdsRef.current = new Set(nearby.map((e) => e.id));
+        const group: SpiderfiedGroup = { centerLat: clicked.lat, centerLon: clicked.lon, items };
+        setSpiderfied(group);
+      };
+
+      // Pan first; defer all UI work until the map has settled.
+      // If the map is already centered on the target (< 2px away), fire immediately
+      // because Leaflet won't emit moveend for a zero-distance pan.
+      const target = getOffsetTarget(map, clicked.lat, clicked.lon);
+      const distPx = map
+        .latLngToContainerPoint(map.getCenter())
+        .distanceTo(map.latLngToContainerPoint(target));
+
+      if (distPx < 2) {
+        map.panTo(target);
+        executeAction();
+      } else {
+        pendingPanRef.current = { map, handler: executeAction };
+        map.once('moveend', executeAction);
+        map.panTo(target);
+      }
     },
     [collapse],
   );
