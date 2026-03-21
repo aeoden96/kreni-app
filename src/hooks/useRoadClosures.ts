@@ -104,21 +104,12 @@ function normalizeClosuresList(raw: unknown): RoadClosure[] {
 }
 
 /** Client cache TTL; matches poll interval and worker `max-age` for closures. */
-export const ROAD_CLOSURES_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+const CACHE_DURATION_MS = 60 * 60 * 1000; // 1 hour
 
 export function useRoadClosures(enabled: boolean) {
     const [closures, setClosures] = useState<RoadClosure[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
-    const [lastFetched, setLastFetched] = useState<number>(() => {
-        try {
-            const cached = localStorage.getItem(CACHE_KEY);
-            if (cached) return (JSON.parse(cached) as CacheData).timestamp;
-        } catch {
-            /* ignore */
-        }
-        return 0;
-    });
 
     // Ref to hold the latest interval ID
     const intervalRef = useRef<number | null>(null);
@@ -141,10 +132,9 @@ export function useRoadClosures(enabled: boolean) {
                 if (cacheStr) {
                     try {
                         const cache: CacheData = JSON.parse(cacheStr);
-                        if (Date.now() - cache.timestamp < ROAD_CLOSURES_CACHE_TTL_MS) {
+                        if (Date.now() - cache.timestamp < CACHE_DURATION_MS) {
                             if (isMounted) {
                                 setClosures(normalizeClosuresList(cache.closures));
-                                setLastFetched(cache.timestamp);
                             }
                             return;
                         }
@@ -166,7 +156,6 @@ export function useRoadClosures(enabled: boolean) {
 
                 if (isMounted) {
                     setClosures(newClosures);
-                    setLastFetched(fetchedAt);
                     setLoading(false);
                     setError(null);
                 }
@@ -189,7 +178,7 @@ export function useRoadClosures(enabled: boolean) {
         fetchData();
 
         // Set up polling interval
-        intervalRef.current = window.setInterval(fetchData, ROAD_CLOSURES_CACHE_TTL_MS);
+        intervalRef.current = window.setInterval(fetchData, CACHE_DURATION_MS);
 
         return () => {
             isMounted = false;
@@ -200,5 +189,5 @@ export function useRoadClosures(enabled: boolean) {
         };
     }, [enabled]);
 
-    return { closures, loading, error, lastFetched };
+    return { closures, loading, error };
 }

@@ -21,8 +21,6 @@ interface SettingsState {
   onboardingStep: number;
 
   showAllVehicles: boolean;
-  /** Show Zagreb open-data road closures layer */
-  showRoadClosures: boolean;
   showBikeStations: boolean;
   showBikeParkings: boolean;
   showBikePaths: boolean;
@@ -67,7 +65,6 @@ interface SettingsState {
   setOnboardingStep: (step: number) => void;
 
   setShowAllVehicles: (show: boolean) => void;
-  setShowRoadClosures: (show: boolean) => void;
   setShowBikeStations: (show: boolean) => void;
   setShowBikeParkings: (show: boolean) => void;
   setShowBikePaths: (show: boolean) => void;
@@ -116,7 +113,6 @@ export const useSettingsStore = create<SettingsState>()(
         onboardingStep: 0,
 
         showAllVehicles: true,
-        showRoadClosures: false,
         showBikeStations: true,
         showBikeParkings: false,
         showBikePaths: false,
@@ -168,7 +164,6 @@ export const useSettingsStore = create<SettingsState>()(
         setOnboardingStep: (step) => set({ onboardingStep: step }),
 
         setShowAllVehicles: (show) => set({ showAllVehicles: show }),
-        setShowRoadClosures: (show) => set({ showRoadClosures: show }),
         setShowBikeStations: (show) => set({ showBikeStations: show }),
         setShowBikeParkings: (show) => set({ showBikeParkings: show }),
         setShowBikePaths: (show) => set({ showBikePaths: show }),
@@ -238,15 +233,17 @@ export const useSettingsStore = create<SettingsState>()(
       // Bump version here whenever a default value changes and you want
       // existing users' stored value to be overridden with the new default.
       // migrate() receives the persisted state and should return the corrected state.
-      version: 2,
+      version: 3,
       migrate: (persisted: unknown, fromVersion: number) => {
-        const state = persisted as Partial<SettingsState>;
+        const state = persisted as Partial<SettingsState> & { showRoadClosures?: boolean };
+        const next: Record<string, unknown> = { ...state };
         if (fromVersion < 2) {
-          // v1 → v2: detailedMap default changed from false to true.
-          // We force it to true for all existing users to ensure they see the better map.
-          return { ...state, detailedMap: true };
+          next.detailedMap = true;
         }
-        return state;
+        if (fromVersion < 3) {
+          delete next.showRoadClosures;
+        }
+        return next as Partial<SettingsState>;
       },
     }
   )

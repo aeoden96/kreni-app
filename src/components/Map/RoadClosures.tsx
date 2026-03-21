@@ -5,24 +5,11 @@ import type { TFunction } from 'i18next';
 import type { RoadClosure } from '../../hooks/useRoadClosures';
 import { useSettingsStore } from '../../stores/settingsStore';
 import i18n from '../../i18n';
+import { formatRoadClosureInstant, roadClosureReasonLabel } from '../../utils/roadClosureDisplay';
 
 interface RoadClosuresProps {
     show: boolean;
     closures: RoadClosure[];
-}
-
-function closureReasonLabel(reason: string, t: (k: string) => string): string {
-    if (reason === 'ROAD_CLOSED_CONSTRUCTION') return t('roadClosures.reasonConstruction');
-    if (reason === 'ROAD_CLOSED') return t('roadClosures.reasonClosed');
-    return reason;
-}
-
-/** ISO 8601 from Zagreb feed (`expectedStartTime` / `expectedEndTime`) → locale date+time, or null if invalid. */
-function formatClosureInstant(iso: string | undefined, locale: string): string | null {
-    if (!iso?.trim()) return null;
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return null;
-    return d.toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
 function RoadClosurePopupBody({
@@ -34,15 +21,15 @@ function RoadClosurePopupBody({
     t: TFunction;
     locale: string;
 }) {
-    const until = formatClosureInstant(closure.endDate, locale);
-    const from = formatClosureInstant(closure.startDate, locale);
+    const until = formatRoadClosureInstant(closure.endDate, locale);
+    const from = formatRoadClosureInstant(closure.startDate, locale);
 
     return (
         <div className="p-1">
             <h3 className="font-bold text-sm mb-1">{closure.streetName}</h3>
             <div className="text-xs space-y-1">
                 <p>
-                    <strong>{t('roadClosures.reasonLabel')}</strong> {closureReasonLabel(closure.reason, t)}
+                    <strong>{t('roadClosures.reasonLabel')}</strong> {roadClosureReasonLabel(closure.reason, t)}
                 </p>
                 <p>
                     <strong>{t('roadClosures.directionLabel')}</strong>{' '}

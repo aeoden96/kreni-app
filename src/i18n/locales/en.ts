@@ -14,7 +14,6 @@ const en = {
       toggles: {
         map: 'Map',
         list: 'List',
-        closures: 'Closures',
         garages: 'Garages',
         ev: 'EV',
         zones: 'Zones',
@@ -273,6 +272,12 @@ const en = {
       },
     },
     roadClosures: {
+      listTitle: 'Road closures',
+      listBadgeTitle: 'Open list of road closures',
+      listBadgeAria: 'Open full list of road closures',
+      listCloseAria: 'Close',
+      listCount_one: '{{count}} closure',
+      listCount_other: '{{count}} closures',
       untilCross: 'To: {{street}}',
       reasonLabel: 'Reason:',
       directionLabel: 'Direction:',
@@ -281,11 +286,6 @@ const en = {
       bothDirections: 'Both directions',
       reasonConstruction: 'Roadworks',
       reasonClosed: 'Closed',
-      refreshBadgeRefreshing: 'Refreshing…',
-      refreshBadgeSeconds: 'Refreshes in {{count}} s',
-      refreshBadgeMinutes: 'Refreshes in {{count}} min',
-      refreshBadgeHours_one: 'Refreshes in {{count}} h',
-      refreshBadgeHours_other: 'Refreshes in {{count}} h',
     },
     realtimePanel: {
       showLegendAria: 'Show legend',

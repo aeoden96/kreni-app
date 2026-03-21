@@ -4,7 +4,6 @@ import { useSettingsStore } from '../stores/settingsStore';
 
 const LAYER_KEYS = {
   congestion: 'showCongestionHeatmap',
-  closures: 'showRoadClosures',
   bike_stations: 'showBikeStations',
   bike_parking: 'showBikeParkings',
   bike_paths: 'showBikePaths',
@@ -22,7 +21,7 @@ type LayerKey = keyof typeof LAYER_KEYS;
 
 const ROUTE_LAYERS: Record<string, LayerKey[]> = {
   '/': ['congestion'],
-  '/driving': ['closures', 'garages', 'ev', 'zones'],
+  '/driving': ['garages', 'ev', 'zones'],
   '/cycling': ['bike_stations', 'bike_parking', 'bike_paths'],
   '/city': ['restaurants', 'fountains', 'pedestrian', 'wifi'],
   '/train': ['train_stations'],

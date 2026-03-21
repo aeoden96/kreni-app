@@ -14,7 +14,6 @@ const de = {
       toggles: {
         map: 'Karte',
         list: 'Liste',
-        closures: 'Sperrungen',
         garages: 'Garagen',
         ev: 'EV',
         zones: 'Zonen',
@@ -273,6 +272,12 @@ const de = {
       },
     },
     roadClosures: {
+      listTitle: 'Straßensperrungen',
+      listBadgeTitle: 'Liste der Straßensperrungen öffnen',
+      listBadgeAria: 'Vollständige Liste der Straßensperrungen öffnen',
+      listCloseAria: 'Schließen',
+      listCount_one: '{{count}} Sperrung',
+      listCount_other: '{{count}} Sperrungen',
       untilCross: 'Bis: {{street}}',
       reasonLabel: 'Grund:',
       directionLabel: 'Richtung:',
@@ -281,11 +286,6 @@ const de = {
       bothDirections: 'Beide Richtungen',
       reasonConstruction: 'Bauarbeiten',
       reasonClosed: 'Gesperrt',
-      refreshBadgeRefreshing: 'Wird aktualisiert…',
-      refreshBadgeSeconds: 'Aktualisierung in {{count}} s',
-      refreshBadgeMinutes: 'Aktualisierung in {{count}} Min.',
-      refreshBadgeHours_one: 'Aktualisierung in {{count}} Std.',
-      refreshBadgeHours_other: 'Aktualisierung in {{count}} Std.',
     },
     realtimePanel: {
       showLegendAria: 'Legende anzeigen',
