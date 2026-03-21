@@ -16,6 +16,10 @@ import { createPortal } from 'react-dom';
 import { useMap } from 'react-leaflet';
 import { Navigation2 } from 'lucide-react';
 import type { Stop } from '../../utils/gtfs';
+import {
+  computeOffScreenIndicator,
+  type OffScreenIndicatorPosition,
+} from '../../utils/offScreenIndicator';
 
 export interface OffScreenIndicatorUIProps {
   x: number;
@@ -73,69 +77,9 @@ interface OffScreenStopIndicatorProps {
   onFlyTo: () => void;
 }
 
-interface Indicator {
-  x: number;
-  y: number;
-  /** CSS rotation angle in degrees — 0 = pointing up, clockwise */
-  angle: number;
-}
-
-function computeIndicator(
-  stop: Stop,
-  north: number,
-  south: number,
-  east: number,
-  west: number,
-  W: number,
-  H: number
-): Indicator | null {
-  const latSpan = north - south;
-  const lonSpan = east - west;
-  if (latSpan === 0 || lonSpan === 0) return null;
-
-  // Project stop lat/lon to screen pixel space using linear mapping
-  const sx = ((stop.lon - west) / lonSpan) * W;
-  const sy = ((north - stop.lat) / latSpan) * H;
-
-  // Stop is inside the viewport — no indicator needed
-  if (sx >= 0 && sx <= W && sy >= 0 && sy <= H) return null;
-
-  const cx = W / 2;
-  const cy = H / 2;
-  const dx = sx - cx;
-  const dy = sy - cy;
-
-  if (dx === 0 && dy === 0) return null;
-
-  // CSS rotate angle: 0 = up (north), clockwise positive
-  const angle = (Math.atan2(dx, -dy) * 180) / Math.PI;
-
-  // Inset rectangle for clamped edge position
-  const margin = 52; // px from screen edge
-  const minX = margin;
-  const maxX = W - margin;
-  const minY = margin;
-  const maxY = H - margin;
-
-  // Find smallest positive t such that (cx + t*dx, cy + t*dy) hits the rect
-  let t = Infinity;
-  if (dx > 0) t = Math.min(t, (maxX - cx) / dx);
-  if (dx < 0) t = Math.min(t, (minX - cx) / dx);
-  if (dy > 0) t = Math.min(t, (maxY - cy) / dy);
-  if (dy < 0) t = Math.min(t, (minY - cy) / dy);
-
-  if (!isFinite(t) || t <= 0) return null;
-
-  return {
-    x: Math.round(cx + t * dx),
-    y: Math.round(cy + t * dy),
-    angle,
-  };
-}
-
 export function OffScreenStopIndicator({ stop, onFlyTo }: OffScreenStopIndicatorProps) {
   const map = useMap();
-  const [indicator, setIndicator] = useState<Indicator | null>(null);
+  const [indicator, setIndicator] = useState<OffScreenIndicatorPosition | null>(null);
 
   const update = useCallback(() => {
     if (!stop) {
@@ -145,15 +89,18 @@ export function OffScreenStopIndicator({ stop, onFlyTo }: OffScreenStopIndicator
     const bounds = map.getBounds();
     const size = map.getSize();
     setIndicator(
-      computeIndicator(
-        stop,
-        bounds.getNorth(),
-        bounds.getSouth(),
-        bounds.getEast(),
-        bounds.getWest(),
+      computeOffScreenIndicator(
+        stop.lat,
+        stop.lon,
+        {
+          north: bounds.getNorth(),
+          south: bounds.getSouth(),
+          east: bounds.getEast(),
+          west: bounds.getWest(),
+        },
         size.x,
-        size.y
-      )
+        size.y,
+      ),
     );
   }, [stop, map]);
 

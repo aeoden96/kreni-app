@@ -7,6 +7,12 @@ import { Marker, Polyline, useMap } from 'react-leaflet';
 import { useSpiderfierContext } from './SpiderfierContext';
 import L from 'leaflet';
 import { fetchStopTimetable, type Stop, type Route } from '../../utils/gtfs';
+import {
+  buildDirectionalStopPinPathData,
+  buildParentLabelGroups,
+  estimateSpiderRouteBadgeRowWidth,
+  SPIDER_TICKER_VISIBLE_PX,
+} from '../../utils/stopMarkersMath';
 import { getDirectionColor } from './directionColors';
 import {
   MARKER_Z_STOP_DEFAULT,
@@ -48,23 +54,7 @@ function makeStopIcon(
   const extraClass = isSelected ? 'stop-selected-pulse' : '';
 
   if (bearing !== undefined) {
-    // Unified pin: tip at top, circular cap below. Cone sides must be tangent to the arc
-    // (same center as the non-directional marker: (cx, cx)) — using a raw `r` here left the
-    // join visibly “shouldered” because r ≠ cx·cos(halfAngle).
-    const tipY = 0;
-    // Angle from vertical to the tangent radius at the circle; larger ⇒ sharper tip (180°−2θ)
-    // and smaller arc (cx·cos θ), so the pin reads less blunt / “fat”.
-    const halfAngleRad = (48 * Math.PI) / 180;
-    const circleCy = cx;
-    const arcR = circleCy * Math.cos(halfAngleRad);
-    const xOff = arcR * Math.sin(halfAngleRad);
-    const yOff = arcR * Math.cos(halfAngleRad);
-    const x1 = cx - xOff;
-    const y1 = circleCy - yOff;
-    const x2 = cx + xOff;
-    const y2 = circleCy - yOff;
-
-    const pathData = `M ${cx},${tipY} L ${x1},${y1} A ${arcR},${arcR} 0 1 0 ${x2},${y2} Z`;
+    const pathData = buildDirectionalStopPinPathData(cx);
 
     const html =
       `<div data-testid="stop-marker" class="${extraClass}" style="position:relative;width:${size}px;height:${size}px;opacity:${opacityFactor};">` +
@@ -148,20 +138,9 @@ function PlatformStopMarker({
           return `<span class="spider-route-badge ${typeClass}">${r.shortName}</span>`;
         }).join('');
 
-        // Estimate total badge row width to decide whether to animate or not.
-        // Badge: font-size 10px bold ≈ 6.5px/char, 10px h-padding, min-width 18px, gap 3px.
-        // Visible ticker area ≈ 110px (130px container minus mask fade zones).
-        const CHAR_PX = 6.5;
-        const H_PAD = 10;
-        const MIN_W = 18;
-        const GAP = 3;
-        const TICKER_VISIBLE_PX = 110;
-        const estimatedWidth = routes.reduce(
-          (sum, r, i) => sum + Math.max(MIN_W, r.shortName.length * CHAR_PX + H_PAD) + (i > 0 ? GAP : 0),
-          0,
-        );
+        const estimatedWidth = estimateSpiderRouteBadgeRowWidth(routes.map((r) => r.shortName));
 
-        const badgeContent = estimatedWidth <= TICKER_VISIBLE_PX
+        const badgeContent = estimatedWidth <= SPIDER_TICKER_VISIBLE_PX
           // Fits — plain static row, no animation, no mask, no duplication
           ? `<div class="spider-route-badges">${renderedBadges}</div>`
           // Overflows — scrolling ticker with seamless doubled content
@@ -245,71 +224,13 @@ export function StopMarkers({
   const parentMap = new Map<string, Stop>();
   if (parentStations) parentStations.forEach((p) => parentMap.set(p.id, p));
 
-  // When showing labels at parent locations, compute grouped parent labels by name.
-  // If multiple parent stations share the same name and are within a small distance,
-  // show a single label at the centroid and connect it to all child platform stops.
-  type ParentLabelGroup = { label: string; lat: number; lon: number; children: Stop[] };
-  const parentLabelGroups: ParentLabelGroup[] = [];
-  if (showLabels && parentStations) {
-    const platformStops = stops.filter((s) => s.locationType === 0);
-    const childrenByParent = new Map<string, Stop[]>();
-    platformStops.forEach((st) => {
-      if (st.parentStation) {
-        const arr = childrenByParent.get(st.parentStation) || [];
-        arr.push(st);
-        childrenByParent.set(st.parentStation, arr);
-      }
-    });
-
-    // Group parents by normalized name
-    const nameGroups = new Map<string, { parents: Stop[]; children: Stop[] }>();
-    childrenByParent.forEach((children, pid) => {
-      const parent = parentMap.get(pid);
-      if (!parent || children.length === 0) return;
-      const key = parent.name.trim().toLowerCase();
-      const entry = nameGroups.get(key) || { parents: [], children: [] };
-      entry.parents.push(parent);
-      entry.children.push(...children);
-      nameGroups.set(key, entry);
-    });
-
-    // Haversine distance helper (meters)
-    const haversine = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-      const toRad = (deg: number) => deg * Math.PI / 180;
-      const R = 6371000; // meters
-      const dLat = toRad(lat2 - lat1);
-      const dLon = toRad(lon2 - lon1);
-      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
-    };
-
-    const MERGE_THRESHOLD_METERS = 60; // parents within this distance will share a label
-    nameGroups.forEach((entry, _key) => {
-      if (entry.parents.length === 1) {
-        const p = entry.parents[0];
-        parentLabelGroups.push({ label: p.name, lat: p.lat, lon: p.lon, children: entry.children });
-        return;
-      }
-
-      // compute centroid of parent positions
-      const sum = entry.parents.reduce((acc, p) => ({ lat: acc.lat + p.lat, lon: acc.lon + p.lon }), { lat: 0, lon: 0 });
-      const centroidLat = sum.lat / entry.parents.length;
-      const centroidLon = sum.lon / entry.parents.length;
-
-      // check spatial spread — if parents are far apart, don't merge; render separate labels instead
-      const maxDist = Math.max(...entry.parents.map((p) => haversine(p.lat, p.lon, centroidLat, centroidLon)));
-      if (maxDist <= MERGE_THRESHOLD_METERS) {
-        parentLabelGroups.push({ label: entry.parents[0].name, lat: centroidLat, lon: centroidLon, children: entry.children });
-      } else {
-        // keep separate labels for each parent
-        entry.parents.forEach((p) => {
-          const pChildren = entry.children.filter((c) => c.parentStation === p.id);
-          if (pChildren.length > 0) parentLabelGroups.push({ label: p.name, lat: p.lat, lon: p.lon, children: pChildren });
-        });
-      }
-    });
-  }
+  const parentLabelGroups =
+    showLabels && parentStations
+      ? buildParentLabelGroups(
+          stops.filter((s) => s.locationType === 0),
+          parentMap,
+        )
+      : [];
   return (
     <>
       {stops.map((s) => {
