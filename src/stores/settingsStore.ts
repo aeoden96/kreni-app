@@ -20,7 +20,6 @@ interface SettingsState {
   onboardingCompleted: Record<string, boolean>;
   onboardingStep: number;
 
-  showAllVehicles: boolean;
   showBikeStations: boolean;
   showBikeParkings: boolean;
   showBikePaths: boolean;
@@ -64,7 +63,6 @@ interface SettingsState {
   setOnboardingCompleted: (mode: string, completed: boolean) => void;
   setOnboardingStep: (step: number) => void;
 
-  setShowAllVehicles: (show: boolean) => void;
   setShowBikeStations: (show: boolean) => void;
   setShowBikeParkings: (show: boolean) => void;
   setShowBikePaths: (show: boolean) => void;
@@ -112,7 +110,6 @@ export const useSettingsStore = create<SettingsState>()(
         onboardingCompleted: {},
         onboardingStep: 0,
 
-        showAllVehicles: true,
         showBikeStations: true,
         showBikeParkings: false,
         showBikePaths: false,
@@ -163,7 +160,6 @@ export const useSettingsStore = create<SettingsState>()(
           })),
         setOnboardingStep: (step) => set({ onboardingStep: step }),
 
-        setShowAllVehicles: (show) => set({ showAllVehicles: show }),
         setShowBikeStations: (show) => set({ showBikeStations: show }),
         setShowBikeParkings: (show) => set({ showBikeParkings: show }),
         setShowBikePaths: (show) => set({ showBikePaths: show }),

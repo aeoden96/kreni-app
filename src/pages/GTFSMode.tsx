@@ -70,13 +70,9 @@ export function GTFSMode({ config }: GTFSModeProps) {
     clearStop,
   } = useSelectionParams();
 
-  // Settings — realtime-only settings are ignored in train mode
-  const showAllVehiclesFromStore = useSettingsStore((s) => s.showAllVehicles);
   const mapZoom = useSettingsStore((s) => s.mapZoom);
   const { addRecentRoute, addRecentStop } = useSettingsStore();
 
-  // In train mode there is no "hide all vehicles" toggle — stops are always visible.
-  const showAllVehicles = config.hasRealtime ? showAllVehiclesFromStore : true;
   const showCongestionHeatmap = false; // useSettingsStore((s) => s.showCongestionHeatmap);
 
   // Load initial data from the mode's data directory
@@ -140,7 +136,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
     stats: realtimeStats,
     loading: realtimeLoading,
     nextPollAtMs,
-  } = useRealtimeData(config.hasRealtime && showAllVehicles);
+  } = useRealtimeData(config.hasRealtime);
   const gtfsRtAlerts = useRealtimeStore((s) => s.serviceAlerts);
   const lastUpdate = useRealtimeStore((s) => s.lastUpdate);
   const workerTimestamp = useRealtimeStore((s) => s.workerTimestamp);
@@ -179,7 +175,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
   // All-vehicles overlay (transit only)
   const { vehicles: allVehicles } =
     useAllVehiclePositions(
-      config.hasRealtime && showAllVehicles,
+      config.hasRealtime,
       serviceId,
       routesById,
     );
@@ -311,10 +307,9 @@ export function GTFSMode({ config }: GTFSModeProps) {
           routeShortName={selectedRoute?.shortName}
           onStopClick={handleStopClickFromMap}
           onVehicleClick={(routeId, routeType, tripId) => handleSelectRoute(routeId, routeType, undefined, tripId)}
-          showAllVehicles={showAllVehicles}
           allVehicles={
-            showAllVehicles && selectedRouteId
-              ? allVehicles.filter((v) => v.routeId === selectedRouteId)
+            selectedRouteId
+              ? allVehicles.filter((v) => v.routeId !== selectedRouteId)
               : allVehicles
           }
           routesById={routesById}
@@ -357,7 +352,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
         )}
 
         {/* Realtime status badges (transit only) */}
-        {config.hasRealtime && showAllVehicles && realtimeStats && (
+        {config.hasRealtime && realtimeStats && (
           <RealtimeStatusPanel
             ref={realtimePanelRef}
             alerts={serviceAlerts}
@@ -378,7 +373,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
         )}
 
         {/* Low-zoom hint when vehicles and stops are hidden (transit only) */}
-        {config.hasRealtime && showAllVehicles && mapZoom <= 14 && (
+        {config.hasRealtime && mapZoom <= 14 && (
           <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[1000]">
             <div className="badge badge-neutral gap-2 shadow text-xs sm:text-sm opacity-90">
               <span className="w-2 h-2 rounded-full bg-base-content/60" />
@@ -473,44 +468,42 @@ export function GTFSMode({ config }: GTFSModeProps) {
         )}
 
         {/* Floating search bar */}
-        {showAllVehicles && (
-          <div className="absolute top-2 left-2 right-32 sm:left-4 sm:right-auto sm:top-4 z-[1000]">
-            <div className="w-full sm:w-80 flex items-center gap-2 bg-base-100 rounded-xl px-4 py-3 shadow-lg">
-              <button
-                onClick={() => { trackEvent('search_opened'); setSearchModalOpen(true); }}
-                className="flex-1 flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
-              >
-                <Search className="w-5 h-5 text-base-content/50 shrink-0" />
-                {selectedRoute && routeModalOpen ? (
-                  <span className="text-sm flex-1">
-                    <span
-                      className="badge font-bold mr-2 text-white"
-                      style={{ backgroundColor: selectedRoute.type === 0 ? '#2563eb' : '#d97706' }}
-                    >
-                      {selectedRoute.shortName}
-                    </span>
-                    <span className="text-base-content/70">{selectedRoute.longName}</span>
+        <div className="absolute top-2 left-2 right-32 sm:left-4 sm:right-auto sm:top-4 z-[1000]">
+          <div className="w-full sm:w-80 flex items-center gap-2 bg-base-100 rounded-xl px-4 py-3 shadow-lg">
+            <button
+              onClick={() => { trackEvent('search_opened'); setSearchModalOpen(true); }}
+              className="flex-1 flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
+            >
+              <Search className="w-5 h-5 text-base-content/50 shrink-0" />
+              {selectedRoute && routeModalOpen ? (
+                <span className="text-sm flex-1">
+                  <span
+                    className="badge font-bold mr-2 text-white"
+                    style={{ backgroundColor: selectedRoute.type === 0 ? '#2563eb' : '#d97706' }}
+                  >
+                    {selectedRoute.shortName}
                   </span>
-                ) : (
-                  <span className="text-base-content/50 text-sm flex-1">
-                    {config.id === 'train'
-                      ? t('search.barPlaceholderTrains')
-                      : t('search.barPlaceholderLines')}
-                  </span>
-                )}
-              </button>
-              {selectedRoute && routeModalOpen && (
-                <button
-                  onClick={handleClearRoute}
-                  className="btn btn-ghost btn-circle btn-xs min-h-[32px] min-w-[32px]"
-                  aria-label={t('search.clearSelectionAria')}
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                  <span className="text-base-content/70">{selectedRoute.longName}</span>
+                </span>
+              ) : (
+                <span className="text-base-content/50 text-sm flex-1">
+                  {config.id === 'train'
+                    ? t('search.barPlaceholderTrains')
+                    : t('search.barPlaceholderLines')}
+                </span>
               )}
-            </div>
+            </button>
+            {selectedRoute && routeModalOpen && (
+              <button
+                onClick={handleClearRoute}
+                className="btn btn-ghost btn-circle btn-xs min-h-[32px] min-w-[32px]"
+                aria-label={t('search.clearSelectionAria')}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
-        )}
+        </div>
 
         {/* Locate error toast */}
         {locateError && (

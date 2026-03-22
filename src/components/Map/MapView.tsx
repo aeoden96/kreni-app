@@ -36,7 +36,6 @@ interface MapViewProps {
   onVehicleClick?: (routeId: string, routeType: number, tripId: string) => void;
   /** Called when a vehicle in the selected-route view is clicked (selects the trip for follow mode) */
   onVehicleSelect?: (tripId: string) => void;
-  showAllVehicles?: boolean;
   allVehicles?: AllVehiclePosition[];
   routesById: Map<string, Route>;
   serviceId: string | null;
@@ -74,7 +73,6 @@ export function MapView({
   onStopClick,
   onVehicleClick,
   onVehicleSelect,
-  showAllVehicles = false,
   allVehicles = [],
   routesById,
   userLocation,
@@ -113,23 +111,19 @@ export function MapView({
           <OffScreenStopIndicator stop={selectedStop} onFlyTo={onFlyToStop} />
         )}
 
-        {showAllVehicles && (
-          <ZoomBasedStops
-            parentStations={parentStations}
-            platformStops={platformStops}
-            parentChildCounts={parentChildCounts}
-            selectedStopId={selectedStopId}
-            highlightStopIds={highlightStopIds ?? (selectedRouteId ? routeStops : [])}
-            orderedStops={orderedStops}
-            routesById={routesById}
-            onStopClick={onStopClick}
-          />
-        )}
+        <ZoomBasedStops
+          parentStations={parentStations}
+          platformStops={platformStops}
+          parentChildCounts={parentChildCounts}
+          selectedStopId={selectedStopId}
+          highlightStopIds={highlightStopIds ?? (selectedRouteId ? routeStops : [])}
+          orderedStops={orderedStops}
+          routesById={routesById}
+          onStopClick={onStopClick}
+        />
 
 
-        {showAllVehicles && (
-          <AllVehicleMarkers vehicles={allVehicles} onVehicleClick={onVehicleClick} />
-        )}
+        <AllVehicleMarkers vehicles={allVehicles} onVehicleClick={onVehicleClick} />
 
         <CongestionHeatmap points={congestionPoints} show={showCongestionHeatmap} />
 
