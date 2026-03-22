@@ -142,7 +142,11 @@ export function SpiderMenu() {
 
                     {/* Menu content */}
                     {isOpen && (
-                        <div className="flex flex-col items-end gap-3 pointer-events-auto w-fit">
+                        <div
+                            onClick={(e) => {
+                                closeMenu();
+                            }}
+                            className="flex flex-col items-end gap-3 pointer-events-auto w-fit">
                             <SpiderRouteList />
 
                             <div

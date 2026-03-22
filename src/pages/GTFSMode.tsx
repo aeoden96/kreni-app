@@ -375,7 +375,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
         {/* Low-zoom hint when vehicles and stops are hidden (transit only) */}
         {config.hasRealtime && mapZoom <= 14 && (
           <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[1000]">
-            <div className="badge badge-neutral gap-2 shadow text-xs sm:text-sm opacity-90">
+            <div className="badge badge-neutral gap-2 shadow text-xs sm:text-sm opacity-90 whitespace-nowrap">
               <span className="w-2 h-2 rounded-full bg-base-content/60" />
               {t('gtfs.zoomForStopsAndVehicles')}
             </div>
