@@ -1,0 +1,120 @@
+/**
+ * Component that renders different stops based on zoom level
+ */
+
+import { useState, useEffect, useMemo } from 'react';
+import { useMap } from 'react-leaflet';
+import { StopMarkers } from './StopMarkers';
+import type { Stop, Route } from '../../utils/gtfs';
+import { useMapBounds } from '../../hooks/useMapBounds';
+import { useGTFSMode } from '../../contexts/GTFSModeContext';
+
+interface ZoomBasedStopsProps {
+  parentStations: Stop[];
+
+  platformStops: Stop[];
+  parentChildCounts: Map<string, number>;
+  selectedStopId: string | null;
+  highlightStopIds: string[];
+  onStopClick: (stopId: string) => void;
+
+  /** Optional ordered stops mapping from useRouteData (direction -> stop ids) */
+  orderedStops?: Record<string, string[]>;
+  routesById: Map<string, Route>;
+}
+
+export function ZoomBasedStops({
+  parentStations,
+
+  platformStops,
+  parentChildCounts,
+  selectedStopId,
+  highlightStopIds,
+  onStopClick,
+  orderedStops,
+  routesById,
+}: ZoomBasedStopsProps) {
+  const map = useMap();
+  const { alwaysShowStops } = useGTFSMode();
+  const [zoom, setZoom] = useState(map.getZoom());
+  const bounds = useMapBounds();
+
+  useEffect(() => {
+    const handleZoomEnd = () => {
+      setZoom(map.getZoom());
+    };
+
+    map.on('zoomend', handleZoomEnd);
+
+    return () => {
+      map.off('zoomend', handleZoomEnd);
+    };
+  }, [map]);
+
+  // Pre-compute sets for route-based filtering (must be before any early return)
+  const highlightSet = useMemo(() => new Set(highlightStopIds), [highlightStopIds]);
+
+  // Show labels when the map is at (or above) its max zoom.
+  const showLabels = Math.round(zoom) >= map.getMaxZoom();
+
+  // Build a mapping stopId -> direction index (0,1,...) if orderedStops provided
+  const stopDirectionMap = useMemo<Record<string, number>>(() => {
+    const map: Record<string, number> = {};
+    if (!orderedStops) return map;
+    Object.entries(orderedStops).forEach(([dirKey, ids]) => {
+      const idx = Number.parseInt(dirKey, 10) || 0;
+      ids.forEach((sid) => { map[sid] = idx; });
+    });
+    return map;
+  }, [orderedStops]);
+
+  // When a route is selected (highlightStopIds is populated) derive the parent
+  // station IDs that belong to that route so grouped-mode can filter correctly.
+  const routeParentIds = useMemo<Set<string> | null>(() => {
+    if (highlightSet.size === 0) return null;
+    const parents = new Set<string>();
+    platformStops.forEach((s) => {
+      if (highlightSet.has(s.id) && s.parentStation) parents.add(s.parentStation);
+    });
+    return parents;
+  }, [highlightSet, platformStops]);
+
+  // Always show platform stops; opacity scales with zoom.
+  // zoom >= 17  → factor 1.0 (fully visible)
+  // 14 < zoom < 17 → linearly 0 → 1
+  // zoom <= 14  → factor 0 (invisible)
+  // In train mode (alwaysShowStops) stops are always fully visible.
+  const FADE_MIN = 14;
+  const FADE_MAX = 17;
+  const opacityFactor = alwaysShowStops
+    ? 1
+    : zoom >= FADE_MAX
+      ? 1
+      : zoom <= FADE_MIN
+        ? 0
+        : (zoom - FADE_MIN) / (FADE_MAX - FADE_MIN);
+
+  let visiblePlatforms = platformStops.filter((s) => bounds.contains([s.lat, s.lon]));
+  // When a route is selected, only show stops on that route (always keep the selected stop).
+  if (routeParentIds) {
+    visiblePlatforms = visiblePlatforms.filter(
+      (s) => highlightSet.has(s.id) || s.id === selectedStopId
+    );
+  }
+
+  return (
+    <StopMarkers
+      stops={visiblePlatforms}
+      isParentStationView={false}
+      parentChildCounts={parentChildCounts}
+      parentStations={parentStations}
+      selectedStopId={selectedStopId}
+      highlightStopIds={highlightStopIds}
+      stopDirectionMap={stopDirectionMap}
+      onStopClick={onStopClick}
+      opacityFactor={opacityFactor}
+      showLabels={showLabels}
+      routesById={routesById}
+    />
+  );
+}

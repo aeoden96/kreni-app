@@ -1,0 +1,112 @@
+name: Deploy to Cloudflare Pages
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      force_gtfs:
+        description: 'Force re-download and re-process GTFS data (ignore cache)'
+        type: boolean
+        default: false
+        required: false
+      skip_ci:
+        description: 'Skip CI tests'
+        type: boolean
+        default: false
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    if: ${{ !inputs.skip_ci }}
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    needs:
+      - ci
+    if: ${{ always() && (needs.ci.result == 'success' || needs.ci.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Download GTFS data
+        run: curl -L https://www.zet.hr/gtfs-scheduled/latest -o gtfs.zip
+
+      - name: Compute GTFS hash
+        id: gtfs-hash
+        run: echo "hash=$(sha256sum gtfs.zip | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+
+      - name: Restore processed GTFS cache
+        id: gtfs-cache
+        if: ${{ !inputs.force_gtfs }}
+        uses: actions/cache@v5
+        with:
+          path: public/data
+          key: gtfs-processed-${{ steps.gtfs-hash.outputs.hash }}
+
+      - name: Extract GTFS data
+        if: steps.gtfs-cache.outputs.cache-hit != 'true'
+        run: unzip -o gtfs.zip -d data/
+
+      - name: Process GTFS data
+        if: steps.gtfs-cache.outputs.cache-hit != 'true'
+        run: bash scripts/run.sh
+
+      - name: Download HZPP train GTFS data
+        run: curl -L https://www.hzpp.hr/GTFS_files.zip -o gtfs-train.zip
+
+      - name: Compute train GTFS hash
+        id: gtfs-train-hash
+        run: echo "hash=$(sha256sum gtfs-train.zip | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+
+      - name: Restore processed train GTFS cache
+        id: gtfs-train-cache
+        if: ${{ !inputs.force_gtfs }}
+        uses: actions/cache@v5
+        with:
+          path: public/data-train
+          key: gtfs-train-processed-${{ steps.gtfs-train-hash.outputs.hash }}
+
+      - name: Extract train GTFS data
+        if: steps.gtfs-train-cache.outputs.cache-hit != 'true'
+        run: unzip -o gtfs-train.zip -d data-train/
+
+      - name: Process train GTFS data
+        if: steps.gtfs-train-cache.outputs.cache-hit != 'true'
+        run: bash scripts/run_train.sh
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build
+        env:
+          VITE_GTFS_PROXY_URL: ${{ secrets.VITE_GTFS_PROXY_URL }}
+          VITE_GTFS_API_KEY: ${{ secrets.VITE_GTFS_API_KEY }}
+          VITE_TALLY_FEEDBACK_FORM_ID: ${{ secrets.VITE_TALLY_FEEDBACK_FORM_ID }}
+        run: yarn build
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=zet-live --commit-dirty=true

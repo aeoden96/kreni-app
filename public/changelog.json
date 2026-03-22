@@ -1,0 +1,11 @@
+[
+  {
+    "version": "2.0.0",
+    "changes": [
+      "Open Source: Initial public release of the project",
+      "Release Automation: Integrated Release Please for automated versioning and GitHub Releases",
+      "Changelog UI: Built a native changelog viewer within the application updates modal"
+    ],
+    "force": false
+  }
+]

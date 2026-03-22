@@ -1,0 +1,33 @@
+# Playwright E2E testing — everything runs inside Docker.
+# Both the Vite dev server and Playwright tests run in the same container,
+# communicating via localhost. No host↔container networking needed.
+#
+# Usage:
+#   yarn test:e2e          # run all E2E tests inside Docker
+#   yarn pw:server         # start standalone browser server for MCP / interactive use
+#   yarn pw:server:down    # stop the MCP server
+services:
+  # ── Test runner ──────────────────────────────────────────────────────────────
+  # Mounts the project, starts Vite internally (via playwright.config.ts webServer),
+  # and runs tests — all on localhost. No special networking required.
+  playwright-runner:
+    image: mcr.microsoft.com/playwright:v1.58.2-noble
+    working_dir: /app
+    volumes:
+      - .:/app
+    # node_modules are already installed on the host (WSL2 = Linux, same ABI).
+    # playwright runs the webServer (Vite) automatically before starting tests.
+    command: node ./node_modules/.bin/playwright test
+    ipc: host    # required for Chromium shared memory
+    init: true   # avoid zombie PID 1 issues
+
+  # ── MCP / interactive browser server ─────────────────────────────────────────
+  # Used by the VS Code Playwright MCP (.vscode/mcp.json) and for headed debugging.
+  # PW_TEST_CONNECT_WS_ENDPOINT=ws://127.0.0.1:3000/
+  playwright-server:
+    image: mcr.microsoft.com/playwright:v1.58.2-noble
+    command: npx -y playwright@1.58.2 run-server --port 3000 --host 0.0.0.0
+    ports:
+      - "3000:3000"
+    ipc: host
+    init: true
