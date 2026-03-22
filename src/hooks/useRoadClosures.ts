@@ -151,6 +151,12 @@ export function useRoadClosures(enabled: boolean) {
                 }
 
                 const data = await response.json();
+                
+                if (!data || !Array.isArray(data.closures)) {
+                    console.error('Invalid road closures data format:', data);
+                    throw new Error('Invalid road closures data format');
+                }
+
                 const newClosures = normalizeClosuresList(data.closures);
                 const fetchedAt = Date.now();
 
@@ -167,6 +173,7 @@ export function useRoadClosures(enabled: boolean) {
                 }));
 
             } catch (err) {
+                console.error('Error fetching road closures:', err);
                 if (isMounted) {
                     setError(err instanceof Error ? err : new Error('Unknown error fetching road closures'));
                     setLoading(false);
