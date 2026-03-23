@@ -1,10 +1,11 @@
+import { Globe, Layers, Map, Moon, Sun, X } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Globe, Sun, Moon, Layers, X, Map } from 'lucide-react';
+
 import { useSettingsStore } from '../../stores/settingsStore';
 
 export function GlobalWelcomeWizard() {
-  const { t, i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const globalOnboardingCompleted = useSettingsStore((s) => s.globalOnboardingCompleted);
   const setGlobalOnboardingCompleted = useSettingsStore((s) => s.setGlobalOnboardingCompleted);
   const theme = useSettingsStore((s) => s.theme);
@@ -38,7 +39,7 @@ export function GlobalWelcomeWizard() {
     <div className="modal modal-open z-[9999] backdrop-blur-sm">
       <div className="modal-box max-w-md p-0 overflow-y-auto overflow-x-hidden max-h-[90svh] relative flex flex-col">
         <div className="w-full h-32 sm:h-48 bg-base-200 relative flex items-center justify-center overflow-hidden shrink-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-base-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-base-300" />
           {step === 0 && <Globe className="w-24 h-24 text-primary relative z-10" />}
           {step === 1 && <Sun className="w-24 h-24 text-primary relative z-10" />}
           {step === 2 && <Layers className="w-24 h-24 text-primary relative z-10" />}
@@ -46,8 +47,8 @@ export function GlobalWelcomeWizard() {
 
         {step > 0 && (
           <button
-            onClick={handleClose}
             className="btn btn-sm btn-circle absolute left-2 top-2 bg-base-100/80 hover:bg-base-200 border-none shadow-sm"
+            onClick={handleClose}
           >
             <X className="w-4 h-4" />
           </button>
@@ -116,39 +117,40 @@ export function GlobalWelcomeWizard() {
 
           {step === 2 && (
             <div className="w-full flex justify-center mb-6 max-h-48 sm:max-h-64 overflow-hidden rounded-xl bg-base-300">
-               <video
-                 src={import.meta.env.BASE_URL + 'onboarding/switch_views.webm'}
-                 muted
-                 autoPlay
-                 loop
-                 playsInline
-                 className="w-full h-full object-contain"
-               />
+              <video
+                autoPlay
+                className="w-full h-full object-contain"
+                loop
+                muted
+                playsInline
+                src={import.meta.env.BASE_URL + 'onboarding/switch_views.webm'}
+              />
             </div>
           )}
 
           <div className="flex items-center gap-2 justify-center mb-6">
             {[0, 1, 2].map((i) => (
               <div
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  i === step ? 'w-8 bg-primary' : 'w-2 bg-base-300'
+                }`}
                 key={i}
-                className={`h-1.5 rounded-full transition-all duration-300 ${i === step ? 'w-8 bg-primary' : 'w-2 bg-base-300'
-                  }`}
               />
             ))}
           </div>
 
           <div className="flex justify-between gap-3">
             {step === 0 ? (
-               <button onClick={handleClose} className="btn btn-outline flex-1">
-                 {t('common.close')}
-               </button>
+              <button className="btn btn-outline flex-1" onClick={handleClose}>
+                {t('common.close')}
+              </button>
             ) : (
-              <button onClick={back} className="btn btn-outline flex-1">
+              <button className="btn btn-outline flex-1" onClick={back}>
                 {t('common.back')}
               </button>
             )}
-            
-            <button onClick={next} className="btn btn-primary flex-1">
+
+            <button className="btn btn-primary flex-1" onClick={next}>
               {step < 2 ? t('common.next') : t('common.done')}
             </button>
           </div>

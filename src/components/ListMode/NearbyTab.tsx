@@ -2,99 +2,29 @@
  * Nearby tab — geolocation-based nearest stops with live approaching vehicles.
  */
 
-import { useState, useEffect, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
+
 import { LocateFixed, MapPin, Navigation } from 'lucide-react';
-import type { Stop, Route } from '../../utils/gtfs';
-import { findNearestStops } from '../../utils/gtfs';
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import type { Route, Stop } from '../../utils/gtfs';
+
 import { useApproachingVehicles } from '../../hooks/useApproachingVehicles';
+import { findNearestStops } from '../../utils/gtfs';
 
 interface NearbyTabProps {
+  onSelectStop: (stopId: string) => void;
+  routesById: Map<string, Route>;
   stops: Stop[];
   stopsById: Map<string, Stop>;
-  routesById: Map<string, Route>;
-  onSelectStop: (stopId: string) => void;
 }
 
-function formatDistanceKm(km: number, t: TFunction): string {
-  if (km < 1) return t('nearbyStops.distanceMeters', { meters: Math.round(km * 1000) });
-  return t('nearbyStops.distanceKm', { km: km.toFixed(1) });
-}
-
-/** Mini card for a nearby stop with live vehicle badges */
-function NearbyStopCard({
-  stop,
-  distanceKm,
-  stopsById,
-  routesById,
-  onSelect,
-}: {
-  stop: Stop;
-  distanceKm: number;
-  stopsById: Map<string, Stop>;
-  routesById: Map<string, Route>;
-  onSelect: () => void;
-}) {
+export function NearbyTab({ onSelectStop, routesById, stops, stopsById }: NearbyTabProps) {
   const { t } = useTranslation();
-  const [nowMs, setNowMs] = useState(() => Date.now());
-  useEffect(() => {
-    const interval = setInterval(() => setNowMs(Date.now()), 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const { vehicles, loading } = useApproachingVehicles(stop.id, stopsById, routesById, nowMs);
-  const upcoming = vehicles.filter((v) => v.confidence === 'realtime' && !v.passedStop).slice(0, 3);
-
-  return (
-    <button
-      onClick={onSelect}
-      className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow w-full text-left"
-    >
-      <div className="card-body p-3 gap-1">
-        <div className="flex items-center gap-2">
-          <MapPin className="w-4 h-4 text-primary shrink-0" />
-          <span className="font-semibold text-sm flex-1 truncate">{stop.name}</span>
-          <span className="text-xs text-base-content/50 flex items-center gap-1 shrink-0">
-            <Navigation className="w-3 h-3" />
-            {formatDistanceKm(distanceKm, t)}
-          </span>
-        </div>
-        {loading ? (
-          <div className="flex items-center gap-2 mt-1">
-            <span className="loading loading-dots loading-xs" />
-          </div>
-        ) : upcoming.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5 mt-1">
-            {upcoming.map((v) => {
-              const mins = Math.max(0, Math.round(v.arrivingInSeconds / 60));
-              return (
-                <span
-                  key={v.tripId}
-                  className="badge badge-sm gap-1 text-white"
-                  style={{ backgroundColor: v.routeType === 0 ? '#2563eb' : '#d97706' }}
-                >
-                  {v.routeShortName}
-                  <span className="opacity-80">
-                    {mins === 0 ? t('nearbyTab.arrivingNow') : t('nearbyTab.minutes', { count: mins })}
-                  </span>
-                </span>
-              );
-            })}
-          </div>
-        ) : (
-          <span className="text-xs text-base-content/40 mt-1">{t('nearbyTab.noVehiclesNearby')}</span>
-        )}
-      </div>
-    </button>
-  );
-}
-
-export function NearbyTab({ stops, stopsById, routesById, onSelectStop }: NearbyTabProps) {
-  const { t } = useTranslation();
-  const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [userLocation, setUserLocation] = useState<null | { lat: number; lon: number }>(null);
   const [locating, setLocating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<null | string>(null);
 
   const platformStops = useMemo(() => stops.filter((s) => s.locationType === 0), [stops]);
 
@@ -120,7 +50,7 @@ export function NearbyTab({ stops, stopsById, routesById, onSelectStop }: Nearby
         setLocating(false);
         setTimeout(() => setError(null), 4000);
       },
-      { timeout: 8000, maximumAge: 30000 }
+      { maximumAge: 30000, timeout: 8000 }
     );
   };
 
@@ -136,7 +66,7 @@ export function NearbyTab({ stops, stopsById, routesById, onSelectStop }: Nearby
         <LocateFixed className="w-12 h-12 text-base-content/20 mb-4" />
         <p className="text-lg font-semibold text-base-content/60">{t('nearbyTab.emptyTitle')}</p>
         <p className="text-sm text-base-content/40 mt-1 mb-4">{t('nearbyTab.emptyHint')}</p>
-        <button onClick={handleLocate} className="btn btn-primary btn-sm gap-2">
+        <button className="btn btn-primary btn-sm gap-2" onClick={handleLocate}>
           <LocateFixed className="w-4 h-4" />
           {t('nearbyTab.findMyLocation')}
         </button>
@@ -151,11 +81,7 @@ export function NearbyTab({ stops, stopsById, routesById, onSelectStop }: Nearby
         <h3 className="text-xs font-semibold uppercase text-base-content/50 px-1">
           {t('nearbyTab.sectionTitle')}
         </h3>
-        <button
-          onClick={handleLocate}
-          disabled={locating}
-          className="btn btn-ghost btn-xs gap-1"
-        >
+        <button className="btn btn-ghost btn-xs gap-1" disabled={locating} onClick={handleLocate}>
           {locating ? (
             <span className="loading loading-spinner loading-xs" />
           ) : (
@@ -180,15 +106,92 @@ export function NearbyTab({ stops, stopsById, routesById, onSelectStop }: Nearby
       <div className="space-y-2">
         {nearbyStops.map((ns) => (
           <NearbyStopCard
-            key={ns.id}
-            stop={ns}
             distanceKm={ns.distance}
-            stopsById={stopsById}
-            routesById={routesById}
+            key={ns.id}
             onSelect={() => onSelectStop(ns.id)}
+            routesById={routesById}
+            stop={ns}
+            stopsById={stopsById}
           />
         ))}
       </div>
     </div>
+  );
+}
+
+function formatDistanceKm(km: number, t: TFunction): string {
+  if (km < 1) return t('nearbyStops.distanceMeters', { meters: Math.round(km * 1000) });
+  return t('nearbyStops.distanceKm', { km: km.toFixed(1) });
+}
+
+/** Mini card for a nearby stop with live vehicle badges */
+function NearbyStopCard({
+  distanceKm,
+  onSelect,
+  routesById,
+  stop,
+  stopsById,
+}: {
+  distanceKm: number;
+  onSelect: () => void;
+  routesById: Map<string, Route>;
+  stop: Stop;
+  stopsById: Map<string, Stop>;
+}) {
+  const { t } = useTranslation();
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => setNowMs(Date.now()), 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const { loading, vehicles } = useApproachingVehicles(stop.id, stopsById, routesById, nowMs);
+  const upcoming = vehicles.filter((v) => v.confidence === 'realtime' && !v.passedStop).slice(0, 3);
+
+  return (
+    <button
+      className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow w-full text-left"
+      onClick={onSelect}
+    >
+      <div className="card-body p-3 gap-1">
+        <div className="flex items-center gap-2">
+          <MapPin className="w-4 h-4 text-primary shrink-0" />
+          <span className="font-semibold text-sm flex-1 truncate">{stop.name}</span>
+          <span className="text-xs text-base-content/50 flex items-center gap-1 shrink-0">
+            <Navigation className="w-3 h-3" />
+            {formatDistanceKm(distanceKm, t)}
+          </span>
+        </div>
+        {loading ? (
+          <div className="flex items-center gap-2 mt-1">
+            <span className="loading loading-dots loading-xs" />
+          </div>
+        ) : upcoming.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5 mt-1">
+            {upcoming.map((v) => {
+              const mins = Math.max(0, Math.round(v.arrivingInSeconds / 60));
+              return (
+                <span
+                  className="badge badge-sm gap-1 text-white"
+                  key={v.tripId}
+                  style={{ backgroundColor: v.routeType === 0 ? '#2563eb' : '#d97706' }}
+                >
+                  {v.routeShortName}
+                  <span className="opacity-80">
+                    {mins === 0
+                      ? t('nearbyTab.arrivingNow')
+                      : t('nearbyTab.minutes', { count: mins })}
+                  </span>
+                </span>
+              );
+            })}
+          </div>
+        ) : (
+          <span className="text-xs text-base-content/40 mt-1">
+            {t('nearbyTab.noVehiclesNearby')}
+          </span>
+        )}
+      </div>
+    </button>
   );
 }

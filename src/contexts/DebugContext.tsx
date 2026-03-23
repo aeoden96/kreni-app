@@ -2,14 +2,14 @@
  * Debug context for time override
  */
 
-import { createContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, type ReactNode, useEffect, useState } from 'react';
 
 interface DebugContextType {
-  debugTime: number | null; // minutes from midnight, null = use real time
-  setDebugTime: (minutes: number | null) => void;
+  debugTime: null | number; // minutes from midnight, null = use real time
   isDebugMode: boolean;
-  setDebugMode: (enabled: boolean) => void;
   isPlaying: boolean;
+  setDebugMode: (enabled: boolean) => void;
+  setDebugTime: (minutes: null | number) => void;
   setIsPlaying: (playing: boolean) => void;
   timeSpeed: number; // minutes per second
 }
@@ -20,14 +20,14 @@ export { DebugContext };
 const TIME_SPEED = 0.3; // 0.3 minutes per second
 
 export function DebugProvider({ children }: { children: ReactNode }) {
-  const [debugTime, setDebugTime] = useState<number | null>(null);
+  const [debugTime, setDebugTime] = useState<null | number>(null);
   const [isDebugMode, setDebugMode] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [baseTime, setBaseTime] = useState<number>(0); // Base time in minutes
   const [baseTimestamp, setBaseTimestamp] = useState<number>(() => Date.now()); // Base timestamp in ms
 
   // Set base time and timestamp when debug time is manually set
-  const handleSetDebugTime = (minutes: number | null) => {
+  const handleSetDebugTime = (minutes: null | number) => {
     setDebugTime(minutes);
     if (minutes !== null) {
       setBaseTime(minutes);
@@ -63,10 +63,10 @@ export function DebugProvider({ children }: { children: ReactNode }) {
     <DebugContext.Provider
       value={{
         debugTime,
-        setDebugTime: handleSetDebugTime,
         isDebugMode,
-        setDebugMode,
         isPlaying,
+        setDebugMode,
+        setDebugTime: handleSetDebugTime,
         setIsPlaying,
         timeSpeed: TIME_SPEED,
       }}

@@ -1,14 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import type { Stop } from './gtfs';
+
 import {
   buildDirectionalStopPinPathData,
   buildParentLabelGroups,
   DIRECTIONAL_PIN_HALF_ANGLE_DEG,
   estimateSpiderRouteBadgeRowWidth,
-  SPIDER_BADGE_GAP,
-  SPIDER_BADGE_MIN_W,
   SPIDER_BADGE_CHAR_PX,
+  SPIDER_BADGE_GAP,
   SPIDER_BADGE_H_PAD,
+  SPIDER_BADGE_MIN_W,
 } from './stopMarkersMath';
 
 describe('buildDirectionalStopPinPathData', () => {
@@ -48,31 +50,26 @@ describe('estimateSpiderRouteBadgeRowWidth', () => {
   });
 });
 
-function parentStop(
-  id: string,
-  name: string,
-  lat: number,
-  lon: number,
-): Stop {
+function parentStop(id: string, name: string, lat: number, lon: number): Stop {
   return {
-    id,
     code: id,
-    name,
+    id,
     lat,
-    lon,
     locationType: 1,
+    lon,
+    name,
     parentStation: null,
   };
 }
 
 function platformStop(id: string, parentId: string, lat = 0, lon = 0): Stop {
   return {
-    id,
     code: id,
-    name: `platform-${id}`,
+    id,
     lat,
-    lon,
     locationType: 0,
+    lon,
+    name: `platform-${id}`,
     parentStation: parentId,
   };
 }

@@ -1,40 +1,41 @@
+import { Bus, Loader2, MapPin, TrainFront } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { MapPin, TrainFront, Bus, Loader2 } from 'lucide-react';
+
 import type { Route, Stop } from '../../../utils/gtfs';
 
 interface DirectionResult {
-  route: Route;
-  directionKey: string;
   directionFilter: 'A' | 'B';
+  directionKey: string;
+  route: Route;
   stopsBetween: number;
 }
 
 interface DirectionsContentProps {
-  dirFromStop: Stop | null;
-  dirToStop: Stop | null;
   dirActiveField: 'from' | 'to';
-  searchQuery: string;
-  dirToQuery: string;
-  filteredDirStops: { stops: Stop[]; hasMore: boolean };
-  onDirStopSelect: (stop: Stop) => void;
-  dirResultLabel: string;
+  dirFromStop: null | Stop;
   dirLoading: boolean;
+  dirResultLabel: string;
   dirResults: DirectionResult[];
+  dirToQuery: string;
+  dirToStop: null | Stop;
+  filteredDirStops: { hasMore: boolean; stops: Stop[] };
+  onDirStopSelect: (stop: Stop) => void;
   onSelectDirectionsRoute: (routeId: string, routeType: number, direction: 'A' | 'B') => void;
+  searchQuery: string;
 }
 
 export function DirectionsContent({
-  dirFromStop,
-  dirToStop,
   dirActiveField,
-  searchQuery,
+  dirFromStop,
+  dirLoading,
+  dirResultLabel,
+  dirResults,
   dirToQuery,
+  dirToStop,
   filteredDirStops,
   onDirStopSelect,
-  dirResultLabel,
-  dirLoading,
-  dirResults,
   onSelectDirectionsRoute,
+  searchQuery,
 }: DirectionsContentProps) {
   const { t } = useTranslation();
 
@@ -61,12 +62,12 @@ export function DirectionsContent({
               const VehicleIcon = item.route.type === 0 ? TrainFront : Bus;
               return (
                 <button
-                  key={`${item.route.id}-${item.directionKey}`}
-                  type="button"
                   className="w-full px-3 py-3 text-left hover:bg-base-200 transition-colors"
+                  key={`${item.route.id}-${item.directionKey}`}
                   onClick={() =>
                     onSelectDirectionsRoute(item.route.id, item.route.type, item.directionFilter)
                   }
+                  type="button"
                 >
                   <div className="flex items-center gap-3">
                     <span
@@ -79,8 +80,8 @@ export function DirectionsContent({
                       <div className="text-sm line-clamp-1">{item.route.longName}</div>
                       <div className="text-xs text-base-content/60">
                         {t('search.routeDirectionMeta', {
-                          direction: item.directionFilter,
                           count: item.stopsBetween + 1,
+                          direction: item.directionFilter,
                         })}
                       </div>
                     </div>
@@ -111,10 +112,10 @@ export function DirectionsContent({
       <div className="divide-y divide-base-300">
         {filteredDirStops.stops.map((stop) => (
           <button
-            key={stop.id}
-            type="button"
-            onClick={() => onDirStopSelect(stop)}
             className="w-full flex items-center gap-3 py-3 px-4 text-left hover:bg-base-200 active:bg-base-300 transition-colors min-h-[52px]"
+            key={stop.id}
+            onClick={() => onDirStopSelect(stop)}
+            type="button"
           >
             <MapPin className="w-4 h-4 text-base-content/40 shrink-0" />
             <span className="text-sm font-medium">{stop.name}</span>

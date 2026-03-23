@@ -1,10 +1,8 @@
-import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import {
-  getTallyFeedbackEmbedSrc,
-  TALLY_FEEDBACK_FORM_ID,
-} from '../config';
+import { useNavigate } from 'react-router-dom';
+
+import { getTallyFeedbackEmbedSrc, TALLY_FEEDBACK_FORM_ID } from '../config';
 
 /**
  * Full-screen Tally form in an iframe.
@@ -22,14 +20,8 @@ export function TallyFeedbackPage() {
   if (!TALLY_FEEDBACK_FORM_ID) {
     return (
       <div className="h-svh w-screen flex flex-col items-center justify-center gap-4 bg-base-100 p-6 text-center">
-        <p className="text-base-content/80 max-w-sm">
-          {t('feedbackPage.unconfigured')}
-        </p>
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={handleBack}
-        >
+        <p className="text-base-content/80 max-w-sm">{t('feedbackPage.unconfigured')}</p>
+        <button className="btn btn-primary" onClick={handleBack} type="button">
           {t('common.back')}
         </button>
       </div>
@@ -42,11 +34,11 @@ export function TallyFeedbackPage() {
     <div className="h-svh w-screen overflow-hidden bg-base-100 flex flex-col">
       <div className="shrink-0 flex items-center gap-2 p-2 border-b border-base-300/50 bg-base-100/95 backdrop-blur-sm z-10">
         <button
-          type="button"
-          onClick={handleBack}
-          className="btn btn-ghost btn-circle btn-sm sm:btn-md"
-          title={t('common.back')}
           aria-label={t('common.back')}
+          className="btn btn-ghost btn-circle btn-sm sm:btn-md"
+          onClick={handleBack}
+          title={t('common.back')}
+          type="button"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
@@ -56,14 +48,14 @@ export function TallyFeedbackPage() {
       </div>
       <div className="flex-1 min-h-0 relative">
         <iframe
-          src={tallySrc}
-          width="100%"
-          height="100%"
-          title={t('feedbackPage.iframeTitle')}
+          allowFullScreen
           className="absolute inset-0 w-full h-full border-0"
+          height="100%"
           marginHeight={0}
           marginWidth={0}
-          allowFullScreen
+          src={tallySrc}
+          title={t('feedbackPage.iframeTitle')}
+          width="100%"
         />
       </div>
     </div>

@@ -1,11 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
-  formatDelay,
-  speedToKmh,
-  haversineDistance,
   computeBearing,
   enrichWithDeadReckoning,
+  formatDelay,
+  haversineDistance,
   type ParsedVehiclePosition,
+  speedToKmh,
   type VehicleSnapshot,
 } from './realtime';
 
@@ -67,15 +68,15 @@ function vehicle(
   lat: number,
   lng: number,
   ts: number,
-  overrides: Partial<ParsedVehiclePosition> = {},
+  overrides: Partial<ParsedVehiclePosition> = {}
 ): ParsedVehiclePosition {
   return {
-    vehicleId: 'v1',
-    tripId: 't1',
-    routeId: 'r1',
     latitude: lat,
     longitude: lng,
+    routeId: 'r1',
     timestamp: ts,
+    tripId: 't1',
+    vehicleId: 'v1',
     ...overrides,
   };
 }

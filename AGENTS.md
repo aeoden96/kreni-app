@@ -5,9 +5,11 @@
 After every code change, always:
 
 1. Run TypeScript check:
+
    ```sh
    yarn tsc
    ```
+
    Fix all errors before continuing.
 
 2. Run the linter:

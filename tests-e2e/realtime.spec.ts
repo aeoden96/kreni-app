@@ -20,7 +20,7 @@
  *     - Test 2 checks no [RealtimeStore] error appears in the console
  */
 
-import { test, expect } from './fixtures';
+import { expect, test } from './fixtures';
 import { interceptRealtimeFeed } from './realtime-mock';
 
 // A valid static route ID that exists in all GTFS snapshots
@@ -29,17 +29,15 @@ const MOCK_ROUTE_ID = '1';
 const MOCK_TRIP_ID = 'mock-realtime-trip-001';
 
 test.describe('realtime vehicle feed', () => {
-  test('data status shows success badge when proxy returns a valid feed', async ({
-    page,
-  }) => {
+  test('data status shows success badge when proxy returns a valid feed', async ({ page }) => {
     // Register the intercept BEFORE navigating so the very first poll is mocked.
     await interceptRealtimeFeed(page, [
       {
-        vehicleId: 'tram-101',
-        tripId: MOCK_TRIP_ID,
-        routeId: MOCK_ROUTE_ID,
         lat: 45.815,
         lng: 15.982,
+        routeId: MOCK_ROUTE_ID,
+        tripId: MOCK_TRIP_ID,
+        vehicleId: 'tram-101',
       },
     ]);
 
@@ -49,23 +47,21 @@ test.describe('realtime vehicle feed', () => {
     // "ZET podaci stari Xs" button only appears when the realtime store fetched
     // successfully.  Its presence proves the entire mock→decode→render pipeline
     // is working.
-    await expect(
-      page.getByRole('button', { name: /ZET podaci stari/ }),
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('button', { name: /ZET podaci stari/ })).toBeVisible({
+      timeout: 10_000,
+    });
   });
 
-  test('no [RealtimeStore] console errors when proxy mock is active', async ({
-    page,
-  }) => {
+  test('no [RealtimeStore] console errors when proxy mock is active', async ({ page }) => {
     const consoleErrors: string[] = [];
 
     await interceptRealtimeFeed(page, [
       {
-        vehicleId: 'tram-102',
-        tripId: MOCK_TRIP_ID,
-        routeId: MOCK_ROUTE_ID,
         lat: 45.812,
         lng: 15.978,
+        routeId: MOCK_ROUTE_ID,
+        tripId: MOCK_TRIP_ID,
+        vehicleId: 'tram-102',
       },
     ]);
 
@@ -77,9 +73,9 @@ test.describe('realtime vehicle feed', () => {
     await page.waitForLoadState('networkidle');
 
     // Wait for the store's first fetch cycle to complete
-    await expect(
-      page.getByRole('button', { name: /ZET podaci stari/ }),
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('button', { name: /ZET podaci stari/ })).toBeVisible({
+      timeout: 10_000,
+    });
 
     // With the mock intercepting all localhost:9999 requests, the
     // "[RealtimeStore] Fetch failed" error must not appear.

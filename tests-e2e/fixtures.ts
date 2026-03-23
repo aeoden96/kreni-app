@@ -13,8 +13,9 @@
  *   export const test = base.extend<{ myFixture: MyType }>({ ... });
  */
 
-import { test as base, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
+
+import { test as base, expect } from '@playwright/test';
 
 export const test = base.extend<{ page: Page }>({
   /**
@@ -31,11 +32,11 @@ export const test = base.extend<{ page: Page }>({
         const stored = raw ? JSON.parse(raw) : {};
         if (!stored.state) stored.state = {};
         stored.state.onboardingCompleted = {
-          transit: true,
+          city: true,
           cycling: true,
           driving: true,
-          city: true,
           list: true,
+          transit: true,
         };
         localStorage.setItem('kreni-settings', JSON.stringify(stored));
       } catch {

@@ -1,20 +1,22 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+
 import { useState } from 'react';
+
 import { BadgeWithPanel } from './BadgeWithPanel';
 
 const meta = {
-  title: 'Common / BadgeWithPanel',
-  component: BadgeWithPanel,
-  parameters: {
-    layout: 'centered',
-  },
-  tags: ['autodocs'],
   argTypes: {
     variant: {
       control: 'radio',
       options: ['popover', 'fullScreen'],
     },
   },
+  component: BadgeWithPanel,
+  parameters: {
+    layout: 'centered',
+  },
+  tags: ['autodocs'],
+  title: 'Common / BadgeWithPanel',
 } satisfies Meta<typeof BadgeWithPanel>;
 
 export default meta;
@@ -25,11 +27,10 @@ function PopoverWrapper() {
   const [open, setOpen] = useState(false);
   return (
     <BadgeWithPanel
-      variant="popover"
-      open={open}
-      onOpenChange={setOpen}
-      badgeClassName="badge badge-primary gap-1 shadow cursor-pointer hover:badge-outline transition-all"
       ariaLabel="Toggle legend"
+      badgeClassName="badge badge-primary gap-1 shadow cursor-pointer hover:badge-outline transition-all"
+      onOpenChange={setOpen}
+      open={open}
       panelContent={
         <div className="absolute bottom-full right-0 mb-2 p-3 bg-base-100 rounded-xl shadow-lg border border-base-300 min-w-[12rem]">
           <p className="text-sm font-medium">Legend</p>
@@ -40,6 +41,7 @@ function PopoverWrapper() {
           </ul>
         </div>
       }
+      variant="popover"
     >
       <span>Legend</span>
     </BadgeWithPanel>
@@ -54,20 +56,15 @@ function FullScreenWrapper() {
   const [open, setOpen] = useState(false);
   return (
     <BadgeWithPanel
-      variant="fullScreen"
-      open={open}
-      onOpenChange={setOpen}
-      badgeClassName="badge badge-success gap-1 shadow cursor-pointer hover:badge-outline transition-all"
       ariaLabel="Open alerts"
+      badgeClassName="badge badge-success gap-1 shadow cursor-pointer hover:badge-outline transition-all"
+      onOpenChange={setOpen}
+      open={open}
       panelContent={(onClose) => (
         <div className="fixed inset-0 z-50 bg-base-100 flex flex-col">
           <div className="flex justify-between items-center p-4 border-b border-base-300">
             <h2 className="text-lg font-semibold">Alerts</h2>
-            <button
-              type="button"
-              onClick={onClose}
-              className="btn btn-sm btn-ghost"
-            >
+            <button className="btn btn-sm btn-ghost" onClick={onClose} type="button">
               Close
             </button>
           </div>
@@ -78,6 +75,7 @@ function FullScreenWrapper() {
           </div>
         </div>
       )}
+      variant="fullScreen"
     >
       <span>Alerts</span>
     </BadgeWithPanel>

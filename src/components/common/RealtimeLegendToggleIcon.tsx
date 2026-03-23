@@ -16,5 +16,5 @@ export function RealtimeLegendToggleIcon({ open }: RealtimeLegendToggleIconProps
     .filter(Boolean)
     .join(' ');
 
-  return <Map className={className} strokeWidth={2.25} aria-hidden />;
+  return <Map aria-hidden className={className} strokeWidth={2.25} />;
 }

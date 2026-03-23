@@ -11,26 +11,31 @@
  * woken up only when a new fix arrives.
  */
 
-import { useEffect, useRef } from 'react';
 import type { Marker as LeafletMarker } from 'leaflet';
+
+import { useEffect, useRef } from 'react';
+
 import { REALTIME_POLL_INTERVAL } from '../config';
 
 // Ease over slightly less than the poll interval so the marker arrives at the
 // GPS fix just before the next one comes in, keeping motion continuous.
 const EASE_MS = REALTIME_POLL_INTERVAL * 0.9;
 
-interface Vec2 { lat: number; lon: number }
+interface Vec2 {
+  lat: number;
+  lon: number;
+}
 
 export function useAnimatedVehiclePosition(
   markerRef: React.RefObject<LeafletMarker | null>,
   lat: number,
-  lon: number,
+  lon: number
 ): void {
   // Current animated position (what the Leaflet marker is displaying).
   const animPosRef = useRef<Vec2>({ lat, lon });
 
   // Active ease transition, or null when idle.
-  const easeRef = useRef<{ from: Vec2; to: Vec2; startTime: number } | null>(null);
+  const easeRef = useRef<null | { from: Vec2; startTime: number; to: Vec2 }>(null);
 
   // Restarts the rAF loop after it has gone idle.
   const wakeUpRef = useRef<(() => void) | null>(null);
@@ -92,8 +97,8 @@ export function useAnimatedVehiclePosition(
 
     easeRef.current = {
       from: { ...animPosRef.current },
-      to: { lat, lon },
       startTime: performance.now(),
+      to: { lat, lon },
     };
     wakeUpRef.current?.();
   }, [lat, lon]);

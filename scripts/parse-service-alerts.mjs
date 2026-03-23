@@ -51,6 +51,18 @@ const CF_API_TOKEN = process.env.CF_API_TOKEN;
 // RSS fetching & parsing (no external deps)
 // ---------------------------------------------------------------------------
 
+/** Extract CDATA content from a tag */
+function extractCdata(xml, tag) {
+  const m = xml.match(new RegExp(`<${tag}[^>]*>\\s*<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>`, 'i'));
+  return m ? m[1] : null;
+}
+
+/** Extract plain text content from a tag (no CDATA) */
+function extractTag(xml, tag) {
+  const m = xml.match(new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`, 'i'));
+  return m ? m[1] : null;
+}
+
 /** @returns {Promise<{guid:string, title:string, description:string, link:string, pubDate:string}[]>} */
 async function fetchRssItems() {
   const res = await fetch(RSS_URL, {
@@ -65,26 +77,29 @@ async function fetchRssItems() {
   for (const match of itemMatches) {
     const block = match[1];
     const title = extractCdata(block, 'title') ?? extractTag(block, 'title') ?? '';
-    const description = extractCdata(block, 'description') ?? extractTag(block, 'description') ?? '';
+    const description =
+      extractCdata(block, 'description') ?? extractTag(block, 'description') ?? '';
     const link = extractTag(block, 'link') ?? '';
     const pubDate = extractTag(block, 'pubDate') ?? '';
     const guid = extractTag(block, 'guid') ?? link;
-    items.push({ guid: guid.trim(), title: title.trim(), description, link: link.trim(), pubDate: pubDate.trim() });
+    items.push({
+      description,
+      guid: guid.trim(),
+      link: link.trim(),
+      pubDate: pubDate.trim(),
+      title: title.trim(),
+    });
   }
   return items;
 }
 
-/** Extract CDATA content from a tag */
-function extractCdata(xml, tag) {
-  const m = xml.match(new RegExp(`<${tag}[^>]*>\\s*<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>`, 'i'));
-  return m ? m[1] : null;
+function makeId(guid) {
+  return createHash('md5').update(guid).digest('hex').slice(0, 12);
 }
 
-/** Extract plain text content from a tag (no CDATA) */
-function extractTag(xml, tag) {
-  const m = xml.match(new RegExp(`<${tag}[^>]*>([^<]*)<\/${tag}>`, 'i'));
-  return m ? m[1] : null;
-}
+// ---------------------------------------------------------------------------
+// Stable ID from guid
+// ---------------------------------------------------------------------------
 
 /** Strip HTML tags and collapse whitespace */
 function stripHtml(html) {
@@ -101,12 +116,12 @@ function stripHtml(html) {
 
   // 4. Decode HTML entities in a single pass to avoid double-unescaping (CodeQL: js/double-escaping)
   const entities = {
-    '&nbsp;': ' ',
-    '&lt;': '<',
-    '&gt;': '>',
-    '&quot;': '"',
-    '&apos;': "'",
     '&amp;': '&', // Decoded last in the map
+    '&apos;': "'",
+    '&gt;': '>',
+    '&lt;': '<',
+    '&nbsp;': ' ',
+    '&quot;': '"',
   };
 
   text = text.replace(/&(?:nbsp|lt|gt|quot|apos|amp);/g, (match) => entities[match]);
@@ -116,14 +131,6 @@ function stripHtml(html) {
     .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(dec))
     .replace(/\s+/g, ' ')
     .trim();
-}
-
-// ---------------------------------------------------------------------------
-// Stable ID from guid
-// ---------------------------------------------------------------------------
-
-function makeId(guid) {
-  return createHash('md5').update(guid).digest('hex').slice(0, 12);
 }
 
 // ---------------------------------------------------------------------------
@@ -158,6 +165,81 @@ Vrijednosti za type:
 
 Vrati SAMO JSON objekt. Bez markdowna, bez objašnjenja.`;
 
+async function main() {
+  console.log('Fetching ZET RSS feed…');
+  const rssItems = await fetchRssItems();
+  console.log(`  ${rssItems.length} items in feed`);
+
+  // Load existing alerts from KV (source of truth)
+  /** @type {{ alerts: ServiceAlert[], lastUpdate: string }} */
+  console.log('Reading existing alerts from KV…');
+  const kvExisting = await readFromKv();
+  const existing = kvExisting ?? { alerts: [], lastUpdate: new Date(0).toISOString() };
+  if (!kvExisting) console.log('  No existing KV data – starting fresh');
+
+  const existingIds = new Set(existing.alerts.map((a) => a.guid));
+  const newItems = rssItems.filter((item) => !existingIds.has(item.guid));
+  console.log(`  ${newItems.length} new item(s) to process`);
+
+  const newAlerts = /** @type {ServiceAlert[]} */ ([]);
+
+  for (const item of newItems) {
+    console.log(`  Parsing: ${item.title}`);
+    const plain = stripHtml(item.description);
+    let parsed;
+    try {
+      parsed = await parsWithLlm(item.title, plain);
+    } catch (err) {
+      console.error(`  LLM error for "${item.title}":`, err.message);
+      parsed = {
+        affectedStops: [],
+        endDate: null,
+        lines: [],
+        startDate: null,
+        summary: item.title,
+        type: 'other',
+      };
+    }
+
+    newAlerts.push({
+      affectedStops: parsed.affectedStops,
+      endDate: parsed.endDate,
+      guid: item.guid,
+      id: makeId(item.guid),
+      lines: parsed.lines,
+      processedAt: new Date().toISOString(),
+      pubDate: item.pubDate,
+      startDate: parsed.startDate,
+      summary: parsed.summary,
+      title: item.title,
+      type: /** @type {any} */ (parsed.type),
+      url: item.link,
+    });
+  }
+
+  // Merge: new alerts first (most recent at top), then existing
+  const merged = [...newAlerts, ...existing.alerts];
+
+  // Keep only guids that still appear in the feed (prune removed items)
+  const feedGuids = new Set(rssItems.map((i) => i.guid));
+  const pruned = merged.filter((a) => feedGuids.has(a.guid));
+
+  const output = {
+    alerts: pruned,
+    lastUpdate: new Date().toISOString(),
+  };
+
+  if (newAlerts.length > 0 || pruned.length !== existing.alerts.length) {
+    await writeToKv(output);
+  } else {
+    console.log('No changes – skipping KV write');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Cloudflare KV write-back
+// ---------------------------------------------------------------------------
+
 /**
  * @param {string} title
  * @param {string} plainDescription
@@ -166,28 +248,35 @@ Vrati SAMO JSON objekt. Bez markdowna, bez objašnjenja.`;
 async function parsWithLlm(title, plainDescription) {
   if (!OLLAMA_API_KEY) {
     console.warn('OLLAMA_API_KEY not set – skipping LLM parse, using defaults');
-    return { lines: [], type: 'other', startDate: null, endDate: null, affectedStops: [], summary: title };
+    return {
+      affectedStops: [],
+      endDate: null,
+      lines: [],
+      startDate: null,
+      summary: title,
+      type: 'other',
+    };
   }
 
   const userContent = `Title: ${title}\n\nDescription: ${plainDescription.slice(0, 2000)}`;
 
   const res = await fetch(OLLAMA_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${OLLAMA_API_KEY}`,
-    },
     body: JSON.stringify({
-      model: OLLAMA_MODEL,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: userContent },
-      ],
       // Ollama JSON mode: instructs the model to respond with valid JSON
       format: 'json',
-      stream: false,
+      messages: [
+        { content: SYSTEM_PROMPT, role: 'system' },
+        { content: userContent, role: 'user' },
+      ],
+      model: OLLAMA_MODEL,
       options: { temperature: 0 },
+      stream: false,
     }),
+    headers: {
+      Authorization: `Bearer ${OLLAMA_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    method: 'POST',
   });
 
   if (!res.ok) {
@@ -201,13 +290,12 @@ async function parsWithLlm(title, plainDescription) {
   if (!content) throw new Error('Empty Ollama response');
 
   // Strip accidental markdown fences if the model adds them
-  const cleaned = content.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+  const cleaned = content
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
   return JSON.parse(cleaned);
 }
-
-// ---------------------------------------------------------------------------
-// Cloudflare KV write-back
-// ---------------------------------------------------------------------------
 
 async function readFromKv() {
   if (!CF_ACCOUNT_ID || !CF_KV_NAMESPACE_ID || !CF_API_TOKEN) return null;
@@ -227,6 +315,10 @@ async function readFromKv() {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
 async function writeToKv(payload) {
   if (!CF_ACCOUNT_ID || !CF_KV_NAMESPACE_ID || !CF_API_TOKEN) {
     console.warn('CF KV env vars not set – cannot write to KV');
@@ -235,12 +327,12 @@ async function writeToKv(payload) {
 
   const url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/storage/kv/namespaces/${CF_KV_NAMESPACE_ID}/values/${KV_KEY}`;
   const res = await fetch(url, {
-    method: 'PUT',
+    body: JSON.stringify(payload),
     headers: {
       Authorization: `Bearer ${CF_API_TOKEN}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(payload),
+    method: 'PUT',
   });
 
   if (!res.ok) {
@@ -251,75 +343,7 @@ async function writeToKv(payload) {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Main
-// ---------------------------------------------------------------------------
-
-async function main() {
-  console.log('Fetching ZET RSS feed…');
-  const rssItems = await fetchRssItems();
-  console.log(`  ${rssItems.length} items in feed`);
-
-  // Load existing alerts from KV (source of truth)
-  /** @type {{ alerts: ServiceAlert[], lastUpdate: string }} */
-  console.log('Reading existing alerts from KV…');
-  const kvExisting = await readFromKv();
-  const existing = kvExisting ?? { alerts: [], lastUpdate: new Date(0).toISOString() };
-  if (!kvExisting) console.log('  No existing KV data – starting fresh');
-
-  const existingIds = new Set(existing.alerts.map(a => a.guid));
-  const newItems = rssItems.filter(item => !existingIds.has(item.guid));
-  console.log(`  ${newItems.length} new item(s) to process`);
-
-  const newAlerts = /** @type {ServiceAlert[]} */ ([]);
-
-  for (const item of newItems) {
-    console.log(`  Parsing: ${item.title}`);
-    const plain = stripHtml(item.description);
-    let parsed;
-    try {
-      parsed = await parsWithLlm(item.title, plain);
-    } catch (err) {
-      console.error(`  LLM error for "${item.title}":`, err.message);
-      parsed = { lines: [], type: 'other', startDate: null, endDate: null, affectedStops: [], summary: item.title };
-    }
-
-    newAlerts.push({
-      id: makeId(item.guid),
-      guid: item.guid,
-      title: item.title,
-      lines: parsed.lines,
-      type: /** @type {any} */ (parsed.type),
-      startDate: parsed.startDate,
-      endDate: parsed.endDate,
-      affectedStops: parsed.affectedStops,
-      summary: parsed.summary,
-      pubDate: item.pubDate,
-      url: item.link,
-      processedAt: new Date().toISOString(),
-    });
-  }
-
-  // Merge: new alerts first (most recent at top), then existing
-  const merged = [...newAlerts, ...existing.alerts];
-
-  // Keep only guids that still appear in the feed (prune removed items)
-  const feedGuids = new Set(rssItems.map(i => i.guid));
-  const pruned = merged.filter(a => feedGuids.has(a.guid));
-
-  const output = {
-    alerts: pruned,
-    lastUpdate: new Date().toISOString(),
-  };
-
-  if (newAlerts.length > 0 || pruned.length !== existing.alerts.length) {
-    await writeToKv(output);
-  } else {
-    console.log('No changes – skipping KV write');
-  }
-}
-
-main().catch(err => {
+main().catch((err) => {
   console.error('Fatal error:', err);
   process.exit(1);
 });

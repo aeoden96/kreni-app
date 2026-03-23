@@ -1,24 +1,26 @@
 import { useEffect, useMemo, useState } from 'react';
+
 import type { Route, RouteParentStopsIndex } from '../utils/gtfs';
+
 import { fetchRouteParentStops } from '../utils/gtfs';
 
 interface DirectionResult {
-  route: Route;
-  directionKey: string;
   directionFilter: 'A' | 'B';
+  directionKey: string;
   fromIndex: number;
-  toIndex: number;
+  route: Route;
   stopsBetween: number;
+  toIndex: number;
 }
 
 export function useDirections(
-  fromParentId: string | null,
-  toParentId: string | null,
+  fromParentId: null | string,
+  toParentId: null | string,
   routesById: Map<string, Route>,
-  options: { dataDir?: string } = {},
-): { results: DirectionResult[]; loading: boolean } {
+  options: { dataDir?: string } = {}
+): { loading: boolean; results: DirectionResult[] } {
   const { dataDir = 'data' } = options;
-  const [index, setIndex] = useState<RouteParentStopsIndex | null>(null);
+  const [index, setIndex] = useState<null | RouteParentStopsIndex>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -50,7 +52,9 @@ export function useDirections(
       const route = routesById.get(routeId);
       if (!route) continue;
 
-      const sortedDirections = Object.entries(directions).sort((a, b) => Number(a[0]) - Number(b[0]));
+      const sortedDirections = Object.entries(directions).sort(
+        (a, b) => Number(a[0]) - Number(b[0])
+      );
       for (const [directionKey, parentStops] of sortedDirections) {
         const fromIndex = parentStops.indexOf(fromParentId);
         const toIndex = parentStops.indexOf(toParentId);
@@ -58,12 +62,12 @@ export function useDirections(
 
         const directionIndex = sortedDirections.findIndex(([key]) => key === directionKey);
         items.push({
-          route,
-          directionKey,
           directionFilter: directionIndex <= 0 ? 'A' : 'B',
+          directionKey,
           fromIndex,
-          toIndex,
+          route,
           stopsBetween: toIndex - fromIndex - 1,
+          toIndex,
         });
       }
     }
@@ -87,5 +91,5 @@ export function useDirections(
     });
   }, [fromParentId, index, routesById, toParentId]);
 
-  return { results, loading };
+  return { loading, results };
 }

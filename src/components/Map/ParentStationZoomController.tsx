@@ -2,20 +2,20 @@
  * Component to handle zooming when parent stations are clicked
  */
 
+import L from 'leaflet';
 import { useEffect } from 'react';
 import { useMap } from 'react-leaflet';
-import L from 'leaflet';
 
 interface ParentStationZoomControllerProps {
-  zoomTarget: { lat: number; lon: number; zoom?: number } | null;
-  panOffsetY?: number;
   onZoomComplete: () => void;
+  panOffsetY?: number;
+  zoomTarget: null | { lat: number; lon: number; zoom?: number };
 }
 
-export function ParentStationZoomController({ 
-  zoomTarget,
+export function ParentStationZoomController({
+  onZoomComplete,
   panOffsetY = 0,
-  onZoomComplete 
+  zoomTarget,
 }: ParentStationZoomControllerProps) {
   const map = useMap();
 
@@ -31,15 +31,15 @@ export function ParentStationZoomController({
       } else {
         map.flyTo([zoomTarget.lat, zoomTarget.lon], targetZoom, {
           duration: 0.8,
-          easeLinearity: 0.25
+          easeLinearity: 0.25,
         });
       }
-      
+
       // Clear the zoom target after animation completes
       const timer = setTimeout(() => {
         onZoomComplete();
       }, 1000); // Give time for animation to complete
-      
+
       return () => clearTimeout(timer);
     }
   }, [zoomTarget, panOffsetY, map, onZoomComplete]);

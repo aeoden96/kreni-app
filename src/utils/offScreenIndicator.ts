@@ -6,16 +6,16 @@
 export const OFF_SCREEN_INDICATOR_MARGIN_PX = 52;
 
 export interface OffScreenIndicatorPosition {
-  x: number;
-  y: number;
   /** CSS rotation in degrees — 0 = up (north), clockwise */
   angle: number;
+  x: number;
+  y: number;
 }
 
 interface MapViewportBounds {
+  east: number;
   north: number;
   south: number;
-  east: number;
   west: number;
 }
 
@@ -31,9 +31,9 @@ export function computeOffScreenIndicator(
   bounds: MapViewportBounds,
   width: number,
   height: number,
-  marginPx: number = OFF_SCREEN_INDICATOR_MARGIN_PX,
-): OffScreenIndicatorPosition | null {
-  const { north, south, east, west } = bounds;
+  marginPx: number = OFF_SCREEN_INDICATOR_MARGIN_PX
+): null | OffScreenIndicatorPosition {
+  const { east, north, south, west } = bounds;
   const latSpan = north - south;
   const lonSpan = east - west;
   if (latSpan === 0 || lonSpan === 0) return null;
@@ -66,8 +66,8 @@ export function computeOffScreenIndicator(
   if (!isFinite(t) || t <= 0) return null;
 
   return {
+    angle,
     x: Math.round(cx + t * dx),
     y: Math.round(cy + t * dy),
-    angle,
   };
 }

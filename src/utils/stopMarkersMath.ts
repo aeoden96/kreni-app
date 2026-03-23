@@ -4,6 +4,7 @@
  */
 
 import type { Stop } from './gtfs';
+
 import { calculateDistance } from './gtfs';
 
 /** Half-angle (degrees) from vertical to tangent on the directional pin arc. */
@@ -34,6 +35,13 @@ export const SPIDER_BADGE_MIN_W = 18;
 export const SPIDER_BADGE_GAP = 3;
 export const SPIDER_TICKER_VISIBLE_PX = 110;
 
+interface ParentLabelGroup {
+  children: Stop[];
+  label: string;
+  lat: number;
+  lon: number;
+}
+
 /**
  * Estimated total width (px) of a row of route short-name badges (spiderfier label).
  */
@@ -43,15 +51,8 @@ export function estimateSpiderRouteBadgeRowWidth(shortNames: string[]): number {
       sum +
       Math.max(SPIDER_BADGE_MIN_W, shortName.length * SPIDER_BADGE_CHAR_PX + SPIDER_BADGE_H_PAD) +
       (i > 0 ? SPIDER_BADGE_GAP : 0),
-    0,
+    0
   );
-}
-
-interface ParentLabelGroup {
-  label: string;
-  lat: number;
-  lon: number;
-  children: Stop[];
 }
 
 const PARENT_MERGE_THRESHOLD_KM = 60 / 1000;
@@ -62,7 +63,7 @@ const PARENT_MERGE_THRESHOLD_KM = 60 / 1000;
  */
 export function buildParentLabelGroups(
   platformStops: Stop[],
-  parentById: Map<string, Stop>,
+  parentById: Map<string, Stop>
 ): ParentLabelGroup[] {
   const childrenByParent = new Map<string, Stop[]>();
   for (const st of platformStops) {
@@ -72,12 +73,12 @@ export function buildParentLabelGroups(
     childrenByParent.set(st.parentStation, arr);
   }
 
-  const nameGroups = new Map<string, { parents: Stop[]; children: Stop[] }>();
+  const nameGroups = new Map<string, { children: Stop[]; parents: Stop[] }>();
   for (const [pid, children] of childrenByParent) {
     const parent = parentById.get(pid);
     if (!parent || children.length === 0) continue;
     const key = parent.name.trim().toLowerCase();
-    const entry = nameGroups.get(key) ?? { parents: [], children: [] };
+    const entry = nameGroups.get(key) ?? { children: [], parents: [] };
     entry.parents.push(parent);
     entry.children.push(...children);
     nameGroups.set(key, entry);
@@ -88,33 +89,33 @@ export function buildParentLabelGroups(
   for (const entry of nameGroups.values()) {
     if (entry.parents.length === 1) {
       const p = entry.parents[0];
-      groups.push({ label: p.name, lat: p.lat, lon: p.lon, children: entry.children });
+      groups.push({ children: entry.children, label: p.name, lat: p.lat, lon: p.lon });
       continue;
     }
 
-    const sum = entry.parents.reduce(
-      (acc, p) => ({ lat: acc.lat + p.lat, lon: acc.lon + p.lon }),
-      { lat: 0, lon: 0 },
-    );
+    const sum = entry.parents.reduce((acc, p) => ({ lat: acc.lat + p.lat, lon: acc.lon + p.lon }), {
+      lat: 0,
+      lon: 0,
+    });
     const centroidLat = sum.lat / entry.parents.length;
     const centroidLon = sum.lon / entry.parents.length;
 
     const maxDistKm = Math.max(
-      ...entry.parents.map((p) => calculateDistance(p.lat, p.lon, centroidLat, centroidLon)),
+      ...entry.parents.map((p) => calculateDistance(p.lat, p.lon, centroidLat, centroidLon))
     );
 
     if (maxDistKm <= PARENT_MERGE_THRESHOLD_KM) {
       groups.push({
+        children: entry.children,
         label: entry.parents[0].name,
         lat: centroidLat,
         lon: centroidLon,
-        children: entry.children,
       });
     } else {
       for (const p of entry.parents) {
         const pChildren = entry.children.filter((c) => c.parentStation === p.id);
         if (pChildren.length > 0) {
-          groups.push({ label: p.name, lat: p.lat, lon: p.lon, children: pChildren });
+          groups.push({ children: pChildren, label: p.name, lat: p.lat, lon: p.lon });
         }
       }
     }

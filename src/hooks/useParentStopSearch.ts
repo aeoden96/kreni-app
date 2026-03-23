@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+
 import type { Stop } from '../utils/gtfs';
 
 export function useParentStopSearch(stops: Stop[], query: string, limit = 20): Stop[] {

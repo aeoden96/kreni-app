@@ -5,7 +5,7 @@
  * mobile viewport without JS errors, and that navigation between them works.
  */
 
-import { test, expect } from '../fixtures';
+import { expect, test } from '../fixtures';
 
 test.describe('mobile navigation', () => {
   test('home route (/) shows the transport app shell', async ({ page }) => {
@@ -36,17 +36,17 @@ test.describe('mobile navigation', () => {
 test.describe('mobile settings', () => {
   test('settings page shows Postavke heading', async ({ page }) => {
     await page.goto('/settings');
-    await expect(page.getByRole('heading', { name: 'Postavke', level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Postavke' })).toBeVisible();
   });
 
   test('settings page shows all section headings', async ({ page }) => {
     await page.goto('/settings');
-    await expect(page.getByRole('heading', { name: 'Izgled', level: 2 })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Karta', level: 2 })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'Izgled' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'Karta' })).toBeVisible();
     await expect(
-      page.getByRole('heading', { name: 'Podaci i predmemorija', level: 2 }),
+      page.getByRole('heading', { level: 2, name: 'Podaci i predmemorija' })
     ).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'O aplikaciji', level: 2 })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'O aplikaciji' })).toBeVisible();
   });
 
   test('settings page has a back link to home', async ({ page }) => {

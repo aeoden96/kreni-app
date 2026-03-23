@@ -1,9 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import {
-  interpolatePosition,
-  getStopAwareProgress,
-  computeVehicleStopProgress,
-} from './vehicles';
+import { describe, expect, it } from 'vitest';
+
+import { computeVehicleStopProgress, getStopAwareProgress, interpolatePosition } from './vehicles';
 
 describe('interpolatePosition', () => {
   it('returns [0,0] for empty shape', () => {

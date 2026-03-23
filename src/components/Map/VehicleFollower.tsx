@@ -9,15 +9,15 @@ import { useEffect, useRef } from 'react';
 import { useMap, useMapEvents } from 'react-leaflet';
 
 interface VehicleFollowerProps {
-  /** Current GPS position of the followed vehicle, or null when not following. */
-  position: { lat: number; lon: number } | null;
   /** Called when the user drags the map — parent should clear follow state. */
   onDisengage: () => void;
+  /** Current GPS position of the followed vehicle, or null when not following. */
+  position: null | { lat: number; lon: number };
 }
 
-export function VehicleFollower({ position, onDisengage }: VehicleFollowerProps) {
+export function VehicleFollower({ onDisengage, position }: VehicleFollowerProps) {
   const map = useMap();
-  const prevPosRef = useRef<{ lat: number; lon: number } | null>(null);
+  const prevPosRef = useRef<null | { lat: number; lon: number }>(null);
 
   // Disengage on manual drag
   useMapEvents({

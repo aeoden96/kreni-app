@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures';
+import { expect, test } from './fixtures';
 
 /**
  * Navigation tests — verify each top-level route renders its expected content.
@@ -67,7 +67,7 @@ test.describe('settings', () => {
     await page.goto('/settings');
     await page.waitForLoadState('networkidle');
 
-    await expect(page.getByRole('heading', { name: 'Postavke', level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Postavke' })).toBeVisible();
   });
 
   test('settings page shows all section headings', async ({ page }) => {
@@ -75,7 +75,7 @@ test.describe('settings', () => {
     await page.waitForLoadState('networkidle');
 
     for (const section of ['Izgled', 'Karta', 'Podaci i predmemorija', 'O aplikaciji']) {
-      await expect(page.getByRole('heading', { name: section, level: 2 })).toBeVisible();
+      await expect(page.getByRole('heading', { level: 2, name: section })).toBeVisible();
     }
   });
 

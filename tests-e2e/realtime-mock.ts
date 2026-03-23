@@ -20,17 +20,18 @@
  */
 
 import type { Page } from '@playwright/test';
+
 import GtfsRealtimeBindings from 'gtfs-realtime-bindings';
 
 interface MockVehicle {
-  vehicleId: string;
-  /** Must be a real trip_id from trips.txt so the store can enrich it. */
-  tripId: string;
-  /** Route short name, e.g. '1'. */
-  routeId: string;
+  bearing?: number;
   lat: number;
   lng: number;
-  bearing?: number;
+  /** Route short name, e.g. '1'. */
+  routeId: string;
+  /** Must be a real trip_id from trips.txt so the store can enrich it. */
+  tripId: string;
+  vehicleId: string;
 }
 
 /**
@@ -41,42 +42,38 @@ interface MockVehicle {
  * Call this *before* page.goto() so the handler is registered before
  * the app starts its first poll.
  */
-export async function interceptRealtimeFeed(
-  page: Page,
-  vehicles: MockVehicle[],
-): Promise<void> {
+export async function interceptRealtimeFeed(page: Page, vehicles: MockVehicle[]): Promise<void> {
   const now = Math.floor(Date.now() / 1000);
 
   const feed = GtfsRealtimeBindings.transit_realtime.FeedMessage.create({
-    header: {
-      gtfsRealtimeVersion: '2.0',
-      incrementality:
-        GtfsRealtimeBindings.transit_realtime.FeedHeader.Incrementality.FULL_DATASET,
-      timestamp: now,
-    },
     entity: vehicles.map((v, i) => ({
       id: String(i + 1),
       vehicle: {
-        trip: { tripId: v.tripId, routeId: v.routeId },
         position: {
+          bearing: v.bearing ?? 0,
           latitude: v.lat,
           longitude: v.lng,
-          bearing: v.bearing ?? 0,
         },
-        vehicle: { id: v.vehicleId },
         timestamp: now,
+        trip: { routeId: v.routeId, tripId: v.tripId },
+        vehicle: { id: v.vehicleId },
       },
     })),
+    header: {
+      gtfsRealtimeVersion: '2.0',
+      incrementality: GtfsRealtimeBindings.transit_realtime.FeedHeader.Incrementality.FULL_DATASET,
+      timestamp: now,
+    },
   });
 
   const buffer = GtfsRealtimeBindings.transit_realtime.FeedMessage.encode(feed).finish();
 
   await page.route('http://localhost:9999/**', (route) => {
     route.fulfill({
-      status: 200,
+      body: Buffer.from(buffer),
       contentType: 'application/octet-stream',
       headers: { 'Access-Control-Allow-Origin': '*' },
-      body: Buffer.from(buffer),
+      status: 200,
     });
   });
 }

@@ -1,19 +1,20 @@
-import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { RefreshCw, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { useAppUpdate } from '../../hooks/useAppUpdate';
 
 interface ReleaseNotes {
-  version: string;
-  force?: boolean;
   changes: string[];
+  force?: boolean;
+  version: string;
 }
 
 interface UpdatePromptProps {
   /** Storybook only: when true, shows the banner with mock data (no real hook/fetch). */
   storybook?: boolean;
   /** Storybook only: override mock notes. Omit version or use wrong version to show fallback bullets. */
-  storybookNotes?: ReleaseNotes | null;
+  storybookNotes?: null | ReleaseNotes;
 }
 
 /**
@@ -21,7 +22,7 @@ interface UpdatePromptProps {
  * background. Prompts the user to reload and apply the update.
  * Fetches changelog.json (cache-busted) to show what changed.
  */
-const noop = () => { };
+const noop = () => {};
 
 export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePromptProps = {}) {
   const { t } = useTranslation();
@@ -29,7 +30,7 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
   const needRefresh = storybook || hook.needRefresh;
   const updateApp = storybook ? noop : hook.updateApp;
   const [dismissed, setDismissed] = useState(false);
-  const [notes, setNotes] = useState<ReleaseNotes | null>(null);
+  const [notes, setNotes] = useState<null | ReleaseNotes>(null);
   const [fullChangelog, setFullChangelog] = useState<ReleaseNotes[]>([]);
   const [showFull, setShowFull] = useState(false);
 
@@ -38,14 +39,18 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
     if (storybook) {
       setNotes(
         storybookNotes ?? {
+          changes: [
+            t('updatePrompt.storyPerf'),
+            t('updatePrompt.storyFeatures'),
+            t('updatePrompt.storyFixes'),
+          ],
           version: __APP_VERSION__,
-          changes: [t('updatePrompt.storyPerf'), t('updatePrompt.storyFeatures'), t('updatePrompt.storyFixes')],
-        },
+        }
       );
       return;
     }
     fetch(`${import.meta.env.BASE_URL}changelog.json?t=${Date.now()}`, { cache: 'no-store' })
-      .then((r) => r.ok ? r.json() as Promise<ReleaseNotes[]> : null)
+      .then((r) => (r.ok ? (r.json() as Promise<ReleaseNotes[]>) : null))
       .then((data) => {
         if (data && Array.isArray(data)) {
           setFullChangelog(data);
@@ -53,7 +58,9 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
           if (current) setNotes(current);
         }
       })
-      .catch(() => {/* silently ignore */ });
+      .catch(() => {
+        /* silently ignore */
+      });
   }, [needRefresh, storybook, storybookNotes, t]);
 
   // Force-update: auto-apply without user interaction
@@ -67,24 +74,24 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
 
   return (
     <>
+      <div aria-hidden className="fixed inset-0 z-[9998] bg-base-content/40 backdrop-blur-[2px]" />
       <div
-        className="fixed inset-0 z-[9998] bg-base-content/40 backdrop-blur-[2px]"
-        aria-hidden
-      />
-      <div
-        role="alertdialog"
-        aria-modal="true"
         aria-labelledby="update-prompt-title"
+        aria-modal="true"
         className="fixed z-[9999] inset-x-4 bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:inset-x-auto sm:bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] w-auto sm:w-[min(100%,28rem)] max-w-lg mx-auto safe-left safe-right animate-[modal-fade-in_0.2s_ease-out]"
+        role="alertdialog"
       >
         <div className="rounded-2xl bg-base-100 border border-base-300 shadow-2xl px-5 py-5 sm:px-6 sm:py-6 max-h-[min(70svh,32rem)] flex flex-col overflow-hidden">
           {/* HEADER ROW (Fixed) */}
           <div className="flex shrink-0 items-start gap-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-              <RefreshCw size={20} className="text-primary" aria-hidden />
+              <RefreshCw aria-hidden className="text-primary" size={20} />
             </div>
             <div className="flex-1 min-w-0 mt-0.5">
-              <p id="update-prompt-title" className="text-base sm:text-lg font-semibold text-base-content leading-snug">
+              <p
+                className="text-base sm:text-lg font-semibold text-base-content leading-snug"
+                id="update-prompt-title"
+              >
                 {t('updatePrompt.title')}
                 <span className="block mt-0.5 text-xs font-normal text-base-content/55">
                   v{__APP_VERSION__}
@@ -92,10 +99,10 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
               </p>
             </div>
             <button
-              type="button"
-              onClick={() => setDismissed(true)}
-              className="btn btn-ghost btn-circle btn-sm shrink-0 touch-target -mr-1 -mt-1"
               aria-label={t('common.close')}
+              className="btn btn-ghost btn-circle btn-sm shrink-0 touch-target -mr-1 -mt-1"
+              onClick={() => setDismissed(true)}
+              type="button"
             >
               <X size={20} />
             </button>
@@ -106,11 +113,11 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
             {showFull ? (
               <div className="space-y-4">
                 {fullChangelog.map((rel) => (
-                  <div key={rel.version} className="space-y-1">
+                  <div className="space-y-1" key={rel.version}>
                     <div className="font-bold text-sm text-base-content/90">v{rel.version}</div>
                     <ul className="space-y-1 text-sm text-base-content/70 leading-relaxed">
                       {rel.changes.map((c, i) => (
-                        <li key={i} className="flex gap-2">
+                        <li className="flex gap-2" key={i}>
                           <span className="shrink-0 text-primary font-bold leading-[1.35]">·</span>
                           <span>{c}</span>
                         </li>
@@ -128,7 +135,7 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
             ) : notes?.version === __APP_VERSION__ && notes.changes.length > 0 ? (
               <ul className="space-y-1.5 text-sm text-base-content/70 leading-relaxed">
                 {notes.changes.map((c, i) => (
-                  <li key={i} className="flex gap-2">
+                  <li className="flex gap-2" key={i}>
                     <span className="shrink-0 text-primary font-bold leading-[1.35]">·</span>
                     <span>{c}</span>
                   </li>
@@ -149,15 +156,18 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
 
             {!showFull && fullChangelog.length > 0 && (
               <button
-                onClick={() => setShowFull(true)}
                 className="mt-3 text-xs text-primary underline hover:text-primary-focus cursor-pointer block"
+                onClick={() => setShowFull(true)}
               >
                 {t('updatePrompt.seeFullChangelog', 'See full changelog')}
               </button>
             )}
             {showFull && (
               <p className="mt-4 text-[10px] text-base-content/40 italic leading-tight">
-                {t('updatePrompt.englishNote', '* Detailed release notes are automatically generated from project commits and are available in English only.')}
+                {t(
+                  'updatePrompt.englishNote',
+                  '* Detailed release notes are automatically generated from project commits and are available in English only.'
+                )}
               </p>
             )}
           </div>
@@ -165,16 +175,16 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
           {/* FOOTER ROW (Fixed) */}
           <div className="shrink-0 flex flex-col sm:flex-row gap-2 sm:gap-3 mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-base-200 sm:justify-end sm:items-center">
             <button
-              type="button"
-              onClick={() => setDismissed(true)}
               className="btn btn-outline border-2 border-base-300 bg-base-200/40 hover:bg-base-200/70 w-full sm:w-auto sm:btn-sm min-h-12 sm:min-h-0 font-medium"
+              onClick={() => setDismissed(true)}
+              type="button"
             >
               {t('updatePrompt.later')}
             </button>
             <button
-              type="button"
-              onClick={updateApp}
               className="btn btn-primary shadow-md shadow-primary/25 hover:shadow-lg hover:shadow-primary/30 w-full sm:w-auto sm:btn-sm min-h-12 sm:min-h-0 font-semibold transition-[box-shadow,filter]"
+              onClick={updateApp}
+              type="button"
             >
               {t('updatePrompt.refreshApp')}
             </button>

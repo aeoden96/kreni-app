@@ -1,93 +1,95 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+
 import type { ApproachingVehicle } from '../../hooks/useApproachingVehicles';
+
 import { ApproachingVehicleCard } from './ApproachingVehicleCard';
 
 const baseVehicle: ApproachingVehicle = {
-  tripId: '0_4_123_6_10001',
-  vehicleId: 'vehicle-1',
-  routeId: 'route-4',
-  routeShortName: '4',
-  routeType: 0,
-  routeLongName: 'Dubec – Savski most – Mirogoj',
-  tripDestinationName: 'Mirogoj',
-  etaMinutes: 9 * 60 + 20,
-  delaySeconds: 0,
   arrivingInSeconds: 300,
-  stopsAway: 3,
-  distanceMeters: 500,
   confidence: 'realtime',
+  delaySeconds: 0,
+  distanceMeters: 500,
+  etaFromGpsSeconds: 280,
+  etaMinutes: 9 * 60 + 20,
   lat: 45.8,
   lon: 15.97,
   passedStop: false,
-  etaFromGpsSeconds: 280,
+  routeId: 'route-4',
+  routeLongName: 'Dubec – Savski most – Mirogoj',
+  routeShortName: '4',
+  routeType: 0,
+  stopsAway: 3,
+  tripDestinationName: 'Mirogoj',
+  tripId: '0_4_123_6_10001',
+  vehicleId: 'vehicle-1',
 };
 
 /** At stop: distance < 15m, arriving now */
 const mockAtStop: ApproachingVehicle = {
   ...baseVehicle,
-  distanceMeters: 8,
   arrivingInSeconds: 0,
-  stopsAway: 1,
+  distanceMeters: 8,
   etaFromGpsSeconds: 0,
+  stopsAway: 1,
 };
 
 /** Nearby: distance < 100m */
 const mockNearby: ApproachingVehicle = {
   ...baseVehicle,
-  distanceMeters: 65,
   arrivingInSeconds: 90,
-  stopsAway: 1,
+  distanceMeters: 65,
   etaFromGpsSeconds: 85,
+  stopsAway: 1,
 };
 
 /** Far: distance > 100m */
 const mockFar: ApproachingVehicle = {
   ...baseVehicle,
-  distanceMeters: 850,
   arrivingInSeconds: 420,
-  stopsAway: 5,
+  distanceMeters: 850,
   etaFromGpsSeconds: 400,
+  stopsAway: 5,
 };
 
 /** Passed stop */
 const mockPassedStop: ApproachingVehicle = {
   ...baseVehicle,
-  distanceMeters: 120,
   arrivingInSeconds: -30,
-  stopsAway: 0,
-  passedStop: true,
+  distanceMeters: 120,
   etaFromGpsSeconds: null,
+  passedStop: true,
+  stopsAway: 0,
 };
 
 /** Scheduled only: no GPS */
 const mockScheduled: ApproachingVehicle = {
   ...baseVehicle,
-  vehicleId: null,
-  distanceMeters: null,
-  stopsAway: null,
+  arrivingInSeconds: 600,
   confidence: 'scheduled',
+  distanceMeters: null,
+  etaFromGpsSeconds: null,
   lat: null,
   lon: null,
-  etaFromGpsSeconds: null,
-  arrivingInSeconds: 600,
+  stopsAway: null,
+  vehicleId: null,
 };
 
 /** Bus variant */
 const mockBus: ApproachingVehicle = {
   ...mockNearby,
+  routeLongName: 'Savski most – Zapruđe',
   routeShortName: '106',
   routeType: 3,
-  routeLongName: 'Savski most – Zapruđe',
   tripDestinationName: 'Zapruđe',
 };
 
 const meta = {
-  title: 'Common / ApproachingVehicleCard',
   component: ApproachingVehicleCard,
   parameters: {
     layout: 'centered',
   },
   tags: ['autodocs'],
+  title: 'Common / ApproachingVehicleCard',
 } satisfies Meta<typeof ApproachingVehicleCard>;
 
 export default meta;

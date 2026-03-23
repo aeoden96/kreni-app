@@ -18,8 +18,8 @@ services:
     # node_modules are already installed on the host (WSL2 = Linux, same ABI).
     # playwright runs the webServer (Vite) automatically before starting tests.
     command: node ./node_modules/.bin/playwright test
-    ipc: host    # required for Chromium shared memory
-    init: true   # avoid zombie PID 1 issues
+    ipc: host # required for Chromium shared memory
+    init: true # avoid zombie PID 1 issues
 
   # ── MCP / interactive browser server ─────────────────────────────────────────
   # Used by the VS Code Playwright MCP (.vscode/mcp.json) and for headed debugging.
@@ -28,6 +28,6 @@ services:
     image: mcr.microsoft.com/playwright:v1.58.2-noble
     command: npx -y playwright@1.58.2 run-server --port 3000 --host 0.0.0.0
     ports:
-      - "3000:3000"
+      - '3000:3000'
     ipc: host
     init: true

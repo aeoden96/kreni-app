@@ -13,11 +13,11 @@ export function useAppUpdate() {
     updateServiceWorker,
   } = useRegisterSW({
     immediate: true,
-    onRegisteredSW(swUrl) {
-      console.log('[SW] registered:', swUrl);
-    },
     onNeedRefresh() {
       console.log('[SW] new version waiting — showing update prompt');
+    },
+    onRegisteredSW(swUrl) {
+      console.log('[SW] registered:', swUrl);
     },
     onRegisterError(error) {
       console.error('[SW] registration error:', error);
@@ -27,8 +27,7 @@ export function useAppUpdate() {
   // Append ?update to the URL to force the banner visible for UI testing,
   // e.g. http://localhost:5173/?update or http://localhost:4173/?update
   const devForceShow =
-    typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).has('update');
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('update');
 
   return {
     needRefresh: needRefresh || devForceShow,

@@ -14,7 +14,9 @@ const changelogJsonPath = path.resolve(publicPath, 'changelog.json');
 const changelogPath = path.resolve(rootPath, 'CHANGELOG.md');
 
 if (!fs.existsSync(changelogPath)) {
-  console.log(`[generate-changelog] No CHANGELOG.md found. Writing fallback notes for v${currentVersion}`);
+  console.log(
+    `[generate-changelog] No CHANGELOG.md found. Writing fallback notes for v${currentVersion}`
+  );
   fs.writeFileSync(changelogJsonPath, JSON.stringify([], null, 2));
   process.exit(0);
 }
@@ -25,7 +27,7 @@ const versionRegex = /^###? \[?(\d+\.\d+\.\d+)\]?.*$/gm;
 let match;
 const versions = [];
 while ((match = versionRegex.exec(changelogContent)) !== null) {
-  versions.push({ version: match[1], index: match.index });
+  versions.push({ index: match.index, version: match[1] });
 }
 
 const allReleases = [];
@@ -35,7 +37,7 @@ for (let i = 0; i < versions.length; i++) {
   const nextV = versions[i + 1];
   const endIndex = nextV ? nextV.index : changelogContent.length;
   const block = changelogContent.slice(v.index, endIndex);
-  
+
   const bulletRegex = /^[*-]\s+(.+)$/gm;
   const changes = [];
   let bulletMatch;
@@ -47,14 +49,16 @@ for (let i = 0; i < versions.length; i++) {
   }
 
   const force = block.includes('[FORCE]');
-  
+
   // Optionally map conventional commit titles to generic ones for i18n
   allReleases.push({
-    version: v.version,
     changes,
-    force
+    force,
+    version: v.version,
   });
 }
 
 fs.writeFileSync(changelogJsonPath, JSON.stringify(allReleases, null, 2));
-console.log(`[generate-changelog] Successfully generated changelog.json with ${allReleases.length} releases.`);
+console.log(
+  `[generate-changelog] Successfully generated changelog.json with ${allReleases.length} releases.`
+);

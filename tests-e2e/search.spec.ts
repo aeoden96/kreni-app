@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures';
+import { expect, test } from './fixtures';
 
 /**
  * Search modal tests.
@@ -15,7 +15,7 @@ test.describe('search modal', () => {
     await page.getByRole('button', { name: /Pretraži linije/ }).click();
 
     // Modal heading (captured via MCP)
-    await expect(page.getByRole('heading', { name: 'Pretraži', level: 2 })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'Pretraži' })).toBeVisible();
   });
 
   test('search modal shows tram and bus filter buttons', async ({ page }) => {

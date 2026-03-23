@@ -9,101 +9,66 @@
  *  3. Following (isFollowing) — same as #2 but with colored border, distance, pulse icon
  */
 
-import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { Maximize2, X, Train, Bus, Star, Navigation, MapPin } from 'lucide-react';
-import type { Route, Stop, RouteTimetable } from '../../utils/gtfs';
+
+import { Bus, MapPin, Maximize2, Navigation, Star, Train, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+
+import type { Route, RouteTimetable, Stop } from '../../utils/gtfs';
+import type { ParsedTripUpdate, ParsedVehiclePosition } from '../../utils/realtime';
 import type { VehiclePosition } from '../../utils/vehicles';
-import { computeVehicleStopProgress } from '../../utils/vehicles';
-import type { ParsedVehiclePosition, ParsedTripUpdate } from '../../utils/realtime';
-import { VehicleStopStatus } from '../../utils/realtime';
-import { getDirectionColor } from '../Map/directionColors';
+
 import { useSettingsStore } from '../../stores/settingsStore';
+import { VehicleStopStatus } from '../../utils/realtime';
+import { computeVehicleStopProgress } from '../../utils/vehicles';
+import { getDirectionColor } from '../Map/directionColors';
 
 interface RouteInfoBarProps {
-  route: Route;
-  vehicles: VehiclePosition[];
-  onExpand: () => void;
-  onClose: () => void;
-  orderedStops?: Record<string, string[]>;
-  stopsById?: Map<string, Stop>;
-  /** tripId of the last-clicked vehicle — enables the follow button */
-  followCandidateTripId?: string | null;
-  /** Called with the tripId to activate follow mode */
-  onFollowStart?: (tripId: string) => void;
-  /** Full VehiclePosition of the clicked/followed vehicle (headsign, delay, etc.) */
-  clickedVehicle?: VehiclePosition | null;
-  /** Raw realtime position of the clicked/followed vehicle (current stop, status) */
-  clickedVehiclePos?: ParsedVehiclePosition | null;
   /** Trip update for the clicked/followed vehicle (stop time updates, delay) */
-  clickedTripUpdate?: ParsedTripUpdate | null;
+  clickedTripUpdate?: null | ParsedTripUpdate;
+  /** Full VehiclePosition of the clicked/followed vehicle (headsign, delay, etc.) */
+  clickedVehicle?: null | VehiclePosition;
+  /** Raw realtime position of the clicked/followed vehicle (current stop, status) */
+  clickedVehiclePos?: null | ParsedVehiclePosition;
+  /** tripId of the last-clicked vehicle — enables the follow button */
+  followCandidateTripId?: null | string;
+  /** Raw realtime position of the followed vehicle — used for distance calculation */
+  followedVehiclePos?: null | ParsedVehiclePosition;
   /** When true the user is actively following — shows border + distance + pulse icon */
   isFollowing?: boolean;
+  onClose: () => void;
+  onExpand: () => void;
+  /** Called with the tripId to activate follow mode */
+  onFollowStart?: (tripId: string) => void;
   /** Called to exit follow mode */
   onUnfollow?: () => void;
-  /** Raw realtime position of the followed vehicle — used for distance calculation */
-  followedVehiclePos?: ParsedVehiclePosition | null;
+  orderedStops?: Record<string, string[]>;
+  route: Route;
   /** Route timetable for showing next N stops from static schedule */
-  routeTimetable?: RouteTimetable | null;
+  routeTimetable?: null | RouteTimetable;
+  stopsById?: Map<string, Stop>;
+  vehicles: VehiclePosition[];
 }
 
 const TRAM_COLOR = '#2563eb'; // blue-600
-const BUS_COLOR = '#d97706';  // amber-600
-
-function formatDelay(seconds: number, t: TFunction): { text: string; positive: boolean } {
-  const abs = Math.abs(seconds);
-  const mins = Math.floor(abs / 60);
-  const secs = abs % 60;
-  const time = mins > 0 ? `${mins} min ${secs} s` : `${secs} s`;
-  return seconds > 30
-    ? { text: t('routeBar.delayLate', { time }), positive: false }
-    : seconds < -30
-      ? { text: t('routeBar.delayEarly', { time }), positive: true }
-      : { text: t('routeBar.onTime'), positive: true };
-}
-
-function haversineMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371000;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function formatDistance(meters: number): string {
-  if (meters < 1000) return `${meters} m`;
-  return `${(meters / 1000).toFixed(1)} km`;
-}
-
-/** Format minutes-from-midnight (with optional delay in seconds) as HH:MM. */
-function formatMinutes(minutesFromMidnight: number, delaySeconds: number = 0): string {
-  const total = minutesFromMidnight + Math.round(delaySeconds / 60);
-  const wrapped = ((total % 1440) + 1440) % 1440;
-  const h = Math.floor(wrapped / 60);
-  const m = wrapped % 60;
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-}
+const BUS_COLOR = '#d97706'; // amber-600
 
 export function RouteInfoBar({
-  route,
-  vehicles,
-  onExpand,
-  onClose,
-  orderedStops,
-  stopsById,
-  followCandidateTripId,
-  onFollowStart,
+  clickedTripUpdate,
   clickedVehicle,
   clickedVehiclePos,
-  clickedTripUpdate,
-  isFollowing = false,
-  onUnfollow,
+  followCandidateTripId,
   followedVehiclePos,
+  isFollowing = false,
+  onClose,
+  onExpand,
+  onFollowStart,
+  onUnfollow,
+  orderedStops,
+  route,
   routeTimetable,
+  stopsById,
+  vehicles,
 }: RouteInfoBarProps) {
   const { t } = useTranslation();
   const color = route.type === 0 ? TRAM_COLOR : BUS_COLOR;
@@ -124,12 +89,12 @@ export function RouteInfoBar({
 
   const currentStopId = clickedVehiclePos?.currentStopId;
   const stopStatus = clickedVehiclePos?.status;
-  const currentStop = currentStopId && stopsById ? stopsById.get(currentStopId) ?? null : null;
+  const currentStop = currentStopId && stopsById ? (stopsById.get(currentStopId) ?? null) : null;
 
   const stopUpdates = clickedTripUpdate?.stopTimeUpdates ?? [];
   const derivedNextStopId = !currentStop && stopUpdates.length > 0 ? stopUpdates[0].stopId : null;
   const derivedNextStop =
-    derivedNextStopId && stopsById ? stopsById.get(derivedNextStopId) ?? null : null;
+    derivedNextStopId && stopsById ? (stopsById.get(derivedNextStopId) ?? null) : null;
 
   // ── GPS-based position in the trip's stop sequence ─────────────────────────
   // ZET's GTFS-RT trip updates only carry 2 upcoming stops and become stale
@@ -138,7 +103,7 @@ export function RouteInfoBar({
   // actual real-time position.
   const delaySeconds = clickedTripUpdate?.delay ?? clickedVehicle?.delay ?? null;
   const tripId = clickedVehicle?.tripId;
-  const tripStops = tripId ? routeTimetable?.[tripId] ?? null : null;
+  const tripStops = tripId ? (routeTimetable?.[tripId] ?? null) : null;
 
   const gpsPrimaryIdx = (() => {
     if (!clickedVehiclePos || !tripStops || !stopsById) return -1;
@@ -152,7 +117,7 @@ export function RouteInfoBar({
     const progress = computeVehicleStopProgress(
       clickedVehiclePos.latitude,
       clickedVehiclePos.longitude,
-      coords,
+      coords
     );
     // Math.ceil gives the next stop the vehicle hasn't reached yet.
     // Clamp to valid range so terminus vehicles don't overflow.
@@ -219,7 +184,7 @@ export function RouteInfoBar({
   const delayInfo = delaySeconds !== null ? formatDelay(delaySeconds, t) : null;
 
   // ── Distance to next stop (follow mode only) ───────────────────────────────
-  const distanceTargetStop: Stop | null = (() => {
+  const distanceTargetStop: null | Stop = (() => {
     if (!isFollowing || !stopsById) return null;
     // Prefer GPS-derived next stop; fall back to GTFS-RT when GPS unavailable
     if (gpsNextStop) return gpsNextStop;
@@ -242,16 +207,14 @@ export function RouteInfoBar({
             followedVehiclePos.latitude,
             followedVehiclePos.longitude,
             distanceTargetStop.lat,
-            distanceTargetStop.lon,
-          ),
+            distanceTargetStop.lon
+          )
         )
       : null;
 
   // ── Header display name ────────────────────────────────────────────────────
   const displayName =
-    hasVehiclePreview &&
-    clickedVehicle!.headsign &&
-    clickedVehicle!.headsign !== route.longName
+    hasVehiclePreview && clickedVehicle!.headsign && clickedVehicle!.headsign !== route.longName
       ? `→ ${clickedVehicle!.headsign}`
       : route.longName;
 
@@ -287,36 +250,39 @@ export function RouteInfoBar({
           {/* Actions */}
           <div className="flex items-center gap-1 shrink-0">
             <button
-              onClick={() => toggleFavouriteRoute(route.id)}
               className="btn btn-ghost btn-circle btn-xs min-h-[32px] min-w-[32px]"
+              onClick={() => toggleFavouriteRoute(route.id)}
               title={isFav ? t('search.favouriteRemove') : t('search.favouriteAdd')}
             >
               <Star
                 className="w-4 h-4"
-                fill={isFav ? 'currentColor' : 'none'}
                 color={isFav ? '#f59e0b' : 'currentColor'}
+                fill={isFav ? 'currentColor' : 'none'}
               />
             </button>
             {/* Follow button — only shown when a vehicle is clicked but not yet followed */}
             {!isFollowing && followCandidateTripId && onFollowStart && (
               <button
-                onClick={() => onFollowStart(followCandidateTripId)}
                 className="btn btn-ghost btn-circle btn-xs min-h-[32px] min-w-[32px]"
+                onClick={() => onFollowStart(followCandidateTripId)}
                 title={t('common.followVehicle')}
               >
                 <Navigation className="w-4 h-4" />
               </button>
             )}
             <button
-              onClick={onExpand}
               className="btn btn-ghost btn-circle btn-xs min-h-[32px] min-w-[32px]"
+              onClick={onExpand}
               title={t('common.showRouteDetails')}
             >
               <Maximize2 className="w-4 h-4" />
             </button>
             <button
-              onClick={() => { onUnfollow?.(); onClose(); }}
               className="btn btn-ghost btn-circle btn-xs min-h-[32px] min-w-[32px]"
+              onClick={() => {
+                onUnfollow?.();
+                onClose();
+              }}
               title={isFollowing ? t('common.stopFollowingVehicle') : t('common.close')}
             >
               <X className="w-4 h-4" />
@@ -352,15 +318,14 @@ export function RouteInfoBar({
                         {primaryStopTime}
                       </span>
                     )}
-                    
                   </span>
                 </div>
 
                 {/* Upcoming stops from static timetable */}
                 {upcomingStops.map((s, i) => (
                   <div
-                    key={i}
                     className="flex items-center gap-2 text-xs text-base-content/60 pl-5"
+                    key={i}
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-base-content/30 shrink-0" />
                     <span className="truncate">{s.name}</span>
@@ -407,19 +372,21 @@ export function RouteInfoBar({
                 const stopName = endId ? stopsById.get(endId)?.name || endId : '—';
                 const active = count > 0;
                 return (
-                  <span key={dir} className="flex items-center gap-1">
+                  <span className="flex items-center gap-1" key={dir}>
                     <span
                       style={{
-                        display: 'inline-block',
-                        width: 10,
-                        height: 10,
-                        borderRadius: 2,
                         background: getDirectionColor(route.type, idx),
+                        borderRadius: 2,
+                        display: 'inline-block',
                         flexShrink: 0,
+                        height: 10,
+                        width: 10,
                       }}
                     />
                     <span className="text-base-content/70 truncate max-w-[110px]">{stopName}</span>
-                    <span className={active ? 'font-semibold text-success' : 'text-base-content/40'}>
+                    <span
+                      className={active ? 'font-semibold text-success' : 'text-base-content/40'}
+                    >
                       {count}
                     </span>
                     {active && (
@@ -442,4 +409,40 @@ export function RouteInfoBar({
       </div>
     </div>
   );
+}
+
+function formatDelay(seconds: number, t: TFunction): { positive: boolean; text: string } {
+  const abs = Math.abs(seconds);
+  const mins = Math.floor(abs / 60);
+  const secs = abs % 60;
+  const time = mins > 0 ? `${mins} min ${secs} s` : `${secs} s`;
+  return seconds > 30
+    ? { positive: false, text: t('routeBar.delayLate', { time }) }
+    : seconds < -30
+      ? { positive: true, text: t('routeBar.delayEarly', { time }) }
+      : { positive: true, text: t('routeBar.onTime') };
+}
+
+function formatDistance(meters: number): string {
+  if (meters < 1000) return `${meters} m`;
+  return `${(meters / 1000).toFixed(1)} km`;
+}
+
+/** Format minutes-from-midnight (with optional delay in seconds) as HH:MM. */
+function formatMinutes(minutesFromMidnight: number, delaySeconds: number = 0): string {
+  const total = minutesFromMidnight + Math.round(delaySeconds / 60);
+  const wrapped = ((total % 1440) + 1440) % 1440;
+  const h = Math.floor(wrapped / 60);
+  const m = wrapped % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+function haversineMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371000;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }

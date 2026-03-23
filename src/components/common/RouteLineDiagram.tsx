@@ -13,8 +13,10 @@
  */
 
 import { useMemo } from 'react';
+
 import type { Stop } from '../../utils/gtfs';
 import type { VehiclePosition } from '../../utils/vehicles';
+
 import { computeVehicleStopProgress } from '../../utils/vehicles';
 
 // ── Layout constants ────────────────────────────────────────────────────────
@@ -28,18 +30,18 @@ export const STOP_LIST_PADDING_TOP = 8;
 const DIAGRAM_WIDTH = 44;
 
 // ── Colors ──────────────────────────────────────────────────────────────────
-const TRAM_COLOR = '#2563eb';   // blue-600
-const BUS_COLOR = '#d97706';   // amber-600
+const TRAM_COLOR = '#2563eb'; // blue-600
+const BUS_COLOR = '#d97706'; // amber-600
 
 interface RouteLineDiagramProps {
   /** Ordered stop IDs for the selected direction. */
   orderedStopIds: string[];
+  /** 0 = Tram, 3 = Bus */
+  routeType: number;
   /** Stop lookup map for lat/lon access. */
   stopsById: Map<string, Stop>;
   /** Realtime vehicles filtered to this direction (from the route). */
   vehicles: VehiclePosition[];
-  /** 0 = Tram, 3 = Bus */
-  routeType: number;
 }
 
 interface VehicleMarker {
@@ -49,9 +51,9 @@ interface VehicleMarker {
 
 export function RouteLineDiagram({
   orderedStopIds,
+  routeType,
   stopsById,
   vehicles,
-  routeType,
 }: RouteLineDiagramProps) {
   const color = routeType === 0 ? TRAM_COLOR : BUS_COLOR;
   const stopCount = orderedStopIds.length;
@@ -76,32 +78,32 @@ export function RouteLineDiagram({
 
   if (stopCount === 0) return <div style={{ width: DIAGRAM_WIDTH }} />;
 
-  const totalHeight =
-    stopCount * STOP_ROW_HEIGHT + STOP_LIST_PADDING_TOP;
+  const totalHeight = stopCount * STOP_ROW_HEIGHT + STOP_LIST_PADDING_TOP;
 
   // top-centre of the first dot
   const firstDotTop = STOP_LIST_PADDING_TOP + STOP_ROW_HEIGHT / 2;
   // top-centre of the last dot
-  const lastDotTop = STOP_LIST_PADDING_TOP + (stopCount - 1) * STOP_ROW_HEIGHT + STOP_ROW_HEIGHT / 2;
+  const lastDotTop =
+    STOP_LIST_PADDING_TOP + (stopCount - 1) * STOP_ROW_HEIGHT + STOP_ROW_HEIGHT / 2;
 
   return (
     <div
-      className="relative flex-shrink-0"
-      style={{ width: DIAGRAM_WIDTH, height: totalHeight }}
       aria-hidden="true"
+      className="relative flex-shrink-0"
+      style={{ height: totalHeight, width: DIAGRAM_WIDTH }}
     >
       {/* Vertical track line */}
       <div
         className="absolute"
         style={{
-          left: '50%',
-          transform: 'translateX(-50%)',
-          top: firstDotTop,
-          height: lastDotTop - firstDotTop,
-          width: 3,
           backgroundColor: color,
           borderRadius: 2,
+          height: lastDotTop - firstDotTop,
+          left: '50%',
           opacity: 0.75,
+          top: firstDotTop,
+          transform: 'translateX(-50%)',
+          width: 3,
         }}
       />
 
@@ -113,19 +115,19 @@ export function RouteLineDiagram({
 
         return (
           <div
-            key={idx}
             className="absolute"
+            key={idx}
             style={{
+              backgroundColor: isEndpoint ? color : 'white',
+              border: `2.5px solid ${color}`,
+              borderRadius: '50%',
+              boxShadow: isEndpoint ? `0 0 0 2px ${color}33` : undefined,
+              height: dotSize,
               left: '50%',
               top,
               transform: 'translate(-50%, -50%)',
               width: dotSize,
-              height: dotSize,
-              borderRadius: '50%',
-              backgroundColor: isEndpoint ? color : 'white',
-              border: `2.5px solid ${color}`,
               zIndex: 1,
-              boxShadow: isEndpoint ? `0 0 0 2px ${color}33` : undefined,
             }}
           />
         );
@@ -135,15 +137,11 @@ export function RouteLineDiagram({
       {vehicleMarkers.map(({ progress, vehicle }, idx) => {
         // Clamp to valid range
         const clampedProgress = Math.max(0, Math.min(stopCount - 1, progress));
-        const top =
-          STOP_LIST_PADDING_TOP +
-          clampedProgress * STOP_ROW_HEIGHT +
-          STOP_ROW_HEIGHT / 2;
+        const top = STOP_LIST_PADDING_TOP + clampedProgress * STOP_ROW_HEIGHT + STOP_ROW_HEIGHT / 2;
 
         const label = vehicle.headsign || (vehicle.direction === 0 ? 'A' : 'B');
         const speedKmh = vehicle.speed != null ? Math.round(vehicle.speed * 3.6) : null;
-        const delayMin =
-          vehicle.delay != null ? Math.round(vehicle.delay / 60) : null;
+        const delayMin = vehicle.delay != null ? Math.round(vehicle.delay / 60) : null;
 
         const tooltipParts: string[] = [label];
         if (speedKmh !== null) tooltipParts.push(`${speedKmh} km/h`);
@@ -159,26 +157,26 @@ export function RouteLineDiagram({
 
         return (
           <div
-            key={`v-${idx}`}
-            title={tooltip}
             className="absolute flex items-center justify-center"
+            key={`v-${idx}`}
             style={{
+              backgroundColor: color,
+              border: '2.5px solid white',
+              borderRadius: '50%',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
+              cursor: 'default',
+              height: 20,
               left: '50%',
               top,
               transform: 'translate(-50%, -50%)',
               width: 20,
-              height: 20,
-              borderRadius: '50%',
-              backgroundColor: color,
-              border: '2.5px solid white',
               zIndex: 2,
-              boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
-              cursor: 'default',
             }}
+            title={tooltip}
           >
             {/* Small direction triangle — pointing down (direction of travel) */}
-            <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-              <polygon points="4,7 7,1 1,1" fill="white" />
+            <svg fill="none" height="8" viewBox="0 0 8 8" width="8">
+              <polygon fill="white" points="4,7 7,1 1,1" />
             </svg>
           </div>
         );

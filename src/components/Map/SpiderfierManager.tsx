@@ -1,8 +1,9 @@
+import L from 'leaflet';
 import React, { Fragment, useEffect, useRef } from 'react';
 import { Circle, Marker, Polyline, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import { useSpiderfierContext } from './SpiderfierContext';
+
 import { useSettingsStore } from '../../stores/settingsStore';
+import { useSpiderfierContext } from './SpiderfierContext';
 
 // ── Icon factories ────────────────────────────────────────────────────────────
 
@@ -17,18 +18,27 @@ import { useSettingsStore } from '../../stores/settingsStore';
  */
 const LABEL_DIST_PX = 50;
 
+interface SpiderNodeProps {
+  centerLat: number;
+  centerLon: number;
+  centerPx: L.Point;
+  i: number;
+  isDark: boolean;
+  item: any;
+  map: L.Map;
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
 function animatedSpiderIcon(
   baseIcon: L.DivIcon | null | undefined,
   label: string,
   index: number,
   hideLabel = false,
   labelOffsetX = 0,
-  labelOffsetY = 0,
+  labelOffsetY = 0
 ): L.DivIcon {
-  const safe = label
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  const safe = label.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
   const innerHtml =
     typeof baseIcon?.options.html === 'string'
@@ -51,30 +61,17 @@ function animatedSpiderIcon(
   const iconSize = (baseIcon?.options.iconSize as [number, number] | undefined) ?? [14, 14];
   const iconAnchor = (baseIcon?.options.iconAnchor as [number, number] | undefined) ?? [7, 7];
 
-  return L.divIcon({ html, className: '', iconSize, iconAnchor });
-}
-
-
-// ── Component ─────────────────────────────────────────────────────────────────
-
-interface SpiderNodeProps {
-  item: any;
-  i: number;
-  centerLat: number;
-  centerLon: number;
-  centerPx: L.Point;
-  map: L.Map;
-  isDark: boolean;
+  return L.divIcon({ className: '', html, iconAnchor, iconSize });
 }
 
 const SpiderNode = React.memo(function SpiderNode({
-  item,
-  i,
   centerLat,
   centerLon,
   centerPx,
+  i,
+  isDark,
+  item,
   map,
-  isDark
 }: SpiderNodeProps) {
   const markerRef = useRef<L.Marker | null>(null);
 
@@ -102,48 +99,55 @@ const SpiderNode = React.memo(function SpiderNode({
   useEffect(() => {
     if (!item.resolveLabel || item.hideLabel) return;
     let cancelled = false;
-    item.resolveLabel().then((enriched: string) => {
-      if (cancelled) return;
-      const el = markerRef.current?.getElement?.();
-      if (!el) return;
-      const labelEl = el.querySelector<HTMLElement>('.spider-node-label');
-      if (!labelEl) return;
-      labelEl.innerHTML = enriched;
-    }).catch(() => { /* silent — label stays as stop name */ });
-    return () => { cancelled = true; };
+    item
+      .resolveLabel()
+      .then((enriched: string) => {
+        if (cancelled) return;
+        const el = markerRef.current?.getElement?.();
+        if (!el) return;
+        const labelEl = el.querySelector<HTMLElement>('.spider-node-label');
+        if (!labelEl) return;
+        labelEl.innerHTML = enriched;
+      })
+      .catch(() => {
+        /* silent — label stays as stop name */
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [item]);
 
   return (
     <Fragment>
       {/* Dashed leg from original position to spiderfied position */}
       <Polyline
+        interactive={false}
+        pane="spiderBgPane"
+        pathOptions={{
+          className: 'spider-leg',
+          color: isDark ? '#9ca3af' : '#374151',
+          dashArray: '3 5',
+          opacity: 0.65,
+          weight: 1.5,
+        }}
         positions={[
           [centerLat, centerLon],
           [item.spiderfiedLat, item.spiderfiedLon],
         ]}
-        pane="spiderBgPane"
-        pathOptions={{
-          color: isDark ? '#9ca3af' : '#374151',
-          weight: 1.5,
-          opacity: 0.65,
-          dashArray: '3 5',
-          className: 'spider-leg',
-        }}
-        interactive={false}
       />
       {/* Clickable node at spiderfied position – uses the real marker icon */}
       <Marker
-        ref={markerRef}
-        position={[item.spiderfiedLat, item.spiderfiedLon]}
-        icon={icon}
-        pane="spiderNodePane"
-        zIndexOffset={1100}
         eventHandlers={{
           click: (e) => {
             e.originalEvent.stopPropagation();
             item.onClick();
           },
         }}
+        icon={icon}
+        pane="spiderNodePane"
+        position={[item.spiderfiedLat, item.spiderfiedLon]}
+        ref={markerRef}
+        zIndexOffset={1100}
       />
     </Fragment>
   );
@@ -196,7 +200,9 @@ export const SpiderfierManager = React.memo(function SpiderfierManager() {
     const d = center.distanceTo(L.latLng(item.spiderfiedLat, item.spiderfiedLon));
     return d > max ? d : max;
   }, 0);
-  const mPerPx = 40075016.686 * Math.abs(Math.cos(centerLat * Math.PI / 180)) / Math.pow(2, map.getZoom() + 8);
+  const mPerPx =
+    (40075016.686 * Math.abs(Math.cos((centerLat * Math.PI) / 180))) /
+    Math.pow(2, map.getZoom() + 8);
   const bgRadius = maxMeters + mPerPx * 14;
 
   const centerPx = map.latLngToContainerPoint([centerLat, centerLon]);
@@ -205,33 +211,33 @@ export const SpiderfierManager = React.memo(function SpiderfierManager() {
     <>
       <Circle
         center={[centerLat, centerLon]}
-        radius={bgRadius}
-        pane="spiderBgPane"
-        pathOptions={{
-          color: 'transparent',
-          fillColor: isDark ? '#1f2937' : '#ffffff',
-          fillOpacity: 0.93,
-          weight: 0,
-          className: 'spider-bg-circle',
-        }}
-        interactive={true}
         eventHandlers={{
           click: (e) => {
             L.DomEvent.stopPropagation(e.originalEvent);
             ctx.collapse();
-          }
+          },
         }}
+        interactive={true}
+        pane="spiderBgPane"
+        pathOptions={{
+          className: 'spider-bg-circle',
+          color: 'transparent',
+          fillColor: isDark ? '#1f2937' : '#ffffff',
+          fillOpacity: 0.93,
+          weight: 0,
+        }}
+        radius={bgRadius}
       />
       {items.map((item, i) => (
         <SpiderNode
-          key={`spider-${item.id}`}
-          item={item}
-          i={i}
           centerLat={centerLat}
           centerLon={centerLon}
           centerPx={centerPx}
-          map={map}
+          i={i}
           isDark={isDark}
+          item={item}
+          key={`spider-${item.id}`}
+          map={map}
         />
       ))}
     </>

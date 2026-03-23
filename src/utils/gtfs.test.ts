@@ -1,13 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
   bearingToCompassKey,
-  minutesToTime,
-  timeToMinutes,
-  formatTime24h,
   calculateDistance,
   findNearestStops,
+  formatTime24h,
   getNextDepartures,
+  minutesToTime,
   type Stop,
+  timeToMinutes,
 } from './gtfs';
 
 describe('bearingToCompassKey', () => {
@@ -70,12 +71,12 @@ describe('calculateDistance', () => {
 
 describe('findNearestStops', () => {
   const baseStop = (id: string, lat: number, lon: number): Stop => ({
-    id,
     code: id,
-    name: id,
+    id,
     lat,
-    lon,
     locationType: 0,
+    lon,
+    name: id,
     parentStation: null,
   });
 

@@ -6,15 +6,17 @@
  * to match the order shown in the spider-graph overlays.
  */
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
 import type { Route } from '../utils/gtfs';
+
 import { fetchStopTimetable } from '../utils/gtfs';
 
 export function useStopRoutes(
-  stopId: string | null,
+  stopId: null | string,
   routesById: Map<string, Route>,
   options: { dataDir?: string } = {}
-): { routes: Route[]; loading: boolean } {
+): { loading: boolean; routes: Route[] } {
   const { dataDir = 'data' } = options;
   const [routes, setRoutes] = useState<Route[]>([]);
   const [loading, setLoading] = useState(false);
@@ -62,5 +64,5 @@ export function useStopRoutes(
     };
   }, [stopId, routesById, dataDir]);
 
-  return { routes, loading };
+  return { loading, routes };
 }

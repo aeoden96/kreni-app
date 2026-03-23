@@ -1,28 +1,29 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export interface BajsStation {
-    uid: number;
-    lat: number;
-    lng: number;
-    name: string;
-    bikes: number;
-    bike_racks: number;
-    free_racks: number;
-    bikes_available_to_rent: number;
-    active_place: number;
-    maintenance: boolean;
+  active_place: number;
+  bike_racks: number;
+  bikes: number;
+  bikes_available_to_rent: number;
+  free_racks: number;
+  lat: number;
+  lng: number;
+  maintenance: boolean;
+  name: string;
+  uid: number;
 }
 
 interface CacheData {
-    timestamp: number;
-    stations: BajsStation[];
+  stations: BajsStation[];
+  timestamp: number;
 }
 
 const CACHE_KEY = 'kreni-nextbike-cache';
 
 /** How long Nextbike data is considered fresh; also the poll interval when the hook is enabled. */
 export const NEXTBIKE_CACHE_TTL_MS = 60 * 1000;
-const API_URL = 'https://maps.nextbike.net/maps/nextbike-live.json?city=1172&domains=hd&list_cities=0&bikes=0';
+const API_URL =
+  'https://maps.nextbike.net/maps/nextbike-live.json?city=1172&domains=hd&list_cities=0&bikes=0';
 
 /**
  * Module-level guard so concurrent effect invocations (e.g. React Strict Mode
@@ -31,110 +32,112 @@ const API_URL = 'https://maps.nextbike.net/maps/nextbike-live.json?city=1172&dom
 let networkFetchInFlight = false;
 
 export function useNextbikeData(enabled: boolean) {
-    const [stations, setStations] = useState<BajsStation[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<Error | null>(null);
+  const [stations, setStations] = useState<BajsStation[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
-    // Initialise from localStorage so the timestamp survives page re-mounts
-    const [lastFetched, setLastFetched] = useState<number>(() => {
+  // Initialise from localStorage so the timestamp survives page re-mounts
+  const [lastFetched, setLastFetched] = useState<number>(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) return (JSON.parse(cached) as CacheData).timestamp;
+    } catch {
+      /* ignore */
+    }
+    return 0;
+  });
+
+  const intervalRef = useRef<null | number>(null);
+
+  useEffect(() => {
+    if (!enabled) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      return;
+    }
+
+    let isMounted = true;
+
+    /**
+     * @param force – when true (scheduled interval) always fetch from the
+     *   network, bypassing the localStorage freshness check. This avoids the
+     *   countdown getting stuck because a timer fired a few ms early.
+     */
+    const fetchData = async (force = false) => {
+      if (!force) {
+        // On-mount path: serve from localStorage if still fresh
         try {
-            const cached = localStorage.getItem(CACHE_KEY);
-            if (cached) return (JSON.parse(cached) as CacheData).timestamp;
-        } catch { /* ignore */ }
-        return 0;
-    });
-
-    const intervalRef = useRef<number | null>(null);
-
-    useEffect(() => {
-        if (!enabled) {
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-                intervalRef.current = null;
+          const cacheStr = localStorage.getItem(CACHE_KEY);
+          if (cacheStr) {
+            const cache: CacheData = JSON.parse(cacheStr);
+            if (Date.now() - cache.timestamp < NEXTBIKE_CACHE_TTL_MS) {
+              if (isMounted) {
+                setStations(cache.stations);
+                setLastFetched(cache.timestamp);
+              }
+              return;
             }
-            return;
+          }
+        } catch (e) {
+          console.error('Failed to parse nextbike cache', e);
+        }
+      }
+
+      // Prevent concurrent fetches (e.g. Strict Mode double-invoke)
+      if (networkFetchInFlight) return;
+      networkFetchInFlight = true;
+
+      if (isMounted) setLoading(true);
+
+      try {
+        const response = await fetch(API_URL);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch nextbike data: ${response.status}`);
         }
 
-        let isMounted = true;
+        const data = await response.json();
 
-        /**
-         * @param force – when true (scheduled interval) always fetch from the
-         *   network, bypassing the localStorage freshness check. This avoids the
-         *   countdown getting stuck because a timer fired a few ms early.
-         */
-        const fetchData = async (force = false) => {
-            if (!force) {
-                // On-mount path: serve from localStorage if still fresh
-                try {
-                    const cacheStr = localStorage.getItem(CACHE_KEY);
-                    if (cacheStr) {
-                        const cache: CacheData = JSON.parse(cacheStr);
-                        if (Date.now() - cache.timestamp < NEXTBIKE_CACHE_TTL_MS) {
-                            if (isMounted) {
-                                setStations(cache.stations);
-                                setLastFetched(cache.timestamp);
-                            }
-                            return;
-                        }
-                    }
-                } catch (e) {
-                    console.error('Failed to parse nextbike cache', e);
-                }
-            }
+        // Extract Zagreb stations
+        let newStations: BajsStation[] = [];
+        if (data.countries?.[0]?.cities?.[0]) {
+          newStations = data.countries[0].cities[0].places || [];
+        }
 
-            // Prevent concurrent fetches (e.g. Strict Mode double-invoke)
-            if (networkFetchInFlight) return;
-            networkFetchInFlight = true;
+        const now = Date.now();
 
-            if (isMounted) setLoading(true);
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ stations: newStations, timestamp: now }));
 
-            try {
-                const response = await fetch(API_URL);
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch nextbike data: ${response.status}`);
-                }
+        if (isMounted) {
+          setStations(newStations);
+          setLastFetched(now);
+          setLoading(false);
+          setError(null);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err instanceof Error ? err : new Error('Unknown error fetching nextbike data'));
+          setLoading(false);
+        }
+      } finally {
+        networkFetchInFlight = false;
+      }
+    };
 
-                const data = await response.json();
+    fetchData(false);
+    // Always force a real network request on the scheduled interval so the
+    // countdown never gets stuck when the timer fires a few ms early.
+    intervalRef.current = window.setInterval(() => fetchData(true), NEXTBIKE_CACHE_TTL_MS);
 
-                // Extract Zagreb stations
-                let newStations: BajsStation[] = [];
-                if (data.countries?.[0]?.cities?.[0]) {
-                    newStations = data.countries[0].cities[0].places || [];
-                }
+    return () => {
+      isMounted = false;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [enabled]);
 
-                const now = Date.now();
-
-                localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: now, stations: newStations }));
-
-                if (isMounted) {
-                    setStations(newStations);
-                    setLastFetched(now);
-                    setLoading(false);
-                    setError(null);
-                }
-            } catch (err) {
-                if (isMounted) {
-                    setError(err instanceof Error ? err : new Error('Unknown error fetching nextbike data'));
-                    setLoading(false);
-                }
-            } finally {
-                networkFetchInFlight = false;
-            }
-        };
-
-        fetchData(false);
-        // Always force a real network request on the scheduled interval so the
-        // countdown never gets stuck when the timer fires a few ms early.
-        intervalRef.current = window.setInterval(() => fetchData(true), NEXTBIKE_CACHE_TTL_MS);
-
-        return () => {
-            isMounted = false;
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-                intervalRef.current = null;
-            }
-        };
-    }, [enabled]);
-
-    return { stations, loading, error, lastFetched };
+  return { error, lastFetched, loading, stations };
 }

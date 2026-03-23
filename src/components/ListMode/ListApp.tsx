@@ -11,27 +11,28 @@
  * Tapping a route opens RouteModal (reused as-is).
  */
 
-import { useState, useCallback } from 'react';
+import { AlertTriangle, MapPin, Route as RouteIcon, Star } from 'lucide-react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Star, Route as RouteIcon, MapPin, AlertTriangle } from 'lucide-react';
-import { useInitialData } from '../../hooks/useInitialData';
+
 import { useCurrentService } from '../../hooks/useCurrentService';
+import { useInitialData } from '../../hooks/useInitialData';
+import { useRealtimeData } from '../../hooks/useRealtimeData';
 import { useRouteData } from '../../hooks/useRouteData';
 import { useVehiclePositions } from '../../hooks/useVehiclePositions';
-import { useRealtimeData } from '../../hooks/useRealtimeData';
 import { useRealtimeStore } from '../../stores/realtimeStore';
 import { useSettingsStore } from '../../stores/settingsStore';
-import { StopModal } from '../common/StopModal';
-import { RouteModal } from '../common/RouteModal';
 import { DebugPanel } from '../common/DebugPanel';
 import { OnboardingWizard } from '../common/OnboardingWizard';
-import { FavouritesTab } from './FavouritesTab';
-import { RoutesTab } from './RoutesTab';
-import { NearbyTab } from './NearbyTab';
+import { RouteModal } from '../common/RouteModal';
+import { StopModal } from '../common/StopModal';
 import { AlertsTab } from './AlertsTab';
+import { FavouritesTab } from './FavouritesTab';
+import { NearbyTab } from './NearbyTab';
+import { RoutesTab } from './RoutesTab';
 
-type Tab = 'favourites' | 'routes' | 'nearby' | 'alerts';
 type DirectionFilter = 'A' | 'B';
+type Tab = 'alerts' | 'favourites' | 'nearby' | 'routes';
 
 export function ListApp() {
   const { t } = useTranslation();
@@ -40,25 +41,25 @@ export function ListApp() {
   // Modal / selection state
   const [stopModalOpen, setStopModalOpen] = useState(false);
   const [routeModalOpen, setRouteModalOpen] = useState(false);
-  const [selectedStopId, setSelectedStopId] = useState<string | null>(null);
-  const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
-  const [, setSelectedRouteType] = useState<number | null>(null);
+  const [selectedStopId, setSelectedStopId] = useState<null | string>(null);
+  const [selectedRouteId, setSelectedRouteId] = useState<null | string>(null);
+  const [, setSelectedRouteType] = useState<null | number>(null);
   const [directionFilter, setDirectionFilter] = useState<DirectionFilter>('A');
   const { addRecentRoute, addRecentStop } = useSettingsStore();
 
   // Data hooks
   const {
-    stops,
-    routes,
-    stopsById,
-    routesById,
     calendar,
-    loading: initialLoading,
     error: initialError,
+    loading: initialLoading,
+    routes,
+    routesById,
+    stops,
+    stopsById,
   } = useInitialData();
 
   const serviceId = useCurrentService(calendar);
-  const { routeStops, orderedStops, activeTripsData } = useRouteData(selectedRouteId);
+  const { activeTripsData, orderedStops, routeStops } = useRouteData(selectedRouteId);
   const vehicles = useVehiclePositions(activeTripsData, serviceId);
   const { error: realtimeError, stats: realtimeStats } = useRealtimeData();
   const serviceAlerts = useRealtimeStore((s) => s.serviceAlerts);
@@ -134,15 +135,15 @@ export function ListApp() {
   const selectedStop = selectedStopId ? stopsById.get(selectedStopId) : null;
   const selectedRoute = selectedRouteId ? routesById.get(selectedRouteId) : null;
 
-  const tabs: { id: Tab; icon: typeof Star; label: string; badge?: number }[] = [
-    { id: 'favourites', icon: Star, label: t('listApp.tabFavourites') },
-    { id: 'routes', icon: RouteIcon, label: t('listApp.tabRoutes') },
-    { id: 'nearby', icon: MapPin, label: t('listApp.tabNearby') },
+  const tabs: { badge?: number; icon: typeof Star; id: Tab; label: string }[] = [
+    { icon: Star, id: 'favourites', label: t('listApp.tabFavourites') },
+    { icon: RouteIcon, id: 'routes', label: t('listApp.tabRoutes') },
+    { icon: MapPin, id: 'nearby', label: t('listApp.tabNearby') },
     {
-      id: 'alerts',
-      icon: AlertTriangle,
-      label: t('listApp.tabAlerts'),
       badge: serviceAlerts.length || undefined,
+      icon: AlertTriangle,
+      id: 'alerts',
+      label: t('listApp.tabAlerts'),
     },
   ];
 
@@ -162,36 +163,32 @@ export function ListApp() {
         {realtimeError && (
           <span className="badge badge-error badge-sm gap-1">{t('listApp.gpsError')}</span>
         )}
-
-
       </header>
 
       {/* Tab content */}
       <main className="flex-1 overflow-y-auto overscroll-contain">
         {activeTab === 'favourites' && (
           <FavouritesTab
-            stopsById={stopsById}
-            routesById={routesById}
-            onSelectStop={handleSelectStop}
             onSelectRoute={handleSelectRoute}
+            onSelectStop={handleSelectStop}
+            routesById={routesById}
+            stopsById={stopsById}
           />
         )}
-        {activeTab === 'routes' && (
-          <RoutesTab routes={routes} onSelectRoute={handleSelectRoute} />
-        )}
+        {activeTab === 'routes' && <RoutesTab onSelectRoute={handleSelectRoute} routes={routes} />}
         {activeTab === 'nearby' && (
           <NearbyTab
+            onSelectStop={handleSelectStop}
+            routesById={routesById}
             stops={stops}
             stopsById={stopsById}
-            routesById={routesById}
-            onSelectStop={handleSelectStop}
           />
         )}
         {activeTab === 'alerts' && (
           <AlertsTab
             alerts={serviceAlerts}
-            routesById={routesById}
             onRouteClick={handleSelectRoute}
+            routesById={routesById}
           />
         )}
       </main>
@@ -199,16 +196,15 @@ export function ListApp() {
       {/* Bottom tab bar */}
       <nav className="relative z-[2100] bg-base-100 border-t border-base-300 shrink-0 safe-area-bottom">
         <div className="flex">
-          {tabs.map(({ id, icon: Icon, label, badge }) => {
+          {tabs.map(({ badge, icon: Icon, id, label }) => {
             const isActive = activeTab === id;
             return (
               <button
+                className={`flex-1 flex flex-col items-center gap-0.5 py-2 pt-2.5 transition-colors relative ${
+                  isActive ? 'text-primary' : 'text-base-content/50 hover:text-base-content/70'
+                }`}
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className={`flex-1 flex flex-col items-center gap-0.5 py-2 pt-2.5 transition-colors relative ${isActive
-                  ? 'text-primary'
-                  : 'text-base-content/50 hover:text-base-content/70'
-                  }`}
               >
                 <div className="relative">
                   <Icon className="w-5 h-5" />
@@ -232,25 +228,25 @@ export function ListApp() {
       {selectedStop && (
         <StopModal
           isOpen={stopModalOpen}
-          stop={selectedStop}
-          routesById={routesById}
-          stopsById={stopsById}
           onClose={handleCloseStop}
           onRouteClick={handleRouteClickFromStop}
+          routesById={routesById}
+          stop={selectedStop}
+          stopsById={stopsById}
         />
       )}
 
       {selectedRoute && (
         <RouteModal
-          isOpen={routeModalOpen}
-          route={selectedRoute}
-          routeStops={routeStops}
-          orderedStops={orderedStops}
-          stopsById={stopsById}
-          vehicles={vehicles}
           initialDirectionFilter={directionFilter}
+          isOpen={routeModalOpen}
           onClose={handleCloseRoute}
           onStopClick={handleStopClickFromRoute}
+          orderedStops={orderedStops}
+          route={selectedRoute}
+          routeStops={routeStops}
+          stopsById={stopsById}
+          vehicles={vehicles}
         />
       )}
 

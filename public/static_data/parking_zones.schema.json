@@ -88,7 +88,9 @@
               "properties": {
                 "name": { "type": "string" },
                 "sms": { "type": "string" },
-                "enforcement": { "$ref": "#/properties/zoneInfo/additionalProperties/properties/enforcement" },
+                "enforcement": {
+                  "$ref": "#/properties/zoneInfo/additionalProperties/properties/enforcement"
+                },
                 "maxTime": { "type": ["string", "null"] },
                 "prices": { "$ref": "#/properties/zoneInfo/additionalProperties/properties/prices" }
               }

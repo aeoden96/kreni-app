@@ -1,21 +1,23 @@
-import { useState, useEffect } from 'react';
-import { GTFS_PROXY_URL, GTFS_API_KEY } from '../config';
-import type { ParsedServiceAlert } from '../utils/realtime';
+import { useEffect, useState } from 'react';
+
 import type { Route } from '../utils/gtfs';
+import type { ParsedServiceAlert } from '../utils/realtime';
+
+import { GTFS_API_KEY, GTFS_PROXY_URL } from '../config';
 
 interface RssAlert {
-  id: string;
-  guid: string;
-  title: string;
-  lines: string[];
-  type: 'route-change' | 'stop-change' | 'cancellation' | 'new-service' | 'other';
-  startDate: string | null;
-  endDate: string | null;
   affectedStops: string[];
-  summary: string;
-  pubDate: string;
-  url: string;
+  endDate: null | string;
+  guid: string;
+  id: string;
+  lines: string[];
   processedAt: string;
+  pubDate: string;
+  startDate: null | string;
+  summary: string;
+  title: string;
+  type: 'cancellation' | 'new-service' | 'other' | 'route-change' | 'stop-change';
+  url: string;
 }
 
 interface RssAlertsFile {
@@ -24,56 +26,15 @@ interface RssAlertsFile {
 }
 
 const TYPE_TO_EFFECT: Record<RssAlert['type'], string> = {
+  cancellation: 'NO_SERVICE',
+  'new-service': 'ADDITIONAL_SERVICE',
+  other: 'OTHER_EFFECT',
   'route-change': 'DETOUR',
   'stop-change': 'STOP_MOVED',
-  'cancellation': 'NO_SERVICE',
-  'new-service': 'ADDITIONAL_SERVICE',
-  'other': 'OTHER_EFFECT',
 };
 
 const CACHE_KEY = 'kreni-rss-alerts-cache';
 const CACHE_DURATION_MS = 30 * 60 * 1000; // 30 minutes – alerts update every 4 h
-
-function toActivePosix(dateStr: string | null): number | null {
-  if (!dateStr) return null;
-  const ts = Date.parse(dateStr);
-  return isNaN(ts) ? null : Math.floor(ts / 1000);
-}
-
-function convertToServiceAlerts(
-  rssAlerts: RssAlert[],
-  routesById: Map<string, Route>,
-): ParsedServiceAlert[] {
-  // Build a short-name → routeId index once
-  const shortNameIndex = new Map<string, string>();
-  for (const [id, route] of routesById) {
-    shortNameIndex.set(route.shortName, id);
-  }
-
-  // Filter to only currently active or future alerts
-  const now = Date.now() / 1000;
-
-  return rssAlerts
-    .filter((a) => {
-      const until = toActivePosix(a.endDate);
-      // Keep if no end date known, or end date is in the future
-      return until === null || until > now;
-    })
-    .map((a): ParsedServiceAlert => ({
-      id: `rss-${a.id}`,
-      routeIds: a.lines
-        .map((line) => shortNameIndex.get(line))
-        .filter((id): id is string => id !== undefined),
-      stopIds: [],
-      header: a.title,
-      description: a.summary,
-      cause: 'OTHER_CAUSE',
-      effect: TYPE_TO_EFFECT[a.type] ?? 'OTHER_EFFECT',
-      activeSince: toActivePosix(a.startDate),
-      activeUntil: toActivePosix(a.endDate),
-      url: a.url,
-    }));
-}
 
 export function useRssServiceAlerts(routesById: Map<string, Route>): ParsedServiceAlert[] {
   const [alerts, setAlerts] = useState<ParsedServiceAlert[]>([]);
@@ -86,7 +47,7 @@ export function useRssServiceAlerts(routesById: Map<string, Route>): ParsedServi
       try {
         const cached = localStorage.getItem(CACHE_KEY);
         if (cached) {
-          const { ts, data }: { ts: number; data: RssAlert[] } = JSON.parse(cached);
+          const { data, ts }: { data: RssAlert[]; ts: number } = JSON.parse(cached);
           if (Date.now() - ts < CACHE_DURATION_MS) {
             if (!cancelled) {
               setAlerts(convertToServiceAlerts(data, routesById));
@@ -108,7 +69,7 @@ export function useRssServiceAlerts(routesById: Map<string, Route>): ParsedServi
         const json: RssAlertsFile = await res.json();
 
         try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data: json.alerts }));
+          localStorage.setItem(CACHE_KEY, JSON.stringify({ data: json.alerts, ts: Date.now() }));
         } catch {
           // storage quota exceeded – ignore
         }
@@ -122,12 +83,57 @@ export function useRssServiceAlerts(routesById: Map<string, Route>): ParsedServi
     }
 
     load();
-    return () => { cancelled = true; };
-  // routesById is a new Map reference on every render but its content is stable
-  // after initial data load. Using .size as a proxy dep avoids infinite re-runs
-  // while still re-fetching once routes are available.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      cancelled = true;
+    };
+    // routesById is a new Map reference on every render but its content is stable
+    // after initial data load. Using .size as a proxy dep avoids infinite re-runs
+    // while still re-fetching once routes are available.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routesById.size]);
 
   return alerts;
+}
+
+function convertToServiceAlerts(
+  rssAlerts: RssAlert[],
+  routesById: Map<string, Route>
+): ParsedServiceAlert[] {
+  // Build a short-name → routeId index once
+  const shortNameIndex = new Map<string, string>();
+  for (const [id, route] of routesById) {
+    shortNameIndex.set(route.shortName, id);
+  }
+
+  // Filter to only currently active or future alerts
+  const now = Date.now() / 1000;
+
+  return rssAlerts
+    .filter((a) => {
+      const until = toActivePosix(a.endDate);
+      // Keep if no end date known, or end date is in the future
+      return until === null || until > now;
+    })
+    .map(
+      (a): ParsedServiceAlert => ({
+        activeSince: toActivePosix(a.startDate),
+        activeUntil: toActivePosix(a.endDate),
+        cause: 'OTHER_CAUSE',
+        description: a.summary,
+        effect: TYPE_TO_EFFECT[a.type] ?? 'OTHER_EFFECT',
+        header: a.title,
+        id: `rss-${a.id}`,
+        routeIds: a.lines
+          .map((line) => shortNameIndex.get(line))
+          .filter((id): id is string => id !== undefined),
+        stopIds: [],
+        url: a.url,
+      })
+    );
+}
+
+function toActivePosix(dateStr: null | string): null | number {
+  if (!dateStr) return null;
+  const ts = Date.parse(dateStr);
+  return isNaN(ts) ? null : Math.floor(ts / 1000);
 }

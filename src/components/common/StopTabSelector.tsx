@@ -2,28 +2,28 @@
  * Tab selector for stop view: "Vozila" (live GPS) and "Red vožnje" (timetable).
  */
 
-import { useTranslation } from 'react-i18next';
 import { Bus, Clock } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
-export type StopTab = 'vehicles' | 'timetable';
+export type StopTab = 'timetable' | 'vehicles';
 
 interface StopTabSelectorProps {
   activeTab: StopTab;
-  onTabChange: (tab: StopTab) => void;
-  /** Number of live GPS vehicles — shown as a badge on the Vehicles tab */
-  liveVehicleCount?: number;
   /** Smaller variant for compact StopInfoBar */
   compact?: boolean;
   /** When true, the Vozila (vehicles) tab is not rendered. Useful for modes without realtime. */
   hideVehicles?: boolean;
+  /** Number of live GPS vehicles — shown as a badge on the Vehicles tab */
+  liveVehicleCount?: number;
+  onTabChange: (tab: StopTab) => void;
 }
 
 export function StopTabSelector({
   activeTab,
-  onTabChange,
-  liveVehicleCount,
   compact = false,
   hideVehicles = false,
+  liveVehicleCount,
+  onTabChange,
 }: StopTabSelectorProps) {
   const { t } = useTranslation();
   const tabClass = compact
@@ -33,12 +33,12 @@ export function StopTabSelector({
   const iconSize = compact ? 'w-3 h-3' : 'w-3.5 h-3.5';
 
   return (
-    <div role="tablist" className="tabs tabs-box bg-base-200/70 rounded-full w-full p-0.5">
+    <div className="tabs tabs-box bg-base-200/70 rounded-full w-full p-0.5" role="tablist">
       {!hideVehicles && (
         <button
-          role="tab"
           className={`${tabClass} ${activeTab === 'vehicles' ? activeClass : ''} flex flex-1 items-center justify-center gap-1`}
           onClick={() => onTabChange('vehicles')}
+          role="tab"
         >
           <Bus className={iconSize} />
           <span>{t('stopView.tabVehiclesNearby')}</span>
@@ -50,9 +50,9 @@ export function StopTabSelector({
         </button>
       )}
       <button
-        role="tab"
         className={`${tabClass} ${activeTab === 'timetable' ? activeClass : ''} flex flex-1 items-center justify-center gap-1`}
         onClick={() => onTabChange('timetable')}
+        role="tab"
       >
         <Clock className={iconSize} />
         <span>{t('stopView.tabTimetable')}</span>

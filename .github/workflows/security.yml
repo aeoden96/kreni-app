@@ -2,7 +2,7 @@ name: Security
 
 on:
   pull_request:
-    branches: [ "master", "main" ]
+    branches: ['master', 'main']
 
 permissions:
   contents: read

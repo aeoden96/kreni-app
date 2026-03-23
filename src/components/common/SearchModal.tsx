@@ -4,74 +4,76 @@
  */
 
 import { memo } from 'react';
+
 import type { Route, Stop } from '../../utils/gtfs';
+
 import { useSearchModal } from '../../hooks/useSearchModal';
-import { SearchHeader } from './search/SearchHeader';
-import { RouteList } from './search/RouteList';
-import { StopGroupList } from './search/StopGroupList';
 import { DirectionsContent } from './search/DirectionsContent';
 import { RecentsBar } from './search/RecentsBar';
+import { RouteList } from './search/RouteList';
+import { SearchHeader } from './search/SearchHeader';
+import { StopGroupList } from './search/StopGroupList';
 
 interface SearchModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSelectRoute: (routeId: string, routeType: number, directionFilter?: 'A' | 'B') => void;
+  onSelectStop: (stopId: string) => void;
   routes: Route[];
   stops: Stop[];
   stopsById: Map<string, Stop>;
-  onSelectRoute: (routeId: string, routeType: number, directionFilter?: 'A' | 'B') => void;
-  onSelectStop: (stopId: string) => void;
 }
 
 export const SearchModal = memo(function SearchModal(props: SearchModalProps) {
   const {
-    config,
-    filter,
-    setFilter,
-    trams,
+    badgeColor,
     buses,
-    trainRoutes,
-    stopsMode,
-    setStopsMode,
-    searchQuery,
-    setSearchQuery,
-    searchInputRef,
-    isDirsMode,
-    dirFromStop,
-    setDirFromStop,
-    dirToStop,
+    config,
     dirActiveField,
-    setDirActiveField,
-    dirToQuery,
-    setDirToQuery,
+    dirFromStop,
+    dirLoading,
+    dirResultLabel,
+    dirResults,
     dirToInputRef,
-    handleDirSwap,
+    dirToQuery,
+    dirToStop,
+    expandedStopKeys,
+    favouriteRouteIds,
+    favouriteStopIds,
     favRoutes,
     favStops,
-    badgeColor,
+    filter,
+    filteredDirStops,
+    filteredRoutes,
+    filteredStopGroups,
+    handleClearRecentsForTab,
+    handleDirStopSelect,
+    handleDirSwap,
+    handleSelectDirectionsRoute,
     handleSelectRoute,
     handleSelectStop,
-    filteredRoutes,
-    favouriteRouteIds,
-    toggleFavouriteRoute,
-    filteredStopGroups,
-    expandedStopKeys,
-    setExpandedStopKeys,
-    routesById,
-    stopsById,
-    favouriteStopIds,
-    toggleFavouriteStop,
-    filteredDirStops,
-    dirResultLabel,
-    dirLoading,
-    dirResults,
-    handleSelectDirectionsRoute,
-    handleDirStopSelect,
+    hasRecents,
+    isDirsMode,
+    isRouteFilter,
     recentItemsMerged,
     recentsExpanded,
+    routesById,
+    searchInputRef,
+    searchQuery,
+    setDirActiveField,
+    setDirFromStop,
+    setDirToQuery,
+    setExpandedStopKeys,
+    setFilter,
     setRecentsExpanded,
-    handleClearRecentsForTab,
-    isRouteFilter,
-    hasRecents,
+    setSearchQuery,
+    setStopsMode,
+    stopsById,
+    stopsMode,
+    toggleFavouriteRoute,
+    toggleFavouriteStop,
+    trainRoutes,
+    trams,
   } = useSearchModal(props);
 
   if (!props.isOpen) return null;
@@ -81,8 +83,8 @@ export const SearchModal = memo(function SearchModal(props: SearchModalProps) {
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        style={{ animation: 'backdrop-fade-in 0.15s ease-out' }}
         onClick={props.onClose}
+        style={{ animation: 'backdrop-fade-in 0.15s ease-out' }}
       />
 
       {/* Modal */}
@@ -91,75 +93,75 @@ export const SearchModal = memo(function SearchModal(props: SearchModalProps) {
         style={{ animation: 'modal-fade-in 0.2s ease-out' }}
       >
         <SearchHeader
-          config={config}
-          filter={filter}
-          setFilter={setFilter}
-          trams={trams}
+          badgeColor={badgeColor}
           buses={buses}
-          trainRoutes={trainRoutes}
-          stopsMode={stopsMode}
-          setStopsMode={setStopsMode}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          searchInputRef={searchInputRef}
-          isDirsMode={isDirsMode}
+          config={config}
           dirFromStop={dirFromStop}
-          dirToStop={dirToStop}
-          setDirActiveField={setDirActiveField}
-          setDirFromStop={setDirFromStop}
-          dirToQuery={dirToQuery}
-          setDirToQuery={setDirToQuery}
           dirToInputRef={dirToInputRef}
-          onDirSwap={handleDirSwap}
+          dirToQuery={dirToQuery}
+          dirToStop={dirToStop}
           favRoutes={favRoutes}
           favStops={favStops}
-          badgeColor={badgeColor}
+          filter={filter}
+          isDirsMode={isDirsMode}
+          onClose={props.onClose}
+          onDirSwap={handleDirSwap}
           onSelectRoute={handleSelectRoute}
           onSelectStop={handleSelectStop}
-          onClose={props.onClose}
+          searchInputRef={searchInputRef}
+          searchQuery={searchQuery}
+          setDirActiveField={setDirActiveField}
+          setDirFromStop={setDirFromStop}
+          setDirToQuery={setDirToQuery}
+          setFilter={setFilter}
+          setSearchQuery={setSearchQuery}
+          setStopsMode={setStopsMode}
+          stopsMode={stopsMode}
+          trainRoutes={trainRoutes}
+          trams={trams}
         />
 
         {/* Content list */}
         <div className="flex-1 overflow-y-auto overscroll-contain">
           {isDirsMode && (
             <DirectionsContent
-              dirFromStop={dirFromStop}
-              dirToStop={dirToStop}
               dirActiveField={dirActiveField}
-              searchQuery={searchQuery}
+              dirFromStop={dirFromStop}
+              dirLoading={dirLoading}
+              dirResultLabel={dirResultLabel}
+              dirResults={dirResults}
               dirToQuery={dirToQuery}
+              dirToStop={dirToStop}
               filteredDirStops={filteredDirStops}
               onDirStopSelect={handleDirStopSelect}
-              dirResultLabel={dirResultLabel}
-              dirLoading={dirLoading}
-              dirResults={dirResults}
               onSelectDirectionsRoute={handleSelectDirectionsRoute}
+              searchQuery={searchQuery}
             />
           )}
 
           {isRouteFilter && (
             <RouteList
-              filteredRoutes={filteredRoutes}
               badgeColor={badgeColor}
-              searchQuery={searchQuery}
               favouriteRouteIds={favouriteRouteIds}
-              toggleFavouriteRoute={toggleFavouriteRoute}
+              filteredRoutes={filteredRoutes}
               onSelectRoute={handleSelectRoute}
+              searchQuery={searchQuery}
+              toggleFavouriteRoute={toggleFavouriteRoute}
             />
           )}
 
           {filter === 'stanice' && stopsMode === 'search' && (
             <StopGroupList
-              filteredStopGroups={filteredStopGroups}
-              expandedStopKeys={expandedStopKeys}
-              setExpandedStopKeys={setExpandedStopKeys}
-              routesById={routesById}
-              stopsById={stopsById}
               dataDir={config.dataDir}
+              expandedStopKeys={expandedStopKeys}
               favouriteStopIds={favouriteStopIds}
-              toggleFavouriteStop={toggleFavouriteStop}
+              filteredStopGroups={filteredStopGroups}
               onSelectStop={handleSelectStop}
+              routesById={routesById}
               searchQuery={searchQuery}
+              setExpandedStopKeys={setExpandedStopKeys}
+              stopsById={stopsById}
+              toggleFavouriteStop={toggleFavouriteStop}
             />
           )}
         </div>
@@ -167,12 +169,12 @@ export const SearchModal = memo(function SearchModal(props: SearchModalProps) {
         {/* Recently viewed — sticky footer */}
         {!isDirsMode && !searchQuery && hasRecents && (
           <RecentsBar
-            recentItemsMerged={recentItemsMerged}
-            recentsExpanded={recentsExpanded}
-            setRecentsExpanded={setRecentsExpanded}
             onClearRecents={handleClearRecentsForTab}
             onSelectRoute={handleSelectRoute}
             onSelectStop={handleSelectStop}
+            recentItemsMerged={recentItemsMerged}
+            recentsExpanded={recentsExpanded}
+            setRecentsExpanded={setRecentsExpanded}
           />
         )}
       </div>

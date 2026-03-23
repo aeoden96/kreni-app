@@ -9,12 +9,14 @@
  * in production.
  */
 
-import { useState, useEffect, useMemo, useRef } from 'react';
-import type { Stop, Route, StopTimetable, RouteStopsData } from '../utils/gtfs';
-import { fetchStopTimetable, fetchRouteStops } from '../utils/gtfs';
+import { useEffect, useMemo, useRef, useState } from 'react';
+
+import type { Route, RouteStopsData, Stop, StopTimetable } from '../utils/gtfs';
+import type { ParsedTripUpdate, ParsedVehiclePosition } from '../utils/realtime';
+
 import { useRealtimeStore } from '../stores/realtimeStore';
+import { fetchRouteStops, fetchStopTimetable } from '../utils/gtfs';
 import { computeVehicleStopProgress } from '../utils/vehicles';
-import type { ParsedVehiclePosition, ParsedTripUpdate } from '../utils/realtime';
 
 // ── Mirror of the constants in useApproachingVehicles ──────────────────────
 const LOOKAHEAD_MINUTES = 30;
@@ -26,79 +28,67 @@ const PASSED_STOP_DISTANCE_METERS = 400;
 const DIAG_PAST_SECONDS = 60 * 60;
 const DIAG_FUTURE_SECONDS = 60 * 60;
 
-export type TripFilterReason =
-  | 'ok'                   // passed all filters — would appear in approaching list
-  | 'terminus'             // this stop is the last stop of the route direction (arriving, not departing)
-  | 'outside_window'       // ETA is beyond LOOKAHEAD_MINUTES
-  | 'past_grace_window'    // scheduled-only trip already departed (> ARRIVED_GRACE_SECONDS ago)
-  | 'passed_stop_too_far'  // GPS shows vehicle has already passed stop and is > 400 m away
-  | 'beyond_diag_window';  // outside the ±60-min diagnostic window (collapsed in UI)
-
 export interface TripDiagnostic {
-  tripId: string;
-  routeId: string;
-  routeShortName: string;
-  routeLongName: string;
-  routeType: number;
-
-  scheduledMinutes: number;
-  /** Delay in seconds from trip update; null = no realtime data */
-  delaySeconds: number | null;
-  /** ETA in POSIX seconds (scheduled + delay) */
-  etaAbsoluteSeconds: number;
   /** Seconds until arrival: positive = future, negative = passed */
   arrivingInSeconds: number;
-
-  /** True if the realtime feed has a position for this trip */
-  hasVehiclePosition: boolean;
-  vehiclePos: ParsedVehiclePosition | null;
-  tripUpdate: ParsedTripUpdate | null;
-
-  /** Straight-line distance vehicle → stop in metres; null = no GPS */
-  distanceMeters: number | null;
-  /** Integer stops remaining; null = no GPS data */
-  stopsAway: number | null;
-  passedStop: boolean;
+  /** Delay in seconds from trip update; null = no realtime data */
+  delaySeconds: null | number;
   /** Direction key the stop was found in (e.g. "0" or "1"); null = not found */
-  directionKey: string | null;
-  /** Stop index within orderedStops for that direction; -1 = not found */
-  targetStopIndex: number;
+  directionKey: null | string;
+  /** Straight-line distance vehicle → stop in metres; null = no GPS */
+  distanceMeters: null | number;
+  /** ETA in POSIX seconds (scheduled + delay) */
+  etaAbsoluteSeconds: number;
 
   filterReason: TripFilterReason;
+  /** True if the realtime feed has a position for this trip */
+  hasVehiclePosition: boolean;
   included: boolean;
+  passedStop: boolean;
+
+  routeId: string;
+  routeLongName: string;
+  routeShortName: string;
+
+  routeType: number;
+  scheduledMinutes: number;
+  /** Integer stops remaining; null = no GPS data */
+  stopsAway: null | number;
+  /** Stop index within orderedStops for that direction; -1 = not found */
+  targetStopIndex: number;
+  tripId: string;
+
+  tripUpdate: null | ParsedTripUpdate;
+  vehiclePos: null | ParsedVehiclePosition;
 }
+
+export type TripFilterReason =
+  | 'beyond_diag_window' // outside the ±60-min diagnostic window (collapsed in UI)
+  | 'ok' // passed all filters — would appear in approaching list
+  | 'outside_window' // ETA is beyond LOOKAHEAD_MINUTES
+  | 'passed_stop_too_far' // GPS shows vehicle has already passed stop and is > 400 m away
+  | 'past_grace_window' // scheduled-only trip already departed (> ARRIVED_GRACE_SECONDS ago)
+  | 'terminus'; // this stop is the last stop of the route direction (arriving, not departing)
 
 interface StopDiagnosticResult {
   diagnostics: TripDiagnostic[];
-  loading: boolean;
   error: Error | null;
+  loading: boolean;
   /** Derived summary stats */
   totalTrips: number;
-  tripsWithGPS: number;
   tripsIncluded: number;
-}
-
-/** Haversine distance (metres) — mirrors useApproachingVehicles */
-function haversineMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371000;
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(a));
+  tripsWithGPS: number;
 }
 
 export function useStopDiagnostic(
-  stopId: string | null,
+  stopId: null | string,
   stopsById: Map<string, Stop>,
   routesById: Map<string, Route>,
   nowMs: number,
   options: { dataDir?: string } = {}
 ): StopDiagnosticResult {
   const { dataDir = 'data' } = options;
-  const [stopTimetable, setStopTimetable] = useState<StopTimetable | null>(null);
+  const [stopTimetable, setStopTimetable] = useState<null | StopTimetable>(null);
   const [routeStopsCache, setRouteStopsCache] = useState<Map<string, RouteStopsData>>(new Map());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -106,7 +96,7 @@ export function useStopDiagnostic(
   const vehiclePositions = useRealtimeStore((s) => s.vehiclePositions);
   const tripUpdates = useRealtimeStore((s) => s.tripUpdates);
 
-  const fetchingForStopId = useRef<string | null>(null);
+  const fetchingForStopId = useRef<null | string>(null);
 
   useEffect(() => {
     if (!stopId) {
@@ -178,7 +168,7 @@ export function useStopDiagnostic(
       const routeStopsData = routeStopsCache.get(routeId);
 
       // Find direction containing this stop
-      let directionKey: string | null = null;
+      let directionKey: null | string = null;
       let targetStopIndex = -1;
       if (routeStopsData?.orderedStops) {
         for (const [dir, stopList] of Object.entries(routeStopsData.orderedStops)) {
@@ -202,7 +192,7 @@ export function useStopDiagnostic(
         const tripUpdate = tripUpdates.get(tripId) ?? null;
 
         // Resolve delay
-        let delaySeconds: number | null = null;
+        let delaySeconds: null | number = null;
         if (tripUpdate) {
           const stu = tripUpdate.stopTimeUpdates.find((s) => s.stopId === stopId);
           if (stu) {
@@ -220,25 +210,25 @@ export function useStopDiagnostic(
         if (etaAbsoluteSeconds < diagPast || etaAbsoluteSeconds > diagFuture) {
           // Still include a collapsed entry so the developer knows it existed
           results.push({
-            tripId,
+            arrivingInSeconds,
+            delaySeconds,
+            directionKey,
+            distanceMeters: null,
+            etaAbsoluteSeconds,
+            filterReason: 'beyond_diag_window',
+            hasVehiclePosition: vehiclePos !== null,
+            included: false,
+            passedStop: false,
             routeId,
-            routeShortName: route.shortName,
             routeLongName: route.longName,
+            routeShortName: route.shortName,
             routeType: route.type,
             scheduledMinutes,
-            delaySeconds,
-            etaAbsoluteSeconds,
-            arrivingInSeconds,
-            hasVehiclePosition: vehiclePos !== null,
-            vehiclePos,
-            tripUpdate,
-            distanceMeters: null,
             stopsAway: null,
-            passedStop: false,
-            directionKey,
             targetStopIndex,
-            filterReason: 'beyond_diag_window',
-            included: false,
+            tripId,
+            tripUpdate,
+            vehiclePos,
           });
           continue;
         }
@@ -246,7 +236,7 @@ export function useStopDiagnostic(
         // ── Replicate production filter logic exactly ──────────────────────
 
         // Compute stops-away and passedStop via GPS projection
-        let stopsAway: number | null = null;
+        let stopsAway: null | number = null;
         let passedStop = false;
 
         if (vehiclePos && targetStopIndex >= 0 && directionKey !== null) {
@@ -277,7 +267,14 @@ export function useStopDiagnostic(
 
         const distanceMeters =
           vehiclePos && targetStop
-            ? Math.round(haversineMeters(vehiclePos.latitude, vehiclePos.longitude, targetStop.lat, targetStop.lon))
+            ? Math.round(
+                haversineMeters(
+                  vehiclePos.latitude,
+                  vehiclePos.longitude,
+                  targetStop.lat,
+                  targetStop.lon
+                )
+              )
             : null;
 
         // Determine filter reason
@@ -321,25 +318,25 @@ export function useStopDiagnostic(
         }
 
         results.push({
-          tripId,
+          arrivingInSeconds,
+          delaySeconds,
+          directionKey,
+          distanceMeters,
+          etaAbsoluteSeconds,
+          filterReason,
+          hasVehiclePosition: vehiclePos !== null,
+          included,
+          passedStop,
           routeId,
-          routeShortName: route.shortName,
           routeLongName: route.longName,
+          routeShortName: route.shortName,
           routeType: route.type,
           scheduledMinutes,
-          delaySeconds,
-          etaAbsoluteSeconds,
-          arrivingInSeconds,
-          hasVehiclePosition: vehiclePos !== null,
-          vehiclePos,
-          tripUpdate,
-          distanceMeters,
           stopsAway,
-          passedStop,
-          directionKey,
           targetStopIndex,
-          filterReason,
-          included,
+          tripId,
+          tripUpdate,
+          vehiclePos,
         });
       }
     }
@@ -363,10 +360,22 @@ export function useStopDiagnostic(
 
   return {
     diagnostics,
-    loading: loading || (!!stopId && !stopTimetable && !error),
     error,
+    loading: loading || (!!stopId && !stopTimetable && !error),
     totalTrips,
-    tripsWithGPS,
     tripsIncluded,
+    tripsWithGPS,
   };
+}
+
+/** Haversine distance (metres) — mirrors useApproachingVehicles */
+function haversineMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
 }

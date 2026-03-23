@@ -3,19 +3,21 @@
  * Reuses the same filtering logic from SearchModal but in an inline list.
  */
 
-import { useState, useMemo } from 'react';
+import { Bus, Search, Star, TrainFront } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, TrainFront, Bus, Star } from 'lucide-react';
+
 import type { Route } from '../../utils/gtfs';
-import { isRouteTypeTram, isRouteTypeBus } from '../../utils/gtfs';
+
 import { useSettingsStore } from '../../stores/settingsStore';
+import { isRouteTypeBus, isRouteTypeTram } from '../../utils/gtfs';
+
+type FilterType = 'bus' | 'tram';
 
 interface RoutesTabProps {
-  routes: Route[];
   onSelectRoute: (routeId: string, routeType: number) => void;
+  routes: Route[];
 }
-
-type FilterType = 'tram' | 'bus';
 
 const ROUTE_TYPE_SORT = (a: Route, b: Route) => {
   const numA = parseInt(a.shortName, 10);
@@ -24,13 +26,13 @@ const ROUTE_TYPE_SORT = (a: Route, b: Route) => {
   return a.shortName.localeCompare(b.shortName);
 };
 
-export function RoutesTab({ routes, onSelectRoute }: RoutesTabProps) {
+export function RoutesTab({ onSelectRoute, routes }: RoutesTabProps) {
   const { t } = useTranslation();
   const [filter, setFilter] = useState<FilterType>('tram');
   const [searchQuery, setSearchQuery] = useState('');
   const { favouriteRouteIds, toggleFavouriteRoute } = useSettingsStore();
 
-  const { trams, buses } = useMemo(
+  const { buses, trams } = useMemo(
     () =>
       routes.reduce(
         (acc, route) => {
@@ -38,7 +40,7 @@ export function RoutesTab({ routes, onSelectRoute }: RoutesTabProps) {
           else if (isRouteTypeBus(route.type)) acc.buses.push(route);
           return acc;
         },
-        { trams: [] as Route[], buses: [] as Route[] }
+        { buses: [] as Route[], trams: [] as Route[] }
       ),
     [routes]
   );
@@ -49,10 +51,8 @@ export function RoutesTab({ routes, onSelectRoute }: RoutesTabProps) {
     const q = searchQuery.toLowerCase().trim();
     const list = q
       ? sourceRoutes.filter(
-        (r) =>
-          r.shortName.toLowerCase().includes(q) ||
-          r.longName.toLowerCase().includes(q)
-      )
+          (r) => r.shortName.toLowerCase().includes(q) || r.longName.toLowerCase().includes(q)
+        )
       : sourceRoutes;
     return [...list].sort(ROUTE_TYPE_SORT);
   }, [sourceRoutes, searchQuery]);
@@ -64,24 +64,24 @@ export function RoutesTab({ routes, onSelectRoute }: RoutesTabProps) {
         <div className="flex items-center gap-2 bg-base-200 rounded-xl px-3 py-2">
           <Search className="w-4 h-4 text-base-content/50" />
           <input
-            type="text"
-            placeholder={t('search.barPlaceholderLines')}
             className="flex-1 bg-transparent outline-none text-sm"
-            value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t('search.barPlaceholderLines')}
+            type="text"
+            value={searchQuery}
           />
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => setFilter('tram')}
             className={`btn btn-sm flex-1 gap-1.5 ${filter === 'tram' ? 'btn-primary' : 'btn-ghost'}`}
+            onClick={() => setFilter('tram')}
           >
             <TrainFront className="w-4 h-4" />
             {t('search.tabs.trams', { count: trams.length })}
           </button>
           <button
-            onClick={() => setFilter('bus')}
             className={`btn btn-sm flex-1 gap-1.5 ${filter === 'bus' ? 'btn-warning' : 'btn-ghost'}`}
+            onClick={() => setFilter('bus')}
           >
             <Bus className="w-4 h-4" />
             {t('search.tabs.buses', { count: buses.length })}
@@ -100,22 +100,27 @@ export function RoutesTab({ routes, onSelectRoute }: RoutesTabProps) {
             {filtered.map((route) => {
               const isFav = favouriteRouteIds.includes(route.id);
               return (
-                <div key={route.id} className="flex items-center hover:bg-base-200 transition-colors">
+                <div
+                  className="flex items-center hover:bg-base-200 transition-colors"
+                  key={route.id}
+                >
                   <button
-                    onClick={() => onSelectRoute(route.id, route.type)}
                     className="flex-1 flex items-center gap-3 px-4 py-3 text-left min-w-0"
+                    onClick={() => onSelectRoute(route.id, route.type)}
                   >
                     <span
                       className="badge font-bold shrink-0 text-white"
-                      style={{ backgroundColor: isRouteTypeTram(route.type) ? '#2563eb' : '#d97706' }}
+                      style={{
+                        backgroundColor: isRouteTypeTram(route.type) ? '#2563eb' : '#d97706',
+                      }}
                     >
                       {route.shortName}
                     </span>
                     <span className="text-sm truncate">{route.longName}</span>
                   </button>
                   <button
-                    onClick={() => toggleFavouriteRoute(route.id)}
                     className="btn btn-ghost btn-sm btn-square shrink-0 mr-2"
+                    onClick={() => toggleFavouriteRoute(route.id)}
                   >
                     <Star
                       className={`w-4 h-4 ${isFav ? 'fill-warning text-warning' : 'text-base-content/30'}`}

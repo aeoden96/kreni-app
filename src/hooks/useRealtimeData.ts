@@ -4,8 +4,9 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { useRealtimeStore } from '../stores/realtimeStore';
+
 import { REALTIME_POLL_INTERVAL } from '../config';
+import { useRealtimeStore } from '../stores/realtimeStore';
 
 // Extra time to wait after the cache TTL before polling again.
 // Must be large enough to absorb: cache.put write latency on the worker side
@@ -17,28 +18,12 @@ const MIN_RETRY_DELAY_MS = 1000;
 const ERROR_RETRY_DELAY_MS = 3000;
 const RESUME_COALESCE_WINDOW_MS = 1200;
 
-// Uses the Age header (server-derived, clock-skew-safe) to estimate how much
-// of the cache TTL has already elapsed, then waits for the remainder plus a
-// buffer. X-Timestamp is intentionally NOT used here: comparing a server
-// timestamp against Date.now() is sensitive to client/server clock skew and
-// consistently causes the poll to arrive before the cache has expired.
-function getAdaptiveDelayMs(cacheAgeSeconds: number | null): number {
-  if (cacheAgeSeconds != null && cacheAgeSeconds >= 0) {
-    const remainingMs =
-      REALTIME_POLL_INTERVAL - cacheAgeSeconds * 1000 + CACHE_POST_EXPIRY_BUFFER_MS;
-    return Math.max(MIN_RETRY_DELAY_MS, remainingMs);
-  }
-
-  return REALTIME_POLL_INTERVAL;
-}
-
 export function useRealtimeData(enabled: boolean = true) {
-  const { vehiclePositions, tripUpdates, stats, lastUpdate, loading, error } =
-    useRealtimeStore();
+  const { error, lastUpdate, loading, stats, tripUpdates, vehiclePositions } = useRealtimeStore();
 
-  const [nextPollAtMs, setNextPollAtMs] = useState<number | null>(null);
+  const [nextPollAtMs, setNextPollAtMs] = useState<null | number>(null);
 
-  const timeoutRef = useRef<number | null>(null);
+  const timeoutRef = useRef<null | number>(null);
   const inFlightRef = useRef(false);
   const pendingResyncRef = useRef(false);
   const didErrorRetryRef = useRef(false);
@@ -147,12 +132,27 @@ export function useRealtimeData(enabled: boolean = true) {
   }, [enabled]);
 
   return {
-    vehiclePositions,
-    tripUpdates,
-    stats,
+    error,
     lastUpdate,
     loading,
-    error,
     nextPollAtMs,
+    stats,
+    tripUpdates,
+    vehiclePositions,
   };
+}
+
+// Uses the Age header (server-derived, clock-skew-safe) to estimate how much
+// of the cache TTL has already elapsed, then waits for the remainder plus a
+// buffer. X-Timestamp is intentionally NOT used here: comparing a server
+// timestamp against Date.now() is sensitive to client/server clock skew and
+// consistently causes the poll to arrive before the cache has expired.
+function getAdaptiveDelayMs(cacheAgeSeconds: null | number): number {
+  if (cacheAgeSeconds != null && cacheAgeSeconds >= 0) {
+    const remainingMs =
+      REALTIME_POLL_INTERVAL - cacheAgeSeconds * 1000 + CACHE_POST_EXPIRY_BUFFER_MS;
+    return Math.max(MIN_RETRY_DELAY_MS, remainingMs);
+  }
+
+  return REALTIME_POLL_INTERVAL;
 }

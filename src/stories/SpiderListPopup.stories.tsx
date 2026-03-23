@@ -20,16 +20,9 @@ function SpiderListPopupDemo({ itemCount = 8 }: { itemCount?: number }) {
 
   return (
     <div className="spider-list-popup">
-      <div className="spider-list-header">
-        {items.length} postaja u blizini — odaberite jednu
-      </div>
+      <div className="spider-list-header">{items.length} postaja u blizini — odaberite jednu</div>
       {items.map((stop) => (
-        <button
-          key={stop.id}
-          type="button"
-          className="spider-list-item"
-          onClick={() => {}}
-        >
+        <button className="spider-list-item" key={stop.id} onClick={() => {}} type="button">
           <span className="font-medium">{stop.name}</span>
           <span className="ml-1 text-base-content/60 text-xs">({stop.routes})</span>
         </button>
@@ -39,15 +32,15 @@ function SpiderListPopupDemo({ itemCount = 8 }: { itemCount?: number }) {
 }
 
 const meta = {
-  title: 'Map / Spider List Popup',
+  argTypes: {
+    itemCount: { control: { max: 8, min: 1, type: 'number' } },
+  },
   component: SpiderListPopupDemo,
   parameters: {
     layout: 'centered',
   },
   tags: ['autodocs'],
-  argTypes: {
-    itemCount: { control: { type: 'number', min: 1, max: 8 } },
-  },
+  title: 'Map / Spider List Popup',
 } satisfies Meta<typeof SpiderListPopupDemo>;
 
 export default meta;
@@ -65,11 +58,11 @@ export const FewItems: Story = {
 export const Scrollable: Story = {
   args: { itemCount: 8 },
   parameters: {
-    layout: 'centered',
     docs: {
       description: {
         story: 'Popup with max-height 280px — scroll when many items.',
       },
     },
+    layout: 'centered',
   },
 };

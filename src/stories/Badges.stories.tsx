@@ -18,7 +18,7 @@ function BadgeShowcase() {
         <h2 className="text-lg font-semibold mb-3">Variants</h2>
         <div className="flex flex-wrap gap-2">
           {variants.map((variant) => (
-            <span key={variant} className={`badge ${variant}`}>
+            <span className={`badge ${variant}`} key={variant}>
               {variant.replace('badge-', '')}
             </span>
           ))}
@@ -37,12 +37,12 @@ function BadgeShowcase() {
 }
 
 const meta = {
-  title: 'Design System / Badges',
   component: BadgeShowcase,
   parameters: {
     layout: 'centered',
   },
   tags: ['autodocs'],
+  title: 'Design System / Badges',
 } satisfies Meta<typeof BadgeShowcase>;
 
 export default meta;

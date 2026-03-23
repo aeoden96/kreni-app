@@ -6,40 +6,42 @@
  * prop-drilling.
  */
 
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { Search, Train, X } from 'lucide-react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { trackEvent } from '../utils/analytics';
-import { Search, X, Train } from 'lucide-react';
-import { useSelectionParams } from '../hooks/useSelectionParams';
-import type { DirectionFilter } from '../hooks/useSelectionParams';
-import { MapView } from '../components/Map/MapView';
-import { SearchModal } from '../components/common/SearchModal';
-import { RouteModal } from '../components/common/RouteModal';
-import { StopModal } from '../components/common/StopModal';
-import { StopInfoBar } from '../components/common/StopInfoBar';
-import { RouteInfoBar } from '../components/common/RouteInfoBar';
-import { DebugPanel } from '../components/common/DebugPanel';
-import { OnboardingWizard } from '../components/common/OnboardingWizard';
-import { NearbyStopsModal } from '../components/common/NearbyStopsModal';
-import { RealtimeStatusPanel } from '../components/common/RealtimeStatusPanel';
+
 import type { RealtimeStatusPanelHandle } from '../components/common/RealtimeStatusPanel';
-import { useInitialData } from '../hooks/useInitialData';
-import { useCurrentService } from '../hooks/useCurrentService';
-import { useRouteData } from '../hooks/useRouteData';
-import { useRouteTimetable } from '../hooks/useRouteTimetable';
-import { useSettingsStore } from '../stores/settingsStore';
-import { useRealtimeStore } from '../stores/realtimeStore';
+import type { GTFSModeConfig } from '../config/modes';
+import type { DirectionFilter } from '../hooks/useSelectionParams';
+
+import { DebugPanel } from '../components/common/DebugPanel';
+import { NearbyStopsModal } from '../components/common/NearbyStopsModal';
+import { OnboardingWizard } from '../components/common/OnboardingWizard';
+import { RealtimeStatusPanel } from '../components/common/RealtimeStatusPanel';
+import { RouteInfoBar } from '../components/common/RouteInfoBar';
+import { RouteModal } from '../components/common/RouteModal';
+import { SearchModal } from '../components/common/SearchModal';
+import { StopInfoBar } from '../components/common/StopInfoBar';
+import { StopModal } from '../components/common/StopModal';
+import { MapView } from '../components/Map/MapView';
+import { GTFSModeProvider } from '../contexts/GTFSModeContext';
 import { useAllVehiclePositions } from '../hooks/useAllVehiclePositions';
-import { useVehiclePositions } from '../hooks/useVehiclePositions';
+import { useCongestionData } from '../hooks/useCongestionData';
+import { useCurrentService } from '../hooks/useCurrentService';
+import { useGeolocation } from '../hooks/useGeolocation';
+import { useInitialData } from '../hooks/useInitialData';
+import { useMapPanTarget } from '../hooks/useMapPanTarget';
 import { useRealtimeData } from '../hooks/useRealtimeData';
 import { useRealtimeFreshness } from '../hooks/useRealtimeFreshness';
-import { useVehicleFollow } from '../hooks/useVehicleFollow';
-import { useMapPanTarget } from '../hooks/useMapPanTarget';
-import { useGeolocation } from '../hooks/useGeolocation';
-import { GTFSModeProvider } from '../contexts/GTFSModeContext';
+import { useRouteData } from '../hooks/useRouteData';
+import { useRouteTimetable } from '../hooks/useRouteTimetable';
 import { useRssServiceAlerts } from '../hooks/useRssServiceAlerts';
-import { useCongestionData } from '../hooks/useCongestionData';
-import type { GTFSModeConfig } from '../config/modes';
+import { useSelectionParams } from '../hooks/useSelectionParams';
+import { useVehicleFollow } from '../hooks/useVehicleFollow';
+import { useVehiclePositions } from '../hooks/useVehiclePositions';
+import { useRealtimeStore } from '../stores/realtimeStore';
+import { useSettingsStore } from '../stores/settingsStore';
+import { trackEvent } from '../utils/analytics';
 
 interface GTFSModeProps {
   config: GTFSModeConfig;
@@ -61,13 +63,13 @@ export function GTFSMode({ config }: GTFSModeProps) {
 
   // URL-backed selection state (route, stop, direction)
   const {
+    clearRoute,
+    clearStop,
+    directionFilter,
     selectedRouteId,
     selectedStopId,
-    directionFilter,
     selectRoute,
-    clearRoute,
     selectStop,
-    clearStop,
   } = useSelectionParams();
 
   const mapZoom = useSettingsStore((s) => s.mapZoom);
@@ -77,13 +79,13 @@ export function GTFSMode({ config }: GTFSModeProps) {
 
   // Load initial data from the mode's data directory
   const {
-    stops,
-    routes,
-    stopsById,
-    routesById,
     calendar,
-    loading: initialLoading,
     error: initialError,
+    loading: initialLoading,
+    routes,
+    routesById,
+    stops,
+    stopsById,
   } = useInitialData({ dataDir: config.dataDir });
 
   // Separate parent stations and platform stops for zoom-based rendering
@@ -94,48 +96,50 @@ export function GTFSMode({ config }: GTFSModeProps) {
   parentStations.forEach((parent) => {
     parentChildCounts.set(
       parent.id,
-      platformStops.filter((s) => s.parentStation === parent.id).length,
+      platformStops.filter((s) => s.parentStation === parent.id).length
     );
   });
 
   const {
-    parentStationZoomTarget,
-    handleZoomComplete,
-    handleStopClickFromMap,
     handleSelectStop,
     handleSelectStopFromNearby,
+    handleStopClickFromMap,
+    handleZoomComplete,
+    parentStationZoomTarget,
     setParentStationZoomTarget,
   } = useMapPanTarget({
-    stops,
-    stopsById,
+    addRecentStop,
+    closeLegendAndDetails,
     config,
     selectStop,
-    addRecentStop,
     setNearbyOpen,
-    closeLegendAndDetails,
+    stops,
+    stopsById,
   });
 
   const serviceId = useCurrentService(calendar);
 
   // Load route-specific data
-  const { shapes, routeStops, orderedStops, activeTripsData, loading: routeLoading } =
-    useRouteData(selectedRouteId, { dataDir: config.dataDir });
+  const {
+    activeTripsData,
+    loading: routeLoading,
+    orderedStops,
+    routeStops,
+    shapes,
+  } = useRouteData(selectedRouteId, { dataDir: config.dataDir });
 
   // Load per-trip stop sequence + times for the "next stops" feature
   const routeTimetable = useRouteTimetable(selectedRouteId, config.dataDir);
 
   // Scheduled vehicle positions (transit only; null activeTripsData yields [])
-  const vehicles = useVehiclePositions(
-    config.hasRealtime ? activeTripsData : null,
-    serviceId,
-  );
+  const vehicles = useVehiclePositions(config.hasRealtime ? activeTripsData : null, serviceId);
 
   // Realtime GTFS-RT polling (no-op when disabled)
   const {
     error: _realtimeError,
-    stats: realtimeStats,
     loading: realtimeLoading,
     nextPollAtMs,
+    stats: realtimeStats,
   } = useRealtimeData(config.hasRealtime);
   const gtfsRtAlerts = useRealtimeStore((s) => s.serviceAlerts);
   const lastUpdate = useRealtimeStore((s) => s.lastUpdate);
@@ -146,19 +150,23 @@ export function GTFSMode({ config }: GTFSModeProps) {
   const vehiclePositions = useRealtimeStore((s) => s.vehiclePositions);
   const tripUpdates = useRealtimeStore((s) => s.tripUpdates);
 
-  const { timeAgoStr, feedAgeStr } = useRealtimeFreshness(config, lastUpdate, realtimeStats ?? null);
+  const { feedAgeStr, timeAgoStr } = useRealtimeFreshness(
+    config,
+    lastUpdate,
+    realtimeStats ?? null
+  );
 
   const {
+    followedTripUpdate,
+    followedVehicleParsedPos,
+    followedVehiclePos,
+    followedVehicleTripId,
+    handleFollowDisengage,
+    handleFollowStart,
+    handleUnfollow,
+    handleVehicleSelect,
     lastClickedVehicle,
     setLastClickedVehicle,
-    followedVehicleTripId,
-    followedVehiclePos,
-    followedVehicleParsedPos,
-    followedTripUpdate,
-    handleVehicleSelect,
-    handleFollowStart,
-    handleFollowDisengage,
-    handleUnfollow,
   } = useVehicleFollow(selectedRouteId, vehiclePositions, tripUpdates);
 
   // RSS-parsed ZET service alerts (polled by GitHub Actions cron every 30 min)
@@ -168,17 +176,16 @@ export function GTFSMode({ config }: GTFSModeProps) {
   // Congestion heatmap (tram-only, transit mode only)
   const { congestionPoints } = useCongestionData({
     enabled: config.hasRealtime && showCongestionHeatmap,
-    stopsById,
     routesById,
+    stopsById,
   });
 
   // All-vehicles overlay (transit only)
-  const { vehicles: allVehicles } =
-    useAllVehiclePositions(
-      config.hasRealtime,
-      serviceId,
-      routesById,
-    );
+  const { vehicles: allVehicles } = useAllVehiclePositions(
+    config.hasRealtime,
+    serviceId,
+    routesById
+  );
 
   const selectedRouteType = selectedRouteId
     ? (routesById.get(selectedRouteId)?.type ?? null)
@@ -191,17 +198,17 @@ export function GTFSMode({ config }: GTFSModeProps) {
       closeLegendAndDetails();
       setNearbyOpen(true);
     },
-    [clearStop, closeLegendAndDetails],
+    [clearStop, closeLegendAndDetails]
   );
-  const { userLocation, locateError } = useGeolocation(onLocateSuccess);
+  const { locateError, userLocation } = useGeolocation(onLocateSuccess);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
   const handleSelectRoute = (
     routeId: string,
     _routeType: number,
-    df?: DirectionFilter | 'all',
-    tripId?: string,
+    df?: 'all' | DirectionFilter,
+    tripId?: string
   ) => {
     const dir: DirectionFilter = df === 'A' || df === 'B' ? df : 'A';
     if (tripId) {
@@ -220,9 +227,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
     closeLegendAndDetails();
     const stop = stopsById.get(stopId);
     if (stop && stop.locationType === 1) {
-      const childPlatform = stops.find(
-        (s) => s.parentStation === stopId && s.locationType === 0,
-      );
+      const childPlatform = stops.find((s) => s.parentStation === stopId && s.locationType === 0);
       selectStop(childPlatform ? childPlatform.id : stopId);
     } else {
       selectStop(stopId);
@@ -255,10 +260,9 @@ export function GTFSMode({ config }: GTFSModeProps) {
 
   // ── Derived ───────────────────────────────────────────────────────────────
 
-
   const activeHighlightStopIds = useMemo(
     () => (selectedRouteId && routeStops ? routeStops : []),
-    [selectedRouteId, routeStops],
+    [selectedRouteId, routeStops]
   );
 
   const selectedRoute = selectedRouteId ? routesById.get(selectedRouteId) : null;
@@ -270,7 +274,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
     return (
       <div className="min-h-svh flex items-center justify-center">
         <div className="text-center">
-          <div className="loading loading-spinner loading-lg"></div>
+          <div className="loading loading-spinner loading-lg" />
           <div className="mt-4">{t(`gtfs.${config.loadingI18nKey}`)}</div>
         </div>
       </div>
@@ -294,58 +298,62 @@ export function GTFSMode({ config }: GTFSModeProps) {
       <div className="h-svh w-screen overflow-hidden relative">
         {/* Full-screen map */}
         <MapView
-          parentStations={parentStations}
-          platformStops={platformStops}
-          parentChildCounts={parentChildCounts}
-          selectedRouteId={selectedRouteId}
-          selectedStopId={selectedStopId}
-          routeShapes={shapes}
-          routeStops={routeStops}
-          orderedStops={orderedStops}
-          vehicles={vehicles}
-          routeType={selectedRouteType}
-          routeShortName={selectedRoute?.shortName}
-          onStopClick={handleStopClickFromMap}
-          onVehicleClick={(routeId, routeType, tripId) => handleSelectRoute(routeId, routeType, undefined, tripId)}
           allVehicles={
-            selectedRouteId
-              ? allVehicles.filter((v) => v.routeId !== selectedRouteId)
-              : allVehicles
+            selectedRouteId ? allVehicles.filter((v) => v.routeId !== selectedRouteId) : allVehicles
           }
-          routesById={routesById}
-          serviceId={serviceId}
-          userLocation={userLocation}
-          locationPanOffsetY={nearbyOpen && typeof window !== 'undefined' && window.innerWidth < 640 ? -Math.round(window.innerHeight / 4) : 0}
-          parentStationZoomTarget={parentStationZoomTarget}
-          onZoomComplete={handleZoomComplete}
-          selectedStop={selectedStop && !stopModalOpen ? selectedStop : null}
+          congestionPoints={congestionPoints}
+          followedVehiclePos={followedVehiclePos}
+          highlightStopIds={activeHighlightStopIds}
+          locationPanOffsetY={
+            nearbyOpen && typeof window !== 'undefined' && window.innerWidth < 640
+              ? -Math.round(window.innerHeight / 4)
+              : 0
+          }
           onFlyToStop={
             selectedStop
               ? () =>
-                setParentStationZoomTarget({
-                  lat: selectedStop.lat,
-                  lon: selectedStop.lon,
-                  zoom: config.stopZoom,
-                  panOffsetY:
-                    typeof window !== 'undefined' && window.innerWidth < 640
-                      ? -Math.round(window.innerHeight / 4)
-                      : 0,
-                })
+                  setParentStationZoomTarget({
+                    lat: selectedStop.lat,
+                    lon: selectedStop.lon,
+                    panOffsetY:
+                      typeof window !== 'undefined' && window.innerWidth < 640
+                        ? -Math.round(window.innerHeight / 4)
+                        : 0,
+                    zoom: config.stopZoom,
+                  })
               : undefined
           }
-          highlightStopIds={activeHighlightStopIds}
-          onVehicleSelect={handleVehicleSelect}
-          followedVehiclePos={followedVehiclePos}
           onFollowDisengage={handleFollowDisengage}
-          congestionPoints={congestionPoints}
+          onStopClick={handleStopClickFromMap}
+          onVehicleClick={(routeId, routeType, tripId) =>
+            handleSelectRoute(routeId, routeType, undefined, tripId)
+          }
+          onVehicleSelect={handleVehicleSelect}
+          onZoomComplete={handleZoomComplete}
+          orderedStops={orderedStops}
+          parentChildCounts={parentChildCounts}
+          parentStations={parentStations}
+          parentStationZoomTarget={parentStationZoomTarget}
+          platformStops={platformStops}
+          routesById={routesById}
+          routeShapes={shapes}
+          routeShortName={selectedRoute?.shortName}
+          routeStops={routeStops}
+          routeType={selectedRouteType}
+          selectedRouteId={selectedRouteId}
+          selectedStop={selectedStop && !stopModalOpen ? selectedStop : null}
+          selectedStopId={selectedStopId}
+          serviceId={serviceId}
           showCongestionHeatmap={config.hasRealtime && showCongestionHeatmap}
+          userLocation={userLocation}
+          vehicles={vehicles}
         />
 
         {/* Route loading indicator */}
         {routeLoading && (
           <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[1000]">
             <div className="alert alert-info py-2 px-4 shadow-lg">
-              <span className="loading loading-spinner loading-sm"></span>
+              <span className="loading loading-spinner loading-sm" />
               <span>{t('gtfs.loadingRoute')}</span>
             </div>
           </div>
@@ -354,21 +362,21 @@ export function GTFSMode({ config }: GTFSModeProps) {
         {/* Realtime status badges (transit only) */}
         {config.hasRealtime && realtimeStats && (
           <RealtimeStatusPanel
-            ref={realtimePanelRef}
             alerts={serviceAlerts}
-            routesById={routesById}
-            selectedRouteId={selectedRouteId}
-            onRouteClick={(routeId, routeType) => handleSelectRoute(routeId, routeType)}
-            realtimeStats={realtimeStats}
-            timeAgoStr={timeAgoStr}
-            feedAgeStr={feedAgeStr}
-            workerTimestamp={workerTimestamp}
             cacheAgeSeconds={cacheAgeSeconds}
+            cacheStatus={cacheStatus}
+            feedAgeStr={feedAgeStr}
             fetchLatencyMs={fetchLatencyMs}
             lastUpdate={lastUpdate}
-            cacheStatus={cacheStatus}
             nextPollAtMs={nextPollAtMs}
+            onRouteClick={(routeId, routeType) => handleSelectRoute(routeId, routeType)}
             realtimeLoading={realtimeLoading}
+            realtimeStats={realtimeStats}
+            ref={realtimePanelRef}
+            routesById={routesById}
+            selectedRouteId={selectedRouteId}
+            timeAgoStr={timeAgoStr}
+            workerTimestamp={workerTimestamp}
           />
         )}
 
@@ -418,52 +426,60 @@ export function GTFSMode({ config }: GTFSModeProps) {
         */}
 
         {/* Route Info Bar */}
-        {selectedRoute && !routeModalOpen && !stopModalOpen && !selectedStopId && (() => {
-          const isFollowing = !!followedVehicleTripId;
-          const clickedTripId =
-            lastClickedVehicle?.routeId === selectedRouteId ? lastClickedVehicle.tripId : null;
-          // When following, surface the followed vehicle's data; otherwise the clicked vehicle's
-          const activeTripId = isFollowing ? followedVehicleTripId : clickedTripId;
-          const activeVehicle = activeTripId
-            ? vehicles.find((v) => v.tripId === activeTripId) ?? null
-            : null;
-          const activeVehiclePos = isFollowing
-            ? followedVehicleParsedPos
-            : (clickedTripId ? vehiclePositions.get(clickedTripId) ?? null : null);
-          const activeTripUpdate = isFollowing
-            ? followedTripUpdate
-            : (clickedTripId ? tripUpdates.get(clickedTripId) ?? null : null);
-          return (
-            <RouteInfoBar
-              route={selectedRoute}
-              vehicles={vehicles}
-              orderedStops={orderedStops}
-              stopsById={stopsById}
-              onExpand={handleExpandRoute}
-              onClose={handleClearRoute}
-              followCandidateTripId={isFollowing ? null : clickedTripId}
-              onFollowStart={handleFollowStart}
-              clickedVehicle={activeVehicle}
-              clickedVehiclePos={activeVehiclePos}
-              clickedTripUpdate={activeTripUpdate}
-              isFollowing={isFollowing}
-              onUnfollow={handleUnfollow}
-              followedVehiclePos={followedVehicleParsedPos}
-              routeTimetable={routeTimetable}
-            />
-          );
-        })()}
+        {selectedRoute &&
+          !routeModalOpen &&
+          !stopModalOpen &&
+          !selectedStopId &&
+          (() => {
+            const isFollowing = !!followedVehicleTripId;
+            const clickedTripId =
+              lastClickedVehicle?.routeId === selectedRouteId ? lastClickedVehicle.tripId : null;
+            // When following, surface the followed vehicle's data; otherwise the clicked vehicle's
+            const activeTripId = isFollowing ? followedVehicleTripId : clickedTripId;
+            const activeVehicle = activeTripId
+              ? (vehicles.find((v) => v.tripId === activeTripId) ?? null)
+              : null;
+            const activeVehiclePos = isFollowing
+              ? followedVehicleParsedPos
+              : clickedTripId
+                ? (vehiclePositions.get(clickedTripId) ?? null)
+                : null;
+            const activeTripUpdate = isFollowing
+              ? followedTripUpdate
+              : clickedTripId
+                ? (tripUpdates.get(clickedTripId) ?? null)
+                : null;
+            return (
+              <RouteInfoBar
+                clickedTripUpdate={activeTripUpdate}
+                clickedVehicle={activeVehicle}
+                clickedVehiclePos={activeVehiclePos}
+                followCandidateTripId={isFollowing ? null : clickedTripId}
+                followedVehiclePos={followedVehicleParsedPos}
+                isFollowing={isFollowing}
+                onClose={handleClearRoute}
+                onExpand={handleExpandRoute}
+                onFollowStart={handleFollowStart}
+                onUnfollow={handleUnfollow}
+                orderedStops={orderedStops}
+                route={selectedRoute}
+                routeTimetable={routeTimetable}
+                stopsById={stopsById}
+                vehicles={vehicles}
+              />
+            );
+          })()}
 
         {/* Stop Info Bar */}
         {selectedStop && !stopModalOpen && (
           <StopInfoBar
-            stop={selectedStop}
-            routesById={routesById}
-            stopsById={stopsById}
-            onExpand={handleExpandStop}
             onClose={handleCloseStopInfo}
+            onExpand={handleExpandStop}
             onStopSelect={handleSelectStop}
+            routesById={routesById}
             stackBelow={false}
+            stop={selectedStop}
+            stopsById={stopsById}
           />
         )}
 
@@ -471,8 +487,11 @@ export function GTFSMode({ config }: GTFSModeProps) {
         <div className="absolute top-2 left-2 right-32 sm:left-4 sm:right-auto sm:top-4 z-[1000]">
           <div className="w-full sm:w-80 flex items-center gap-2 bg-base-100 rounded-xl px-4 py-3 shadow-lg">
             <button
-              onClick={() => { trackEvent('search_opened'); setSearchModalOpen(true); }}
               className="flex-1 flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
+              onClick={() => {
+                trackEvent('search_opened');
+                setSearchModalOpen(true);
+              }}
             >
               <Search className="w-5 h-5 text-base-content/50 shrink-0" />
               {selectedRoute && routeModalOpen ? (
@@ -495,9 +514,9 @@ export function GTFSMode({ config }: GTFSModeProps) {
             </button>
             {selectedRoute && routeModalOpen && (
               <button
-                onClick={handleClearRoute}
-                className="btn btn-ghost btn-circle btn-xs min-h-[32px] min-w-[32px]"
                 aria-label={t('search.clearSelectionAria')}
+                className="btn btn-ghost btn-circle btn-xs min-h-[32px] min-w-[32px]"
+                onClick={handleClearRoute}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -517,9 +536,9 @@ export function GTFSMode({ config }: GTFSModeProps) {
         {/* Debug panel (transit only) */}
         {config.hasRealtime && (
           <DebugPanel
+            routesById={routesById}
             selectedStopId={selectedStopId}
             stopsById={stopsById}
-            routesById={routesById}
           />
         )}
 
@@ -527,25 +546,25 @@ export function GTFSMode({ config }: GTFSModeProps) {
         <SearchModal
           isOpen={searchModalOpen}
           onClose={() => setSearchModalOpen(false)}
+          onSelectRoute={handleSelectRoute}
+          onSelectStop={handleSelectStop}
           routes={routes}
           stops={stops}
           stopsById={stopsById}
-          onSelectRoute={handleSelectRoute}
-          onSelectStop={handleSelectStop}
         />
 
         {/* Route Modal */}
         {selectedRoute && (
           <RouteModal
-            isOpen={routeModalOpen}
-            route={selectedRoute}
-            routeStops={routeStops}
-            orderedStops={orderedStops}
-            stopsById={stopsById}
-            vehicles={vehicles}
             initialDirectionFilter={directionFilter}
+            isOpen={routeModalOpen}
             onClose={handleCloseRoute}
             onStopClick={handleStopClickFromRoute}
+            orderedStops={orderedStops}
+            route={selectedRoute}
+            routeStops={routeStops}
+            stopsById={stopsById}
+            vehicles={vehicles}
           />
         )}
 
@@ -553,12 +572,12 @@ export function GTFSMode({ config }: GTFSModeProps) {
         {selectedStop && (
           <StopModal
             isOpen={stopModalOpen}
-            stop={selectedStop}
-            routesById={routesById}
-            stopsById={stopsById}
             onClose={handleCloseStop}
             onRouteClick={handleRouteClickFromStop}
             onStopSelect={handleSelectStop}
+            routesById={routesById}
+            stop={selectedStop}
+            stopsById={stopsById}
           />
         )}
 
@@ -566,13 +585,13 @@ export function GTFSMode({ config }: GTFSModeProps) {
         {userLocation && (
           <NearbyStopsModal
             isOpen={nearbyOpen}
-            userLat={userLocation.lat}
-            userLon={userLocation.lon}
-            stops={platformStops}
             onClose={() => {
               setNearbyOpen(false);
             }}
             onSelectStop={handleSelectStopFromNearby}
+            stops={platformStops}
+            userLat={userLocation.lat}
+            userLon={userLocation.lon}
           />
         )}
 

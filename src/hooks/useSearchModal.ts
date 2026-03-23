@@ -1,49 +1,51 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
-import type { Route, Stop } from '../utils/gtfs';
-import { isRouteTypeTram, isRouteTypeBus, isRouteTypeRail } from '../utils/gtfs';
-import { useSettingsStore } from '../stores/settingsStore';
-import { useGTFSMode } from '../contexts/GTFSModeContext';
-import { trackEvent } from '../utils/analytics';
-import { useDirections } from './useDirections';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import type { Route, Stop } from '../utils/gtfs';
+
+import { useGTFSMode } from '../contexts/GTFSModeContext';
+import { useSettingsStore } from '../stores/settingsStore';
+import { trackEvent } from '../utils/analytics';
+import { isRouteTypeBus, isRouteTypeRail, isRouteTypeTram } from '../utils/gtfs';
 import {
+  filterParentStops,
+  filterRoutes,
   type FilterType,
   getBadgeColor,
-  filterRoutes,
   groupPlatformStops,
-  filterParentStops,
   mergeAndFilterRecents,
 } from '../utils/searchUtils';
+import { useDirections } from './useDirections';
 
 interface SearchModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSelectRoute: (routeId: string, routeType: number, directionFilter?: 'A' | 'B') => void;
+  onSelectStop: (stopId: string) => void;
   routes: Route[];
   stops: Stop[];
   stopsById: Map<string, Stop>;
-  onSelectRoute: (routeId: string, routeType: number, directionFilter?: 'A' | 'B') => void;
-  onSelectStop: (stopId: string) => void;
 }
 
 export function useSearchModal({
   isOpen,
   onClose,
+  onSelectRoute,
+  onSelectStop,
   routes,
   stops,
   stopsById,
-  onSelectRoute,
-  onSelectStop,
 }: SearchModalProps) {
   const { t } = useTranslation();
   const config = useGTFSMode();
   const [filter, setFilter] = useState<FilterType>(config.id === 'train' ? 'trains' : 'stanice');
-  const [stopsMode, setStopsMode] = useState<'search' | 'directions'>('search');
+  const [stopsMode, setStopsMode] = useState<'directions' | 'search'>('search');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedStopKeys, setExpandedStopKeys] = useState<Set<string>>(new Set());
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const [dirFromStop, setDirFromStop] = useState<Stop | null>(null);
-  const [dirToStop, setDirToStop] = useState<Stop | null>(null);
+  const [dirFromStop, setDirFromStop] = useState<null | Stop>(null);
+  const [dirToStop, setDirToStop] = useState<null | Stop>(null);
   const [dirActiveField, setDirActiveField] = useState<'from' | 'to'>('from');
   const [dirToQuery, setDirToQuery] = useState('');
   const dirToInputRef = useRef<HTMLInputElement>(null);
@@ -53,10 +55,10 @@ export function useSearchModal({
     favouriteStopIds,
     recentRoutes,
     recentStops,
-    toggleFavouriteRoute,
-    toggleFavouriteStop,
     removeRecentRoutes,
     removeRecentStops,
+    toggleFavouriteRoute,
+    toggleFavouriteStop,
   } = useSettingsStore();
 
   const [recentsExpanded, setRecentsExpanded] = useState(false);
@@ -86,7 +88,7 @@ export function useSearchModal({
     }
   }, [filter, searchQuery]);
 
-  const { trams, buses, trainRoutes } = useMemo(
+  const { buses, trainRoutes, trams } = useMemo(
     () =>
       routes.reduce(
         (acc, route) => {
@@ -95,7 +97,7 @@ export function useSearchModal({
           else if (isRouteTypeRail(route.type)) acc.trainRoutes.push(route);
           return acc;
         },
-        { trams: [] as Route[], buses: [] as Route[], trainRoutes: [] as Route[] }
+        { buses: [] as Route[], trainRoutes: [] as Route[], trams: [] as Route[] }
       ),
     [routes]
   );
@@ -121,10 +123,7 @@ export function useSearchModal({
   }, [filter, trams, buses, trainRoutes, favouriteRouteIds]);
 
   const favStops = useMemo(
-    () =>
-      favouriteStopIds
-        .map((id) => stopsById.get(id))
-        .filter((s): s is Stop => s !== undefined),
+    () => favouriteStopIds.map((id) => stopsById.get(id)).filter((s): s is Stop => s !== undefined),
     [favouriteStopIds, stopsById]
   );
 
@@ -148,13 +147,13 @@ export function useSearchModal({
 
   const filteredDirStops = useMemo(() => {
     if (filter !== 'stanice' || stopsMode !== 'directions') {
-      return { stops: [], hasMore: false } as ReturnType<typeof filterParentStops>;
+      return { hasMore: false, stops: [] } as ReturnType<typeof filterParentStops>;
     }
     const query = dirActiveField === 'from' ? searchQuery : dirToQuery;
     return filterParentStops(parentStops, query);
   }, [filter, stopsMode, dirActiveField, searchQuery, dirToQuery, parentStops]);
 
-  const { results: dirResults, loading: dirLoading } = useDirections(
+  const { loading: dirLoading, results: dirResults } = useDirections(
     dirFromStop?.id ?? null,
     dirToStop?.id ?? null,
     routesById,
@@ -197,7 +196,7 @@ export function useSearchModal({
     routeType: number,
     direction: 'A' | 'B'
   ) => {
-    trackEvent('directions_route_selected', { route_id: routeId, direction });
+    trackEvent('directions_route_selected', { direction, route_id: routeId });
     onSelectRoute(routeId, routeType, direction);
     onClose();
   };
@@ -238,53 +237,53 @@ export function useSearchModal({
   const hasRecents = recentItemsMerged.length > 0;
 
   return {
-    config,
-    filter,
-    setFilter,
-    trams,
+    badgeColor,
     buses,
-    trainRoutes,
-    stopsMode,
-    setStopsMode,
-    searchQuery,
-    setSearchQuery,
-    searchInputRef,
-    isDirsMode,
-    dirFromStop,
-    setDirFromStop,
-    dirToStop,
+    config,
     dirActiveField,
-    setDirActiveField,
-    dirToQuery,
-    setDirToQuery,
+    dirFromStop,
+    dirLoading,
+    dirResultLabel,
+    dirResults,
     dirToInputRef,
-    handleDirSwap,
+    dirToQuery,
+    dirToStop,
+    expandedStopKeys,
+    favouriteRouteIds,
+    favouriteStopIds,
     favRoutes,
     favStops,
-    badgeColor,
+    filter,
+    filteredDirStops,
+    filteredRoutes,
+    filteredStopGroups,
+    handleClearRecentsForTab,
+    handleDirStopSelect,
+    handleDirSwap,
+    handleSelectDirectionsRoute,
     handleSelectRoute,
     handleSelectStop,
-    filteredRoutes,
-    favouriteRouteIds,
-    toggleFavouriteRoute,
-    filteredStopGroups,
-    expandedStopKeys,
-    setExpandedStopKeys,
-    routesById,
-    stopsById,
-    favouriteStopIds,
-    toggleFavouriteStop,
-    filteredDirStops,
-    dirResultLabel,
-    dirLoading,
-    dirResults,
-    handleSelectDirectionsRoute,
-    handleDirStopSelect,
+    hasRecents,
+    isDirsMode,
+    isRouteFilter,
     recentItemsMerged,
     recentsExpanded,
+    routesById,
+    searchInputRef,
+    searchQuery,
+    setDirActiveField,
+    setDirFromStop,
+    setDirToQuery,
+    setExpandedStopKeys,
+    setFilter,
     setRecentsExpanded,
-    handleClearRecentsForTab,
-    isRouteFilter,
-    hasRecents,
+    setSearchQuery,
+    setStopsMode,
+    stopsById,
+    stopsMode,
+    toggleFavouriteRoute,
+    toggleFavouriteStop,
+    trainRoutes,
+    trams,
   };
 }

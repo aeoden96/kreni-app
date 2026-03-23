@@ -1,121 +1,142 @@
 <!doctype html>
 <html lang="hr">
+  <head>
+    <meta charset="UTF-8" />
 
-<head>
-  <meta charset="UTF-8" />
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
+    <link rel="shortcut icon" href="/favicon.svg" />
 
-  <!-- Favicons -->
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
-  <link rel="shortcut icon" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kreni — Zagreb uživo: ZET, Parking, Bicikli i Gradske usluge</title>
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kreni — Zagreb uživo: ZET, Parking, Bicikli i Gradske usluge</title>
+    <!-- Primary SEO -->
+    <meta
+      name="description"
+      content="Sve na jednoj karti: pratite ZET tramvaje i autobuse uživo, pronađite slobodna parkirna mjesta, javne garaže, nextbike bicikle i biciklističke staze u Zagrebu. Uključuje i lokacije javnih česmi, punionica za električna vozila i studentskih menzi."
+    />
+    <meta
+      name="keywords"
+      content="ZET, Zagreb, javni prijevoz, tramvaj, autobus, vlak, parking, garaže, javne garaže, parking zone, nextbike, bicikli, biciklističke staze, punionice, električna vozila, javne česme, studentske menze, uživo praćenje, live tracking, karta, raspored"
+    />
+    <meta name="author" content="Kreni" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://kreni.app/" />
 
-  <!-- Primary SEO -->
-  <meta name="description"
-    content="Sve na jednoj karti: pratite ZET tramvaje i autobuse uživo, pronađite slobodna parkirna mjesta, javne garaže, nextbike bicikle i biciklističke staze u Zagrebu. Uključuje i lokacije javnih česmi, punionica za električna vozila i studentskih menzi." />
-  <meta name="keywords"
-    content="ZET, Zagreb, javni prijevoz, tramvaj, autobus, vlak, parking, garaže, javne garaže, parking zone, nextbike, bicikli, biciklističke staze, punionice, električna vozila, javne česme, studentske menze, uživo praćenje, live tracking, karta, raspored" />
-  <meta name="author" content="Kreni" />
-  <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://kreni.app/" />
+    <!-- Geographic / Language -->
+    <meta name="geo.region" content="HR-21" />
+    <meta name="geo.placename" content="Zagreb, Croatia" />
+    <link rel="alternate" hreflang="hr" href="https://kreni.app/" />
 
-  <!-- Geographic / Language -->
-  <meta name="geo.region" content="HR-21" />
-  <meta name="geo.placename" content="Zagreb, Croatia" />
-  <link rel="alternate" hreflang="hr" href="https://kreni.app/" />
+    <!-- Open Graph (Facebook, LinkedIn, WhatsApp) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://kreni.app/" />
+    <meta
+      property="og:title"
+      content="Kreni — Zagreb uživo: ZET, Parking, Bicikli i Gradske usluge"
+    />
+    <meta
+      property="og:description"
+      content="Pratite tramvaje, autobuse, bicikle i parking uživo na karti Zagreba. Sve gradske usluge na jednom mjestu."
+    />
+    <meta property="og:image" content="https://kreni.app/screenshot-wide.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1280" />
+    <meta property="og:image:height" content="720" />
+    <meta
+      property="og:image:alt"
+      content="Kreni karta s prikazom javnog prijevoza, parkinga i bicikala u Zagrebu"
+    />
+    <meta property="og:locale" content="hr_HR" />
+    <meta property="og:site_name" content="Kreni" />
 
-  <!-- Open Graph (Facebook, LinkedIn, WhatsApp) -->
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://kreni.app/" />
-  <meta property="og:title" content="Kreni — Zagreb uživo: ZET, Parking, Bicikli i Gradske usluge" />
-  <meta property="og:description"
-    content="Pratite tramvaje, autobuse, bicikle i parking uživo na karti Zagreba. Sve gradske usluge na jednom mjestu." />
-  <meta property="og:image" content="https://kreni.app/screenshot-wide.png" />
-  <meta property="og:image:type" content="image/png" />
-  <meta property="og:image:width" content="1280" />
-  <meta property="og:image:height" content="720" />
-  <meta property="og:image:alt" content="Kreni karta s prikazom javnog prijevoza, parkinga i bicikala u Zagrebu" />
-  <meta property="og:locale" content="hr_HR" />
-  <meta property="og:site_name" content="Kreni" />
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Kreni — Zagreb uživo: ZET, Parking, Bicikli i Gradske usluge"
+    />
+    <meta
+      name="twitter:description"
+      content="Pratite tramvaje, autobuse, bicikle i parking uživo na karti Zagreba."
+    />
+    <meta name="twitter:image" content="https://kreni.app/screenshot-wide.png" />
+    <meta
+      name="twitter:image:alt"
+      content="Kreni karta s prikazom javnog prijevoza, parkinga i bicikala u Zagrebu"
+    />
 
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Kreni — Zagreb uživo: ZET, Parking, Bicikli i Gradske usluge" />
-  <meta name="twitter:description" content="Pratite tramvaje, autobuse, bicikle i parking uživo na karti Zagreba." />
-  <meta name="twitter:image" content="https://kreni.app/screenshot-wide.png" />
-  <meta name="twitter:image:alt" content="Kreni karta s prikazom javnog prijevoza, parkinga i bicikala u Zagrebu" />
+    <!-- PWA -->
+    <meta name="theme-color" content="#1e3a5f" />
+    <meta name="mobile-web-app-capable" content="yes" />
 
-  <!-- PWA -->
-  <meta name="theme-color" content="#1e3a5f" />
-  <meta name="mobile-web-app-capable" content="yes" />
+    <!-- Apple PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Kreni" />
+    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
 
-  <!-- Apple PWA -->
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="Kreni" />
-  <link rel="apple-touch-icon" href="/pwa-192x192.png" />
-
-  <!-- Structured Data -->
-  <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "Kreni",
-      "url": "https://kreni.app/",
-      "description": "Sve na jednoj karti: pratite ZET tramvaje i autobuse uživo, pronađite slobodna parkirna mjesta, javne garaže, nextbike bicikle i biciklističke staze u Zagrebu.",
-      "applicationCategory": "TravelApplication",
-      "operatingSystem": "Any",
-      "inLanguage": "hr",
-      "isAccessibleForFree": true,
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "EUR"
-      },
-      "areaServed": {
-        "@type": "City",
-        "name": "Zagreb",
-        "addressCountry": "HR"
-      },
-      "image": "https://kreni.app/screenshot-wide.png"
-    }
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Kreni",
+        "url": "https://kreni.app/",
+        "description": "Sve na jednoj karti: pratite ZET tramvaje i autobuse uživo, pronađite slobodna parkirna mjesta, javne garaže, nextbike bicikle i biciklističke staze u Zagrebu.",
+        "applicationCategory": "TravelApplication",
+        "operatingSystem": "Any",
+        "inLanguage": "hr",
+        "isAccessibleForFree": true,
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "EUR"
+        },
+        "areaServed": {
+          "@type": "City",
+          "name": "Zagreb",
+          "addressCountry": "HR"
+        },
+        "image": "https://kreni.app/screenshot-wide.png"
+      }
     </script>
 
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-C6L98QJ4Z3"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('js', new Date());
-    gtag('config', 'G-C6L98QJ4Z3');
-  </script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-C6L98QJ4Z3"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'G-C6L98QJ4Z3');
+    </script>
 
-  <script>
-    // Initialize theme before React loads to prevent flash
-    (function () {
-      const theme = (() => {
-        const localStorageTheme = localStorage?.getItem("theme") ?? "";
-        if (["dark", "light"].includes(localStorageTheme)) {
-          return localStorageTheme;
-        }
-        if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-          return "dark";
-        }
-        return "light";
+    <script>
+      // Initialize theme before React loads to prevent flash
+      (function () {
+        const theme = (() => {
+          const localStorageTheme = localStorage?.getItem('theme') ?? '';
+          if (['dark', 'light'].includes(localStorageTheme)) {
+            return localStorageTheme;
+          }
+          if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            return 'dark';
+          }
+          return 'light';
+        })();
+        document.documentElement.setAttribute('data-theme', theme);
       })();
-      document.documentElement.setAttribute("data-theme", theme);
-    })();
-  </script>
+    </script>
 
-  <!-- Tally feedback popup (see https://tally.so) -->
-  <script async src="https://tally.so/widgets/embed.js"></script>
-</head>
+    <!-- Tally feedback popup (see https://tally.so) -->
+    <script async src="https://tally.so/widgets/embed.js"></script>
+  </head>
 
-<body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
-</body>
-
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

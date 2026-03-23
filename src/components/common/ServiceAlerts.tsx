@@ -3,87 +3,101 @@
  * Shows a badge when active alerts exist; expands to a full-screen list panel on click.
  */
 
+import {
+  AlertTriangle,
+  ArrowRight,
+  Ban,
+  Bus,
+  Calendar,
+  ChevronRight,
+  Info,
+  MapPin,
+  Plus,
+  X,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BadgeWithPanel } from './BadgeWithPanel';
-import { serviceAlertEffectLabel } from '../../utils/serviceAlertEffectLabel';
-import { AlertTriangle, X, ChevronRight, Bus, MapPin, Ban, Plus, Info, Calendar, ArrowRight } from 'lucide-react';
-import type { ParsedServiceAlert } from '../../utils/realtime';
+
 import type { Route } from '../../utils/gtfs';
+import type { ParsedServiceAlert } from '../../utils/realtime';
+
+import { serviceAlertEffectLabel } from '../../utils/serviceAlertEffectLabel';
+import { BadgeWithPanel } from './BadgeWithPanel';
 
 // ── Per-effect visual config ───────────────────────────────────────────────
 type EffectStyle = {
-  border: string;       // left border colour class
-  badge: string;        // DaisyUI badge variant
+  badge: string; // DaisyUI badge variant
+  border: string; // left border colour class
   icon: React.ReactNode;
 };
 
 function effectStyle(effect: string, isRelevant: boolean): EffectStyle {
   if (isRelevant) {
     return {
-      border: 'border-l-error',
       badge: 'badge-error',
+      border: 'border-l-error',
       icon: <AlertTriangle className="w-4 h-4 text-error" />,
     };
   }
   switch (effect) {
-    case 'NO_SERVICE':
-      return { border: 'border-l-error', badge: 'badge-error', icon: <Ban className="w-4 h-4 text-error" /> };
+    case 'ADDITIONAL_SERVICE':
+      return {
+        badge: 'badge-success',
+        border: 'border-l-success',
+        icon: <Plus className="w-4 h-4 text-success" />,
+      };
     case 'DETOUR':
     case 'MODIFIED_SERVICE':
     case 'REDUCED_SERVICE':
     case 'SIGNIFICANT_DELAYS':
-      return { border: 'border-l-warning', badge: 'badge-warning', icon: <Bus className="w-4 h-4 text-warning" /> };
+      return {
+        badge: 'badge-warning',
+        border: 'border-l-warning',
+        icon: <Bus className="w-4 h-4 text-warning" />,
+      };
+    case 'NO_SERVICE':
+      return {
+        badge: 'badge-error',
+        border: 'border-l-error',
+        icon: <Ban className="w-4 h-4 text-error" />,
+      };
     case 'STOP_MOVED':
-      return { border: 'border-l-info', badge: 'badge-info', icon: <MapPin className="w-4 h-4 text-info" /> };
-    case 'ADDITIONAL_SERVICE':
-      return { border: 'border-l-success', badge: 'badge-success', icon: <Plus className="w-4 h-4 text-success" /> };
+      return {
+        badge: 'badge-info',
+        border: 'border-l-info',
+        icon: <MapPin className="w-4 h-4 text-info" />,
+      };
     default:
-      return { border: 'border-l-base-300', badge: 'badge-ghost', icon: <Info className="w-4 h-4 text-base-content/50" /> };
+      return {
+        badge: 'badge-ghost',
+        border: 'border-l-base-300',
+        icon: <Info className="w-4 h-4 text-base-content/50" />,
+      };
   }
 }
 
 // ── Date helpers ───────────────────────────────────────────────────────────
 const DATE_FMT = new Intl.DateTimeFormat('hr-HR', { day: 'numeric', month: 'short' });
 
-function fmtDate(posixSec: number): string {
-  return DATE_FMT.format(new Date(posixSec * 1000));
-}
-
 interface DateRangeProps {
-  since: number | null;
-  until: number | null;
-}
-
-function DateRange({ since, until }: DateRangeProps) {
-  if (!since && !until) return null;
-  return (
-    <div className="flex items-center gap-1 text-xs text-base-content/60 mt-2">
-      <Calendar className="w-3 h-3 shrink-0" />
-      {since && until ? (
-        <>
-          <span>{fmtDate(since)}</span>
-          <ArrowRight className="w-3 h-3" />
-          <span>{fmtDate(until)}</span>
-        </>
-      ) : since ? (
-        <span>od {fmtDate(since)}</span>
-      ) : (
-        <span>do {fmtDate(until!)}</span>
-      )}
-    </div>
-  );
+  since: null | number;
+  until: null | number;
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
 interface ServiceAlertsProps {
   alerts: ParsedServiceAlert[];
-  routesById: Map<string, Route>;
-  selectedRouteId?: string | null;
   onRouteClick?: (routeId: string, routeType: number) => void;
+  routesById: Map<string, Route>;
+  selectedRouteId?: null | string;
 }
 
-export function ServiceAlerts({ alerts, routesById, selectedRouteId, onRouteClick }: ServiceAlertsProps) {
+export function ServiceAlerts({
+  alerts,
+  onRouteClick,
+  routesById,
+  selectedRouteId,
+}: ServiceAlertsProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
@@ -92,9 +106,9 @@ export function ServiceAlerts({ alerts, routesById, selectedRouteId, onRouteClic
   // Relevant alerts first when a route is selected
   const sorted = selectedRouteId
     ? [
-      ...alerts.filter((a) => a.routeIds.includes(selectedRouteId!)),
-      ...alerts.filter((a) => !a.routeIds.includes(selectedRouteId!)),
-    ]
+        ...alerts.filter((a) => a.routeIds.includes(selectedRouteId!)),
+        ...alerts.filter((a) => !a.routeIds.includes(selectedRouteId!)),
+      ]
     : alerts;
 
   const hasRelevant = selectedRouteId && alerts.some((a) => a.routeIds.includes(selectedRouteId));
@@ -104,8 +118,8 @@ export function ServiceAlerts({ alerts, routesById, selectedRouteId, onRouteClic
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        style={{ animation: 'backdrop-fade-in 0.15s ease-out' }}
         onClick={onClose}
+        style={{ animation: 'backdrop-fade-in 0.15s ease-out' }}
       />
 
       {/* Modal */}
@@ -119,8 +133,8 @@ export function ServiceAlerts({ alerts, routesById, selectedRouteId, onRouteClic
           <h2 className="text-lg font-bold flex-1">Prometne obavijesti</h2>
           <span className="badge badge-warning badge-sm">{alerts.length}</span>
           <button
-            onClick={onClose}
             className="btn btn-ghost btn-circle btn-sm min-h-[44px] min-w-[44px]"
+            onClick={onClose}
           >
             <X className="w-5 h-5" />
           </button>
@@ -134,8 +148,8 @@ export function ServiceAlerts({ alerts, routesById, selectedRouteId, onRouteClic
 
             return (
               <div
-                key={alert.id}
                 className={`p-4 border-l-4 ${style.border} ${isRelevant ? 'bg-error/5' : 'hover:bg-base-200/50'} transition-colors`}
+                key={alert.id}
               >
                 {/* Top row: icon + effect badge + ZET link */}
                 <div className="flex items-center gap-2 mb-2">
@@ -145,11 +159,11 @@ export function ServiceAlerts({ alerts, routesById, selectedRouteId, onRouteClic
                   </span>
                   {alert.url && (
                     <a
-                      href={alert.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
                       className="ml-auto text-xs text-base-content/40 hover:text-primary underline underline-offset-2 transition-colors"
+                      href={alert.url}
                       onClick={(e) => e.stopPropagation()}
+                      rel="noopener noreferrer"
+                      target="_blank"
                     >
                       zet.hr ↗
                     </a>
@@ -179,12 +193,12 @@ export function ServiceAlerts({ alerts, routesById, selectedRouteId, onRouteClic
                       if (!route) return null;
                       return (
                         <button
+                          className="badge badge-sm font-bold gap-1 hover:opacity-80 transition-opacity cursor-pointer text-white"
                           key={rid}
                           onClick={() => {
                             onRouteClick?.(rid, route.type);
                             onClose();
                           }}
-                          className="badge badge-sm font-bold gap-1 hover:opacity-80 transition-opacity cursor-pointer text-white"
                           style={{ backgroundColor: route.type === 0 ? '#2563eb' : '#d97706' }}
                         >
                           {route.shortName}
@@ -204,15 +218,39 @@ export function ServiceAlerts({ alerts, routesById, selectedRouteId, onRouteClic
 
   return (
     <BadgeWithPanel
-      variant="fullScreen"
-      open={open}
-      onOpenChange={setOpen}
       badgeClassName={`badge gap-1.5 shadow cursor-pointer transition-all ${hasRelevant ? 'badge-error hover:badge-outline' : 'badge-warning hover:badge-outline'}`}
-      title="Obavijesti o prometu"
+      onOpenChange={setOpen}
+      open={open}
       panelContent={panelContent}
+      title="Obavijesti o prometu"
+      variant="fullScreen"
     >
       <AlertTriangle className="w-3 h-3" />
       {alerts.length} {alerts.length === 1 ? 'obavijest' : 'obavijesti'}
     </BadgeWithPanel>
   );
+}
+
+function DateRange({ since, until }: DateRangeProps) {
+  if (!since && !until) return null;
+  return (
+    <div className="flex items-center gap-1 text-xs text-base-content/60 mt-2">
+      <Calendar className="w-3 h-3 shrink-0" />
+      {since && until ? (
+        <>
+          <span>{fmtDate(since)}</span>
+          <ArrowRight className="w-3 h-3" />
+          <span>{fmtDate(until)}</span>
+        </>
+      ) : since ? (
+        <span>od {fmtDate(since)}</span>
+      ) : (
+        <span>do {fmtDate(until!)}</span>
+      )}
+    </div>
+  );
+}
+
+function fmtDate(posixSec: number): string {
+  return DATE_FMT.format(new Date(posixSec * 1000));
 }

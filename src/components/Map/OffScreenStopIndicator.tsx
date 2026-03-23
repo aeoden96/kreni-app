@@ -11,42 +11,49 @@
  * to that stop.
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { Navigation2 } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMap } from 'react-leaflet';
-import { Navigation2 } from 'lucide-react';
+
 import type { Stop } from '../../utils/gtfs';
+
 import {
   computeOffScreenIndicator,
   type OffScreenIndicatorPosition,
 } from '../../utils/offScreenIndicator';
 
 export interface OffScreenIndicatorUIProps {
-  x: number;
-  y: number;
   /** CSS rotation in degrees — 0 = up, clockwise */
   angle: number;
-  stopName: string;
-  onFlyTo: () => void;
   /** When true, render inline (for Storybook); otherwise portal to document.body */
   inline?: boolean;
+  onFlyTo: () => void;
+  stopName: string;
+  x: number;
+  y: number;
+}
+
+interface OffScreenStopIndicatorProps {
+  onFlyTo: () => void;
+  stop: null | Stop;
 }
 
 /** Presentational indicator UI — used by OffScreenStopIndicator and Storybook. */
 export function OffScreenIndicatorUI({
+  angle,
+  inline = false,
+  onFlyTo,
+  stopName,
   x,
   y,
-  angle,
-  stopName,
-  onFlyTo,
-  inline = false,
 }: OffScreenIndicatorUIProps) {
   const content = (
     <div
       className={inline ? '' : 'fixed z-[2000] pointer-events-none'}
       style={{
-        position: inline ? 'relative' : 'fixed',
         left: x,
+        position: inline ? 'relative' : 'fixed',
         top: y,
         transform: 'translate(-50%, -50%)',
       }}
@@ -72,14 +79,9 @@ export function OffScreenIndicatorUI({
   return inline ? content : createPortal(content, document.body);
 }
 
-interface OffScreenStopIndicatorProps {
-  stop: Stop | null;
-  onFlyTo: () => void;
-}
-
-export function OffScreenStopIndicator({ stop, onFlyTo }: OffScreenStopIndicatorProps) {
+export function OffScreenStopIndicator({ onFlyTo, stop }: OffScreenStopIndicatorProps) {
   const map = useMap();
-  const [indicator, setIndicator] = useState<OffScreenIndicatorPosition | null>(null);
+  const [indicator, setIndicator] = useState<null | OffScreenIndicatorPosition>(null);
 
   const update = useCallback(() => {
     if (!stop) {
@@ -93,14 +95,14 @@ export function OffScreenStopIndicator({ stop, onFlyTo }: OffScreenStopIndicator
         stop.lat,
         stop.lon,
         {
+          east: bounds.getEast(),
           north: bounds.getNorth(),
           south: bounds.getSouth(),
-          east: bounds.getEast(),
           west: bounds.getWest(),
         },
         size.x,
-        size.y,
-      ),
+        size.y
+      )
     );
   }, [stop, map]);
 
@@ -118,11 +120,11 @@ export function OffScreenStopIndicator({ stop, onFlyTo }: OffScreenStopIndicator
 
   return (
     <OffScreenIndicatorUI
+      angle={indicator.angle}
+      onFlyTo={onFlyTo}
+      stopName={stop.name}
       x={indicator.x}
       y={indicator.y}
-      angle={indicator.angle}
-      stopName={stop.name}
-      onFlyTo={onFlyTo}
     />
   );
 }

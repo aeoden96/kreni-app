@@ -1,13 +1,13 @@
 {
-    "ignore": [
-        "src/utils/gtfs.ts",
-        "src/utils/realtime.ts",
-        "src/components/Map/RailwayStationsMap.tsx",
-        "src/components/common/DirectionsPanel.tsx",
-        "src/components/common/ParentStopInput.tsx",
-        "src/hooks/useParentStopSearch.ts",
-        "vitest.shims.d.ts"
-    ],
-    "ignoreDependencies": ["@vitest/coverage-v8"],
-    "ignoreBinaries": ["audit"]
+  "ignore": [
+    "src/utils/gtfs.ts",
+    "src/utils/realtime.ts",
+    "src/components/Map/RailwayStationsMap.tsx",
+    "src/components/common/DirectionsPanel.tsx",
+    "src/components/common/ParentStopInput.tsx",
+    "src/hooks/useParentStopSearch.ts",
+    "vitest.shims.d.ts"
+  ],
+  "ignoreDependencies": ["@vitest/coverage-v8"],
+  "ignoreBinaries": ["audit"]
 }

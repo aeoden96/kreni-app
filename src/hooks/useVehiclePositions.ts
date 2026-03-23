@@ -12,16 +12,18 @@
  */
 
 import { useMemo } from 'react';
+
 import type { RouteActiveTripsData } from '../utils/gtfs';
 import type { VehiclePosition } from '../utils/vehicles';
-import { mapRealtimeToVehiclePositions } from '../utils/vehicles';
+
 import { useRealtimeStore } from '../stores/realtimeStore';
+import { mapRealtimeToVehiclePositions } from '../utils/vehicles';
 
 export function useVehiclePositions(
-  activeTripsData: RouteActiveTripsData | null,
+  activeTripsData: null | RouteActiveTripsData,
   // serviceId kept in signature for API compatibility; filtering is now done
   // by matching tripIds from the realtime feed against the route's trip list.
-  _serviceId: string | null
+  _serviceId: null | string
 ): VehiclePosition[] {
   const vehiclePositions = useRealtimeStore((s) => s.vehiclePositions);
   const tripUpdates = useRealtimeStore((s) => s.tripUpdates);
@@ -29,10 +31,6 @@ export function useVehiclePositions(
   return useMemo(() => {
     if (!activeTripsData) return [];
 
-    return mapRealtimeToVehiclePositions(
-      vehiclePositions,
-      tripUpdates,
-      activeTripsData.trips
-    );
+    return mapRealtimeToVehiclePositions(vehiclePositions, tripUpdates, activeTripsData.trips);
   }, [vehiclePositions, tripUpdates, activeTripsData]);
 }

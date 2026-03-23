@@ -7,25 +7,6 @@
  */
 import L from 'leaflet';
 
-// Utility: darken a hex color by a fraction (0-1). Returns #rrggbb.
-function darkenHex(hex: string, amount: number): string {
-  const h = hex.replace('#', '');
-  const parse = (s: string) => parseInt(s, 16);
-  let r: number, g: number, b: number;
-  if (h.length === 3) {
-    r = parse(h[0] + h[0]);
-    g = parse(h[1] + h[1]);
-    b = parse(h[2] + h[2]);
-  } else {
-    r = parse(h.substring(0, 2));
-    g = parse(h.substring(2, 4));
-    b = parse(h.substring(4, 6));
-  }
-  const lerp = (v: number) => Math.max(0, Math.min(255, Math.round(v * (1 - amount))));
-  const toHex = (v: number) => v.toString(16).padStart(2, '0');
-  return `#${toHex(lerp(r))}${toHex(lerp(g))}${toHex(lerp(b))}`;
-}
-
 /**
  * Build a Leaflet DivIcon for a vehicle marker.
  *
@@ -40,7 +21,7 @@ export function makeVehicleIcon(
   _isRealtime: boolean,
   label: string = '',
   darkBackground: boolean = false,
-  opacity: number = 1,
+  opacity: number = 1
 ): L.DivIcon {
   const dark = darkBackground;
   // Match platform stop markers (StopMarkers): white ring + drop shadow
@@ -61,16 +42,16 @@ export function makeVehicleIcon(
     const size = 42;
     const cx = size / 2; // 21
     const r = 13;
-    const pinTipY   = cx - r - 5;      // 3
-    const pinBaseY  = cx - r;           // 8
-    const pinHalfW  = 4;
+    const pinTipY = cx - r - 5; // 3
+    const pinBaseY = cx - r; // 8
+    const pinHalfW = 4;
 
     const rotatingSvg =
       `<svg style="position:absolute;top:0;left:0;` +
       `transform:rotate(${bearing}deg);transform-origin:${cx}px ${cx}px;overflow:visible;"` +
       ` width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">` +
-        `<polygon points="${cx},${pinTipY} ${cx - pinHalfW},${pinBaseY} ${cx + pinHalfW},${pinBaseY}"` +
-           ` fill="${fillColor}" stroke="${stroke}" stroke-width="${strokeW}" stroke-linejoin="round"/>` +
+      `<polygon points="${cx},${pinTipY} ${cx - pinHalfW},${pinBaseY} ${cx + pinHalfW},${pinBaseY}"` +
+      ` fill="${fillColor}" stroke="${stroke}" stroke-width="${strokeW}" stroke-linejoin="round"/>` +
       `</svg>`;
 
     let fixedSvg =
@@ -79,11 +60,12 @@ export function makeVehicleIcon(
     if (dark) {
       fixedSvg += `<circle cx="${cx}" cy="${cx}" r="${r + 4}" fill="${outerRingFill}"/>`;
     }
-    fixedSvg += `<circle cx="${cx}" cy="${cx}" r="${r}"` +
-          ` fill="${fillColor}" fill-opacity="${dark ? 1 : 0.95}" stroke="${stroke}" stroke-width="${strokeW}"/>` +
-                `<text x="${cx}" y="${cx + Math.round(fontSize * 0.38)}"` +
-                ` text-anchor="middle" font-size="${fontSize}" font-weight="bold"` +
-                ` fill="white" font-family="system-ui,sans-serif">${label}</text>` +
+    fixedSvg +=
+      `<circle cx="${cx}" cy="${cx}" r="${r}"` +
+      ` fill="${fillColor}" fill-opacity="${dark ? 1 : 0.95}" stroke="${stroke}" stroke-width="${strokeW}"/>` +
+      `<text x="${cx}" y="${cx + Math.round(fontSize * 0.38)}"` +
+      ` text-anchor="middle" font-size="${fontSize}" font-weight="bold"` +
+      ` fill="white" font-family="system-ui,sans-serif">${label}</text>` +
       `</svg>`;
 
     const html =
@@ -94,10 +76,10 @@ export function makeVehicleIcon(
       `</div>`;
 
     return L.divIcon({
-      html,
       className: '',
-      iconSize: [size, size],
+      html,
       iconAnchor: [cx, cx],
+      iconSize: [size, size],
       tooltipAnchor: [0, -cx],
     });
   }
@@ -111,11 +93,12 @@ export function makeVehicleIcon(
   if (dark) {
     svgBody += `<circle cx="${cx}" cy="${cx}" r="${r + 3}" fill="${outerRingFill}"/>`;
   }
-  svgBody += `<circle cx="${cx}" cy="${cx}" r="${r}"` +
-             ` fill="${fillColor}" fill-opacity="${dark ? 1 : 0.85}" stroke="${stroke}" stroke-width="${strokeW}"/>` +
-             `<text x="${cx}" y="${cx + Math.round(fontSize * 0.38)}"` +
-             ` text-anchor="middle" font-size="${fontSize}" font-weight="bold"` +
-             ` fill="white" font-family="system-ui,sans-serif">${label}</text>`;
+  svgBody +=
+    `<circle cx="${cx}" cy="${cx}" r="${r}"` +
+    ` fill="${fillColor}" fill-opacity="${dark ? 1 : 0.85}" stroke="${stroke}" stroke-width="${strokeW}"/>` +
+    `<text x="${cx}" y="${cx + Math.round(fontSize * 0.38)}"` +
+    ` text-anchor="middle" font-size="${fontSize}" font-weight="bold"` +
+    ` fill="white" font-family="system-ui,sans-serif">${label}</text>`;
 
   const html =
     `<svg data-testid="vehicle-marker" xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"` +
@@ -124,10 +107,29 @@ export function makeVehicleIcon(
     `</svg>`;
 
   return L.divIcon({
-    html,
     className: '',
-    iconSize: [size, size],
+    html,
     iconAnchor: [cx, cx],
+    iconSize: [size, size],
     tooltipAnchor: [0, -cx],
   });
+}
+
+// Utility: darken a hex color by a fraction (0-1). Returns #rrggbb.
+function darkenHex(hex: string, amount: number): string {
+  const h = hex.replace('#', '');
+  const parse = (s: string) => parseInt(s, 16);
+  let b: number, g: number, r: number;
+  if (h.length === 3) {
+    r = parse(h[0] + h[0]);
+    g = parse(h[1] + h[1]);
+    b = parse(h[2] + h[2]);
+  } else {
+    r = parse(h.substring(0, 2));
+    g = parse(h.substring(2, 4));
+    b = parse(h.substring(4, 6));
+  }
+  const lerp = (v: number) => Math.max(0, Math.min(255, Math.round(v * (1 - amount))));
+  const toHex = (v: number) => v.toString(16).padStart(2, '0');
+  return `#${toHex(lerp(r))}${toHex(lerp(g))}${toHex(lerp(b))}`;
 }

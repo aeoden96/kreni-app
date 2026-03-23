@@ -4,43 +4,47 @@
 [![Build Status](https://img.shields.io/github/actions/workflow/status/aeoden96/kreni-app/deploy.yml?branch=master)](https://github.com/aeoden96/kreni-app/actions)
 [![Static Analysis](https://img.shields.io/github/actions/workflow/status/aeoden96/kreni-app/ci.yml?branch=master&label=ci)](https://github.com/aeoden96/kreni-app/actions)
 
-
 **Kreni** is a blazing-fast, static frontend application for tracking Zagreb public transit (ZET buses/trams, and HŽPP trains). It relies on zero real-time backend databases or complex servers, instead offloading all heavy transit data processing to build-time.
 
 ---
 
 ## What makes Kreni different?
 
-Most public transit applications rely on heavy databases to query stops, routes, and schedules dynamically. **Kreni is completely static.** 
+Most public transit applications rely on heavy databases to query stops, routes, and schedules dynamically. **Kreni is completely static.**
 
 Instead of a backend database, it pre-processes massive GTFS (General Transit Feed Specification) feed archives into hundreds of thousands of hyper-optimized JSON chunks. These tiny JSON files are served directly from a CDN (Cloudflare Pages), meaning Kreni can handle virtually infinite traffic out-of-the-box with roughly zero database constraints.
 
 It leverages:
-* **React 19, TypeScript, and Vite 7** for the frontend UI.
-* **Tailwind CSS v4 + DaisyUI 5** for a completely customized and responsive design.
-* **Leaflet** for highly detailed, interactive transit maps.
-* **Playwright & Vitest** for rock-solid test coverage.
+
+- **React 19, TypeScript, and Vite 7** for the frontend UI.
+- **Tailwind CSS v4 + DaisyUI 5** for a completely customized and responsive design.
+- **Leaflet** for highly detailed, interactive transit maps.
+- **Playwright & Vitest** for rock-solid test coverage.
 
 ## Architecture & Infrastructure Workflows
 
 The beauty of Kreni lies in its automated infrastructural workflows driven by GitHub Actions:
 
 ### 1. Zero-Downtime Data Processing (`deploy.yml`)
+
 When Kreni deploys, the CI pipeline:
+
 - Downloads the latest massive GTFS ZIP archives from ZET and HŽPP.
 - Slices these 114+ MB feeds locally using Python and Bash scripts (`scripts/run.sh`, `scripts/run_train.sh`).
 - Generates highly fractured and minimal JSON chunks (e.g., individual files for specific route terminuses, stop timetables, geographical shapes, etc.).
 - Saves these index files to `public/data/` and `public/data-train/`.
-- Uploads the lightweight built project directly to **Cloudflare Pages**. 
+- Uploads the lightweight built project directly to **Cloudflare Pages**.
 
 This eliminates the need to calculate routes on-the-fly. The client simply fetches the exact `.json` file it needs.
 
 ### 2. Automated Service Alerts (`parse-service-alerts.yml`)
+
 - Runs a cron job every 4 hours to fetch unstructured official service disruptions and announcements.
 - Uses an AI agent (via the Ollama API) to automatically parse, summarize, and categorize these service alerts into a clean structured format.
 - Writes the processed alerts directly into a **Cloudflare KV** store where the frontend reads them near-instantly.
 
 ### 3. Real-Time Telemetry & Tracking
+
 - The frontend dynamically interpolates vehicle schedules (based on shape data and the time of day) and supplements it with actual, real-time positional updates fetched through a lightweight proxy edge-worker (`VITE_GTFS_PROXY_URL`).
 
 ---

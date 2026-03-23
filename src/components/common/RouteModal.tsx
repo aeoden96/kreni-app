@@ -9,46 +9,44 @@
  * the dots on the line always align with the corresponding stop rows.
  */
 
-import { useState, memo } from 'react';
+import { ArrowLeft, Bus, Train, X } from 'lucide-react';
+import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, X, Train, Bus } from 'lucide-react';
-import type { Route, Stop } from '../../utils/gtfs';
-import { getDirectionColor } from '../Map/directionColors';
-import type { VehiclePosition } from '../../utils/vehicles';
-import {
-  RouteLineDiagram,
-  STOP_ROW_HEIGHT,
-  STOP_LIST_PADDING_TOP,
-} from './RouteLineDiagram';
 
-interface RouteModalProps {
-  isOpen: boolean;
-  route: Route;
-  routeStops: string[];
-  orderedStops?: Record<string, string[]>;
-  stopsById: Map<string, Stop>;
-  vehicles: VehiclePosition[];
-  /** Default direction — 'A' or 'B'. */
-  initialDirectionFilter?: DirectionFilter;
-  onClose: () => void;
-  onStopClick: (stopId: string) => void;
-}
+import type { Route, Stop } from '../../utils/gtfs';
+import type { VehiclePosition } from '../../utils/vehicles';
+
+import { getDirectionColor } from '../Map/directionColors';
+import { RouteLineDiagram, STOP_LIST_PADDING_TOP, STOP_ROW_HEIGHT } from './RouteLineDiagram';
 
 type DirectionFilter = 'A' | 'B';
+
+interface RouteModalProps {
+  /** Default direction — 'A' or 'B'. */
+  initialDirectionFilter?: DirectionFilter;
+  isOpen: boolean;
+  onClose: () => void;
+  onStopClick: (stopId: string) => void;
+  orderedStops?: Record<string, string[]>;
+  route: Route;
+  routeStops: string[];
+  stopsById: Map<string, Stop>;
+  vehicles: VehiclePosition[];
+}
 
 const TRAM_COLOR = '#2563eb'; // blue-600
 const BUS_COLOR = '#d97706'; // amber-600
 
 export const RouteModal = memo(function RouteModal({
   isOpen,
-  route,
-  routeStops,
-  orderedStops,
-  stopsById,
-  vehicles,
   // initialDirectionFilter = 'A', // unused
   onClose,
   onStopClick,
+  orderedStops,
+  route,
+  routeStops,
+  stopsById,
+  vehicles,
 }: RouteModalProps) {
   const { t } = useTranslation();
 
@@ -61,11 +59,11 @@ export const RouteModal = memo(function RouteModal({
   const directionLabels = directionKeys.map((key, idx) => {
     const ids = orderedStops?.[key] || [];
     const endId = ids[ids.length - 1] || ids[0] || null;
-    const stopName = endId ? (stopsById.get(endId)?.name || endId) : key;
+    const stopName = endId ? stopsById.get(endId)?.name || endId : key;
     return {
+      color: getDirectionColor(route.type ?? null, idx),
       key,
       label: stopName,
-      color: getDirectionColor(route.type ?? null, idx),
     };
   });
 
@@ -82,14 +80,15 @@ export const RouteModal = memo(function RouteModal({
   const dirVehicles = vehicles.filter((v) => v.direction === directionIndex);
   const filteredVehicles: VehiclePosition[] = dirVehicles.length > 0 ? dirVehicles : vehicles;
 
-  const color = directionLabels[directionIndex]?.color || (route.type === 0 ? TRAM_COLOR : BUS_COLOR);
+  const color =
+    directionLabels[directionIndex]?.color || (route.type === 0 ? TRAM_COLOR : BUS_COLOR);
 
   if (!isOpen) return null;
 
   const stopRows = orderedStopIds.map((stopId, idx) => ({
-    stopId,
-    stop: stopsById.get(stopId),
     idx,
+    stop: stopsById.get(stopId),
+    stopId,
   }));
 
   return (
@@ -97,8 +96,8 @@ export const RouteModal = memo(function RouteModal({
       {/* Mobile-only backdrop */}
       <div
         className="fixed inset-0 z-[3000] bg-black/50 backdrop-blur-sm sm:hidden"
-        style={{ animation: 'backdrop-fade-in 0.15s ease-out' }}
         onClick={onClose}
+        style={{ animation: 'backdrop-fade-in 0.15s ease-out' }}
       />
 
       {/* Panel */}
@@ -111,9 +110,9 @@ export const RouteModal = memo(function RouteModal({
           {/* Row 1: back / badge / name / close */}
           <div className="flex items-center gap-2 mb-2">
             <button
-              onClick={onClose}
-              className="btn btn-ghost btn-sm p-1.5 min-h-[36px] min-w-[36px]"
               aria-label={t('common.close')}
+              className="btn btn-ghost btn-sm p-1.5 min-h-[36px] min-w-[36px]"
+              onClick={onClose}
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
@@ -125,18 +124,20 @@ export const RouteModal = memo(function RouteModal({
               {route.shortName}
             </span>
 
-            {route.type === 0
-              ? <Train className="w-3.5 h-3.5 opacity-40 shrink-0" />
-              : <Bus className="w-3.5 h-3.5 opacity-40 shrink-0" />}
+            {route.type === 0 ? (
+              <Train className="w-3.5 h-3.5 opacity-40 shrink-0" />
+            ) : (
+              <Bus className="w-3.5 h-3.5 opacity-40 shrink-0" />
+            )}
 
             <h2 className="font-bold text-sm leading-snug flex-1 min-w-0 line-clamp-2">
               {route.longName}
             </h2>
 
             <button
-              onClick={onClose}
-              className="btn btn-ghost btn-circle btn-sm p-1.5 min-h-[36px] min-w-[36px]"
               aria-label={t('common.close')}
+              className="btn btn-ghost btn-circle btn-sm p-1.5 min-h-[36px] min-w-[36px]"
+              onClick={onClose}
             >
               <X className="w-4 h-4" />
             </button>
@@ -150,24 +151,28 @@ export const RouteModal = memo(function RouteModal({
               const VehicleIcon = route.type === 0 ? Train : Bus;
               return (
                 <button
-                  key={dir.key}
-                  onClick={() => setDirectionKey(dir.key)}
                   className={[
                     'flex-1 flex items-center justify-between gap-2 px-3 py-1.5 text-sm font-semibold transition-colors min-w-0',
                     isActive ? 'text-white' : 'bg-base-100 text-base-content/60 hover:bg-base-200',
                   ].join(' ')}
+                  key={dir.key}
+                  onClick={() => setDirectionKey(dir.key)}
                   style={isActive ? { backgroundColor: dir.color } : undefined}
                 >
                   <span className="truncate">{dir.label}</span>
-                  <span className={[
-                    'flex items-center gap-1 shrink-0 text-xs font-bold tabular-nums',
-                    isActive ? 'text-white/90' : dirCount > 0 ? 'text-success' : 'opacity-30',
-                  ].join(' ')}>
+                  <span
+                    className={[
+                      'flex items-center gap-1 shrink-0 text-xs font-bold tabular-nums',
+                      isActive ? 'text-white/90' : dirCount > 0 ? 'text-success' : 'opacity-30',
+                    ].join(' ')}
+                  >
                     {dirCount > 0 && (
-                      <span className={[
-                        'w-1.5 h-1.5 rounded-full animate-pulse',
-                        isActive ? 'bg-white/80' : 'bg-success',
-                      ].join(' ')} />
+                      <span
+                        className={[
+                          'w-1.5 h-1.5 rounded-full animate-pulse',
+                          isActive ? 'bg-white/80' : 'bg-success',
+                        ].join(' ')}
+                      />
                     )}
                     <VehicleIcon className="w-3 h-3" />
                     {dirCount}
@@ -184,25 +189,27 @@ export const RouteModal = memo(function RouteModal({
             {/* Metro line diagram column */}
             <RouteLineDiagram
               orderedStopIds={orderedStopIds}
+              routeType={route.type}
               stopsById={stopsById}
               vehicles={filteredVehicles}
-              routeType={route.type}
             />
 
             {/* Stop name list */}
             <div className="flex-1 min-w-0">
-              {stopRows.map(({ stopId, stop }) => {
-                const isEndpoint = stopRows[0]?.stopId === stopId || stopRows[stopRows.length - 1]?.stopId === stopId;
+              {stopRows.map(({ stop, stopId }) => {
+                const isEndpoint =
+                  stopRows[0]?.stopId === stopId ||
+                  stopRows[stopRows.length - 1]?.stopId === stopId;
                 const name = stop?.name ?? stopId;
                 return (
                   <button
-                    key={stopId}
-                    onClick={() => onStopClick(stopId)}
                     className={[
                       'w-full text-left px-3 flex items-center',
                       'transition-colors hover:bg-base-200 active:bg-base-300',
                       isEndpoint ? 'font-semibold' : '',
                     ].join(' ')}
+                    key={stopId}
+                    onClick={() => onStopClick(stopId)}
                     style={{ height: STOP_ROW_HEIGHT }}
                   >
                     <span className="text-sm leading-tight line-clamp-1">{name}</span>

@@ -2,20 +2,32 @@
  * Settings page
  */
 
-import { Link, useNavigate } from 'react-router-dom';
+import {
+  ArrowLeft,
+  Database,
+  Download,
+  ExternalLink,
+  Info,
+  Languages,
+  Mail,
+  Map,
+  MessageSquare,
+  Moon,
+  Sun,
+  Trash2,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Moon, Sun, Map, Database, Trash2, Info, Mail, ExternalLink, MessageSquare, Download, Languages } from 'lucide-react';
-import { useSettingsStore } from '../../stores/settingsStore';
-import { useDataCacheStore } from '../../stores/dataCache';
+import { Link, useNavigate } from 'react-router-dom';
+
 import { useInitialData } from '../../hooks/useInitialData';
-import { trackEvent } from '../../utils/analytics';
-import { getCurrentLanguage, setLanguage, type SupportedLanguage } from '../../i18n';
-import { FlatLanguageFlags } from '../Navigation/FlatLanguageFlags';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
+import { getCurrentLanguage, setLanguage, type SupportedLanguage } from '../../i18n';
+import { useDataCacheStore } from '../../stores/dataCache';
+import { useSettingsStore } from '../../stores/settingsStore';
+import { trackEvent } from '../../utils/analytics';
+import { FlatLanguageFlags } from '../Navigation/FlatLanguageFlags';
 
 // Map tile providers handled automatically via theme + detailedMap setting
-
-
 
 export function SettingsPage() {
   const { t } = useTranslation();
@@ -34,7 +46,7 @@ export function SettingsPage() {
   const currentLang: SupportedLanguage = getCurrentLanguage();
   const { canInstall, install } = usePWAInstall();
 
-  const { feedVersion, feedStartDate, feedEndDate } = useInitialData();
+  const { feedEndDate, feedStartDate, feedVersion } = useInitialData();
 
   const cacheStats = getCacheStats();
 
@@ -78,7 +90,7 @@ export function SettingsPage() {
       {/* Header */}
       <div className="bg-base-100 border-b border-base-300">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Link to="/" className="btn btn-circle btn-ghost btn-sm">
+          <Link className="btn btn-circle btn-ghost btn-sm" to="/">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <h1 className="text-lg font-bold">{t('settings.title')}</h1>
@@ -95,15 +107,17 @@ export function SettingsPage() {
               {t('settings.languageTitle')}
             </h2>
             <div className="flex items-center justify-between">
-              <p className="font-medium text-sm text-base-content/70">{t('settings.languageHint')}</p>
+              <p className="font-medium text-sm text-base-content/70">
+                {t('settings.languageHint')}
+              </p>
               <FlatLanguageFlags
                 currentLang={currentLang}
-                onSelectHr={() => setLanguage('hr')}
-                onSelectEn={() => setLanguage('en')}
                 onSelectDe={() => setLanguage('de')}
-                titleHr={t('spiderMenu.actions.languageCroatian')}
-                titleEn={t('spiderMenu.actions.languageEnglish')}
+                onSelectEn={() => setLanguage('en')}
+                onSelectHr={() => setLanguage('hr')}
                 titleDe={t('spiderMenu.actions.languageGerman')}
+                titleEn={t('spiderMenu.actions.languageEnglish')}
+                titleHr={t('spiderMenu.actions.languageCroatian')}
               />
             </div>
           </div>
@@ -119,11 +133,11 @@ export function SettingsPage() {
             <div className="flex items-center justify-between">
               <p className="text-sm text-base-content/70">{t('settings.feedbackHint')}</p>
               <button
+                className="btn btn-sm btn-outline"
                 onClick={() => {
                   trackEvent('feedback_opened', { source: 'settings' });
                   navigate('/feedback');
                 }}
-                className="btn btn-sm btn-outline"
               >
                 {t('spiderMenu.actions.feedback')}
               </button>
@@ -142,11 +156,11 @@ export function SettingsPage() {
               <div className="flex items-center justify-between">
                 <p className="text-sm text-base-content/70">{t('settings.installHint')}</p>
                 <button
+                  className="btn btn-sm btn-primary"
                   onClick={() => {
                     trackEvent('pwa_install_prompted', { source: 'settings' });
                     install();
                   }}
-                  className="btn btn-sm btn-primary"
                 >
                   {t('spiderMenu.actions.install')}
                 </button>
@@ -165,30 +179,25 @@ export function SettingsPage() {
             <div className={`flex items-center justify-between`}>
               <div>
                 <p className="font-medium">{t('settings.theme')}</p>
-                <p className="text-sm text-base-content/70">
-                  {t('settings.themeHint')}
-                </p>
+                <p className="text-sm text-base-content/70">{t('settings.themeHint')}</p>
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
                 <Sun className="w-4 h-4" />
                 <input
-                  type="checkbox"
-                  className="toggle toggle-primary"
                   checked={theme === 'dark'}
+                  className="toggle toggle-primary"
                   onChange={(e) => {
                     const nextTheme = e.target.checked ? 'dark' : 'light';
                     trackEvent('theme_changed', { theme: nextTheme });
                     setTheme(nextTheme);
                   }}
-
+                  type="checkbox"
                 />
                 <Moon className="w-4 h-4" />
               </label>
             </div>
           </div>
         </div>
-
-
 
         {/* Map Section */}
         <div className="card bg-base-100 shadow-sm">
@@ -204,15 +213,13 @@ export function SettingsPage() {
                   <p className="text-sm text-base-content/70">{t('settings.detailedMapHint')}</p>
                 </div>
                 <input
-                  type="checkbox"
-                  className="toggle toggle-primary mt-1"
                   checked={detailedMap}
+                  className="toggle toggle-primary mt-1"
                   onChange={(e) => setDetailedMap(e.target.checked)}
+                  type="checkbox"
                 />
               </div>
             </div>
-
-
           </div>
         </div>
 
@@ -223,15 +230,13 @@ export function SettingsPage() {
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <p className="font-medium">{t('settings.sandboxToggle')}</p>
-                <p className="text-sm text-base-content/70">
-                  {t('settings.sandboxHint')}
-                </p>
+                <p className="text-sm text-base-content/70">{t('settings.sandboxHint')}</p>
               </div>
               <input
-                type="checkbox"
-                className="toggle toggle-primary mt-1"
                 checked={sandboxVisible}
+                className="toggle toggle-primary mt-1"
                 onChange={(e) => setSandboxVisible(e.target.checked)}
+                type="checkbox"
               />
             </div>
           </div>
@@ -260,16 +265,13 @@ export function SettingsPage() {
                 </div>
               )}
               <button
-                onClick={handleClearCache}
                 className="btn btn-outline btn-error btn-sm w-full mt-2"
+                onClick={handleClearCache}
               >
                 <Trash2 className="w-4 h-4" />
                 {t('settings.clearGtfsCache')}
               </button>
-              <button
-                onClick={handleDeleteAll}
-                className="btn btn-error btn-sm w-full"
-              >
+              <button className="btn btn-error btn-sm w-full" onClick={handleDeleteAll}>
                 <Trash2 className="w-4 h-4" />
                 {t('settings.deleteAllData')}
               </button>
@@ -317,10 +319,10 @@ export function SettingsPage() {
             <div className="flex items-center justify-between">
               <p className="text-sm text-base-content/70">{t('settings.repositoryHint')}</p>
               <a
-                href="https://github.com/aeoden96/kreni-app"
-                target="_blank"
-                rel="noopener noreferrer"
                 className="btn btn-sm btn-primary"
+                href="https://github.com/aeoden96/kreni-app"
+                rel="noopener noreferrer"
+                target="_blank"
               >
                 <ExternalLink className="w-4 h-4" />
                 GitHub
@@ -340,10 +342,10 @@ export function SettingsPage() {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-base-content/70">Web</span>
                 <a
-                  href="https://mteo.dev/"
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="flex items-center gap-1.5 font-medium link link-primary"
+                  href="https://mteo.dev/"
+                  rel="noopener noreferrer"
+                  target="_blank"
                 >
                   <ExternalLink className="w-3.5 h-3.5 shrink-0" />
                   mteo.dev
@@ -352,8 +354,8 @@ export function SettingsPage() {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-base-content/70">{t('settings.contact')}</span>
                 <a
-                  href="mailto:contact@kreni.app"
                   className="flex items-center gap-1.5 font-medium link link-primary"
+                  href="mailto:contact@kreni.app"
                 >
                   <Mail className="w-3.5 h-3.5 shrink-0" />
                   contact@kreni.app
@@ -369,31 +371,36 @@ export function SettingsPage() {
             <h2 className="card-title text-lg">{t('settings.legalTitle')}</h2>
             <div className="space-y-4 text-sm text-base-content/80 leading-relaxed">
               <section>
-                <h3 className="font-bold mb-1 text-base-content">{t('settings.disclaimerTitle')}</h3>
-                <p>
-                  {t('settings.disclaimerBody')}
-                </p>
+                <h3 className="font-bold mb-1 text-base-content">
+                  {t('settings.disclaimerTitle')}
+                </h3>
+                <p>{t('settings.disclaimerBody')}</p>
               </section>
 
               <section>
                 <h3 className="font-bold mb-1 text-base-content">{t('settings.privacyTitle')}</h3>
-                <p>
-                  {t('settings.privacyBody')}
-                </p>
+                <p>{t('settings.privacyBody')}</p>
               </section>
 
               <section>
-                <h3 className="font-bold mb-1 text-base-content">{t('settings.mapAttributionTitle')}</h3>
+                <h3 className="font-bold mb-1 text-base-content">
+                  {t('settings.mapAttributionTitle')}
+                </h3>
                 <p>
-                  <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="link link-primary">{t('settings.mapAttributionLink')}</a>
+                  <a
+                    className="link link-primary"
+                    href="https://www.openstreetmap.org/copyright"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    {t('settings.mapAttributionLink')}
+                  </a>
                 </p>
               </section>
 
               <section>
                 <h3 className="font-bold mb-1 text-base-content">{t('settings.licenseTitle')}</h3>
-                <p>
-                  {t('settings.licenseBody')}
-                </p>
+                <p>{t('settings.licenseBody')}</p>
               </section>
             </div>
           </div>
@@ -404,14 +411,21 @@ export function SettingsPage() {
           <div className="card-body">
             <h2 className="card-title text-lg">{t('settings.sourcesTitle')}</h2>
             <div className="space-y-6 text-sm">
-
               <section>
-                <h3 className="font-semibold text-base-content/60 uppercase tracking-wider text-xs px-1 mb-2">{t('settings.srcZetHeading')}</h3>
+                <h3 className="font-semibold text-base-content/60 uppercase tracking-wider text-xs px-1 mb-2">
+                  {t('settings.srcZetHeading')}
+                </h3>
                 <div className="grid gap-1">
-                  <a href="https://www.zet.hr/gtfs2" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group">
+                  <a
+                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group"
+                    href="https://www.zet.hr/gtfs2"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
                     <div className="flex flex-col">
-                      <span className="font-medium text-base-content">{t('settings.srcZetGtfs')}</span>
+                      <span className="font-medium text-base-content">
+                        {t('settings.srcZetGtfs')}
+                      </span>
                       <span className="text-xs text-base-content/50">zet.hr</span>
                     </div>
                     <ExternalLink className="w-4 h-4 text-base-content/20 group-hover:text-primary transition-colors" />
@@ -420,12 +434,20 @@ export function SettingsPage() {
               </section>
 
               <section>
-                <h3 className="font-semibold text-base-content/60 uppercase tracking-wider text-xs px-1 mb-2">{t('settings.srcTrainHeading')}</h3>
+                <h3 className="font-semibold text-base-content/60 uppercase tracking-wider text-xs px-1 mb-2">
+                  {t('settings.srcTrainHeading')}
+                </h3>
                 <div className="grid gap-1">
-                  <a href="https://www.hzpp.hr/en/timetable" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group">
+                  <a
+                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group"
+                    href="https://www.hzpp.hr/en/timetable"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
                     <div className="flex flex-col">
-                      <span className="font-medium text-base-content">{t('settings.srcTrainGtfs')}</span>
+                      <span className="font-medium text-base-content">
+                        {t('settings.srcTrainGtfs')}
+                      </span>
                       <span className="text-xs text-base-content/50">hzpp.hr</span>
                     </div>
                     <ExternalLink className="w-4 h-4 text-base-content/20 group-hover:text-primary transition-colors" />
@@ -434,36 +456,62 @@ export function SettingsPage() {
               </section>
 
               <section>
-                <h3 className="font-semibold text-base-content/60 uppercase tracking-wider text-xs px-1 mb-2">{t('settings.srcParkingHeading')}</h3>
+                <h3 className="font-semibold text-base-content/60 uppercase tracking-wider text-xs px-1 mb-2">
+                  {t('settings.srcParkingHeading')}
+                </h3>
                 <div className="grid gap-1">
-                  <a href="https://zagreb.hr/popis-ulica-po-parkiralisnim-zonama-i-blokovima-u-/202702" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group">
+                  <a
+                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group"
+                    href="https://zagreb.hr/popis-ulica-po-parkiralisnim-zonama-i-blokovima-u-/202702"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
                     <div className="flex flex-col">
-                      <span className="font-medium text-base-content">{t('settings.srcParkingStreets')}</span>
+                      <span className="font-medium text-base-content">
+                        {t('settings.srcParkingStreets')}
+                      </span>
                       <span className="text-xs text-base-content/50">zagreb.hr</span>
                     </div>
                     <ExternalLink className="w-4 h-4 text-base-content/20 group-hover:text-primary transition-colors" />
                   </a>
-                  <a href="https://www.zagrebparking.hr/djelatnosti/javna-parkiralista/vrijeme-kontrole-i-naplate-parkiranja/209" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group">
+                  <a
+                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group"
+                    href="https://www.zagrebparking.hr/djelatnosti/javna-parkiralista/vrijeme-kontrole-i-naplate-parkiranja/209"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
                     <div className="flex flex-col">
-                      <span className="font-medium text-base-content">{t('settings.srcParkingControl')}</span>
+                      <span className="font-medium text-base-content">
+                        {t('settings.srcParkingControl')}
+                      </span>
                       <span className="text-xs text-base-content/50">zagrebparking.hr</span>
                     </div>
                     <ExternalLink className="w-4 h-4 text-base-content/20 group-hover:text-primary transition-colors" />
                   </a>
-                  <a href="https://www.zagrebparking.hr/djelatnosti/javna-parkiralista/cijene-i-vrste-parkiralisnih-karata/satna-parkiralisna-karta/229" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group">
+                  <a
+                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group"
+                    href="https://www.zagrebparking.hr/djelatnosti/javna-parkiralista/cijene-i-vrste-parkiralisnih-karata/satna-parkiralisna-karta/229"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
                     <div className="flex flex-col">
-                      <span className="font-medium text-base-content">{t('settings.srcParkingPrices')}</span>
+                      <span className="font-medium text-base-content">
+                        {t('settings.srcParkingPrices')}
+                      </span>
                       <span className="text-xs text-base-content/50">zagrebparking.hr</span>
                     </div>
                     <ExternalLink className="w-4 h-4 text-base-content/20 group-hover:text-primary transition-colors" />
                   </a>
-                  <a href="https://data.zagreb.hr/dataset/geoportal-javne-garaze" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group">
+                  <a
+                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group"
+                    href="https://data.zagreb.hr/dataset/geoportal-javne-garaze"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
                     <div className="flex flex-col">
-                      <span className="font-medium text-base-content">{t('settings.srcParkingGarages')}</span>
+                      <span className="font-medium text-base-content">
+                        {t('settings.srcParkingGarages')}
+                      </span>
                       <span className="text-xs text-base-content/50">data.zagreb.hr</span>
                     </div>
                     <ExternalLink className="w-4 h-4 text-base-content/20 group-hover:text-primary transition-colors" />
@@ -472,12 +520,20 @@ export function SettingsPage() {
               </section>
 
               <section>
-                <h3 className="font-semibold text-base-content/60 uppercase tracking-wider text-xs px-1 mb-2">{t('settings.srcBikeHeading')}</h3>
+                <h3 className="font-semibold text-base-content/60 uppercase tracking-wider text-xs px-1 mb-2">
+                  {t('settings.srcBikeHeading')}
+                </h3>
                 <div className="grid gap-1">
-                  <a href="https://data.zagreb.hr/dataset/geoportal-javna-parkiralista-za-bicikle" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group">
+                  <a
+                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group"
+                    href="https://data.zagreb.hr/dataset/geoportal-javna-parkiralista-za-bicikle"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
                     <div className="flex flex-col">
-                      <span className="font-medium text-base-content">{t('settings.srcBikeParking')}</span>
+                      <span className="font-medium text-base-content">
+                        {t('settings.srcBikeParking')}
+                      </span>
                       <span className="text-xs text-base-content/50">data.zagreb.hr</span>
                     </div>
                     <ExternalLink className="w-4 h-4 text-base-content/20 group-hover:text-primary transition-colors" />
@@ -486,36 +542,62 @@ export function SettingsPage() {
               </section>
 
               <section>
-                <h3 className="font-semibold text-base-content/60 uppercase tracking-wider text-xs px-1 mb-2">{t('settings.srcCityHeading')}</h3>
+                <h3 className="font-semibold text-base-content/60 uppercase tracking-wider text-xs px-1 mb-2">
+                  {t('settings.srcCityHeading')}
+                </h3>
                 <div className="grid gap-1">
-                  <a href="https://data.zagreb.hr/dataset/geoportal-studentski-restoran" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group">
+                  <a
+                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group"
+                    href="https://data.zagreb.hr/dataset/geoportal-studentski-restoran"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
                     <div className="flex flex-col">
-                      <span className="font-medium text-base-content">{t('settings.srcCityMensa')}</span>
+                      <span className="font-medium text-base-content">
+                        {t('settings.srcCityMensa')}
+                      </span>
                       <span className="text-xs text-base-content/50">data.zagreb.hr</span>
                     </div>
                     <ExternalLink className="w-4 h-4 text-base-content/20 group-hover:text-primary transition-colors" />
                   </a>
-                  <a href="https://data.zagreb.hr/dataset/geoportal_javni_zdenci" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group">
+                  <a
+                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group"
+                    href="https://data.zagreb.hr/dataset/geoportal_javni_zdenci"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
                     <div className="flex flex-col">
-                      <span className="font-medium text-base-content">{t('settings.srcCityFountains')}</span>
+                      <span className="font-medium text-base-content">
+                        {t('settings.srcCityFountains')}
+                      </span>
                       <span className="text-xs text-base-content/50">data.zagreb.hr</span>
                     </div>
                     <ExternalLink className="w-4 h-4 text-base-content/20 group-hover:text-primary transition-colors" />
                   </a>
-                  <a href="https://data.zagreb.hr/dataset/geoportal-pjesacka-zona" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group">
+                  <a
+                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group"
+                    href="https://data.zagreb.hr/dataset/geoportal-pjesacka-zona"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
                     <div className="flex flex-col">
-                      <span className="font-medium text-base-content">{t('settings.srcCityPedZone')}</span>
+                      <span className="font-medium text-base-content">
+                        {t('settings.srcCityPedZone')}
+                      </span>
                       <span className="text-xs text-base-content/50">data.zagreb.hr</span>
                     </div>
                     <ExternalLink className="w-4 h-4 text-base-content/20 group-hover:text-primary transition-colors" />
                   </a>
-                  <a href="https://data.zagreb.hr/dataset/geoportal-besplatna-wifi-mreza" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group">
+                  <a
+                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group"
+                    href="https://data.zagreb.hr/dataset/geoportal-besplatna-wifi-mreza"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
                     <div className="flex flex-col">
-                      <span className="font-medium text-base-content">{t('settings.srcCityWifi')}</span>
+                      <span className="font-medium text-base-content">
+                        {t('settings.srcCityWifi')}
+                      </span>
                       <span className="text-xs text-base-content/50">data.zagreb.hr</span>
                     </div>
                     <ExternalLink className="w-4 h-4 text-base-content/20 group-hover:text-primary transition-colors" />
@@ -524,19 +606,26 @@ export function SettingsPage() {
               </section>
 
               <section>
-                <h3 className="font-semibold text-base-content/60 uppercase tracking-wider text-xs px-1 mb-2">{t('settings.srcRailHeading')}</h3>
+                <h3 className="font-semibold text-base-content/60 uppercase tracking-wider text-xs px-1 mb-2">
+                  {t('settings.srcRailHeading')}
+                </h3>
                 <div className="grid gap-1">
-                  <a href="https://data.zagreb.hr/dataset/zeljeznicka-stajalista-hz" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group">
+                  <a
+                    className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group"
+                    href="https://data.zagreb.hr/dataset/zeljeznicka-stajalista-hz"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
                     <div className="flex flex-col">
-                      <span className="font-medium text-base-content">{t('settings.srcRailHzStops')}</span>
+                      <span className="font-medium text-base-content">
+                        {t('settings.srcRailHzStops')}
+                      </span>
                       <span className="text-xs text-base-content/50">data.zagreb.hr</span>
                     </div>
                     <ExternalLink className="w-4 h-4 text-base-content/20 group-hover:text-primary transition-colors" />
                   </a>
                 </div>
               </section>
-
             </div>
           </div>
         </div>

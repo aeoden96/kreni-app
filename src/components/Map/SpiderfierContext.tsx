@@ -4,49 +4,18 @@
  */
 /* eslint-disable react-refresh/only-export-components */
 
+import L from 'leaflet';
 import {
   createContext,
+  type ReactNode,
   useCallback,
   useContext,
   useMemo,
   useRef,
   useState,
-  type ReactNode,
 } from 'react';
-import L from 'leaflet';
 
 // ── Public types ─────────────────────────────────────────────────────────────
-
-interface SpiderfierEntry {
-  id: string;
-  lat: number;
-  lon: number;
-  /** Shown in the list-fallback popup and as tooltip on node markers. */
-  label: string;
-  /** Optional: Resolve a more descriptive label on-demand (e.g. including route info). */
-  resolveLabel?: () => Promise<string>;
-  onClick: () => void;
-  /** Called fresh each time the spider fan is rendered to get the current icon. */
-  getIcon?: () => L.DivIcon | null;
-  /** When true, the text label bubble is hidden in the spider fan (icon is sufficient). */
-  hideLabel?: boolean;
-}
-
-interface SpiderfiedItem {
-  id: string;
-  /** Initial label (stop name). Never mutated — enrichment happens inside SpiderNode. */
-  label: string;
-  originalLat: number;
-  originalLon: number;
-  spiderfiedLat: number;
-  spiderfiedLon: number;
-  icon?: L.DivIcon | null;
-  onClick: () => void;
-  /** When true, the text label bubble is hidden in the spider fan (icon is sufficient). */
-  hideLabel?: boolean;
-  /** Optional: resolve an enriched label (e.g. with route badges) asynchronously. */
-  resolveLabel?: () => Promise<string>;
-}
 
 interface SpiderfiedGroup {
   centerLat: number;
@@ -54,26 +23,57 @@ interface SpiderfiedGroup {
   items: SpiderfiedItem[];
 }
 
+interface SpiderfiedItem {
+  /** When true, the text label bubble is hidden in the spider fan (icon is sufficient). */
+  hideLabel?: boolean;
+  icon?: L.DivIcon | null;
+  id: string;
+  /** Initial label (stop name). Never mutated — enrichment happens inside SpiderNode. */
+  label: string;
+  onClick: () => void;
+  originalLat: number;
+  originalLon: number;
+  /** Optional: resolve an enriched label (e.g. with route badges) asynchronously. */
+  resolveLabel?: () => Promise<string>;
+  spiderfiedLat: number;
+  spiderfiedLon: number;
+}
+
 interface SpiderfierCtx {
+  collapse: () => void;
+  /** Returns true when the marker with this id should hide (it's shown in fan). */
+  isHidden: (id: string) => boolean;
   register: (entry: SpiderfierEntry) => void;
-  unregister: (id: string) => void;
+  spiderfied: null | SpiderfiedGroup;
   /**
    * Call from a marker's click handler instead of the original onClick.
    * If no overlap is detected the original onClick fires; otherwise
    * the group is spiderfied (or collapsed if already open).
    */
   triggerSpiderfy: (id: string, map: L.Map) => void;
-  collapse: () => void;
-  spiderfied: SpiderfiedGroup | null;
-  /** Returns true when the marker with this id should hide (it's shown in fan). */
-  isHidden: (id: string) => boolean;
+  unregister: (id: string) => void;
+}
+
+interface SpiderfierEntry {
+  /** Called fresh each time the spider fan is rendered to get the current icon. */
+  getIcon?: () => L.DivIcon | null;
+  /** When true, the text label bubble is hidden in the spider fan (icon is sufficient). */
+  hideLabel?: boolean;
+  id: string;
+  /** Shown in the list-fallback popup and as tooltip on node markers. */
+  label: string;
+  lat: number;
+  lon: number;
+  onClick: () => void;
+  /** Optional: Resolve a more descriptive label on-demand (e.g. including route info). */
+  resolveLabel?: () => Promise<string>;
 }
 
 // ── Context ───────────────────────────────────────────────────────────────────
 
-const SpiderfierContext = createContext<SpiderfierCtx | null>(null);
+const SpiderfierContext = createContext<null | SpiderfierCtx>(null);
 
-export function useSpiderfierContext(): SpiderfierCtx | null {
+export function useSpiderfierContext(): null | SpiderfierCtx {
   return useContext(SpiderfierContext);
 }
 
@@ -87,44 +87,13 @@ const MAX_SPIDER_FAN = 5;
 
 // ── Layout helpers ────────────────────────────────────────────────────────────
 
-function circlePositions(count: number, center: L.Point, map: L.Map): L.LatLng[] {
-  const radius = count <= 3 ? 40 : count <= 6 ? 55 : 70;
-  return Array.from({ length: count }, (_, i) => {
-    const angle = (i / count) * 2 * Math.PI - Math.PI / 2;
-    return map.containerPointToLatLng(
-      L.point(center.x + radius * Math.cos(angle), center.y + radius * Math.sin(angle)),
-    );
-  });
-}
-
-/**
- * Compute the pan target for [lat, lon], shifting downward on mobile so the
- * selected stop marker ends up in the lower half of the viewport — below the
- * StopInfoBar that appears at the top of the screen.
- */
-function getOffsetTarget(map: L.Map, lat: number, lon: number): L.LatLng {
-  const offsetPx =
-    typeof window !== 'undefined' && window.innerWidth < 640
-      ? -Math.round(window.innerHeight / 4)
-      : 0;
-  if (offsetPx !== 0) {
-    const zoom = map.getZoom();
-    const pt = map.project([lat, lon] as [number, number], zoom);
-    return map.unproject(L.point(pt.x, pt.y + offsetPx), zoom);
-  }
-  return L.latLng(lat, lon);
-}
-
-
-// ── Provider ──────────────────────────────────────────────────────────────────
-
 export function SpiderfierProvider({ children }: { children: ReactNode }) {
   const registryRef = useRef<Map<string, SpiderfierEntry>>(new Map());
-  const [spiderfied, setSpiderfied] = useState<SpiderfiedGroup | null>(null);
+  const [spiderfied, setSpiderfied] = useState<null | SpiderfiedGroup>(null);
   // Ref so isHidden reads the latest set without causing extra renders
   const spiderfiedIdsRef = useRef<Set<string>>(new Set());
   // Tracks any in-flight moveend handler so a subsequent click can cancel it
-  const pendingPanRef = useRef<{ map: L.Map; handler: () => void } | null>(null);
+  const pendingPanRef = useRef<null | { handler: () => void; map: L.Map }>(null);
 
   const register = useCallback((entry: SpiderfierEntry) => {
     registryRef.current.set(entry.id, entry);
@@ -201,22 +170,22 @@ export function SpiderfierProvider({ children }: { children: ReactNode }) {
         const positions = circlePositions(nearby.length, newClickedPx, map);
 
         const items: SpiderfiedItem[] = nearby.map((entry, i) => ({
+          hideLabel: entry.hideLabel,
+          icon: entry.getIcon?.() ?? null,
           id: entry.id,
           label: entry.label,
-          originalLat: entry.lat,
-          originalLon: entry.lon,
-          spiderfiedLat: positions[i].lat,
-          spiderfiedLon: positions[i].lng,
-          icon: entry.getIcon?.() ?? null,
-          hideLabel: entry.hideLabel,
-          // Pass resolveLabel through so SpiderNode enriches its own DOM directly,
-          // avoiding a setSpiderfied call that would re-render all nodes and
-          // replay the pop-in animation for every item in the fan.
-          resolveLabel: entry.resolveLabel,
           onClick: () => {
             collapse();
             entry.onClick();
           },
+          originalLat: entry.lat,
+          originalLon: entry.lon,
+          // Pass resolveLabel through so SpiderNode enriches its own DOM directly,
+          // avoiding a setSpiderfied call that would re-render all nodes and
+          // replay the pop-in animation for every item in the fan.
+          resolveLabel: entry.resolveLabel,
+          spiderfiedLat: positions[i].lat,
+          spiderfiedLon: positions[i].lng,
         }));
 
         spiderfiedIdsRef.current = new Set(nearby.map((e) => e.id));
@@ -236,20 +205,50 @@ export function SpiderfierProvider({ children }: { children: ReactNode }) {
         map.panTo(target);
         executeAction();
       } else {
-        pendingPanRef.current = { map, handler: executeAction };
+        pendingPanRef.current = { handler: executeAction, map };
         map.once('moveend', executeAction);
         map.panTo(target);
       }
     },
-    [collapse],
+    [collapse]
   );
 
   const isHidden = useCallback((id: string) => spiderfiedIdsRef.current.has(id), []);
 
   const value = useMemo<SpiderfierCtx>(
-    () => ({ register, unregister, triggerSpiderfy, collapse, spiderfied, isHidden }),
-    [register, unregister, triggerSpiderfy, collapse, spiderfied, isHidden],
+    () => ({ collapse, isHidden, register, spiderfied, triggerSpiderfy, unregister }),
+    [register, unregister, triggerSpiderfy, collapse, spiderfied, isHidden]
   );
 
   return <SpiderfierContext.Provider value={value}>{children}</SpiderfierContext.Provider>;
+}
+
+function circlePositions(count: number, center: L.Point, map: L.Map): L.LatLng[] {
+  const radius = count <= 3 ? 40 : count <= 6 ? 55 : 70;
+  return Array.from({ length: count }, (_, i) => {
+    const angle = (i / count) * 2 * Math.PI - Math.PI / 2;
+    return map.containerPointToLatLng(
+      L.point(center.x + radius * Math.cos(angle), center.y + radius * Math.sin(angle))
+    );
+  });
+}
+
+// ── Provider ──────────────────────────────────────────────────────────────────
+
+/**
+ * Compute the pan target for [lat, lon], shifting downward on mobile so the
+ * selected stop marker ends up in the lower half of the viewport — below the
+ * StopInfoBar that appears at the top of the screen.
+ */
+function getOffsetTarget(map: L.Map, lat: number, lon: number): L.LatLng {
+  const offsetPx =
+    typeof window !== 'undefined' && window.innerWidth < 640
+      ? -Math.round(window.innerHeight / 4)
+      : 0;
+  if (offsetPx !== 0) {
+    const zoom = map.getZoom();
+    const pt = map.project([lat, lon] as [number, number], zoom);
+    return map.unproject(L.point(pt.x, pt.y + offsetPx), zoom);
+  }
+  return L.latLng(lat, lon);
 }

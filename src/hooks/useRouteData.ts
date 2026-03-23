@@ -2,19 +2,17 @@
  * Hook for fetching route-specific data (shapes, stops, active trips)
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
 import type { RouteActiveTripsData } from '../utils/gtfs';
-import { 
-  fetchRouteShapes, 
-  fetchRouteStops, 
-  fetchRouteActiveTrips
-} from '../utils/gtfs';
+
+import { fetchRouteActiveTrips, fetchRouteShapes, fetchRouteStops } from '../utils/gtfs';
 
 interface RouteData {
-  shapes: Record<string, [number, number][]>;
-  routeStops: string[];
+  activeTripsData: null | RouteActiveTripsData;
   orderedStops: Record<string, string[]>;
-  activeTripsData: RouteActiveTripsData | null;
+  routeStops: string[];
+  shapes: Record<string, [number, number][]>;
 }
 
 interface UseRouteDataOptions {
@@ -22,12 +20,12 @@ interface UseRouteDataOptions {
   dataDir?: string;
 }
 
-export function useRouteData(routeId: string | null, options: UseRouteDataOptions = {}) {
+export function useRouteData(routeId: null | string, options: UseRouteDataOptions = {}) {
   const { dataDir = 'data' } = options;
-  const [data, setData] = useState<RouteData | null>(null);
+  const [data, setData] = useState<null | RouteData>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  
+
   // Cache loaded routes to avoid refetching; namespace by dataDir to prevent cross-dataset hits
   const cache = useRef<Map<string, RouteData>>(new Map());
 
@@ -55,27 +53,28 @@ export function useRouteData(routeId: string | null, options: UseRouteDataOption
     Promise.all([
       fetchRouteShapes(routeId, dataDir),
       fetchRouteStops(routeId, dataDir),
-      fetchRouteActiveTrips(routeId, dataDir)
+      fetchRouteActiveTrips(routeId, dataDir),
     ])
       .then(([shapes, stopsData, activeTripsData]) => {
         if (mounted) {
           // Filter shapes to only canonical ones (excludes deadhead/storage routes)
           const canonicalShapes = stopsData.canonicalShapes;
-          const filteredShapes = canonicalShapes && canonicalShapes.length > 0
-            ? Object.fromEntries(
-                Object.entries(shapes).filter(([shapeId]) => canonicalShapes.includes(shapeId))
-              )
-            : shapes;
-          
+          const filteredShapes =
+            canonicalShapes && canonicalShapes.length > 0
+              ? Object.fromEntries(
+                  Object.entries(shapes).filter(([shapeId]) => canonicalShapes.includes(shapeId))
+                )
+              : shapes;
+
           const routeData: RouteData = {
-            shapes: filteredShapes,
-            routeStops: stopsData.stops,
+            activeTripsData,
             orderedStops: stopsData.orderedStops || {},
-            activeTripsData
+            routeStops: stopsData.stops,
+            shapes: filteredShapes,
           };
-          
+
           cache.current.set(cacheKey, routeData);
-          
+
           setData(routeData);
           setLoading(false);
         }
@@ -93,11 +92,11 @@ export function useRouteData(routeId: string | null, options: UseRouteDataOption
   }, [routeId, dataDir]);
 
   return {
-    shapes: data?.shapes || {},
-    routeStops: data?.routeStops || [],
-    orderedStops: data?.orderedStops || {},
     activeTripsData: data?.activeTripsData || null,
+    error,
     loading,
-    error
+    orderedStops: data?.orderedStops || {},
+    routeStops: data?.routeStops || [],
+    shapes: data?.shapes || {},
   };
 }

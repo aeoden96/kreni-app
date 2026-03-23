@@ -2,37 +2,39 @@
  * Component that renders different stops based on zoom level
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMap } from 'react-leaflet';
-import { StopMarkers } from './StopMarkers';
-import type { Stop, Route } from '../../utils/gtfs';
-import { useMapBounds } from '../../hooks/useMapBounds';
+
+import type { Route, Stop } from '../../utils/gtfs';
+
 import { useGTFSMode } from '../../contexts/GTFSModeContext';
+import { useMapBounds } from '../../hooks/useMapBounds';
+import { StopMarkers } from './StopMarkers';
 
 interface ZoomBasedStopsProps {
-  parentStations: Stop[];
-
-  platformStops: Stop[];
-  parentChildCounts: Map<string, number>;
-  selectedStopId: string | null;
   highlightStopIds: string[];
-  onStopClick: (stopId: string) => void;
 
+  onStopClick: (stopId: string) => void;
   /** Optional ordered stops mapping from useRouteData (direction -> stop ids) */
   orderedStops?: Record<string, string[]>;
+  parentChildCounts: Map<string, number>;
+  parentStations: Stop[];
+  platformStops: Stop[];
+
   routesById: Map<string, Route>;
+  selectedStopId: null | string;
 }
 
 export function ZoomBasedStops({
-  parentStations,
-
-  platformStops,
-  parentChildCounts,
-  selectedStopId,
   highlightStopIds,
+
   onStopClick,
   orderedStops,
+  parentChildCounts,
+  parentStations,
+  platformStops,
   routesById,
+  selectedStopId,
 }: ZoomBasedStopsProps) {
   const map = useMap();
   const { alwaysShowStops } = useGTFSMode();
@@ -63,14 +65,16 @@ export function ZoomBasedStops({
     if (!orderedStops) return map;
     Object.entries(orderedStops).forEach(([dirKey, ids]) => {
       const idx = Number.parseInt(dirKey, 10) || 0;
-      ids.forEach((sid) => { map[sid] = idx; });
+      ids.forEach((sid) => {
+        map[sid] = idx;
+      });
     });
     return map;
   }, [orderedStops]);
 
   // When a route is selected (highlightStopIds is populated) derive the parent
   // station IDs that belong to that route so grouped-mode can filter correctly.
-  const routeParentIds = useMemo<Set<string> | null>(() => {
+  const routeParentIds = useMemo<null | Set<string>>(() => {
     if (highlightSet.size === 0) return null;
     const parents = new Set<string>();
     platformStops.forEach((s) => {
@@ -104,17 +108,17 @@ export function ZoomBasedStops({
 
   return (
     <StopMarkers
-      stops={visiblePlatforms}
-      isParentStationView={false}
-      parentChildCounts={parentChildCounts}
-      parentStations={parentStations}
-      selectedStopId={selectedStopId}
       highlightStopIds={highlightStopIds}
-      stopDirectionMap={stopDirectionMap}
+      isParentStationView={false}
       onStopClick={onStopClick}
       opacityFactor={opacityFactor}
-      showLabels={showLabels}
+      parentChildCounts={parentChildCounts}
+      parentStations={parentStations}
       routesById={routesById}
+      selectedStopId={selectedStopId}
+      showLabels={showLabels}
+      stopDirectionMap={stopDirectionMap}
+      stops={visiblePlatforms}
     />
   );
 }

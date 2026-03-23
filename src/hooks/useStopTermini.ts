@@ -7,20 +7,22 @@
  * are found, returns an empty array so callers can fall back to compass direction.
  */
 
-import { useState, useEffect } from 'react';
-import type { Stop, Route } from '../utils/gtfs';
-import { fetchStopTimetable, fetchRouteStops } from '../utils/gtfs';
+import { useEffect, useState } from 'react';
+
+import type { Route, Stop } from '../utils/gtfs';
+
+import { fetchRouteStops, fetchStopTimetable } from '../utils/gtfs';
 
 /** Maximum number of unique termini before we fall back to compass direction */
 const MAX_TERMINI = 3;
 
 export function useStopTermini(
-  stopId: string | null,
+  stopId: null | string,
   stopsById: Map<string, Stop>,
   /** routesById is accepted but not strictly needed — included for API symmetry */
   _routesById?: Map<string, Route>,
   options: { dataDir?: string } = {}
-): { termini: string[]; loading: boolean } {
+): { loading: boolean; termini: string[] } {
   const { dataDir = 'data' } = options;
   const [termini, setTermini] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -50,7 +52,7 @@ export function useStopTermini(
             } catch {
               return null;
             }
-          }),
+          })
         );
 
         if (cancelled) return;
@@ -91,5 +93,5 @@ export function useStopTermini(
     };
   }, [stopId, stopsById, dataDir]);
 
-  return { termini, loading };
+  return { loading, termini };
 }

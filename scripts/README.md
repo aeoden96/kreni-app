@@ -44,15 +44,15 @@ See [README.md](../README.md) for data schemas and code examples.
 
 ## Statistics
 
-| Metric | Value |
-|--------|-------|
-| Input size | 114.1 MB |
+| Metric      | Value                |
+| ----------- | -------------------- |
+| Input size  | 114.1 MB             |
 | Output size | ~131 MB uncompressed |
-| Total files | 5,862 |
-| Stops | 3,829 |
-| Routes | 155 |
-| Trips | 93,156 |
-| Stop times | 1,580,672 |
+| Total files | 5,862                |
+| Stops       | 3,829                |
+| Routes      | 155                  |
+| Trips       | 93,156               |
+| Stop times  | 1,580,672            |
 
 ## Notes
 

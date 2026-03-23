@@ -9,7 +9,7 @@
  *   - realtime data-status badge renders within the expected timeout
  */
 
-import { test, expect } from '../fixtures';
+import { expect, test } from '../fixtures';
 
 test.describe('mobile smoke', () => {
   test('page loads with the correct title', async ({ page }) => {

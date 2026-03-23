@@ -9,13 +9,13 @@
  * names (e.g. "Tram (19)", "Bus (136)"), so partial regex matching is used.
  */
 
-import { test, expect } from '../fixtures';
+import { expect, test } from '../fixtures';
 
 test.describe('mobile search modal', () => {
   test('tapping "Pretraži linije..." opens the search modal', async ({ page }) => {
     await page.goto('/');
     await page.getByRole('button', { name: /Pretraži linije/ }).click();
-    await expect(page.getByRole('heading', { name: 'Pretraži', level: 2 })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'Pretraži' })).toBeVisible();
   });
 
   test('search modal shows tram and bus filter buttons', async ({ page }) => {
@@ -44,7 +44,7 @@ test.describe('mobile search modal', () => {
     await page.goto('/');
     await page.getByRole('button', { name: /Pretraži linije/ }).click();
     await page.getByRole('button', { name: /1 Zap\.kol\./ }).click();
-    await expect(page.getByRole('heading', { name: /Zap\.kol\./, level: 3 })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 3, name: /Zap\.kol\./ })).toBeVisible();
     await expect(page).toHaveURL(/[?&]route=1/);
   });
 });

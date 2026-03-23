@@ -2,47 +2,57 @@
  * Render vehicle position markers on the map
  */
 
-import { useEffect, useLayoutEffect, useRef, useState, useMemo, memo } from 'react';
-import { Marker, useMap } from 'react-leaflet';
 import type L from 'leaflet';
+
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Marker, useMap } from 'react-leaflet';
+
 import type { VehiclePosition } from '../../utils/vehicles';
+
+import { useAnimatedVehiclePosition } from '../../hooks/useAnimatedVehiclePosition';
+import { useMapBounds } from '../../hooks/useMapBounds';
+import { useSettingsStore } from '../../stores/settingsStore';
 import { makeVehicleIcon } from '../../utils/vehicleIcon';
 import { getDirectionColor } from './directionColors';
-import { useSettingsStore } from '../../stores/settingsStore';
-import { useMapBounds } from '../../hooks/useMapBounds';
-import { useSpiderfierContext } from './SpiderfierContext';
 import { MARKER_Z_VEHICLE } from './mapMarkerZIndex';
-import { useAnimatedVehiclePosition } from '../../hooks/useAnimatedVehiclePosition';
+import { useSpiderfierContext } from './SpiderfierContext';
 
 // ── Spiderfied vehicle sub-component ──────────────────────────────────
 
 interface SpiderfiedVehicleMarkerProps {
-  vehicle: VehiclePosition;
   color: string;
-  routeShortName: string;
-  theme: string;
   onVehicleSelect?: (tripId: string) => void;
   opacity: number;
+  routeShortName: string;
+  theme: string;
+  vehicle: VehiclePosition;
 }
 
 function SpiderfiedVehicleMarker({
-  vehicle,
   color,
-  routeShortName,
-  theme,
   onVehicleSelect,
   opacity,
+  routeShortName,
+  theme,
+  vehicle,
 }: SpiderfiedVehicleMarkerProps) {
   const map = useMap();
   const ctx = useSpiderfierContext();
-  const label = routeShortName
-    ? `${routeShortName} – ${vehicle.headsign}`
-    : vehicle.headsign;
+  const label = routeShortName ? `${routeShortName} – ${vehicle.headsign}` : vehicle.headsign;
 
   // Compute icon before hooks so iconRef always holds the latest value
-  const icon = makeVehicleIcon(color, vehicle.bearing, vehicle.isRealtime, routeShortName, theme === 'dark', opacity);
+  const icon = makeVehicleIcon(
+    color,
+    vehicle.bearing,
+    vehicle.isRealtime,
+    routeShortName,
+    theme === 'dark',
+    opacity
+  );
   const iconRef = useRef(icon);
-  useLayoutEffect(() => { iconRef.current = icon; });
+  useLayoutEffect(() => {
+    iconRef.current = icon;
+  });
 
   // Stable initial position — kept constant so React-Leaflet never calls
   // setLatLng() on the Marker, leaving all position updates to the rAF loop.
@@ -53,13 +63,13 @@ function SpiderfiedVehicleMarker({
   useEffect(() => {
     if (!ctx) return;
     ctx.register({
-      id: vehicle.tripId,
-      lat: vehicle.lat,
-      lon: vehicle.lon,
-      label,
-      onClick: () => onVehicleSelect?.(vehicle.tripId), // allow follow mode on specific vehicle
       getIcon: () => iconRef.current,
       hideLabel: true, // icon already shows the route number; no need for a text bubble
+      id: vehicle.tripId,
+      label,
+      lat: vehicle.lat,
+      lon: vehicle.lon,
+      onClick: () => onVehicleSelect?.(vehicle.tripId), // allow follow mode on specific vehicle
     });
     return () => ctx.unregister(vehicle.tripId);
   }, [vehicle.tripId, vehicle.lat, vehicle.lon, label, onVehicleSelect, ctx]);
@@ -68,16 +78,16 @@ function SpiderfiedVehicleMarker({
 
   return (
     <Marker
-      ref={markerRef}
-      position={initPos}
-      icon={icon}
-      zIndexOffset={MARKER_Z_VEHICLE}
       eventHandlers={{
         click: (e) => {
           e.originalEvent.stopPropagation();
           ctx?.triggerSpiderfy(vehicle.tripId, map);
         },
       }}
+      icon={icon}
+      position={initPos}
+      ref={markerRef}
+      zIndexOffset={MARKER_Z_VEHICLE}
     />
   );
 }
@@ -85,13 +95,18 @@ function SpiderfiedVehicleMarker({
 const MemoSpiderfiedVehicleMarker = memo(SpiderfiedVehicleMarker);
 
 interface VehicleMarkersProps {
-  vehicles: VehiclePosition[];
-  routeType: number | null;
-  routeShortName?: string;
   onVehicleSelect?: (tripId: string) => void;
+  routeShortName?: string;
+  routeType: null | number;
+  vehicles: VehiclePosition[];
 }
 
-export function VehicleMarkers({ vehicles, routeType, routeShortName = '', onVehicleSelect }: VehicleMarkersProps) {
+export function VehicleMarkers({
+  onVehicleSelect,
+  routeShortName = '',
+  routeType,
+  vehicles,
+}: VehicleMarkersProps) {
   const map = useMap();
   const [zoom, setZoom] = useState(map.getZoom());
   const theme = useSettingsStore((s) => s.theme);
@@ -105,15 +120,15 @@ export function VehicleMarkers({ vehicles, routeType, routeShortName = '', onVeh
     };
   }, [map]);
 
-  const visible = useMemo(() => vehicles.filter((v) => bounds.contains([v.lat, v.lon])), [vehicles, bounds]);
+  const visible = useMemo(
+    () => vehicles.filter((v) => bounds.contains([v.lat, v.lon])),
+    [vehicles, bounds]
+  );
 
   const FADE_MIN = 13;
   const FADE_MAX = 14;
-  const opacityFactor = zoom >= FADE_MAX
-    ? 1
-    : zoom <= FADE_MIN
-      ? 0
-      : (zoom - FADE_MIN) / (FADE_MAX - FADE_MIN);
+  const opacityFactor =
+    zoom >= FADE_MAX ? 1 : zoom <= FADE_MIN ? 0 : (zoom - FADE_MIN) / (FADE_MAX - FADE_MIN);
 
   if (opacityFactor === 0) return null;
 
@@ -123,13 +138,13 @@ export function VehicleMarkers({ vehicles, routeType, routeShortName = '', onVeh
         const color = getDirectionColor(routeType, vehicle.direction ?? 0);
         return (
           <MemoSpiderfiedVehicleMarker
-            key={vehicle.tripId}
-            vehicle={vehicle}
             color={color}
-            routeShortName={routeShortName}
-            theme={theme}
+            key={vehicle.tripId}
             onVehicleSelect={onVehicleSelect}
             opacity={opacityFactor}
+            routeShortName={routeShortName}
+            theme={theme}
+            vehicle={vehicle}
           />
         );
       })}

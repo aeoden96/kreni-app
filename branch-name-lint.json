@@ -1,0 +1,5 @@
+{
+  "prohibited": ["master", "main", "develop"],
+  "regex": "^(feat|fix|docs|chore|refactor|test|style|perf|ci)/[a-z0-9\\-]+$",
+  "msg": "Branch name must start with a type (feat/, fix/, etc.) and use kebab-case. Example: feat/branch-name-lint"
+}

@@ -1,82 +1,83 @@
-import { type RefObject } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-  Search,
-  X,
-  TrainFront,
-  Bus,
-  MapPin,
-  Star,
   ArrowLeftRight,
   ArrowUpDown,
+  Bus,
+  MapPin,
+  Search,
+  Star,
+  TrainFront,
+  X,
 } from 'lucide-react';
+import { type RefObject } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import type { Route, Stop } from '../../../utils/gtfs';
 import type { FilterType } from '../../../utils/searchUtils';
 
 interface GTFSModeConfig {
-  id: string;
   dataDir: string;
+  id: string;
 }
 
 interface SearchHeaderProps {
-  config: GTFSModeConfig;
-  filter: FilterType;
-  setFilter: (f: FilterType) => void;
-  trams: Route[];
-  buses: Route[];
-  trainRoutes: Route[];
-  stopsMode: 'search' | 'directions';
-  setStopsMode: (mode: 'search' | 'directions') => void;
-
-  searchQuery: string;
-  setSearchQuery: (q: string) => void;
-  searchInputRef: RefObject<HTMLInputElement | null>;
-
-  isDirsMode: boolean;
-  dirFromStop: Stop | null;
-  dirToStop: Stop | null;
-  setDirActiveField: (field: 'from' | 'to') => void;
-  setDirFromStop: (stop: Stop | null) => void;
-  dirToQuery: string;
-  setDirToQuery: (q: string) => void;
-  dirToInputRef: RefObject<HTMLInputElement | null>;
-  onDirSwap: () => void;
-
-  favRoutes: Route[];
-  favStops: Stop[];
   badgeColor: string;
+  buses: Route[];
+  config: GTFSModeConfig;
+  dirFromStop: null | Stop;
+  dirToInputRef: RefObject<HTMLInputElement | null>;
+  dirToQuery: string;
+  dirToStop: null | Stop;
+  favRoutes: Route[];
+
+  favStops: Stop[];
+  filter: FilterType;
+  isDirsMode: boolean;
+
+  onClose: () => void;
+  onDirSwap: () => void;
   onSelectRoute: (route: Route) => void;
   onSelectStop: (stop: Stop) => void;
-  onClose: () => void;
+  searchInputRef: RefObject<HTMLInputElement | null>;
+  searchQuery: string;
+  setDirActiveField: (field: 'from' | 'to') => void;
+  setDirFromStop: (stop: null | Stop) => void;
+  setDirToQuery: (q: string) => void;
+
+  setFilter: (f: FilterType) => void;
+  setSearchQuery: (q: string) => void;
+  setStopsMode: (mode: 'directions' | 'search') => void;
+  stopsMode: 'directions' | 'search';
+  trainRoutes: Route[];
+  trams: Route[];
 }
 
 export function SearchHeader({
-  config,
-  filter,
-  setFilter,
-  trams,
+  badgeColor,
   buses,
-  trainRoutes,
-  stopsMode,
-  setStopsMode,
-  searchQuery,
-  setSearchQuery,
-  searchInputRef,
-  isDirsMode,
+  config,
   dirFromStop,
-  dirToStop,
-  setDirActiveField,
-  setDirFromStop,
-  dirToQuery,
-  setDirToQuery,
   dirToInputRef,
-  onDirSwap,
+  dirToQuery,
+  dirToStop,
   favRoutes,
   favStops,
-  badgeColor,
+  filter,
+  isDirsMode,
+  onClose,
+  onDirSwap,
   onSelectRoute,
   onSelectStop,
-  onClose,
+  searchInputRef,
+  searchQuery,
+  setDirActiveField,
+  setDirFromStop,
+  setDirToQuery,
+  setFilter,
+  setSearchQuery,
+  setStopsMode,
+  stopsMode,
+  trainRoutes,
+  trams,
 }: SearchHeaderProps) {
   const { t } = useTranslation();
   const isRouteFilter = filter === 'tram' || filter === 'bus' || filter === 'trains';
@@ -87,8 +88,8 @@ export function SearchHeader({
       <div className="flex items-center gap-2 mb-3">
         <h2 className="text-lg font-bold flex-1">{t('search.title')}</h2>
         <button
-          onClick={onClose}
           className="btn btn-ghost btn-circle btn-sm min-h-[44px] min-w-[44px]"
+          onClick={onClose}
         >
           <X className="w-5 h-5" />
         </button>
@@ -168,16 +169,7 @@ export function SearchHeader({
               <>
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/50" />
                 <input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder={
-                    isDirsMode
-                      ? t('search.placeholder.fromWhere')
-                      : filter === 'stanice'
-                        ? t('search.placeholder.stopName')
-                        : t('search.placeholder.routeQuery')
-                  }
-                  value={searchQuery}
+                  className="input input-bordered w-full pl-10 pr-10 min-h-[44px] text-base"
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
                     if (isDirsMode) setDirActiveField('from');
@@ -185,13 +177,22 @@ export function SearchHeader({
                   onFocus={() => {
                     if (isDirsMode) setDirActiveField('from');
                   }}
-                  className="input input-bordered w-full pl-10 pr-10 min-h-[44px] text-base"
+                  placeholder={
+                    isDirsMode
+                      ? t('search.placeholder.fromWhere')
+                      : filter === 'stanice'
+                        ? t('search.placeholder.stopName')
+                        : t('search.placeholder.routeQuery')
+                  }
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
                 />
                 {searchQuery && (
                   <button
-                    type="button"
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content/80"
                     onClick={() => setSearchQuery('')}
+                    type="button"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -200,13 +201,13 @@ export function SearchHeader({
             )}
             {isDirsMode && dirFromStop && (
               <button
-                type="button"
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content/80"
                 onClick={() => {
                   setDirFromStop(null);
                   setDirActiveField('from');
                   setTimeout(() => searchInputRef.current?.focus(), 50);
                 }}
+                type="button"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -215,19 +216,17 @@ export function SearchHeader({
 
           {filter === 'stanice' && (
             <button
-              type="button"
-              onClick={() =>
-                setStopsMode(stopsMode === 'search' ? 'directions' : 'search')
-              }
+              aria-pressed={stopsMode === 'directions'}
               className={`btn btn-square min-h-[44px] w-[44px] shrink-0 ${
                 stopsMode === 'directions' ? 'btn-primary' : 'btn-ghost border border-base-300'
               }`}
+              onClick={() => setStopsMode(stopsMode === 'search' ? 'directions' : 'search')}
               title={
                 stopsMode === 'search'
                   ? t('search.directionsToggleOn')
                   : t('search.directionsToggleOff')
               }
-              aria-pressed={stopsMode === 'directions'}
+              type="button"
             >
               <ArrowLeftRight className="w-4 h-4" />
             </button>
@@ -248,22 +247,22 @@ export function SearchHeader({
               <>
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/50" />
                 <input
-                  ref={dirToInputRef}
-                  type="text"
-                  placeholder={t('search.placeholder.toWhere')}
-                  value={dirToQuery}
+                  className="input input-bordered w-full pl-10 pr-10 min-h-[44px] text-base"
                   onChange={(e) => {
                     setDirToQuery(e.target.value);
                     setDirActiveField('to');
                   }}
                   onFocus={() => setDirActiveField('to')}
-                  className="input input-bordered w-full pl-10 pr-10 min-h-[44px] text-base"
+                  placeholder={t('search.placeholder.toWhere')}
+                  ref={dirToInputRef}
+                  type="text"
+                  value={dirToQuery}
                 />
                 {dirToQuery && (
                   <button
-                    type="button"
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content/80"
                     onClick={() => setDirToQuery('')}
+                    type="button"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -272,12 +271,12 @@ export function SearchHeader({
             )}
             {dirToStop && (
               <button
-                type="button"
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content/80"
                 onClick={() => {
                   setDirToQuery('');
                   setTimeout(() => dirToInputRef.current?.focus(), 50);
                 }}
+                type="button"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -285,11 +284,11 @@ export function SearchHeader({
           </div>
 
           <button
-            type="button"
-            className="btn btn-square min-h-[44px] w-[44px] shrink-0 btn-ghost border border-base-300"
-            onClick={onDirSwap}
-            disabled={!dirFromStop && !dirToStop}
             aria-label={t('search.swapStopsAria')}
+            className="btn btn-square min-h-[44px] w-[44px] shrink-0 btn-ghost border border-base-300"
+            disabled={!dirFromStop && !dirToStop}
+            onClick={onDirSwap}
+            type="button"
           >
             <ArrowUpDown className="w-4 h-4" />
           </button>
@@ -308,9 +307,9 @@ export function SearchHeader({
               <div className="flex flex-wrap gap-2">
                 {favRoutes.map((route) => (
                   <button
+                    className="badge badge-lg font-bold hover:opacity-80 transition-opacity cursor-pointer text-white"
                     key={route.id}
                     onClick={() => onSelectRoute(route)}
-                    className="badge badge-lg font-bold hover:opacity-80 transition-opacity cursor-pointer text-white"
                     style={{ backgroundColor: badgeColor }}
                   >
                     {route.shortName}
@@ -328,9 +327,9 @@ export function SearchHeader({
               <div className="flex flex-wrap gap-2">
                 {favStops.map((stop) => (
                   <button
+                    className="badge badge-outline badge-lg hover:badge-primary transition-colors cursor-pointer text-xs"
                     key={stop.id}
                     onClick={() => onSelectStop(stop)}
-                    className="badge badge-outline badge-lg hover:badge-primary transition-colors cursor-pointer text-xs"
                   >
                     {stop.name}
                   </button>

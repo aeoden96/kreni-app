@@ -3,9 +3,10 @@
  * Only usable inside a react-leaflet MapContainer.
  */
 
-import { useState, useEffect } from 'react';
-import { useMap } from 'react-leaflet';
 import type { LatLngBounds } from 'leaflet';
+
+import { useEffect, useState } from 'react';
+import { useMap } from 'react-leaflet';
 
 export function useMapBounds(): LatLngBounds {
   const map = useMap();

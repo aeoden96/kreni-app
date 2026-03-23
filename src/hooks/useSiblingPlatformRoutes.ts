@@ -8,18 +8,11 @@
  *   terminusSet — Set of stop IDs where every route has that stop as its last stop
  */
 
-import { useState, useEffect, useMemo } from 'react';
-import type { Route } from '../utils/gtfs';
-import { fetchStopTimetable, fetchRouteStops } from '../utils/gtfs';
+import { useEffect, useMemo, useState } from 'react';
 
-function sortRoutes(routes: Route[]): Route[] {
-  return routes.sort((a, b) => {
-    const na = parseInt(a.shortName, 10);
-    const nb = parseInt(b.shortName, 10);
-    if (!isNaN(na) && !isNaN(nb)) return na - nb;
-    return a.shortName.localeCompare(b.shortName);
-  });
-}
+import type { Route } from '../utils/gtfs';
+
+import { fetchRouteStops, fetchStopTimetable } from '../utils/gtfs';
 
 export function useSiblingPlatformRoutes(
   stopIds: string[],
@@ -56,8 +49,12 @@ export function useSiblingPlatformRoutes(
           // Detect terminus: fetch route topology and check if sid is last stop in every route
           const routeStopsResults = await Promise.all(
             routeIds.map(async (routeId) => {
-              try { return await fetchRouteStops(routeId, dataDir); } catch { return null; }
-            }),
+              try {
+                return await fetchRouteStops(routeId, dataDir);
+              } catch {
+                return null;
+              }
+            })
           );
           let routesInTopology = 0;
           let terminusRoutes = 0;
@@ -73,15 +70,15 @@ export function useSiblingPlatformRoutes(
           }
           const isTerminus = routesInTopology > 0 && terminusRoutes === routesInTopology;
 
-          return { sid, routes: sortRoutes(resolved), isTerminus };
+          return { isTerminus, routes: sortRoutes(resolved), sid };
         } catch {
-          return { sid, routes: [] as Route[], isTerminus: false };
+          return { isTerminus: false, routes: [] as Route[], sid };
         }
-      }),
+      })
     ).then((results) => {
       if (cancelled) return;
-      setRouteMap(new Map(results.map(r => [r.sid, r.routes])));
-      setTerminusSet(new Set(results.filter(r => r.isTerminus).map(r => r.sid)));
+      setRouteMap(new Map(results.map((r) => [r.sid, r.routes])));
+      setTerminusSet(new Set(results.filter((r) => r.isTerminus).map((r) => r.sid)));
     });
 
     return () => {
@@ -91,4 +88,13 @@ export function useSiblingPlatformRoutes(
   }, [idsKey, routesById, dataDir]);
 
   return { routeMap, terminusSet };
+}
+
+function sortRoutes(routes: Route[]): Route[] {
+  return routes.sort((a, b) => {
+    const na = parseInt(a.shortName, 10);
+    const nb = parseInt(b.shortName, 10);
+    if (!isNaN(na) && !isNaN(nb)) return na - nb;
+    return a.shortName.localeCompare(b.shortName);
+  });
 }

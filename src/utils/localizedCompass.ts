@@ -1,4 +1,5 @@
 import type { TFunction } from 'i18next';
+
 import { bearingToCompassKey } from './gtfs';
 
 /** Localized compass direction for a bearing (uses `search.compass.*` keys). */

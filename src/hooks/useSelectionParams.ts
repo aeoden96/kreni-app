@@ -24,26 +24,23 @@ import { useSearchParams } from 'react-router-dom';
 export type DirectionFilter = 'A' | 'B';
 
 interface SelectionParams {
-  /** Currently selected route ID (null = none) */
-  selectedRouteId: string | null;
-  /** Currently selected stop ID (null = none) */
-  selectedStopId: string | null;
-  /** Current direction filter for the selected route */
-  directionFilter: DirectionFilter;
-
-  /** Select a route. Clears stop by default unless keepStop is true. */
-  selectRoute: (
-    routeId: string,
-    opts?: { dir?: DirectionFilter; keepStop?: boolean }
-  ) => void;
-  /** Clear the selected route (and direction). */
-  clearRoute: () => void;
-  /** Select (or replace) the current stop. */
-  selectStop: (stopId: string) => void;
-  /** Clear the selected stop. */
-  clearStop: () => void;
   /** Clear all selection params. */
   clearAll: () => void;
+  /** Clear the selected route (and direction). */
+  clearRoute: () => void;
+  /** Clear the selected stop. */
+  clearStop: () => void;
+
+  /** Current direction filter for the selected route */
+  directionFilter: DirectionFilter;
+  /** Currently selected route ID (null = none) */
+  selectedRouteId: null | string;
+  /** Currently selected stop ID (null = none) */
+  selectedStopId: null | string;
+  /** Select a route. Clears stop by default unless keepStop is true. */
+  selectRoute: (routeId: string, opts?: { dir?: DirectionFilter; keepStop?: boolean }) => void;
+  /** Select (or replace) the current stop. */
+  selectStop: (stopId: string) => void;
   /** Update only the direction filter. */
   setDirectionFilter: (dir: DirectionFilter) => void;
 }
@@ -56,10 +53,7 @@ export function useSelectionParams(): SelectionParams {
   const directionFilter = (params.get('dir') as DirectionFilter | null) ?? 'A';
 
   const selectRoute = useCallback(
-    (
-      routeId: string,
-      opts: { dir?: DirectionFilter; keepStop?: boolean } = {}
-    ) => {
+    (routeId: string, opts: { dir?: DirectionFilter; keepStop?: boolean } = {}) => {
       setParams(
         (prev) => {
           const next = new URLSearchParams(prev);
@@ -139,14 +133,14 @@ export function useSelectionParams(): SelectionParams {
   );
 
   return {
+    clearAll,
+    clearRoute,
+    clearStop,
+    directionFilter,
     selectedRouteId,
     selectedStopId,
-    directionFilter,
     selectRoute,
-    clearRoute,
     selectStop,
-    clearStop,
-    clearAll,
     setDirectionFilter,
   };
 }

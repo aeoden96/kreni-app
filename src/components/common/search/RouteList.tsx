@@ -1,24 +1,26 @@
-import { useTranslation } from 'react-i18next';
 import { Star } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+
 import type { Route } from '../../../utils/gtfs';
+
 import { trackEvent } from '../../../utils/analytics';
 
 interface RouteListProps {
-  filteredRoutes: Route[];
   badgeColor: string;
-  searchQuery: string;
   favouriteRouteIds: string[];
-  toggleFavouriteRoute: (id: string) => void;
+  filteredRoutes: Route[];
   onSelectRoute: (route: Route) => void;
+  searchQuery: string;
+  toggleFavouriteRoute: (id: string) => void;
 }
 
 export function RouteList({
-  filteredRoutes,
   badgeColor,
-  searchQuery,
   favouriteRouteIds,
-  toggleFavouriteRoute,
+  filteredRoutes,
   onSelectRoute,
+  searchQuery,
+  toggleFavouriteRoute,
 }: RouteListProps) {
   const { t } = useTranslation();
 
@@ -36,12 +38,12 @@ export function RouteList({
         const isFav = favouriteRouteIds.includes(route.id);
         return (
           <div
-            key={route.id}
             className="flex items-center hover:bg-base-200 active:bg-base-300 transition-colors"
+            key={route.id}
           >
             <button
-              onClick={() => onSelectRoute(route)}
               className="flex-1 py-3 px-4 text-left min-h-[52px]"
+              onClick={() => onSelectRoute(route)}
             >
               <div className="flex items-center gap-3">
                 <div
@@ -54,22 +56,22 @@ export function RouteList({
               </div>
             </button>
             <button
+              className="px-3 py-3 text-base-content/30 hover:text-warning transition-colors min-h-[52px] flex items-center"
               onClick={(e) => {
                 e.stopPropagation();
                 trackEvent('favourite_toggled', {
+                  action: favouriteRouteIds.includes(route.id) ? 'remove' : 'add',
                   item_type: 'route',
                   route_id: route.id,
-                  action: favouriteRouteIds.includes(route.id) ? 'remove' : 'add',
                 });
                 toggleFavouriteRoute(route.id);
               }}
-              className="px-3 py-3 text-base-content/30 hover:text-warning transition-colors min-h-[52px] flex items-center"
               title={isFav ? t('search.favouriteRemove') : t('search.favouriteAdd')}
             >
               <Star
                 className="w-4 h-4"
-                fill={isFav ? 'currentColor' : 'none'}
                 color={isFav ? '#f59e0b' : 'currentColor'}
+                fill={isFav ? 'currentColor' : 'none'}
               />
             </button>
           </div>

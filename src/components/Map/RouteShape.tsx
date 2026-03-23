@@ -3,16 +3,17 @@
  */
 
 import { Polyline } from 'react-leaflet';
+
 import { getDirectionColor } from './directionColors';
 
 interface RouteShapeProps {
-  shapes: Record<string, [number, number][]>
-  routeType: number | null;
   /** Optional ordered stops mapping (direction -> stop ids) — unused here but accepted for future use */
   orderedStops?: Record<string, string[]>;
+  routeType: null | number;
+  shapes: Record<string, [number, number][]>;
 }
 
-export function RouteShape({ shapes, routeType }: RouteShapeProps) {
+export function RouteShape({ routeType, shapes }: RouteShapeProps) {
   // Determine unique suffixes (e.g. shape ids like "1_1", "1_2") and map to palette indexes
   const suffixes: string[] = [];
   const suffixMap: Record<string, number> = {};
@@ -36,13 +37,13 @@ export function RouteShape({ shapes, routeType }: RouteShapeProps) {
         return (
           <Polyline
             key={shapeId}
-            positions={coordinates}
             pathOptions={{
-              color,
-              weight: 4,
-              opacity: 0.8,
               className: 'route-polyline',
+              color,
+              opacity: 0.8,
+              weight: 4,
             }}
+            positions={coordinates}
           />
         );
       })}

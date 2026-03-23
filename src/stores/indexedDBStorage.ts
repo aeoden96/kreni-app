@@ -3,11 +3,12 @@
  * Uses idb-keyval for simple key-value storage with better quota than localStorage
  */
 
-import { get, set, del } from 'idb-keyval';
 import type { StateStorage } from 'zustand/middleware';
 
+import { del, get, set } from 'idb-keyval';
+
 export const indexedDBStorage: StateStorage = {
-  getItem: async (name: string): Promise<string | null> => {
+  getItem: async (name: string): Promise<null | string> => {
     try {
       const value = await get(name);
       return value ?? null;
@@ -16,7 +17,15 @@ export const indexedDBStorage: StateStorage = {
       return null;
     }
   },
-  
+
+  removeItem: async (name: string): Promise<void> => {
+    try {
+      await del(name);
+    } catch (error) {
+      console.warn('Failed to remove from IndexedDB:', error);
+    }
+  },
+
   setItem: async (name: string, value: string): Promise<void> => {
     try {
       await set(name, value);
@@ -27,14 +36,6 @@ export const indexedDBStorage: StateStorage = {
       } else {
         console.warn('Failed to write to IndexedDB:', error);
       }
-    }
-  },
-  
-  removeItem: async (name: string): Promise<void> => {
-    try {
-      await del(name);
-    } catch (error) {
-      console.warn('Failed to remove from IndexedDB:', error);
     }
   },
 };

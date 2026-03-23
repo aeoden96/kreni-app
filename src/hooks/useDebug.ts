@@ -4,6 +4,7 @@
  * (a file should only export components, not mixed components + hooks).
  */
 import { useContext } from 'react';
+
 import { DebugContext } from '../contexts/DebugContext';
 
 export function useDebug() {

@@ -1,34 +1,36 @@
+import { ChevronDown, ChevronRight, MapPin, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { MapPin, Star, ChevronDown, ChevronRight } from 'lucide-react';
+
 import type { Route, Stop } from '../../../utils/gtfs';
 import type { ParentStopGroup } from '../../../utils/searchUtils';
+
 import { trackEvent } from '../../../utils/analytics';
 import { TerminalStopRow } from './TerminalStopRow';
 
 interface StopGroupListProps {
-  filteredStopGroups: { groups: ParentStopGroup[]; hasMore: boolean };
-  expandedStopKeys: Set<string>;
-  setExpandedStopKeys: (updater: (prev: Set<string>) => Set<string>) => void;
-  routesById: Map<string, Route>;
-  stopsById: Map<string, Stop>;
   dataDir: string;
+  expandedStopKeys: Set<string>;
   favouriteStopIds: string[];
-  toggleFavouriteStop: (id: string) => void;
+  filteredStopGroups: { groups: ParentStopGroup[]; hasMore: boolean };
   onSelectStop: (stop: Stop) => void;
+  routesById: Map<string, Route>;
   searchQuery: string;
+  setExpandedStopKeys: (updater: (prev: Set<string>) => Set<string>) => void;
+  stopsById: Map<string, Stop>;
+  toggleFavouriteStop: (id: string) => void;
 }
 
 export function StopGroupList({
-  filteredStopGroups,
-  expandedStopKeys,
-  setExpandedStopKeys,
-  routesById,
-  stopsById,
   dataDir,
+  expandedStopKeys,
   favouriteStopIds,
-  toggleFavouriteStop,
+  filteredStopGroups,
   onSelectStop,
+  routesById,
   searchQuery,
+  setExpandedStopKeys,
+  stopsById,
+  toggleFavouriteStop,
 }: StopGroupListProps) {
   const { t } = useTranslation();
 
@@ -44,13 +46,16 @@ export function StopGroupList({
     <>
       <div className="divide-y divide-base-300">
         {filteredStopGroups.groups.map((group) => {
-          const { representative, terminals, key } = group;
+          const { key, representative, terminals } = group;
           const isFav = favouriteStopIds.includes(representative.id);
           const isExpanded = expandedStopKeys.has(key);
           return (
             <div key={key}>
               <div className="flex items-center hover:bg-base-200 active:bg-base-300 transition-colors">
                 <button
+                  aria-controls={`terminals-${key}`}
+                  aria-expanded={isExpanded}
+                  className="flex-1 flex items-center"
                   onClick={() =>
                     setExpandedStopKeys((prev) => {
                       const next = new Set(prev);
@@ -59,9 +64,6 @@ export function StopGroupList({
                       return next;
                     })
                   }
-                  className="flex-1 flex items-center"
-                  aria-expanded={isExpanded}
-                  aria-controls={`terminals-${key}`}
                 >
                   <div className="flex-1 py-3 px-4 text-left min-h-[52px]">
                     <div className="flex items-center gap-3">
@@ -83,36 +85,36 @@ export function StopGroupList({
                   </div>
                 </button>
                 <button
+                  className="px-3 py-3 text-base-content/30 hover:text-warning transition-colors min-h-[52px] flex items-center"
                   onClick={(e) => {
                     e.stopPropagation();
                     trackEvent('favourite_toggled', {
+                      action: favouriteStopIds.includes(representative.id) ? 'remove' : 'add',
                       item_type: 'stop',
                       stop_id: representative.id,
-                      action: favouriteStopIds.includes(representative.id) ? 'remove' : 'add',
                     });
                     toggleFavouriteStop(representative.id);
                   }}
-                  className="px-3 py-3 text-base-content/30 hover:text-warning transition-colors min-h-[52px] flex items-center"
                   title={isFav ? t('search.favouriteRemove') : t('search.favouriteAdd')}
                 >
                   <Star
                     className="w-4 h-4"
-                    fill={isFav ? 'currentColor' : 'none'}
                     color={isFav ? '#f59e0b' : 'currentColor'}
+                    fill={isFav ? 'currentColor' : 'none'}
                   />
                 </button>
               </div>
               {isExpanded && (
-                <div id={`terminals-${key}`} className="pb-2">
+                <div className="pb-2" id={`terminals-${key}`}>
                   <div className="mx-4 border-l border-base-300">
                     {terminals.map((terminal) => (
                       <TerminalStopRow
-                        key={terminal.id}
-                        stop={terminal}
-                        routesById={routesById}
-                        stopsById={stopsById}
                         dataDir={dataDir}
+                        key={terminal.id}
                         onSelect={onSelectStop}
+                        routesById={routesById}
+                        stop={terminal}
+                        stopsById={stopsById}
                       />
                     ))}
                   </div>

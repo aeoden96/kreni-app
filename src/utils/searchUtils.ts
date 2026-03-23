@@ -2,11 +2,13 @@
  * Pure helper functions for the SearchModal and its sub-components.
  */
 
-import { TrainFront, Bus } from 'lucide-react';
-import type { Route, Stop } from './gtfs';
-import { bearingToCompassKey, isRouteTypeTram, isRouteTypeBus, isRouteTypeRail } from './gtfs';
+import { Bus, TrainFront } from 'lucide-react';
 
-export type FilterType = 'tram' | 'bus' | 'trains' | 'stanice';
+import type { Route, Stop } from './gtfs';
+
+import { bearingToCompassKey, isRouteTypeBus, isRouteTypeRail, isRouteTypeTram } from './gtfs';
+
+export type FilterType = 'bus' | 'stanice' | 'trains' | 'tram';
 
 export type ParentStopGroup = {
   key: string;
@@ -14,22 +16,28 @@ export type ParentStopGroup = {
   terminals: Stop[];
 };
 
-export type RecentRouteItem = { type: 'route'; data: Route };
-export type RecentStopItem = { type: 'stop'; data: Stop };
 export type RecentMergedItem = RecentRouteItem | RecentStopItem;
+export type RecentRouteItem = { data: Route; type: 'route' };
+export type RecentStopItem = { data: Stop; type: 'stop' };
 
-/** Returns the icon component and colour for a given platform stop route type. */
-export function getStopTypeIcons(routeType?: number): { Icon: typeof TrainFront; color: string } {
-  if (routeType === 3) return { Icon: Bus, color: '#d97706' };
-  if (routeType === 2) return { Icon: TrainFront, color: '#dc2626' };
-  return { Icon: TrainFront, color: '#2563eb' };
+interface RecentItem {
+  id: string;
+  timestamp: number;
 }
 
-/** Returns the badge background colour for a route-type filter tab. */
-export function getBadgeColor(filter: FilterType): string {
-  if (filter === 'tram') return '#2563eb';
-  if (filter === 'trains') return '#64748b';
-  return '#d97706';
+/**
+ * Filters canonical parent stops for the directions stop-picker.
+ * Returns the first 20 alphabetically sorted matches with a hasMore flag.
+ */
+export function filterParentStops(
+  parentStops: Stop[],
+  query: string
+): { hasMore: boolean; stops: Stop[] } {
+  const q = query.trim().toLowerCase();
+  const source = q ? parentStops.filter((s) => s.name.toLowerCase().includes(q)) : parentStops;
+  const sorted = source.slice().sort((a, b) => a.name.localeCompare(b.name));
+  const limit = 20;
+  return { hasMore: sorted.length > limit, stops: sorted.slice(0, limit) };
 }
 
 /**
@@ -40,9 +48,22 @@ export function filterRoutes(sourceRoutes: Route[], query: string): Route[] {
   if (!query.trim()) return sourceRoutes;
   const q = query.toLowerCase();
   return sourceRoutes.filter(
-    (route) =>
-      route.shortName.toLowerCase().includes(q) || route.longName.toLowerCase().includes(q)
+    (route) => route.shortName.toLowerCase().includes(q) || route.longName.toLowerCase().includes(q)
   );
+}
+
+/** Returns the badge background colour for a route-type filter tab. */
+export function getBadgeColor(filter: FilterType): string {
+  if (filter === 'tram') return '#2563eb';
+  if (filter === 'trains') return '#64748b';
+  return '#d97706';
+}
+
+/** Returns the icon component and colour for a given platform stop route type. */
+export function getStopTypeIcons(routeType?: number): { color: string; Icon: typeof TrainFront } {
+  if (routeType === 3) return { color: '#d97706', Icon: Bus };
+  if (routeType === 2) return { color: '#dc2626', Icon: TrainFront };
+  return { color: '#2563eb', Icon: TrainFront };
 }
 
 /**
@@ -88,26 +109,6 @@ export function groupPlatformStops(
 }
 
 /**
- * Filters canonical parent stops for the directions stop-picker.
- * Returns the first 20 alphabetically sorted matches with a hasMore flag.
- */
-export function filterParentStops(
-  parentStops: Stop[],
-  query: string
-): { stops: Stop[]; hasMore: boolean } {
-  const q = query.trim().toLowerCase();
-  const source = q ? parentStops.filter((s) => s.name.toLowerCase().includes(q)) : parentStops;
-  const sorted = source.slice().sort((a, b) => a.name.localeCompare(b.name));
-  const limit = 20;
-  return { stops: sorted.slice(0, limit), hasMore: sorted.length > limit };
-}
-
-interface RecentItem {
-  id: string;
-  timestamp: number;
-}
-
-/**
  * Merges recent routes and stops into a single time-sorted list (newest first, max 12),
  * resolves IDs to full objects, and filters to the items relevant to the current tab.
  */
@@ -129,10 +130,10 @@ export function mergeAndFilterRecents(
     .map((item) => {
       if (item.type === 'route') {
         const route = routesById.get(item.id);
-        return route ? ({ type: 'route' as const, data: route } satisfies RecentRouteItem) : null;
+        return route ? ({ data: route, type: 'route' as const } satisfies RecentRouteItem) : null;
       }
       const stop = stopsById.get(item.id);
-      return stop ? ({ type: 'stop' as const, data: stop } satisfies RecentStopItem) : null;
+      return stop ? ({ data: stop, type: 'stop' as const } satisfies RecentStopItem) : null;
     })
     .filter((x): x is RecentMergedItem => x !== null);
 

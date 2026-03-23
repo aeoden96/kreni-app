@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+
 import type { OffScreenIndicatorUIProps } from './OffScreenStopIndicator';
+
 import { OffScreenIndicatorUI } from './OffScreenStopIndicator';
 
 function IndicatorWrapper(props: OffScreenIndicatorUIProps) {
@@ -11,18 +13,18 @@ function IndicatorWrapper(props: OffScreenIndicatorUIProps) {
 }
 
 const meta = {
-  title: 'Map / OffScreenStopIndicator',
+  argTypes: {
+    angle: {
+      control: { max: 360, min: 0, step: 15, type: 'range' },
+      description: '0 = up, 90 = right, 180 = down, 270 = left',
+    },
+  },
   component: OffScreenIndicatorUI,
   parameters: {
     layout: 'centered',
   },
   tags: ['autodocs'],
-  argTypes: {
-    angle: {
-      control: { type: 'range', min: 0, max: 360, step: 15 },
-      description: '0 = up, 90 = right, 180 = down, 270 = left',
-    },
-  },
+  title: 'Map / OffScreenStopIndicator',
 } satisfies Meta<typeof OffScreenIndicatorUI>;
 
 export default meta;
@@ -30,11 +32,11 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const defaultArgs = {
+  inline: true as const,
+  onFlyTo: () => {},
+  stopName: 'Savski most',
   x: 200,
   y: 150,
-  stopName: 'Savski most',
-  onFlyTo: () => {},
-  inline: true as const,
 };
 
 export const Up: Story = {

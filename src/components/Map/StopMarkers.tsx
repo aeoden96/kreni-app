@@ -2,11 +2,11 @@
  * Render stop markers on the map
  */
 
+import L from 'leaflet';
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { Marker, Polyline, useMap } from 'react-leaflet';
-import { useSpiderfierContext } from './SpiderfierContext';
-import L from 'leaflet';
-import { fetchStopTimetable, type Stop, type Route } from '../../utils/gtfs';
+
+import { fetchStopTimetable, type Route, type Stop } from '../../utils/gtfs';
 import {
   buildDirectionalStopPinPathData,
   buildParentLabelGroups,
@@ -20,16 +20,160 @@ import {
   MARKER_Z_STOP_PARENT_LABEL,
   MARKER_Z_STOP_SELECTED,
 } from './mapMarkerZIndex';
+import { useSpiderfierContext } from './SpiderfierContext';
 
-// ── Stop colour by service type ──────────────────────────────────────────────
-function stopFillColor(stop: Stop, isSelected: boolean, isHighlighted: boolean): string {
-  if (isHighlighted && !isSelected) return '#2337ff';
-  switch (stop.routeType) {
-    case 0: return '#2563eb';  // tram-only  → blue
-    case 3: return '#d97706';  // bus-only   → amber
-    case 2: return '#dc2626';  // rail       → red
-    default: return '#475569'; // fallback    → slate
-  }
+interface PlatformStopMarkerProps {
+  color: string;
+  effectiveFactor: number;
+  isHighlighted: boolean;
+  isSelected: boolean;
+  onStopClick: (id: string) => void;
+  routesById: Map<string, Route>;
+  stop: Stop;
+}
+
+interface StopMarkersProps {
+  highlightStopIds: string[];
+  isParentStationView: boolean;
+  onStopClick: (stopId: string) => void;
+  /** 0-1 factor applied to all marker opacity (individual mode zoom fading). Selected stops always stay at 1. */
+  opacityFactor?: number;
+  parentChildCounts: Map<string, number>; // platform-counts per parent station id
+  /** Optional parent station list (used when individual mode wants parent labels/lines) */
+  parentStations?: Stop[];
+  routesById: Map<string, Route>;
+  selectedStopId: null | string;
+  /** When true, platform stop labels are rendered inside the DivIcon (used at max zoom) */
+  showLabels?: boolean;
+  /** Optional mapping stopId -> direction index (0,1,...) for highlighted stops */
+  stopDirectionMap?: Record<string, number>;
+  stops: Stop[];
+}
+
+// ── Platform stop sub-component (registers with spiderfier) ────────────────
+
+export function StopMarkers({
+  highlightStopIds,
+  isParentStationView,
+  onStopClick,
+  opacityFactor = 1,
+  parentChildCounts,
+  parentStations,
+  routesById,
+  selectedStopId,
+  showLabels = false,
+  stopDirectionMap,
+  stops,
+}: StopMarkersProps) {
+  const highlightSet = new Set(highlightStopIds as string[]);
+
+  // Build a lookup of parent stations by id for quick access
+  const parentMap = new Map<string, Stop>();
+  if (parentStations) parentStations.forEach((p) => parentMap.set(p.id, p));
+
+  const parentLabelGroups =
+    showLabels && parentStations
+      ? buildParentLabelGroups(
+          stops.filter((s) => s.locationType === 0),
+          parentMap
+        )
+      : [];
+  return (
+    <>
+      {stops.map((s) => {
+        const stop = s as Stop;
+        const id = stop.id;
+
+        const isSelected = id === selectedStopId;
+        const isHighlighted = highlightSet.has(id);
+
+        // Render parent stations when in parent-station view
+        if (isParentStationView && stop.locationType === 1) {
+          const childCount = parentChildCounts.get(stop.id) || 0;
+          const displayCount = childCount > 9 ? '9+' : childCount.toString();
+
+          const icon = L.divIcon({
+            className: 'parent-station-icon',
+            html: `<div data-testid="stop-marker" class="parent-station-marker ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''}">
+              <span class="count">${displayCount}</span>
+            </div>`,
+            iconAnchor: [14, 14],
+            iconSize: [28, 28],
+          });
+
+          return (
+            <Marker
+              eventHandlers={{
+                click: () => onStopClick(stop.id),
+              }}
+              icon={icon}
+              key={stop.id}
+              position={[stop.lat, stop.lon]}
+              zIndexOffset={
+                isSelected
+                  ? MARKER_Z_STOP_SELECTED
+                  : isHighlighted
+                    ? MARKER_Z_STOP_HIGHLIGHTED
+                    : MARKER_Z_STOP_DEFAULT
+              }
+            />
+          );
+        }
+
+        // Render regular platform stops
+        // Selected stops always remain fully visible regardless of opacityFactor
+        const effectiveFactor = isSelected ? 1 : opacityFactor;
+        // Skip rendering when fully transparent (perf optimisation)
+        if (effectiveFactor === 0) return null;
+
+        // If highlighted and a direction map is available, use the direction color
+        let color = stopFillColor(stop, isSelected, isHighlighted);
+        if (isHighlighted && stopDirectionMap && stopDirectionMap[id] !== undefined) {
+          const dirIdx = stopDirectionMap[id];
+          color = getDirectionColor(stop.routeType ?? null, dirIdx);
+        }
+        return (
+          <PlatformStopMarker
+            color={color}
+            effectiveFactor={effectiveFactor}
+            isHighlighted={isHighlighted}
+            isSelected={isSelected}
+            key={stop.id}
+            onStopClick={onStopClick}
+            routesById={routesById}
+            stop={stop}
+          />
+        );
+      })}
+      {/* Render parent labels and connector lines when requested (individual-mode enhancement) */}
+      {showLabels &&
+        parentLabelGroups.map(({ children, label, lat, lon }, idx) => (
+          <span key={`parent-label-${idx}`}>
+            <Marker
+              icon={L.divIcon({
+                className: '',
+                html: `<span class="parent-station-label">${String(label).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>`,
+                iconAnchor: [0, 0],
+                iconSize: [0, 0],
+              })}
+              interactive={false}
+              position={[lat, lon]}
+              zIndexOffset={MARKER_Z_STOP_PARENT_LABEL}
+            />
+            {children.map((c) => (
+              <Polyline
+                key={`line-${idx}-${c.id}`}
+                pathOptions={{ color: '#9ca3af', dashArray: '3 4', opacity: 0.45, weight: 0.8 }}
+                positions={[
+                  [lat, lon],
+                  [c.lat, c.lon],
+                ]}
+              />
+            ))}
+          </span>
+        ))}
+    </>
+  );
 }
 
 /**
@@ -62,7 +206,7 @@ function makeStopIcon(
       `</svg>` +
       `${safeLabel ? `<span class="stop-label">${safeLabel}</span>` : ''}` +
       `</div>`;
-    return L.divIcon({ html, className: '', iconSize: [size, size], iconAnchor: [cx, cx] });
+    return L.divIcon({ className: '', html, iconAnchor: [cx, cx], iconSize: [size, size] });
   }
 
   const html =
@@ -73,29 +217,17 @@ function makeStopIcon(
     `</svg>` +
     `${safeLabel ? `<span class="stop-label">${safeLabel}</span>` : ''}` +
     `</div>`;
-  return L.divIcon({ html, className: '', iconSize: [size, size], iconAnchor: [cx, cx] });
-}
-
-// ── Platform stop sub-component (registers with spiderfier) ────────────────
-
-interface PlatformStopMarkerProps {
-  stop: Stop;
-  isSelected: boolean;
-  isHighlighted: boolean;
-  color: string;
-  effectiveFactor: number;
-  routesById: Map<string, Route>;
-  onStopClick: (id: string) => void;
+  return L.divIcon({ className: '', html, iconAnchor: [cx, cx], iconSize: [size, size] });
 }
 
 function PlatformStopMarker({
-  stop,
-  isSelected,
-  isHighlighted,
   color,
   effectiveFactor,
-  routesById,
+  isHighlighted,
+  isSelected,
   onStopClick,
+  routesById,
+  stop,
 }: PlatformStopMarkerProps) {
   const map = useMap();
   const ctx = useSpiderfierContext();
@@ -109,7 +241,9 @@ function PlatformStopMarker({
     [color, stop.bearing, size, r, effectiveFactor]
   );
   const iconRef = useRef(icon);
-  useLayoutEffect(() => { iconRef.current = icon; }, [icon]);
+  useLayoutEffect(() => {
+    iconRef.current = icon;
+  }, [icon]);
 
   useEffect(() => {
     if (!ctx) return;
@@ -119,7 +253,7 @@ function PlatformStopMarker({
       try {
         const timetable = await fetchStopTimetable(stop.id);
         const routes = Object.keys(timetable)
-          .map(rid => routesById.get(rid))
+          .map((rid) => routesById.get(rid))
           .filter((r): r is Route => !!r)
           .sort((a, b) => {
             const numA = parseInt(a.shortName, 10);
@@ -130,18 +264,21 @@ function PlatformStopMarker({
 
         if (routes.length === 0) return stop.name;
 
-        const renderedBadges = routes.map(r => {
-          const typeClass = r.type === 0 ? 'is-tram' : r.type === 3 ? 'is-bus' : 'is-mixed';
-          return `<span class="spider-route-badge ${typeClass}">${r.shortName}</span>`;
-        }).join('');
+        const renderedBadges = routes
+          .map((r) => {
+            const typeClass = r.type === 0 ? 'is-tram' : r.type === 3 ? 'is-bus' : 'is-mixed';
+            return `<span class="spider-route-badge ${typeClass}">${r.shortName}</span>`;
+          })
+          .join('');
 
         const estimatedWidth = estimateSpiderRouteBadgeRowWidth(routes.map((r) => r.shortName));
 
-        const badgeContent = estimatedWidth <= SPIDER_TICKER_VISIBLE_PX
-          // Fits — plain static row, no animation, no mask, no duplication
-          ? `<div class="spider-route-badges">${renderedBadges}</div>`
-          // Overflows — scrolling ticker with seamless doubled content
-          : `<div class="spider-route-ticker"><div class="spider-route-ticker-inner">${renderedBadges}${renderedBadges}</div></div>`;
+        const badgeContent =
+          estimatedWidth <= SPIDER_TICKER_VISIBLE_PX
+            ? // Fits — plain static row, no animation, no mask, no duplication
+              `<div class="spider-route-badges">${renderedBadges}</div>`
+            : // Overflows — scrolling ticker with seamless doubled content
+              `<div class="spider-route-ticker"><div class="spider-route-ticker-inner">${renderedBadges}${renderedBadges}</div></div>`;
 
         return `<div class="spider-label-content"><span class="stop-name">${stop.name}</span>${badgeContent}</div>`;
       } catch (err) {
@@ -151,13 +288,13 @@ function PlatformStopMarker({
     };
 
     ctx.register({
+      getIcon: () => iconRef.current,
       id: stop.id,
+      label: stop.name,
       lat: stop.lat,
       lon: stop.lon,
-      label: stop.name,
-      resolveLabel,
       onClick: () => onStopClick(stop.id),
-      getIcon: () => iconRef.current,
+      resolveLabel,
     });
     return () => ctx.unregister(stop.id);
   }, [stop.id, stop.lat, stop.lon, stop.name, onStopClick, ctx, routesById]);
@@ -167,9 +304,6 @@ function PlatformStopMarker({
 
   return (
     <Marker
-      position={[stop.lat, stop.lon]}
-      icon={icon}
-      zIndexOffset={isSelected ? 10000 : isHighlighted ? 500 : 0}
       eventHandlers={{
         click: (e) => {
           e.originalEvent.stopPropagation();
@@ -180,144 +314,24 @@ function PlatformStopMarker({
           }
         },
       }}
+      icon={icon}
+      position={[stop.lat, stop.lon]}
+      zIndexOffset={isSelected ? 10000 : isHighlighted ? 500 : 0}
     />
   );
 }
 
-interface StopMarkersProps {
-  stops: Stop[];
-  isParentStationView: boolean;
-  parentChildCounts: Map<string, number>; // platform-counts per parent station id
-  /** Optional parent station list (used when individual mode wants parent labels/lines) */
-  parentStations?: Stop[];
-  selectedStopId: string | null;
-  highlightStopIds: string[];
-  /** Optional mapping stopId -> direction index (0,1,...) for highlighted stops */
-  stopDirectionMap?: Record<string, number>;
-  onStopClick: (stopId: string) => void;
-  /** 0-1 factor applied to all marker opacity (individual mode zoom fading). Selected stops always stay at 1. */
-  opacityFactor?: number;
-  /** When true, platform stop labels are rendered inside the DivIcon (used at max zoom) */
-  showLabels?: boolean;
-  routesById: Map<string, Route>;
-}
-
-export function StopMarkers({
-  stops,
-  isParentStationView,
-  parentStations,
-  parentChildCounts,
-  selectedStopId,
-  highlightStopIds,
-  stopDirectionMap,
-  onStopClick,
-  opacityFactor = 1,
-  showLabels = false,
-  routesById,
-}: StopMarkersProps) {
-  const highlightSet = new Set(highlightStopIds as string[]);
-
-  // Build a lookup of parent stations by id for quick access
-  const parentMap = new Map<string, Stop>();
-  if (parentStations) parentStations.forEach((p) => parentMap.set(p.id, p));
-
-  const parentLabelGroups =
-    showLabels && parentStations
-      ? buildParentLabelGroups(
-          stops.filter((s) => s.locationType === 0),
-          parentMap,
-        )
-      : [];
-  return (
-    <>
-      {stops.map((s) => {
-        const stop = s as Stop;
-        const id = stop.id;
-
-        const isSelected = id === selectedStopId;
-        const isHighlighted = highlightSet.has(id);
-
-        // Render parent stations when in parent-station view
-        if (isParentStationView && stop.locationType === 1) {
-          const childCount = parentChildCounts.get(stop.id) || 0;
-          const displayCount = childCount > 9 ? '9+' : childCount.toString();
-
-          const icon = L.divIcon({
-            html: `<div data-testid="stop-marker" class="parent-station-marker ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''}">
-              <span class="count">${displayCount}</span>
-            </div>`,
-            className: 'parent-station-icon',
-            iconSize: [28, 28],
-            iconAnchor: [14, 14],
-          });
-
-          return (
-            <Marker
-              key={stop.id}
-              position={[stop.lat, stop.lon]}
-              icon={icon}
-              zIndexOffset={
-                isSelected
-                  ? MARKER_Z_STOP_SELECTED
-                  : isHighlighted
-                    ? MARKER_Z_STOP_HIGHLIGHTED
-                    : MARKER_Z_STOP_DEFAULT
-              }
-              eventHandlers={{
-                click: () => onStopClick(stop.id)
-              }}
-            />
-          );
-        }
-
-        // Render regular platform stops
-        // Selected stops always remain fully visible regardless of opacityFactor
-        const effectiveFactor = isSelected ? 1 : opacityFactor;
-        // Skip rendering when fully transparent (perf optimisation)
-        if (effectiveFactor === 0) return null;
-
-        // If highlighted and a direction map is available, use the direction color
-        let color = stopFillColor(stop, isSelected, isHighlighted);
-        if (isHighlighted && stopDirectionMap && stopDirectionMap[id] !== undefined) {
-          const dirIdx = stopDirectionMap[id];
-          color = getDirectionColor(stop.routeType ?? null, dirIdx);
-        }
-        return (
-          <PlatformStopMarker
-            key={stop.id}
-            stop={stop}
-            isSelected={isSelected}
-            isHighlighted={isHighlighted}
-            color={color}
-            effectiveFactor={effectiveFactor}
-            routesById={routesById}
-            onStopClick={onStopClick}
-          />
-        );
-      })}
-      {/* Render parent labels and connector lines when requested (individual-mode enhancement) */}
-      {showLabels && parentLabelGroups.map(({ label, lat, lon, children }, idx) => (
-        <span key={`parent-label-${idx}`}>
-          <Marker
-            position={[lat, lon]}
-            zIndexOffset={MARKER_Z_STOP_PARENT_LABEL}
-            icon={L.divIcon({
-              html: `<span class="parent-station-label">${String(label).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>`,
-              className: '',
-              iconSize: [0, 0],
-              iconAnchor: [0, 0],
-            })}
-            interactive={false}
-          />
-          {children.map((c) => (
-            <Polyline
-              key={`line-${idx}-${c.id}`}
-              positions={[[lat, lon], [c.lat, c.lon]]}
-              pathOptions={{ color: '#9ca3af', weight: 0.8, opacity: 0.45, dashArray: '3 4' }}
-            />
-          ))}
-        </span>
-      ))}
-    </>
-  );
+// ── Stop colour by service type ──────────────────────────────────────────────
+function stopFillColor(stop: Stop, isSelected: boolean, isHighlighted: boolean): string {
+  if (isHighlighted && !isSelected) return '#2337ff';
+  switch (stop.routeType) {
+    case 0:
+      return '#2563eb'; // tram-only  → blue
+    case 2:
+      return '#dc2626'; // rail       → red
+    case 3:
+      return '#d97706'; // bus-only   → amber
+    default:
+      return '#475569'; // fallback    → slate
+  }
 }

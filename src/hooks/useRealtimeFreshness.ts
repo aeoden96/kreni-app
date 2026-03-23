@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
 import type { GTFSModeConfig } from '../config/modes';
 import type { FeedStatistics } from '../utils/realtime';
 
@@ -8,9 +9,9 @@ import type { FeedStatistics } from '../utils/realtime';
  */
 export function useRealtimeFreshness(
   config: GTFSModeConfig,
-  lastUpdate: number | null,
-  realtimeStats: FeedStatistics | null,
-): { timeAgoStr: string; feedAgeStr: string } {
+  lastUpdate: null | number,
+  realtimeStats: FeedStatistics | null
+): { feedAgeStr: string; timeAgoStr: string } {
   const [timeAgoStr, setTimeAgoStr] = useState<string>('');
   const [feedAgeStr, setFeedAgeStr] = useState<string>('');
 
@@ -21,9 +22,7 @@ export function useRealtimeFreshness(
     }
     const updateTimeAgo = () => {
       const seconds = Math.floor((Date.now() - lastUpdate) / 1000);
-      setTimeAgoStr(
-        seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${seconds % 60}s`,
-      );
+      setTimeAgoStr(seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${seconds % 60}s`);
     };
     updateTimeAgo();
     const interval = setInterval(updateTimeAgo, 1000);
@@ -46,5 +45,5 @@ export function useRealtimeFreshness(
     return () => clearInterval(interval);
   }, [config.hasRealtime, realtimeStats?.lastUpdate]);
 
-  return { timeAgoStr, feedAgeStr };
+  return { feedAgeStr, timeAgoStr };
 }

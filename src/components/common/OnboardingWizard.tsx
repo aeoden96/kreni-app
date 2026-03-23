@@ -1,10 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react';
+import {
+  Coffee,
+  GitMerge,
+  Layers,
+  List,
+  Map,
+  MapPin,
+  MousePointerClick,
+  Navigation,
+  Smartphone,
+  X,
+} from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Navigation, MapPin, Smartphone, Map, GitMerge, Coffee, List, MousePointerClick, Layers } from 'lucide-react';
+
 import { useSettingsStore } from '../../stores/settingsStore';
 import { trackEvent } from '../../utils/analytics';
 
-type OnboardingVariant = 'transit' | 'cycling' | 'driving' | 'city' | 'list' | 'train';
+type OnboardingVariant = 'city' | 'cycling' | 'driving' | 'list' | 'train' | 'transit';
 
 interface OnboardingWizardProps {
   variant: OnboardingVariant;
@@ -51,83 +63,89 @@ export function OnboardingWizard({ variant }: OnboardingWizardProps) {
   // It will only show if explicitly set to false (via the Help button).
   if (onboardingCompleted[variant] !== false) return null;
 
-  const getStepsForVariant = (): Array<{ title: string; body: string; icon: React.ReactNode; image?: string; video?: string }> => {
+  const getStepsForVariant = (): Array<{
+    body: string;
+    icon: React.ReactNode;
+    image?: string;
+    title: string;
+    video?: string;
+  }> => {
     const modeSwitchStep = {
-      title: t('onboarding.modeSwitchTitle'),
       body: t('onboarding.modeSwitchBody'),
       icon: <Layers className="w-6 h-6 text-primary" />,
+      title: t('onboarding.modeSwitchTitle'),
       video: '/onboarding/switch_views.webm',
     };
     switch (variant) {
-      case 'transit':
+      case 'city':
         return [
           {
-            title: t('onboarding.transitTitle0'),
-            body: t('onboarding.transitBody0'),
-            icon: <Navigation className="w-6 h-6 text-primary" />,
-          },
-          {
-            title: t('onboarding.transitTitle1'),
-            body: t('onboarding.transitBody1'),
-            icon: <MapPin className="w-6 h-6 text-primary" />,
-            video: '/onboarding/station_view.webm',
-          },
-          {
-            title: t('onboarding.transitTitle2'),
-            body: t('onboarding.transitBody2'),
-            icon: <MousePointerClick className="w-6 h-6 text-primary" />,
-            video: '/onboarding/spider_selector.webm',
-          },
-          {
-            title: t('onboarding.transitTitle3'),
-            body: t('onboarding.transitBody3'),
-            icon: <List className="w-6 h-6 text-primary" />,
-            video: '/onboarding/public_transport_switch_views.webm',
+            body: t('onboarding.cityBody0'),
+            icon: <Coffee className="w-6 h-6 text-primary" />,
+            title: t('onboarding.cityTitle0'),
           },
           modeSwitchStep,
         ];
       case 'cycling':
         return [
           {
-            title: t('onboarding.cyclingTitle0'),
             body: t('onboarding.cyclingBody0'),
             icon: <GitMerge className="w-6 h-6 text-primary" />,
+            title: t('onboarding.cyclingTitle0'),
           },
           modeSwitchStep,
         ];
       case 'driving':
         return [
           {
-            title: t('onboarding.drivingTitle0'),
             body: t('onboarding.drivingBody0'),
             icon: <Map className="w-6 h-6 text-primary" />,
-          },
-          modeSwitchStep,
-        ];
-      case 'city':
-        return [
-          {
-            title: t('onboarding.cityTitle0'),
-            body: t('onboarding.cityBody0'),
-            icon: <Coffee className="w-6 h-6 text-primary" />,
+            title: t('onboarding.drivingTitle0'),
           },
           modeSwitchStep,
         ];
       case 'list':
         return [
           {
-            title: t('onboarding.listTitle0'),
             body: t('onboarding.listBody0'),
             icon: <Smartphone className="w-6 h-6 text-primary" />,
+            title: t('onboarding.listTitle0'),
           },
           modeSwitchStep,
         ];
       case 'train':
         return [
           {
-            title: t('onboarding.trainTitle0'),
             body: t('onboarding.trainBody0'),
             icon: <Navigation className="w-6 h-6 text-primary" />,
+            title: t('onboarding.trainTitle0'),
+          },
+          modeSwitchStep,
+        ];
+      case 'transit':
+        return [
+          {
+            body: t('onboarding.transitBody0'),
+            icon: <Navigation className="w-6 h-6 text-primary" />,
+            title: t('onboarding.transitTitle0'),
+          },
+          {
+            body: t('onboarding.transitBody1'),
+            icon: <MapPin className="w-6 h-6 text-primary" />,
+            title: t('onboarding.transitTitle1'),
+            video: '/onboarding/station_view.webm',
+          },
+          {
+            body: t('onboarding.transitBody2'),
+            icon: <MousePointerClick className="w-6 h-6 text-primary" />,
+            title: t('onboarding.transitTitle2'),
+            video: '/onboarding/spider_selector.webm',
+          },
+          {
+            body: t('onboarding.transitBody3'),
+            icon: <List className="w-6 h-6 text-primary" />,
+            title: t('onboarding.transitTitle3'),
+            video: '/onboarding/public_transport_switch_views.webm',
           },
           modeSwitchStep,
         ];
@@ -165,28 +183,28 @@ export function OnboardingWizard({ variant }: OnboardingWizardProps) {
         {currentStep.video ? (
           <div className="w-full bg-base-300">
             <video
+              className="w-full h-auto"
               key={step}
-              ref={videoRef}
-              src={import.meta.env.BASE_URL + currentStep.video.replace(/^\//, '')}
               muted
               playsInline
-              className="w-full h-auto"
+              ref={videoRef}
+              src={import.meta.env.BASE_URL + currentStep.video.replace(/^\//, '')}
             />
           </div>
         ) : currentStep.image ? (
           <div className="w-full h-48 bg-base-200 relative">
             <img
-              src={import.meta.env.BASE_URL + currentStep.image.replace(/^\//, '')}
               alt={currentStep.title}
               className="w-full h-full object-cover"
+              src={import.meta.env.BASE_URL + currentStep.image.replace(/^\//, '')}
             />
           </div>
         ) : null}
 
         {step > 0 && (
           <button
-            onClick={handleClose}
             className="btn btn-sm btn-circle absolute left-2 top-2 bg-base-100/80 hover:bg-base-200 border-none shadow-sm"
+            onClick={handleClose}
           >
             <X className="w-4 h-4" />
           </button>
@@ -206,29 +224,30 @@ export function OnboardingWizard({ variant }: OnboardingWizardProps) {
           <div className="flex items-center gap-2 justify-center mb-6">
             {steps.map((_, i) => (
               <div
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  i === step ? 'w-8 bg-primary' : 'w-2 bg-base-300'
+                }`}
                 key={i}
-                className={`h-1.5 rounded-full transition-all duration-300 ${i === step ? 'w-8 bg-primary' : 'w-2 bg-base-300'
-                  }`}
               />
             ))}
           </div>
 
           <div className="flex justify-between gap-3">
             {step === 0 ? (
-              <button onClick={handleClose} className="btn btn-outline flex-1">
+              <button className="btn btn-outline flex-1" onClick={handleClose}>
                 {t('common.close')}
               </button>
             ) : (
-              <button onClick={back} className="btn btn-outline flex-1">
+              <button className="btn btn-outline flex-1" onClick={back}>
                 {t('common.back')}
               </button>
             )}
             {step < steps.length - 1 ? (
-              <button onClick={next} className="btn btn-primary flex-1">
+              <button className="btn btn-primary flex-1" onClick={next}>
                 {t('common.next')}
               </button>
             ) : (
-              <button onClick={handleClose} className="btn btn-primary flex-1">
+              <button className="btn btn-primary flex-1" onClick={handleClose}>
                 {t('common.done')}
               </button>
             )}

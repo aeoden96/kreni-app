@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures';
+import { expect, test } from './fixtures';
 
 /**
  * Stop info and route tests.
@@ -37,11 +37,13 @@ test.describe('route selection', () => {
 
     // Route modal heading (level 2)
     await expect(
-      page.getByRole('heading', { name: 'Zap.kol. - Borongaj', level: 2 }),
+      page.getByRole('heading', { level: 2, name: 'Zap.kol. - Borongaj' })
     ).toBeVisible();
 
     // Known stops on tram 1 direction A
-    await expect(page.getByRole('button', { name: 'Trg bana J. Jela\u010di\u0107a' })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Trg bana J. Jela\u010di\u0107a' })
+    ).toBeVisible();
     await expect(page.getByRole('button', { name: 'Borongaj' }).first()).toBeVisible();
   });
 
@@ -73,7 +75,7 @@ test.describe('stop info', () => {
 
     // Stop info panel heading (captured via MCP)
     await expect(
-      page.getByRole('heading', { name: 'Trg bana J. Jela\u010di\u0107a' }),
+      page.getByRole('heading', { name: 'Trg bana J. Jela\u010di\u0107a' })
     ).toBeVisible();
     await expect(page.getByText(/Smjer prema/)).toBeVisible();
   });

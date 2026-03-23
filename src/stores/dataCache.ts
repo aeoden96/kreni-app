@@ -3,7 +3,8 @@
  */
 
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
+
 import { indexedDBStorage } from './indexedDBStorage';
 
 interface CacheEntry {
@@ -13,19 +14,19 @@ interface CacheEntry {
 
 interface DataCacheState {
   cache: Record<string, CacheEntry>;
-  version: string | null;
-  /** Per-manifest version keys, e.g. { 'data/manifest.json': 'v1', 'data-train/manifest.json': 'v2' } */
-  versions: Record<string, string>;
-  
-  // Actions
-  setEntry: (key: string, data: unknown) => void;
+  clearCache: () => void;
+  getCacheStats: () => { entryCount: number; sizeBytes: number };
+
   getEntry: <T>(key: string) => T | undefined;
   getEntryWithTTL: <T>(key: string, ttlMs: number) => T | undefined;
-  clearCache: () => void;
+  getVersionForKey: (key: string) => string | undefined;
+  // Actions
+  setEntry: (key: string, data: unknown) => void;
   setVersion: (version: string) => void;
   setVersionForKey: (key: string, version: string) => void;
-  getVersionForKey: (key: string) => string | undefined;
-  getCacheStats: () => { entryCount: number; sizeBytes: number };
+  version: null | string;
+  /** Per-manifest version keys, e.g. { 'data/manifest.json': 'v1', 'data-train/manifest.json': 'v2' } */
+  versions: Record<string, string>;
 }
 
 /**
@@ -34,18 +35,18 @@ interface DataCacheState {
  */
 const migrateFromLocalStorage = async () => {
   const STORAGE_KEY = 'gtfs-data-cache';
-  
+
   try {
     const localStorageData = localStorage.getItem(STORAGE_KEY);
     if (localStorageData) {
       console.log('Migrating cache from localStorage to IndexedDB...');
-      
+
       // Write to IndexedDB
       await indexedDBStorage.setItem?.(STORAGE_KEY, localStorageData);
-      
+
       // Remove from localStorage to save space
       localStorage.removeItem(STORAGE_KEY);
-      
+
       console.log('Cache migration completed successfully');
     }
   } catch (error) {
@@ -60,8 +61,41 @@ export const useDataCacheStore = create<DataCacheState>()(
   persist(
     (set, get) => ({
       cache: {},
-      version: null,
-      versions: {},
+      clearCache: () => {
+        set({ cache: {} });
+      },
+      getCacheStats: () => {
+        const state = get();
+        const entryCount = Object.keys(state.cache).length;
+
+        // Estimate size by measuring serialized state
+        let sizeBytes = 0;
+        try {
+          const serialized = JSON.stringify(state.cache);
+          sizeBytes = new Blob([serialized]).size;
+        } catch {
+          // If serialization fails, return 0
+          sizeBytes = 0;
+        }
+
+        return { entryCount, sizeBytes };
+      },
+
+      getEntry: <T>(key: string): T | undefined => {
+        const entry = get().cache[key];
+        return entry?.data as T | undefined;
+      },
+
+      getEntryWithTTL: <T>(key: string, ttlMs: number): T | undefined => {
+        const entry = get().cache[key];
+        if (!entry) return undefined;
+        if (Date.now() - entry.timestamp > ttlMs) return undefined;
+        return entry.data as T;
+      },
+
+      getVersionForKey: (key: string): string | undefined => {
+        return get().versions[key];
+      },
 
       setEntry: (key: string, data: unknown) => {
         set((state) => ({
@@ -75,22 +109,6 @@ export const useDataCacheStore = create<DataCacheState>()(
         }));
       },
 
-      getEntry: <T,>(key: string): T | undefined => {
-        const entry = get().cache[key];
-        return entry?.data as T | undefined;
-      },
-
-      getEntryWithTTL: <T,>(key: string, ttlMs: number): T | undefined => {
-        const entry = get().cache[key];
-        if (!entry) return undefined;
-        if (Date.now() - entry.timestamp > ttlMs) return undefined;
-        return entry.data as T;
-      },
-
-      clearCache: () => {
-        set({ cache: {} });
-      },
-
       setVersion: (version: string) => {
         set({ version });
       },
@@ -99,26 +117,9 @@ export const useDataCacheStore = create<DataCacheState>()(
         set((state) => ({ versions: { ...state.versions, [key]: version } }));
       },
 
-      getVersionForKey: (key: string): string | undefined => {
-        return get().versions[key];
-      },
+      version: null,
 
-      getCacheStats: () => {
-        const state = get();
-        const entryCount = Object.keys(state.cache).length;
-        
-        // Estimate size by measuring serialized state
-        let sizeBytes = 0;
-        try {
-          const serialized = JSON.stringify(state.cache);
-          sizeBytes = new Blob([serialized]).size;
-        } catch {
-          // If serialization fails, return 0
-          sizeBytes = 0;
-        }
-        
-        return { entryCount, sizeBytes };
-      },
+      versions: {},
     }),
     {
       name: 'gtfs-data-cache',
@@ -134,33 +135,7 @@ export const useDataCacheStore = create<DataCacheState>()(
  */
 const inFlight = new Map<string, Promise<unknown>>();
 
-/**
- * Helper function to fetch data with caching
- */
-/**
- * Thin fetch wrapper that attaches the custom `X-App-Request` header to every
- * data-file request.  Pair this with a Cloudflare WAF rule that blocks requests
- * to `/data/*` and `/static_data/*` lacking this header to add a lightweight
- * friction layer against bulk scraping:
- *
- *   (http.request.uri.path contains "/data/" or
- *    http.request.uri.path contains "/static_data/")
- *   and not (http.request.headers["x-app-request"][0] == "1")
- */
-export function dataFetch(url: string, init?: RequestInit): Promise<Response> {
-  return fetch(url, {
-    ...init,
-    headers: {
-      'X-App-Request': '1',
-      ...init?.headers,
-    },
-  });
-}
-
-export async function cachedFetch<T>(
-  url: string,
-  fetcher: () => Promise<T>
-): Promise<T> {
+export async function cachedFetch<T>(url: string, fetcher: () => Promise<T>): Promise<T> {
   const store = useDataCacheStore.getState();
 
   // Check persistent cache first
@@ -176,12 +151,14 @@ export async function cachedFetch<T>(
   }
 
   // Cache miss — start a new fetch and register it as in-flight
-  const promise = fetcher().then((data) => {
-    store.setEntry(url, data);
-    return data;
-  }).finally(() => {
-    inFlight.delete(url);
-  });
+  const promise = fetcher()
+    .then((data) => {
+      store.setEntry(url, data);
+      return data;
+    })
+    .finally(() => {
+      inFlight.delete(url);
+    });
 
   inFlight.set(url, promise as Promise<unknown>);
 
@@ -209,12 +186,14 @@ export async function cachedFetchWithTTL<T>(
     return existing as Promise<T>;
   }
 
-  const promise = fetcher().then((data) => {
-    store.setEntry(url, data);
-    return data;
-  }).finally(() => {
-    inFlight.delete(url);
-  });
+  const promise = fetcher()
+    .then((data) => {
+      store.setEntry(url, data);
+      return data;
+    })
+    .finally(() => {
+      inFlight.delete(url);
+    });
 
   inFlight.set(url, promise as Promise<unknown>);
 
@@ -233,25 +212,28 @@ export async function checkCacheVersion(manifestRelPath = 'data/manifest.json'):
       console.warn(`Failed to fetch ${manifestRelPath}`);
       return;
     }
-    
+
     const manifest = await response.json();
     const newVersion = manifest.version;
-    
+
     const store = useDataCacheStore.getState();
     // Use per-key versioning; fall back to legacy global `version` for the default manifest
-    const currentVersion = manifestRelPath === 'data/manifest.json'
-      ? (store.getVersionForKey(manifestRelPath) ?? store.version)
-      : store.getVersionForKey(manifestRelPath);
-    
+    const currentVersion =
+      manifestRelPath === 'data/manifest.json'
+        ? (store.getVersionForKey(manifestRelPath) ?? store.version)
+        : store.getVersionForKey(manifestRelPath);
+
     if (currentVersion && currentVersion !== newVersion) {
-      console.log(`Cache version mismatch for ${manifestRelPath} (${currentVersion} -> ${newVersion}), clearing cache`);
+      console.log(
+        `Cache version mismatch for ${manifestRelPath} (${currentVersion} -> ${newVersion}), clearing cache`
+      );
       store.clearCache();
 
       if ('caches' in window) {
         caches.delete('gtfs-data').catch(() => {});
       }
     }
-    
+
     store.setVersionForKey(manifestRelPath, newVersion);
     // Keep legacy field in sync for the default manifest
     if (manifestRelPath === 'data/manifest.json') {
@@ -260,4 +242,27 @@ export async function checkCacheVersion(manifestRelPath = 'data/manifest.json'):
   } catch (error) {
     console.warn('Failed to check cache version:', error);
   }
+}
+
+/**
+ * Helper function to fetch data with caching
+ */
+/**
+ * Thin fetch wrapper that attaches the custom `X-App-Request` header to every
+ * data-file request.  Pair this with a Cloudflare WAF rule that blocks requests
+ * to `/data/*` and `/static_data/*` lacking this header to add a lightweight
+ * friction layer against bulk scraping:
+ *
+ *   (http.request.uri.path contains "/data/" or
+ *    http.request.uri.path contains "/static_data/")
+ *   and not (http.request.headers["x-app-request"][0] == "1")
+ */
+export function dataFetch(url: string, init?: RequestInit): Promise<Response> {
+  return fetch(url, {
+    ...init,
+    headers: {
+      'X-App-Request': '1',
+      ...init?.headers,
+    },
+  });
 }

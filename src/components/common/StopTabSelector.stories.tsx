@@ -1,40 +1,38 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+
 import { useState } from 'react';
-import { StopTabSelector, type StopTab } from './StopTabSelector';
+
+import { type StopTab, StopTabSelector } from './StopTabSelector';
 
 function StopTabSelectorWrapper(props: {
-  liveVehicleCount?: number;
   compact?: boolean;
   hideVehicles?: boolean;
+  liveVehicleCount?: number;
 }) {
   const [activeTab, setActiveTab] = useState<StopTab>('vehicles');
   return (
     <div className="w-80">
-      <StopTabSelector
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        {...props}
-      />
+      <StopTabSelector activeTab={activeTab} onTabChange={setActiveTab} {...props} />
     </div>
   );
 }
 
 const meta = {
-  title: 'Common / StopTabSelector',
-  component: StopTabSelector,
-  parameters: {
-    layout: 'centered',
-  },
-  tags: ['autodocs'],
   argTypes: {
     activeTab: {
       control: 'radio',
       options: ['vehicles', 'timetable'],
     },
-    liveVehicleCount: { control: 'number' },
     compact: { control: 'boolean' },
     hideVehicles: { control: 'boolean' },
+    liveVehicleCount: { control: 'number' },
   },
+  component: StopTabSelector,
+  parameters: {
+    layout: 'centered',
+  },
+  tags: ['autodocs'],
+  title: 'Common / StopTabSelector',
 } satisfies Meta<typeof StopTabSelector>;
 
 export default meta;

@@ -3,47 +3,50 @@
  * Opened from the map popup expand button.
  */
 
-import { useState, useEffect, memo } from 'react';
+import { ArrowRight, Clock, Info, Navigation2, Star, X } from 'lucide-react';
+import { memo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Clock, Star, ArrowRight, Navigation2, Info } from 'lucide-react';
-import type { Stop, Route } from '../../utils/gtfs';
-import { minutesToTime, bearingToCompassKey } from '../../utils/gtfs';
-import { compassLabelForBearing } from '../../utils/localizedCompass';
-import { useCurrentTime } from '../../hooks/useCurrentTime';
+
+import type { Route, Stop } from '../../utils/gtfs';
+
+import { useGTFSMode } from '../../contexts/GTFSModeContext';
 import { useApproachingVehicles } from '../../hooks/useApproachingVehicles';
-import { useTimetableDepartures } from '../../hooks/useTimetableDepartures';
+import { useCurrentTime } from '../../hooks/useCurrentTime';
+import { useSiblingPlatformRoutes } from '../../hooks/useSiblingPlatformRoutes';
 import { useStopRoutes } from '../../hooks/useStopRoutes';
 import { useStopTermini } from '../../hooks/useStopTermini';
-import { useSiblingPlatformRoutes } from '../../hooks/useSiblingPlatformRoutes';
-import { ApproachingVehicleCard } from './ApproachingVehicleCard';
-import { TimetableDepartureCard } from './TimetableDepartureCard';
-import { StopTabSelector, type StopTab } from './StopTabSelector';
+import { useTimetableDepartures } from '../../hooks/useTimetableDepartures';
 import { useSettingsStore } from '../../stores/settingsStore';
-import { useGTFSMode } from '../../contexts/GTFSModeContext';
+import { bearingToCompassKey, minutesToTime } from '../../utils/gtfs';
+import { compassLabelForBearing } from '../../utils/localizedCompass';
+import { ApproachingVehicleCard } from './ApproachingVehicleCard';
+import { type StopTab, StopTabSelector } from './StopTabSelector';
+import { TimetableDepartureCard } from './TimetableDepartureCard';
 
 interface StopModalProps {
   isOpen: boolean;
-  stop: Stop;
-  routesById: Map<string, Route>;
-  stopsById: Map<string, Stop>;
   onClose: () => void;
   onRouteClick: (routeId: string, routeType: number) => void;
   onStopSelect?: (stopId: string) => void;
+  routesById: Map<string, Route>;
+  stop: Stop;
+  stopsById: Map<string, Stop>;
 }
 
 export const StopModal = memo(function StopModal({
   isOpen,
-  stop,
-  routesById,
-  stopsById,
   onClose,
   onRouteClick,
   onStopSelect,
+  routesById,
+  stop,
+  stopsById,
 }: StopModalProps) {
   const { t } = useTranslation();
   const { dataDir, hasRealtime, timetableLookaheadMinutes } = useGTFSMode();
   const currentTime = useCurrentTime();
-  const { favouriteStopIds, toggleFavouriteStop, dismissedGpsTip, setDismissedGpsTip } = useSettingsStore();
+  const { dismissedGpsTip, favouriteStopIds, setDismissedGpsTip, toggleFavouriteStop } =
+    useSettingsStore();
   const isFav = favouriteStopIds.includes(stop.id);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [activeTab, setActiveTab] = useState<StopTab>(hasRealtime ? 'vehicles' : 'timetable');
@@ -61,13 +64,11 @@ export const StopModal = memo(function StopModal({
   }, [isOpen]);
 
   // Approaching vehicles (GPS) — only active when modal is open
-  const { vehicles: allVehicles, loading: vehiclesLoading, isAllTerminus } = useApproachingVehicles(
-    isOpen ? stop.id : null,
-    stopsById,
-    routesById,
-    nowMs,
-    { dataDir }
-  );
+  const {
+    isAllTerminus,
+    loading: vehiclesLoading,
+    vehicles: allVehicles,
+  } = useApproachingVehicles(isOpen ? stop.id : null, stopsById, routesById, nowMs, { dataDir });
 
   // Sibling platforms — stops at the same parent station, or (fallback) same-named stops
   // when no parent station is set (common for bus stop pairs without GTFS grouping).
@@ -76,18 +77,20 @@ export const StopModal = memo(function StopModal({
   const siblingPlatforms: Stop[] = (() => {
     if (stop.parentStation !== null) {
       return Array.from(stopsById.values()).filter(
-        s => s.locationType === 0 && s.parentStation === stop.parentStation && s.id !== stop.id,
+        (s) => s.locationType === 0 && s.parentStation === stop.parentStation && s.id !== stop.id
       );
     }
     const raw = Array.from(stopsById.values()).filter(
-      s =>
+      (s) =>
         s.locationType === 0 &&
         s.id !== stop.id &&
         s.name === stop.name &&
-        (stop.routeType === undefined || s.routeType === undefined || s.routeType === stop.routeType),
+        (stop.routeType === undefined ||
+          s.routeType === undefined ||
+          s.routeType === stop.routeType)
     );
     const seen = new Set<string>();
-    return raw.filter(s => {
+    return raw.filter((s) => {
       const key = s.bearing !== undefined ? bearingToCompassKey(s.bearing) : (s.code ?? s.id);
       if (seen.has(key)) return false;
       seen.add(key);
@@ -97,7 +100,7 @@ export const StopModal = memo(function StopModal({
 
   // Fetch routes for each sibling platform so we can show route badges
   const { routeMap: siblingRouteMap, terminusSet: siblingTerminusSet } = useSiblingPlatformRoutes(
-    siblingPlatforms.map(s => s.id),
+    siblingPlatforms.map((s) => s.id),
     routesById,
     { dataDir }
   );
@@ -110,7 +113,7 @@ export const StopModal = memo(function StopModal({
   });
 
   // Filter sibling platforms that actually have departures (for terminus banner)
-  const departingSiblings = siblingPlatforms.filter(s => {
+  const departingSiblings = siblingPlatforms.filter((s) => {
     const routes = siblingRouteMap.get(s.id);
     return routes && routes.length > 0;
   });
@@ -122,24 +125,28 @@ export const StopModal = memo(function StopModal({
         {t('stopView.terminusBody')}
         {departingSiblings.length > 0 && ` ${t('stopView.terminusPickPlatform')}`}
       </p>
-      {departingSiblings.map(s => {
+      {departingSiblings.map((s) => {
         const routes = siblingRouteMap.get(s.id) ?? [];
         const maxBadges = 6;
         return (
           <button
-            key={s.id}
-            type="button"
-            onClick={() => onStopSelect?.(s.id)}
             className="btn btn-sm btn-warning w-full gap-2 mb-1 flex-wrap justify-start"
+            key={s.id}
+            onClick={() => onStopSelect?.(s.id)}
+            type="button"
           >
             <ArrowRight className="w-4 h-4 shrink-0" />
             <span>{t('stopView.terminalButton')}</span>
             {routes.length > 0 && (
               <span className="flex flex-wrap gap-0.5 ml-1">
-                {routes.slice(0, maxBadges).map(r => (
-                  <span key={r.id} className="badge badge-xs font-bold badge-ghost opacity-80">{r.shortName}</span>
+                {routes.slice(0, maxBadges).map((r) => (
+                  <span className="badge badge-xs font-bold badge-ghost opacity-80" key={r.id}>
+                    {r.shortName}
+                  </span>
                 ))}
-                {routes.length > maxBadges && <span className="text-xs opacity-60">+{routes.length - maxBadges}</span>}
+                {routes.length > maxBadges && (
+                  <span className="text-xs opacity-60">+{routes.length - maxBadges}</span>
+                )}
               </span>
             )}
           </button>
@@ -173,26 +180,33 @@ export const StopModal = memo(function StopModal({
   return (
     <div className="fixed inset-0 z-[3000] flex items-start justify-center">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" style={{ animation: 'backdrop-fade-in 0.15s ease-out' }} onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+        style={{ animation: 'backdrop-fade-in 0.15s ease-out' }}
+      />
 
       {/* Modal - full screen on mobile, centered card on desktop */}
-      <div className="relative w-full h-full sm:w-full sm:max-w-lg sm:mx-2 sm:mt-8 sm:max-h-[90vh] sm:h-auto bg-base-100 sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden" style={{ animation: 'modal-fade-in 0.2s ease-out' }}>
+      <div
+        className="relative w-full h-full sm:w-full sm:max-w-lg sm:mx-2 sm:mt-8 sm:max-h-[90vh] sm:h-auto bg-base-100 sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+        style={{ animation: 'modal-fade-in 0.2s ease-out' }}
+      >
         {/* Header */}
         <div className="p-4 border-b border-base-300">
           <div className="flex items-center gap-3 mb-2">
             <h2 className="text-xl font-bold flex-1">{stop.name}</h2>
             <button
-              onClick={() => toggleFavouriteStop(stop.id)}
               className="btn btn-ghost btn-circle btn-sm"
+              onClick={() => toggleFavouriteStop(stop.id)}
               title={isFav ? t('search.favouriteRemove') : t('search.favouriteAdd')}
             >
               <Star
                 className="w-5 h-5"
-                fill={isFav ? 'currentColor' : 'none'}
                 color={isFav ? '#f59e0b' : 'currentColor'}
+                fill={isFav ? 'currentColor' : 'none'}
               />
             </button>
-            <button onClick={onClose} className="btn btn-ghost btn-circle btn-sm">
+            <button className="btn btn-ghost btn-circle btn-sm" onClick={onClose}>
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -203,7 +217,9 @@ export const StopModal = memo(function StopModal({
                   {stop.bearing !== undefined
                     ? termini.length > 0
                       ? t('search.headingTowards', { place: termini.join(', ') })
-                      : t('search.headingTowards', { place: compassLabelForBearing(stop.bearing, t) })
+                      : t('search.headingTowards', {
+                          place: compassLabelForBearing(stop.bearing, t),
+                        })
                     : t('search.headingCode', { code: stop.code ?? '' })}
                 </span>
               )}
@@ -216,20 +232,22 @@ export const StopModal = memo(function StopModal({
           {/* Tab selector */}
           {stopRoutes.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-3">
-              {(routesExpanded ? stopRoutes : stopRoutes.slice(0, ROUTES_COLLAPSED_MAX)).map((route) => (
-                <span
-                  key={route.id}
-                  className="badge badge-sm font-bold text-white"
-                  style={{ backgroundColor: route.type === 0 ? '#2563eb' : '#d97706' }}
-                >
-                  {route.shortName}
-                </span>
-              ))}
+              {(routesExpanded ? stopRoutes : stopRoutes.slice(0, ROUTES_COLLAPSED_MAX)).map(
+                (route) => (
+                  <span
+                    className="badge badge-sm font-bold text-white"
+                    key={route.id}
+                    style={{ backgroundColor: route.type === 0 ? '#2563eb' : '#d97706' }}
+                  >
+                    {route.shortName}
+                  </span>
+                )
+              )}
               {!routesExpanded && stopRoutes.length > ROUTES_COLLAPSED_MAX && (
                 <button
-                  type="button"
-                  onClick={() => setRoutesExpanded(true)}
                   className="badge badge-sm badge-ghost font-semibold cursor-pointer hover:badge-neutral"
+                  onClick={() => setRoutesExpanded(true)}
+                  type="button"
                 >
                   +{stopRoutes.length - ROUTES_COLLAPSED_MAX}
                 </button>
@@ -238,38 +256,66 @@ export const StopModal = memo(function StopModal({
           )}
           {siblingPlatforms.length > 0 && !isAllTerminus && (
             <div className="mb-3">
-              <p className="text-[10px] uppercase tracking-wide text-base-content/40 mb-1.5">{t('stopView.otherPlatforms')}</p>
+              <p className="text-[10px] uppercase tracking-wide text-base-content/40 mb-1.5">
+                {t('stopView.otherPlatforms')}
+              </p>
               <div className="flex flex-wrap gap-1.5">
-                {(platformsExpanded ? sortedSiblingPlatforms : sortedSiblingPlatforms.slice(0, PLATFORMS_COLLAPSED_MAX)).map((s) => {
+                {(platformsExpanded
+                  ? sortedSiblingPlatforms
+                  : sortedSiblingPlatforms.slice(0, PLATFORMS_COLLAPSED_MAX)
+                ).map((s) => {
                   const routes = siblingRouteMap.get(s.id) ?? [];
                   const isTerminus = siblingTerminusSet.has(s.id);
-                  const label = s.bearing !== undefined
-                    ? t('search.headingTowards', { place: compassLabelForBearing(s.bearing, t) })
-                    : undefined;
+                  const label =
+                    s.bearing !== undefined
+                      ? t('search.headingTowards', { place: compassLabelForBearing(s.bearing, t) })
+                      : undefined;
                   return (
                     <button
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs text-base-content/70 transition-colors ${
+                        isTerminus
+                          ? 'bg-warning/10 border-warning/40 hover:bg-warning/20 active:bg-warning/30'
+                          : 'bg-base-200/60 border-base-300 hover:bg-base-200 active:bg-base-300'
+                      }`}
                       key={s.id}
-                      type="button"
                       onClick={() => onStopSelect?.(s.id)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs text-base-content/70 transition-colors ${isTerminus
-                        ? 'bg-warning/10 border-warning/40 hover:bg-warning/20 active:bg-warning/30'
-                        : 'bg-base-200/60 border-base-300 hover:bg-base-200 active:bg-base-300'
-                        }`}
-                      title={`${t('stopView.switchToStop', { name: s.name })}${s.bearing !== undefined ? t('stopView.bearingInTitle', { direction: compassLabelForBearing(s.bearing, t) }) : ''
-                        }${isTerminus ? t('stopView.terminusInTitle') : ''}`}
+                      title={`${t('stopView.switchToStop', { name: s.name })}${
+                        s.bearing !== undefined
+                          ? t('stopView.bearingInTitle', {
+                              direction: compassLabelForBearing(s.bearing, t),
+                            })
+                          : ''
+                      }${isTerminus ? t('stopView.terminusInTitle') : ''}`}
+                      type="button"
                     >
                       <Navigation2
                         className="w-3.5 h-3.5 shrink-0"
-                        style={s.bearing !== undefined ? { transform: `rotate(${s.bearing}deg)` } : undefined}
+                        style={
+                          s.bearing !== undefined
+                            ? { transform: `rotate(${s.bearing}deg)` }
+                            : undefined
+                        }
                       />
                       {label && <span>{label}</span>}
-                      {isTerminus && <span className="badge badge-xs bg-warning/20 text-warning border-warning/30 font-semibold">{t('stopView.terminusBadge')}</span>}
+                      {isTerminus && (
+                        <span className="badge badge-xs bg-warning/20 text-warning border-warning/30 font-semibold">
+                          {t('stopView.terminusBadge')}
+                        </span>
+                      )}
                       {routes.length > 0 && (
                         <span className="flex gap-0.5 ml-0.5">
-                          {routes.slice(0, 3).map(r => (
-                            <span key={r.id} className="badge badge-xs font-bold text-white" style={{ backgroundColor: r.type === 0 ? '#2563eb' : '#d97706' }}>{r.shortName}</span>
+                          {routes.slice(0, 3).map((r) => (
+                            <span
+                              className="badge badge-xs font-bold text-white"
+                              key={r.id}
+                              style={{ backgroundColor: r.type === 0 ? '#2563eb' : '#d97706' }}
+                            >
+                              {r.shortName}
+                            </span>
                           ))}
-                          {routes.length > 3 && <span className="text-[10px] opacity-50">+{routes.length - 3}</span>}
+                          {routes.length > 3 && (
+                            <span className="text-[10px] opacity-50">+{routes.length - 3}</span>
+                          )}
                         </span>
                       )}
                     </button>
@@ -277,9 +323,9 @@ export const StopModal = memo(function StopModal({
                 })}
                 {!platformsExpanded && siblingPlatforms.length > PLATFORMS_COLLAPSED_MAX && (
                   <button
-                    type="button"
-                    onClick={() => setPlatformsExpanded(true)}
                     className="inline-flex items-center px-3 py-1.5 rounded-full bg-base-200/60 border border-base-300 hover:bg-base-200 active:bg-base-300 text-xs text-base-content/50 transition-colors"
+                    onClick={() => setPlatformsExpanded(true)}
+                    type="button"
                   >
                     +{siblingPlatforms.length - PLATFORMS_COLLAPSED_MAX}
                   </button>
@@ -290,10 +336,10 @@ export const StopModal = memo(function StopModal({
           {/* Tab selector */}
           <StopTabSelector
             activeTab={activeTab}
-            onTabChange={setActiveTab}
-            liveVehicleCount={liveCount}
-            hideVehicles={!hasRealtime}
             compact
+            hideVehicles={!hasRealtime}
+            liveVehicleCount={liveCount}
+            onTabChange={setActiveTab}
           />
         </div>
 
@@ -304,7 +350,9 @@ export const StopModal = memo(function StopModal({
             <div className="mx-4 mt-4 mb-3 p-4 rounded-xl bg-info/10 border border-info/30 flex gap-3 items-start">
               <Info className="w-5 h-5 text-info shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-base-content/90 mb-1">{t('stopView.gpsTipTitle')}</p>
+                <p className="text-sm font-semibold text-base-content/90 mb-1">
+                  {t('stopView.gpsTipTitle')}
+                </p>
                 <p className="text-sm text-base-content/70 leading-snug mb-1.5">
                   {t('stopView.gpsTipBodyModal')}
                 </p>
@@ -313,28 +361,28 @@ export const StopModal = memo(function StopModal({
                 </p>
               </div>
               <button
-                type="button"
-                onClick={() => setDismissedGpsTip(true)}
                 className="btn btn-ghost btn-circle btn-sm shrink-0"
+                onClick={() => setDismissedGpsTip(true)}
                 title={t('stopView.gpsTipDismiss')}
+                type="button"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
           )}
           {/* Vehicles tab */}
-          {activeTab === 'vehicles' && (
-            vehiclesLoading ? (
+          {activeTab === 'vehicles' &&
+            (vehiclesLoading ? (
               <div className="flex items-center justify-center gap-3 p-8 text-base-content/50">
                 <span className="loading loading-spinner loading-sm" />
                 <span>{t('stopView.searchingVehicles')}</span>
               </div>
             ) : liveVehicles.length === 0 ? (
-              terminusBanner ?? (
+              (terminusBanner ?? (
                 <div className="p-8 text-center text-base-content/50">
                   {t('stopView.noGpsVehiclesNearby')}
                 </div>
-              )
+              ))
             ) : (
               <div className="px-4 pb-4 space-y-2">
                 <div className="flex items-center justify-between mb-1">
@@ -344,40 +392,41 @@ export const StopModal = memo(function StopModal({
                 {liveVehicles.map((vehicle) => (
                   <ApproachingVehicleCard
                     key={vehicle.tripId}
-                    vehicle={vehicle}
                     onRouteClick={(routeId, routeType) => {
                       onRouteClick(routeId, routeType);
                       onClose();
                     }}
+                    vehicle={vehicle}
                   />
                 ))}
               </div>
-            )
-          )}
+            ))}
 
           {/* Timetable tab */}
-          {activeTab === 'timetable' && (
-            timetableLoading ? (
+          {activeTab === 'timetable' &&
+            (timetableLoading ? (
               <div className="flex items-center justify-center gap-3 p-8 text-base-content/50">
                 <span className="loading loading-spinner loading-sm" />
                 <span>{t('stopView.loadingTimetable')}</span>
               </div>
             ) : timetableDepartures.length === 0 ? (
-              terminusBanner ?? (
+              (terminusBanner ?? (
                 <div className="p-8 text-center text-base-content/50">
                   {t('stopView.noDeparturesInMins', { minutes: timetableLookaheadMinutes })}
                 </div>
-              )
+              ))
             ) : (
               <div className="p-4 space-y-2">
                 <div className="flex items-center justify-between mb-1">
                   <h3 className="font-semibold">{t('stopView.timetableHeading')}</h3>
-                  <span className="text-xs text-base-content/40">{t('stopView.timetableNextMins', { minutes: timetableLookaheadMinutes })}</span>
+                  <span className="text-xs text-base-content/40">
+                    {t('stopView.timetableNextMins', { minutes: timetableLookaheadMinutes })}
+                  </span>
                 </div>
                 {timetableDepartures.map((dep) => (
                   <TimetableDepartureCard
-                    key={dep.tripId}
                     departure={dep}
+                    key={dep.tripId}
                     onRouteClick={(routeId, routeType) => {
                       onRouteClick(routeId, routeType);
                       onClose();
@@ -385,8 +434,7 @@ export const StopModal = memo(function StopModal({
                   />
                 ))}
               </div>
-            )
-          )}
+            ))}
         </div>
       </div>
     </div>

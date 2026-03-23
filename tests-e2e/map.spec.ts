@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures';
+import { expect, test } from './fixtures';
 import { interceptRealtimeFeed } from './realtime-mock';
 
 /**
@@ -39,7 +39,8 @@ test.describe('Map interactions', () => {
     // Use the map instance exposed on window.__leafletMap (only present in E2E / DEV modes)
     // to programmatically zoom in without relying on scroll wheel simulation.
     await page.evaluate(() => {
-      const map = (window as unknown as { __leafletMap?: { setZoom(z: number): void } }).__leafletMap;
+      const map = (window as unknown as { __leafletMap?: { setZoom(z: number): void } })
+        .__leafletMap;
       if (map) map.setZoom(17);
     });
     await page.waitForTimeout(500); // allow Leaflet zoom animation to complete
@@ -58,7 +59,8 @@ test.describe('Map interactions', () => {
 
     // Zoom to 17 so platform stop markers become fully visible
     await page.evaluate(() => {
-      const map = (window as unknown as { __leafletMap?: { setZoom(z: number): void } }).__leafletMap;
+      const map = (window as unknown as { __leafletMap?: { setZoom(z: number): void } })
+        .__leafletMap;
       if (map) map.setZoom(17);
     });
     await page.waitForTimeout(500); // allow Leaflet zoom animation to complete
@@ -95,18 +97,20 @@ test.describe('Map interactions', () => {
 
   // ── 5. Vehicle markers ────────────────────────────────────────────────────
 
-  test('vehicle markers appear on the map when realtime feed contains matching vehicles', async ({ page }) => {
+  test('vehicle markers appear on the map when realtime feed contains matching vehicles', async ({
+    page,
+  }) => {
     // Register the protobuf intercept BEFORE goto so the first poll is caught
     await interceptRealtimeFeed(page, [
       {
-        vehicleId: 'v1',
-        // Real trip from trips.txt — route 1, direction A (Borongaj)
-        tripId: '0_20_101_1_10007',
-        routeId: '1',
+        bearing: 90,
         // Position within Zagreb city centre — visible at default zoom 13
         lat: 45.815,
         lng: 15.982,
-        bearing: 90,
+        routeId: '1',
+        // Real trip from trips.txt — route 1, direction A (Borongaj)
+        tripId: '0_20_101_1_10007',
+        vehicleId: 'v1',
       },
     ]);
 

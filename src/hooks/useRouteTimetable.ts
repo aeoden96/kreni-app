@@ -4,16 +4,15 @@
  * and is used to show the next N scheduled stops for a selected vehicle.
  */
 
-import { useState, useEffect, useRef } from 'react';
-import { fetchRouteTimetable } from '../utils/gtfs';
+import { useEffect, useRef, useState } from 'react';
+
 import type { RouteTimetable } from '../utils/gtfs';
 
-export function useRouteTimetable(
-  routeId: string | null,
-  dataDir: string,
-): RouteTimetable | null {
-  const [timetable, setTimetable] = useState<RouteTimetable | null>(null);
-  const prevKey = useRef<string | null>(null);
+import { fetchRouteTimetable } from '../utils/gtfs';
+
+export function useRouteTimetable(routeId: null | string, dataDir: string): null | RouteTimetable {
+  const [timetable, setTimetable] = useState<null | RouteTimetable>(null);
+  const prevKey = useRef<null | string>(null);
 
   useEffect(() => {
     if (!routeId) {

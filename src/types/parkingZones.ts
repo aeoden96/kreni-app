@@ -1,52 +1,52 @@
-export interface ZonePrice {
-    unit: string;
-    price: string;
-}
-
-export interface ZoneEnforcement {
-    weekday: string | null;
-    saturday: string | null;
-    sunday: string | null;
-}
-
-export interface SubzoneInfo {
-    name: string;
-    sms?: string;
-    enforcement: ZoneEnforcement;
-    maxTime: string | null;
-    prices: ZonePrice[];
-}
-
-export interface ZoneInfo {
-    sms: string | null;
-    name: string;
-    enforcement: ZoneEnforcement;
-    maxTime: string | null;
-    prices: ZonePrice[];
-    subzones: Record<string, SubzoneInfo>;
+export interface GeoJSONParkingFeature {
+  geometry: {
+    coordinates: number[][][];
+    type: 'Polygon';
+  };
+  properties: ParkingZoneProperties;
+  type: 'Feature';
 }
 
 export interface ParkingZoneProperties {
-    id: string;
-    zone: number;
-    subzone: string | null;
-    block: string;
-    name: string;
-    color: string;
-    streets: string[];
+  block: string;
+  color: string;
+  id: string;
+  name: string;
+  streets: string[];
+  subzone: null | string;
+  zone: number;
 }
 
 export interface ParkingZonesData {
-    type: 'FeatureCollection';
-    features: GeoJSONParkingFeature[];
-    zoneInfo: Record<string, ZoneInfo>;
+  features: GeoJSONParkingFeature[];
+  type: 'FeatureCollection';
+  zoneInfo: Record<string, ZoneInfo>;
 }
 
-export interface GeoJSONParkingFeature {
-    type: 'Feature';
-    geometry: {
-        type: 'Polygon';
-        coordinates: number[][][];
-    };
-    properties: ParkingZoneProperties;
+export interface SubzoneInfo {
+  enforcement: ZoneEnforcement;
+  maxTime: null | string;
+  name: string;
+  prices: ZonePrice[];
+  sms?: string;
+}
+
+export interface ZoneEnforcement {
+  saturday: null | string;
+  sunday: null | string;
+  weekday: null | string;
+}
+
+export interface ZoneInfo {
+  enforcement: ZoneEnforcement;
+  maxTime: null | string;
+  name: string;
+  prices: ZonePrice[];
+  sms: null | string;
+  subzones: Record<string, SubzoneInfo>;
+}
+
+export interface ZonePrice {
+  price: string;
+  unit: string;
 }

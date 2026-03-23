@@ -1,28 +1,23 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
+
 import type { GTFSModeConfig } from '../config/modes';
 import type { Stop } from '../utils/gtfs';
-
-/** Vertical pixel offset to shift a stop marker below the top StopInfoBar overlay on mobile. */
-function stopSelectPanOffsetY(): number {
-  if (typeof window === 'undefined' || window.innerWidth >= 640) return 0;
-  return -Math.round(window.innerHeight / 4);
-}
 
 interface MapPanTarget {
   lat: number;
   lon: number;
-  zoom?: number;
   panOffsetY?: number;
+  zoom?: number;
 }
 
 interface UseMapPanTargetDeps {
-  stops: Stop[];
-  stopsById: Map<string, Stop>;
+  addRecentStop: (stopId: string) => void;
+  closeLegendAndDetails: () => void;
   config: GTFSModeConfig;
   selectStop: (stopId: string) => void;
-  addRecentStop: (stopId: string) => void;
   setNearbyOpen: (open: boolean) => void;
-  closeLegendAndDetails: () => void;
+  stops: Stop[];
+  stopsById: Map<string, Stop>;
 }
 
 /**
@@ -32,13 +27,13 @@ interface UseMapPanTargetDeps {
  */
 export function useMapPanTarget(deps: UseMapPanTargetDeps) {
   const {
-    stops,
-    stopsById,
+    addRecentStop,
+    closeLegendAndDetails,
     config,
     selectStop,
-    addRecentStop,
     setNearbyOpen,
-    closeLegendAndDetails,
+    stops,
+    stopsById,
   } = deps;
 
   const [parentStationZoomTarget, setParentStationZoomTarget] = useState<MapPanTarget | null>(null);
@@ -54,12 +49,10 @@ export function useMapPanTarget(deps: UseMapPanTargetDeps) {
         setParentStationZoomTarget({
           lat: stop.lat,
           lon: stop.lon,
-          zoom: config.stopZoom,
           panOffsetY: stopSelectPanOffsetY(),
+          zoom: config.stopZoom,
         });
-        const childPlatform = stops.find(
-          (s) => s.parentStation === stopId && s.locationType === 0,
-        );
+        const childPlatform = stops.find((s) => s.parentStation === stopId && s.locationType === 0);
         selectStop(childPlatform ? childPlatform.id : stopId);
       } else {
         selectStop(stopId);
@@ -74,7 +67,7 @@ export function useMapPanTarget(deps: UseMapPanTargetDeps) {
       addRecentStop,
       closeLegendAndDetails,
       setNearbyOpen,
-    ],
+    ]
   );
 
   const handleSelectStop = useCallback(
@@ -88,12 +81,12 @@ export function useMapPanTarget(deps: UseMapPanTargetDeps) {
         setParentStationZoomTarget({
           lat: stop.lat,
           lon: stop.lon,
-          zoom: config.stopZoom,
           panOffsetY: stopSelectPanOffsetY(),
+          zoom: config.stopZoom,
         });
       }
     },
-    [selectStop, stopsById, addRecentStop, config.stopZoom, closeLegendAndDetails, setNearbyOpen],
+    [selectStop, stopsById, addRecentStop, config.stopZoom, closeLegendAndDetails, setNearbyOpen]
   );
 
   /** Same as handleSelectStop but offsets the map so the stop lands in the
@@ -112,20 +105,26 @@ export function useMapPanTarget(deps: UseMapPanTargetDeps) {
         setParentStationZoomTarget({
           lat: stop.lat,
           lon: stop.lon,
-          zoom: config.stopZoom,
           panOffsetY,
+          zoom: config.stopZoom,
         });
       }
     },
-    [selectStop, stopsById, addRecentStop, config.stopZoom, closeLegendAndDetails, setNearbyOpen],
+    [selectStop, stopsById, addRecentStop, config.stopZoom, closeLegendAndDetails, setNearbyOpen]
   );
 
   return {
-    parentStationZoomTarget,
-    handleZoomComplete,
-    handleStopClickFromMap,
     handleSelectStop,
     handleSelectStopFromNearby,
+    handleStopClickFromMap,
+    handleZoomComplete,
+    parentStationZoomTarget,
     setParentStationZoomTarget,
   };
+}
+
+/** Vertical pixel offset to shift a stop marker below the top StopInfoBar overlay on mobile. */
+function stopSelectPanOffsetY(): number {
+  if (typeof window === 'undefined' || window.innerWidth >= 640) return 0;
+  return -Math.round(window.innerHeight / 4);
 }

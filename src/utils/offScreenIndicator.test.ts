@@ -1,18 +1,16 @@
-import { describe, it, expect } from 'vitest';
-import {
-  computeOffScreenIndicator,
-  OFF_SCREEN_INDICATOR_MARGIN_PX,
-} from './offScreenIndicator';
+import { describe, expect, it } from 'vitest';
 
-const box = { north: 1, south: 0, east: 1, west: 0 };
+import { computeOffScreenIndicator, OFF_SCREEN_INDICATOR_MARGIN_PX } from './offScreenIndicator';
+
+const box = { east: 1, north: 1, south: 0, west: 0 };
 
 describe('computeOffScreenIndicator', () => {
   it('returns null when lat or lon span is zero', () => {
     expect(
-      computeOffScreenIndicator(0.5, 0.5, { north: 1, south: 1, east: 1, west: 0 }, 400, 400),
+      computeOffScreenIndicator(0.5, 0.5, { east: 1, north: 1, south: 1, west: 0 }, 400, 400)
     ).toBeNull();
     expect(
-      computeOffScreenIndicator(0.5, 0.5, { north: 1, south: 0, east: 0, west: 0 }, 400, 400),
+      computeOffScreenIndicator(0.5, 0.5, { east: 0, north: 1, south: 0, west: 0 }, 400, 400)
     ).toBeNull();
   });
 
@@ -24,9 +22,7 @@ describe('computeOffScreenIndicator', () => {
     const w = 100;
     const h = 100;
     const m = 60; // maxX=40, minX=60 → invalid
-    expect(
-      computeOffScreenIndicator(2, 0.5, box, w, h, m),
-    ).toBeNull();
+    expect(computeOffScreenIndicator(2, 0.5, box, w, h, m)).toBeNull();
   });
 
   it('places indicator toward north with angle ~0°', () => {

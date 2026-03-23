@@ -6,51 +6,53 @@
  * Returns departures for the next 60 minutes sorted by adjusted arrival time.
  */
 
-import { useState, useEffect, useMemo, useRef } from 'react';
-import type { Route, Stop, StopTimetable, RouteStopsData } from '../utils/gtfs';
-import { fetchStopTimetable, fetchRouteStops } from '../utils/gtfs';
+import { useEffect, useMemo, useRef, useState } from 'react';
+
+import type { Route, RouteStopsData, Stop, StopTimetable } from '../utils/gtfs';
+
 import { useRealtimeStore } from '../stores/realtimeStore';
+import { fetchRouteStops, fetchStopTimetable } from '../utils/gtfs';
 import { useInitialData } from './useInitialData';
 
 export interface TimetableDeparture {
-  tripId: string;
-  routeId: string;
-  routeShortName: string;
-  routeType: number; // 0 = Tram, 3 = Bus
-  routeLongName: string;
-  /** Last stop on this direction (same idea as trip headsign), for display */
-  tripDestinationName: string;
-  /** Scheduled minutes from midnight */
-  scheduledMinutes: number;
-  /** Realtime delay in seconds; null = no realtime data */
-  delaySeconds: number | null;
   /** Adjusted arrival time in minutes from midnight (scheduledMinutes + delaySeconds/60) */
   adjustedMinutes: number;
-  /** Whether realtime data was matched at stop level (true) or trip level (false) */
-  realtimeSource: 'stop' | 'trip' | null;
+  /** Realtime delay in seconds; null = no realtime data */
+  delaySeconds: null | number;
   /** Minutes until adjusted arrival from now; negative = already departed */
   minutesUntil: number;
+  /** Whether realtime data was matched at stop level (true) or trip level (false) */
+  realtimeSource: 'stop' | 'trip' | null;
+  routeId: string;
+  routeLongName: string;
+  routeShortName: string;
+  routeType: number; // 0 = Tram, 3 = Bus
+  /** Scheduled minutes from midnight */
+  scheduledMinutes: number;
+  /** Last stop on this direction (same idea as trip headsign), for display */
+  tripDestinationName: string;
+  tripId: string;
 }
 
 /** Grace period: show departures that left up to this many seconds ago */
 const PAST_GRACE_SECONDS = 30;
 
 export function useTimetableDepartures(
-  stopId: string | null,
+  stopId: null | string,
   routesById: Map<string, Route>,
   stopsById: Map<string, Stop>,
   nowMs: number,
   options: { dataDir?: string; lookaheadMinutes?: number } = {}
-): { departures: TimetableDeparture[]; loading: boolean; error: Error | null } {
+): { departures: TimetableDeparture[]; error: Error | null; loading: boolean } {
   const { dataDir = 'data', lookaheadMinutes = 60 } = options;
-  const [stopTimetable, setStopTimetable] = useState<StopTimetable | null>(null);
+  const [stopTimetable, setStopTimetable] = useState<null | StopTimetable>(null);
   const [routeStopsCache, setRouteStopsCache] = useState<Map<string, RouteStopsData>>(new Map());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   const tripUpdates = useRealtimeStore((s) => s.tripUpdates);
   const { calendar } = useInitialData({ dataDir });
-  const fetchingForRef = useRef<string | null>(null);
+  const fetchingForRef = useRef<null | string>(null);
 
   useEffect(() => {
     if (!stopId) {
@@ -136,7 +138,7 @@ export function useTimetableDepartures(
       }
       if (isTerminus) continue;
 
-      let directionStopList: string[] | null = null;
+      let directionStopList: null | string[] = null;
       if (routeStopsData?.orderedStops) {
         for (const stopList of Object.values(routeStopsData.orderedStops)) {
           if (stopList.indexOf(stopId) !== -1) {
@@ -158,7 +160,7 @@ export function useTimetableDepartures(
         // Skip trips that don't belong to today's service
         if (activeServiceId && !tripId.startsWith(activeServiceId + '_')) continue;
         // Resolve realtime delay for this specific trip
-        let delaySeconds: number | null = null;
+        let delaySeconds: null | number = null;
         let realtimeSource: 'stop' | 'trip' | null = null;
 
         const tripUpdate = tripUpdates.get(tripId);
@@ -186,17 +188,17 @@ export function useTimetableDepartures(
         const minutesUntil = Math.round((adjustedAbsoluteSeconds - nowSeconds) / 60);
 
         results.push({
-          tripId,
+          adjustedMinutes,
+          delaySeconds,
+          minutesUntil,
+          realtimeSource,
           routeId,
+          routeLongName: route.longName,
           routeShortName: route.shortName,
           routeType: route.type,
-          routeLongName: route.longName,
-          tripDestinationName,
           scheduledMinutes,
-          delaySeconds,
-          adjustedMinutes,
-          realtimeSource,
-          minutesUntil,
+          tripDestinationName,
+          tripId,
         });
       }
     }
@@ -205,7 +207,17 @@ export function useTimetableDepartures(
     results.sort((a, b) => a.adjustedMinutes - b.adjustedMinutes);
 
     return results;
-  }, [stopId, stopTimetable, routeStopsCache, tripUpdates, nowMs, routesById, stopsById, calendar, lookaheadMinutes]);
+  }, [
+    stopId,
+    stopTimetable,
+    routeStopsCache,
+    tripUpdates,
+    nowMs,
+    routesById,
+    stopsById,
+    calendar,
+    lookaheadMinutes,
+  ]);
 
-  return { departures, loading: loading || (!!stopId && !stopTimetable && !error), error };
+  return { departures, error, loading: loading || (!!stopId && !stopTimetable && !error) };
 }

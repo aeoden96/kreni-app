@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
-import type { ParsedVehiclePosition, ParsedTripUpdate } from '../utils/realtime';
+import { useCallback, useEffect, useState } from 'react';
+
+import type { ParsedTripUpdate, ParsedVehiclePosition } from '../utils/realtime';
 
 /**
  * Manages vehicle follow state and handlers. When the user selects a vehicle
@@ -7,15 +8,15 @@ import type { ParsedVehiclePosition, ParsedTripUpdate } from '../utils/realtime'
  * route changes.
  */
 export function useVehicleFollow(
-  selectedRouteId: string | null,
+  selectedRouteId: null | string,
   vehiclePositions: Map<string, ParsedVehiclePosition>,
-  tripUpdates: Map<string, ParsedTripUpdate>,
+  tripUpdates: Map<string, ParsedTripUpdate>
 ) {
-  const [lastClickedVehicle, setLastClickedVehicle] = useState<{
+  const [lastClickedVehicle, setLastClickedVehicle] = useState<null | {
     routeId: string;
     tripId: string;
-  } | null>(null);
-  const [followedVehicleTripId, setFollowedVehicleTripId] = useState<string | null>(null);
+  }>(null);
+  const [followedVehicleTripId, setFollowedVehicleTripId] = useState<null | string>(null);
 
   // Clear follow mode when route changes.
   // lastClickedVehicle is intentionally NOT cleared here — it's already gated
@@ -26,20 +27,20 @@ export function useVehicleFollow(
   }, [selectedRouteId]);
 
   const followedRawPos = followedVehicleTripId
-    ? vehiclePositions.get(followedVehicleTripId) ?? null
+    ? (vehiclePositions.get(followedVehicleTripId) ?? null)
     : null;
   const followedVehiclePos = followedRawPos
     ? { lat: followedRawPos.latitude, lon: followedRawPos.longitude }
     : null;
   const followedTripUpdate = followedVehicleTripId
-    ? tripUpdates.get(followedVehicleTripId) ?? null
+    ? (tripUpdates.get(followedVehicleTripId) ?? null)
     : null;
 
   const handleVehicleSelect = useCallback(
     (tripId: string) => {
       if (selectedRouteId) setLastClickedVehicle({ routeId: selectedRouteId, tripId });
     },
-    [selectedRouteId],
+    [selectedRouteId]
   );
 
   const handleFollowStart = useCallback((tripId: string) => {
@@ -55,15 +56,15 @@ export function useVehicleFollow(
   }, []);
 
   return {
+    followedTripUpdate,
+    followedVehicleParsedPos: followedRawPos,
+    followedVehiclePos,
     followedVehicleTripId,
+    handleFollowDisengage,
+    handleFollowStart,
+    handleUnfollow,
+    handleVehicleSelect,
     lastClickedVehicle,
     setLastClickedVehicle,
-    followedVehiclePos,
-    followedVehicleParsedPos: followedRawPos,
-    followedTripUpdate,
-    handleVehicleSelect,
-    handleFollowStart,
-    handleFollowDisengage,
-    handleUnfollow,
   };
 }

@@ -4,17 +4,17 @@
 
 ### Features
 
-* **Open Source:** Initial public release of the project ([000000](https://github.com/aeoden96/kreni-app/commit/000000))
-* **Release Automation:** Integrated Release Please for automated versioning and GitHub Releases ([111111](https://github.com/aeoden96/kreni-app/commit/111111))
-* **Changelog UI:** Built a native changelog viewer within the application updates modal ([222222](https://github.com/aeoden96/kreni-app/commit/222222))
+- **Open Source:** Initial public release of the project ([000000](https://github.com/aeoden96/kreni-app/commit/000000))
+- **Release Automation:** Integrated Release Please for automated versioning and GitHub Releases ([111111](https://github.com/aeoden96/kreni-app/commit/111111))
+- **Changelog UI:** Built a native changelog viewer within the application updates modal ([222222](https://github.com/aeoden96/kreni-app/commit/222222))
 
 ### [1.5.7](https://github.com/aeoden96/kreni-app/compare/1.5.6...1.5.7) (2026-03-22)
 
 ### Features
 
-* added dark mode ([abcdef](https://github.com/aeoden96/kreni-app/commit/abcdef))
-* new map layers ([123456](https://github.com/aeoden96/kreni-app/commit/123456))
+- added dark mode ([abcdef](https://github.com/aeoden96/kreni-app/commit/abcdef))
+- new map layers ([123456](https://github.com/aeoden96/kreni-app/commit/123456))
 
 ### Bug Fixes
 
-* crash on startup ([987654](https://github.com/aeoden96/kreni-app/commit/987654))
+- crash on startup ([987654](https://github.com/aeoden96/kreni-app/commit/987654))

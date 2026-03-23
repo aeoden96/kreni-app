@@ -17,51 +17,8 @@ import { defineConfig, devices } from '@playwright/test';
 const BASE_URL = 'http://localhost:5174';
 
 export default defineConfig({
-  testDir: './tests-e2e',
-  testMatch: '**/*.spec.ts',
-
-  /* Start Vite on port 5174 inside the container (or reuse if already running). */
-  webServer: {
-    command: 'node ./node_modules/.bin/vite --port 5174',
-    url: BASE_URL,
-    reuseExistingServer: true,
-    timeout: 30_000,
-    stdout: 'ignore',
-    stderr: 'pipe',
-    env: {
-      // Point realtime fetches at a local mock server so page.route() can
-      // intercept them.  Without this the proxy URL is empty and the store
-      // throws before issuing any HTTP request, which page.route() never sees.
-      VITE_GTFS_PROXY_URL: 'http://localhost:9999',
-      // Expose the Leaflet map instance on window.__leafletMap for E2E tests.
-      VITE_E2E: 'true',
-    },
-  },
-
   /* Fail the build on CI if you accidentally left test.only in source code. */
   forbidOnly: !!process.env['CI'],
-
-  /* Retry on CI only */
-  retries: process.env['CI'] ? 2 : 0,
-
-  /* Limit parallel workers on CI */
-  workers: process.env['CI'] ? 1 : undefined,
-
-  reporter: [
-    ['list'],
-    ['html', { open: 'never', outputFolder: 'playwright-report' }],
-  ],
-
-  use: {
-    baseURL: BASE_URL,
-
-    /* Collect trace on first retry for post-mortem debugging */
-    trace: 'on-first-retry',
-
-    /* Screenshot on failure */
-    screenshot: 'only-on-failure',
-  },
-
   projects: [
     {
       name: 'chromium',
@@ -74,9 +31,6 @@ export default defineConfig({
       name: 'mobile-chrome',
       // Only run *.mobile.spec.ts files for the Pixel 5 project.
       testMatch: '**/*.mobile.spec.ts',
-      // Run headed mobile tests with a single worker to make them easy to
-      // observe in a single browser window.
-      workers: 1,
       use: {
         ...devices['Pixel 5'],
         // Slow down actions for easier visual debugging when running headed.
@@ -85,6 +39,9 @@ export default defineConfig({
           slowMo: 600,
         },
       },
+      // Run headed mobile tests with a single worker to make them easy to
+      // observe in a single browser window.
+      workers: 1,
     },
 
     // Uncomment to enable additional browsers:
@@ -97,4 +54,44 @@ export default defineConfig({
     //   use: { ...devices['Desktop Safari'] },
     // },
   ],
+
+  reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
+
+  /* Retry on CI only */
+  retries: process.env['CI'] ? 2 : 0,
+
+  testDir: './tests-e2e',
+
+  testMatch: '**/*.spec.ts',
+
+  use: {
+    baseURL: BASE_URL,
+
+    /* Screenshot on failure */
+    screenshot: 'only-on-failure',
+
+    /* Collect trace on first retry for post-mortem debugging */
+    trace: 'on-first-retry',
+  },
+
+  /* Start Vite on port 5174 inside the container (or reuse if already running). */
+  webServer: {
+    command: 'node ./node_modules/.bin/vite --port 5174',
+    env: {
+      // Expose the Leaflet map instance on window.__leafletMap for E2E tests.
+      VITE_E2E: 'true',
+      // Point realtime fetches at a local mock server so page.route() can
+      // intercept them.  Without this the proxy URL is empty and the store
+      // throws before issuing any HTTP request, which page.route() never sees.
+      VITE_GTFS_PROXY_URL: 'http://localhost:9999',
+    },
+    reuseExistingServer: true,
+    stderr: 'pipe',
+    stdout: 'ignore',
+    timeout: 30_000,
+    url: BASE_URL,
+  },
+
+  /* Limit parallel workers on CI */
+  workers: process.env['CI'] ? 1 : undefined,
 });

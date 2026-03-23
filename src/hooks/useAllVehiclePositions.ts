@@ -11,15 +11,17 @@
  */
 
 import { useMemo } from 'react';
+
 import type { Route } from '../utils/gtfs';
 import type { AllVehiclePosition } from '../utils/vehicles';
-import { mapRealtimeToAllVehiclePositions } from '../utils/vehicles';
+
 import { useRealtimeStore } from '../stores/realtimeStore';
+import { mapRealtimeToAllVehiclePositions } from '../utils/vehicles';
 
 export function useAllVehiclePositions(
   enabled: boolean,
   // serviceId kept in signature for API compatibility
-  _serviceId: string | null,
+  _serviceId: null | string,
   routesById?: Map<string, Route>
 ) {
   const vehiclePositions = useRealtimeStore((s) => s.vehiclePositions);
@@ -30,12 +32,8 @@ export function useAllVehiclePositions(
   const vehicles = useMemo((): AllVehiclePosition[] => {
     if (!enabled || !routesById) return [];
 
-    return mapRealtimeToAllVehiclePositions(
-      vehiclePositions,
-      tripUpdates,
-      routesById
-    );
+    return mapRealtimeToAllVehiclePositions(vehiclePositions, tripUpdates, routesById);
   }, [enabled, vehiclePositions, tripUpdates, routesById]);
 
-  return { vehicles, loading, error };
+  return { error, loading, vehicles };
 }

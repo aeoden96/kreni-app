@@ -5,60 +5,24 @@
  * Passed-stop vehicles are shown dimmed at the bottom.
  */
 
+import type { TFunction } from 'i18next';
+
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { TFunction } from 'i18next';
+
 import type { ApproachingVehicle } from '../../hooks/useApproachingVehicles';
+
 import { minutesToTime } from '../../utils/gtfs';
 
 interface ApproachingVehicleCardProps {
-  vehicle: ApproachingVehicle;
   onRouteClick?: (routeId: string, routeType: number) => void;
+  vehicle: ApproachingVehicle;
 }
 
 /** Reference window used for proportional bar width (30 min) */
 const WINDOW_SECONDS = 30 * 60;
 
-/** Format distance: metres below 1000, km above */
-function formatDistance(meters: number, t: TFunction): string {
-  if (meters < 1000) return t('common.metresShort', { metres: meters });
-  return t('common.kilometres', { km: (meters / 1000).toFixed(1) });
-}
-
-/** Format GPS-derived ETA as a short string */
-function formatGpsEta(seconds: number, t: TFunction): string {
-  if (seconds < 30) return t('vehicleCard.arriving');
-  if (seconds < 120) return t('vehicleCard.secondsTilde', { secs: Math.round(seconds) });
-  const mins = Math.round(seconds / 60);
-  return t('vehicleCard.minutesTilde', { mins });
-}
-
-/** Format schedule-based ETA */
-function formatScheduleEta(
-  seconds: number,
-  isScheduled: boolean,
-  etaMinutes: number,
-  delaySeconds: number | null,
-  t: TFunction,
-): string {
-  if (seconds <= 0) return t('vehicleCard.nowTilde');
-  if (seconds < 120) {
-    const s = Math.round(seconds);
-    return isScheduled
-      ? t('vehicleCard.secondsTilde', { secs: s })
-      : t('vehicleCard.inSeconds', { secs: s });
-  }
-  const mins = Math.round(seconds / 60);
-  if (mins < 60) {
-    return isScheduled
-      ? t('vehicleCard.minutesTilde', { mins })
-      : t('vehicleCard.inMinutes', { mins });
-  }
-  const adjusted = etaMinutes + (delaySeconds ?? 0) / 60;
-  return `${isScheduled ? '~' : ''}${minutesToTime(adjusted)}`;
-}
-
-export function ApproachingVehicleCard({ vehicle, onRouteClick }: ApproachingVehicleCardProps) {
+export function ApproachingVehicleCard({ onRouteClick, vehicle }: ApproachingVehicleCardProps) {
   const { t } = useTranslation();
   const isScheduled = vehicle.confidence === 'scheduled';
   const isArriving = !vehicle.passedStop && vehicle.arrivingInSeconds <= 0;
@@ -89,7 +53,8 @@ export function ApproachingVehicleCard({ vehicle, onRouteClick }: ApproachingVeh
   const badgeColor = vehicle.routeType === 0 ? '#2563eb' : '#d97706';
 
   // Proximity state for highlight effects
-  const isNear = !vehicle.passedStop && vehicle.distanceMeters !== null && vehicle.distanceMeters < 100;
+  const isNear =
+    !vehicle.passedStop && vehicle.distanceMeters !== null && vehicle.distanceMeters < 100;
   const proximityRing = isAtStop
     ? 'ring-2 ring-success bg-success/10'
     : isNear
@@ -111,33 +76,60 @@ export function ApproachingVehicleCard({ vehicle, onRouteClick }: ApproachingVeh
     primaryColorClass = 'text-success';
   } else if (vehicle.distanceMeters !== null) {
     primaryText = formatDistance(vehicle.distanceMeters, t);
-    primaryColorClass = isArriving ? 'text-success' : isScheduled ? 'text-base-content/50' : isNear ? 'text-success' : 'text-base-content';
+    primaryColorClass = isArriving
+      ? 'text-success'
+      : isScheduled
+        ? 'text-base-content/50'
+        : isNear
+          ? 'text-success'
+          : 'text-base-content';
   } else {
     // No GPS — fall back to schedule ETA as primary
-    primaryText = formatScheduleEta(vehicle.arrivingInSeconds, isScheduled, vehicle.etaMinutes, vehicle.delaySeconds, t);
-    primaryColorClass = isArriving ? 'text-success' : isScheduled ? 'text-base-content/50' : 'text-base-content';
+    primaryText = formatScheduleEta(
+      vehicle.arrivingInSeconds,
+      isScheduled,
+      vehicle.etaMinutes,
+      vehicle.delaySeconds,
+      t
+    );
+    primaryColorClass = isArriving
+      ? 'text-success'
+      : isScheduled
+        ? 'text-base-content/50'
+        : 'text-base-content';
   }
 
   // Secondary: GPS time estimate (or schedule when no distance)
-  let secondaryText: string | null = null;
+  let secondaryText: null | string = null;
   if (!vehicle.passedStop && !isAtStop && vehicle.distanceMeters !== null) {
-    secondaryText = vehicle.etaFromGpsSeconds !== null
-      ? formatGpsEta(vehicle.etaFromGpsSeconds, t)
-      : formatScheduleEta(vehicle.arrivingInSeconds, isScheduled, vehicle.etaMinutes, vehicle.delaySeconds, t);
+    secondaryText =
+      vehicle.etaFromGpsSeconds !== null
+        ? formatGpsEta(vehicle.etaFromGpsSeconds, t)
+        : formatScheduleEta(
+            vehicle.arrivingInSeconds,
+            isScheduled,
+            vehicle.etaMinutes,
+            vehicle.delaySeconds,
+            t
+          );
   }
 
   const dimClass = isScheduled || vehicle.passedStop ? 'opacity-50' : '';
 
   return (
     <div
-      className={`card bg-base-200 overflow-hidden transition-all duration-500 ${proximityRing} ${leaving ? 'opacity-0 max-h-0 !py-0 !my-0' : 'max-h-44 opacity-100'
-        }`}
+      className={`card bg-base-200 overflow-hidden transition-all duration-500 ${proximityRing} ${
+        leaving ? 'opacity-0 max-h-0 !py-0 !my-0' : 'max-h-44 opacity-100'
+      }`}
     >
       <div className="card-body p-3 pb-2 gap-0">
         {/* Top row: badge + name + distance + time */}
         <div className={`flex items-center gap-2 mb-1.5 ${dimClass}`}>
           {/* Route badge */}
-          <div className={`badge ${badgeAnim} font-bold shrink-0 min-w-[2.75rem] justify-center text-white`} style={{ backgroundColor: badgeColor }}>
+          <div
+            className={`badge ${badgeAnim} font-bold shrink-0 min-w-[2.75rem] justify-center text-white`}
+            style={{ backgroundColor: badgeColor }}
+          >
             {vehicle.routeShortName}
           </div>
 
@@ -145,13 +137,15 @@ export function ApproachingVehicleCard({ vehicle, onRouteClick }: ApproachingVeh
           <div className="flex-1 min-w-0">
             {onRouteClick ? (
               <button
-                onClick={() => onRouteClick(vehicle.routeId, vehicle.routeType)}
                 className="text-sm font-medium truncate leading-tight text-left hover:opacity-70 transition-opacity w-full block"
+                onClick={() => onRouteClick(vehicle.routeId, vehicle.routeType)}
               >
                 {vehicle.tripDestinationName}
               </button>
             ) : (
-              <div className="text-sm font-medium truncate leading-tight">{vehicle.tripDestinationName}</div>
+              <div className="text-sm font-medium truncate leading-tight">
+                {vehicle.tripDestinationName}
+              </div>
             )}
             <div className="text-xs text-base-content/50 mt-0.5 flex items-center gap-1.5">
               {vehicle.passedStop ? (
@@ -183,21 +177,30 @@ export function ApproachingVehicleCard({ vehicle, onRouteClick }: ApproachingVeh
 
           {/* Distance (primary) + time estimate (secondary) */}
           <div className="text-right shrink-0">
-            <div className={`font-bold text-base tabular-nums whitespace-nowrap ${primaryColorClass}`}>
+            <div
+              className={`font-bold text-base tabular-nums whitespace-nowrap ${primaryColorClass}`}
+            >
               {primaryText}
             </div>
             {secondaryText && (
               <div className="text-xs text-base-content/50 tabular-nums">{secondaryText}</div>
             )}
             {/* Delay info when no GPS distance available */}
-            {vehicle.distanceMeters === null && vehicle.delaySeconds !== null && (isLate || isEarly) && (
-              <div className={`text-xs font-medium ${isLate ? 'text-error' : 'text-success'}`}>
-                {isLate ? `+${delayMin}` : `-${delayMin}`} min
-              </div>
-            )}
-            {vehicle.distanceMeters === null && vehicle.delaySeconds !== null && !isLate && !isEarly && (
-              <div className="text-xs text-success font-medium">{t('vehicleCard.onTimeShort')}</div>
-            )}
+            {vehicle.distanceMeters === null &&
+              vehicle.delaySeconds !== null &&
+              (isLate || isEarly) && (
+                <div className={`text-xs font-medium ${isLate ? 'text-error' : 'text-success'}`}>
+                  {isLate ? `+${delayMin}` : `-${delayMin}`} min
+                </div>
+              )}
+            {vehicle.distanceMeters === null &&
+              vehicle.delaySeconds !== null &&
+              !isLate &&
+              !isEarly && (
+                <div className="text-xs text-success font-medium">
+                  {t('vehicleCard.onTimeShort')}
+                </div>
+              )}
           </div>
         </div>
 
@@ -205,14 +208,15 @@ export function ApproachingVehicleCard({ vehicle, onRouteClick }: ApproachingVeh
         {!vehicle.passedStop && (
           <div className="w-full h-1 bg-base-300 rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full transition-[width] duration-[4s] ease-linear ${isScheduled
+              className={`h-full rounded-full transition-[width] duration-[4s] ease-linear ${
+                isScheduled
                   ? 'bg-base-content/25'
                   : isArriving
                     ? 'bg-success'
                     : vehicle.routeType === 0
                       ? 'bg-blue-600'
                       : 'bg-amber-600'
-                }`}
+              }`}
               style={{ width: `${barPercent}%` }}
             />
           </div>
@@ -220,4 +224,43 @@ export function ApproachingVehicleCard({ vehicle, onRouteClick }: ApproachingVeh
       </div>
     </div>
   );
+}
+
+/** Format distance: metres below 1000, km above */
+function formatDistance(meters: number, t: TFunction): string {
+  if (meters < 1000) return t('common.metresShort', { metres: meters });
+  return t('common.kilometres', { km: (meters / 1000).toFixed(1) });
+}
+
+/** Format GPS-derived ETA as a short string */
+function formatGpsEta(seconds: number, t: TFunction): string {
+  if (seconds < 30) return t('vehicleCard.arriving');
+  if (seconds < 120) return t('vehicleCard.secondsTilde', { secs: Math.round(seconds) });
+  const mins = Math.round(seconds / 60);
+  return t('vehicleCard.minutesTilde', { mins });
+}
+
+/** Format schedule-based ETA */
+function formatScheduleEta(
+  seconds: number,
+  isScheduled: boolean,
+  etaMinutes: number,
+  delaySeconds: null | number,
+  t: TFunction
+): string {
+  if (seconds <= 0) return t('vehicleCard.nowTilde');
+  if (seconds < 120) {
+    const s = Math.round(seconds);
+    return isScheduled
+      ? t('vehicleCard.secondsTilde', { secs: s })
+      : t('vehicleCard.inSeconds', { secs: s });
+  }
+  const mins = Math.round(seconds / 60);
+  if (mins < 60) {
+    return isScheduled
+      ? t('vehicleCard.minutesTilde', { mins })
+      : t('vehicleCard.inMinutes', { mins });
+  }
+  const adjusted = etaMinutes + (delaySeconds ?? 0) / 60;
+  return `${isScheduled ? '~' : ''}${minutesToTime(adjusted)}`;
 }

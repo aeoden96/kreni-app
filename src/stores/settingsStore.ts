@@ -1,95 +1,95 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-type MapTileProvider = 'osm' | 'positron' | 'dark-matter';
-type Theme = 'light' | 'dark';
-
-type AppMode = 'map' | 'list';
+type AppMode = 'list' | 'map';
+type MapTileProvider = 'dark-matter' | 'osm' | 'positron';
 
 interface RecentItem {
   id: string;
   timestamp: number;
 }
 
+type Theme = 'dark' | 'light';
+
 const MAX_RECENTS = 10;
 
 interface SettingsState {
-  sandboxVisible: boolean;
-  mapTileProvider: MapTileProvider;
-  theme: Theme;
-  globalOnboardingCompleted: boolean;
-  onboardingCompleted: Record<string, boolean>;
-  onboardingStep: number;
-
-  showBikeStations: boolean;
-  showBikeParkings: boolean;
-  showBikePaths: boolean;
-  /** Zagreb city data toggles */
-  showStudentRestaurants: boolean;
-  showPublicFountains: boolean;
-  showPedestrianZones: boolean;
-  showFreeWifi: boolean;
-  showPublicGarages: boolean;
-  /** Show electric vehicle charging stations layer */
-  showElectricCharging: boolean;
-  /** Show parking zones layer */
-  showParkingZones: boolean;
-  /** Show tram congestion heatmap overlay */
-  showCongestionHeatmap: boolean;
-  /** Show railway stations layer */
-  showRailwayStations: boolean;
+  addRecentRoute: (id: string) => void;
+  addRecentStop: (id: string) => void;
+  appMode: AppMode;
+  clearRecents: () => void;
   /** Prefer more detailed map tiles (Standard / HOT) */
   detailedMap: boolean;
-  appMode: AppMode;
+  /** User dismissed the GPS-vs-timetable info tip in stop view */
+  dismissedGpsTip: boolean;
+
+  /** Favourite Nextbike / Bajs station UIDs (cycling map) */
+  favouriteNextbikeStationUids: number[];
   /** Favourite route IDs */
   favouriteRouteIds: string[];
   /** Favourite stop IDs */
   favouriteStopIds: string[];
-  /** Favourite Nextbike / Bajs station UIDs (cycling map) */
-  favouriteNextbikeStationUids: number[];
+  globalOnboardingCompleted: boolean;
+  /** Persisted map state across navigations */
+  mapCenter: [number, number];
+  mapTileProvider: MapTileProvider;
+  mapZoom: number;
+  onboardingCompleted: Record<string, boolean>;
+  onboardingStep: number;
   /** Recently viewed routes (newest first, max 10) */
   recentRoutes: RecentItem[];
   /** Recently viewed stops (newest first, max 10) */
   recentStops: RecentItem[];
-  /** User dismissed the GPS-vs-timetable info tip in stop view */
-  dismissedGpsTip: boolean;
-  /** Persisted map state across navigations */
-  mapCenter: [number, number];
-  mapZoom: number;
-
-  setSandboxVisible: (visible: boolean) => void;
-  setMapTileProvider: (provider: MapTileProvider) => void;
-  setTheme: (theme: Theme) => void;
-  setDetailedMap: (detailed: boolean) => void;
-  setGlobalOnboardingCompleted: (completed: boolean) => void;
-  setOnboardingCompleted: (mode: string, completed: boolean) => void;
-  setOnboardingStep: (step: number) => void;
-
-  setShowBikeStations: (show: boolean) => void;
-  setShowBikeParkings: (show: boolean) => void;
-  setShowBikePaths: (show: boolean) => void;
-  setShowStudentRestaurants: (show: boolean) => void;
-  setShowPublicFountains: (show: boolean) => void;
-  setShowPedestrianZones: (show: boolean) => void;
-  setShowFreeWifi: (show: boolean) => void;
-  setShowPublicGarages: (show: boolean) => void;
-  setShowElectricCharging: (show: boolean) => void;
-  setShowParkingZones: (show: boolean) => void;
-  setShowCongestionHeatmap: (show: boolean) => void;
-  setShowRailwayStations: (show: boolean) => void;
-  setAppMode: (mode: AppMode) => void;
-  setDismissedGpsTip: (dismissed: boolean) => void;
-  setMapViewport: (center: [number, number], zoom: number) => void;
-  toggleFavouriteRoute: (id: string) => void;
-  toggleFavouriteStop: (id: string) => void;
-  toggleFavouriteNextbikeStation: (uid: number) => void;
-  addRecentRoute: (id: string) => void;
-  addRecentStop: (id: string) => void;
-  clearRecents: () => void;
   /** Remove specific route IDs from recents */
   removeRecentRoutes: (ids: string[]) => void;
   /** Remove specific stop IDs from recents */
   removeRecentStops: (ids: string[]) => void;
+  sandboxVisible: boolean;
+  setAppMode: (mode: AppMode) => void;
+  setDetailedMap: (detailed: boolean) => void;
+  setDismissedGpsTip: (dismissed: boolean) => void;
+  setGlobalOnboardingCompleted: (completed: boolean) => void;
+  setMapTileProvider: (provider: MapTileProvider) => void;
+  setMapViewport: (center: [number, number], zoom: number) => void;
+  setOnboardingCompleted: (mode: string, completed: boolean) => void;
+  setOnboardingStep: (step: number) => void;
+
+  setSandboxVisible: (visible: boolean) => void;
+  setShowBikeParkings: (show: boolean) => void;
+  setShowBikePaths: (show: boolean) => void;
+  setShowBikeStations: (show: boolean) => void;
+  setShowCongestionHeatmap: (show: boolean) => void;
+  setShowElectricCharging: (show: boolean) => void;
+  setShowFreeWifi: (show: boolean) => void;
+
+  setShowParkingZones: (show: boolean) => void;
+  setShowPedestrianZones: (show: boolean) => void;
+  setShowPublicFountains: (show: boolean) => void;
+  setShowPublicGarages: (show: boolean) => void;
+  setShowRailwayStations: (show: boolean) => void;
+  setShowStudentRestaurants: (show: boolean) => void;
+  setTheme: (theme: Theme) => void;
+  showBikeParkings: boolean;
+  showBikePaths: boolean;
+  showBikeStations: boolean;
+  /** Show tram congestion heatmap overlay */
+  showCongestionHeatmap: boolean;
+  /** Show electric vehicle charging stations layer */
+  showElectricCharging: boolean;
+  showFreeWifi: boolean;
+  /** Show parking zones layer */
+  showParkingZones: boolean;
+  showPedestrianZones: boolean;
+  showPublicFountains: boolean;
+  showPublicGarages: boolean;
+  /** Show railway stations layer */
+  showRailwayStations: boolean;
+  /** Zagreb city data toggles */
+  showStudentRestaurants: boolean;
+  theme: Theme;
+  toggleFavouriteNextbikeStation: (uid: number) => void;
+  toggleFavouriteRoute: (id: string) => void;
+  toggleFavouriteStop: (id: string) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -105,38 +105,49 @@ export const useSettingsStore = create<SettingsState>()(
       }
 
       return {
-        sandboxVisible: false,
-        mapTileProvider: initialTheme === 'dark' ? 'dark-matter' : 'osm',
-        theme: initialTheme,
-        detailedMap: true,
-        globalOnboardingCompleted: false,
-        onboardingCompleted: {},
-        onboardingStep: 0,
-
-        showBikeStations: true,
-        showBikeParkings: false,
-        showBikePaths: false,
-        showStudentRestaurants: false,
-        showPublicFountains: true,
-        showPedestrianZones: false,
-        showFreeWifi: false,
-        showPublicGarages: true,
-        showElectricCharging: false,
-        showParkingZones: false,
-        showCongestionHeatmap: false,
-        showRailwayStations: false,
+        addRecentRoute: (id) =>
+          set((s) => {
+            const filtered = s.recentRoutes.filter((r) => r.id !== id);
+            return {
+              recentRoutes: [{ id, timestamp: Date.now() }, ...filtered].slice(0, MAX_RECENTS),
+            };
+          }),
+        addRecentStop: (id) =>
+          set((s) => {
+            const filtered = s.recentStops.filter((r) => r.id !== id);
+            return {
+              recentStops: [{ id, timestamp: Date.now() }, ...filtered].slice(0, MAX_RECENTS),
+            };
+          }),
         appMode: 'map',
+        clearRecents: () => set({ recentRoutes: [], recentStops: [] }),
+        detailedMap: true,
+        dismissedGpsTip: false,
+        favouriteNextbikeStationUids: [],
+
         favouriteRouteIds: [],
         favouriteStopIds: [],
-        favouriteNextbikeStationUids: [],
+        globalOnboardingCompleted: false,
+        mapCenter: [45.815, 15.977],
+        mapTileProvider: initialTheme === 'dark' ? 'dark-matter' : 'osm',
+        mapZoom: 13,
+        onboardingCompleted: {},
+        onboardingStep: 0,
         recentRoutes: [],
         recentStops: [],
-        dismissedGpsTip: false,
-        mapCenter: [45.815, 15.977],
-        mapZoom: 13,
-
-        setSandboxVisible: (visible) => set({ sandboxVisible: visible }),
+        removeRecentRoutes: (ids) =>
+          set((s) => ({
+            recentRoutes: s.recentRoutes.filter((r) => !ids.includes(r.id)),
+          })),
+        removeRecentStops: (ids) =>
+          set((s) => ({
+            recentStops: s.recentStops.filter((item) => !ids.includes(item.id)),
+          })),
+        sandboxVisible: false,
+        setAppMode: (mode) => set({ appMode: mode }),
         setDetailedMap: (detailed) => set({ detailedMap: detailed }),
+        setDismissedGpsTip: (dismissed) => set({ dismissedGpsTip: dismissed }),
+        setGlobalOnboardingCompleted: (completed) => set({ globalOnboardingCompleted: completed }),
         setMapTileProvider: (provider) => {
           const themeForProvider: Theme = provider === 'dark-matter' ? 'dark' : 'light';
           set({ mapTileProvider: provider, theme: themeForProvider });
@@ -147,9 +158,30 @@ export const useSettingsStore = create<SettingsState>()(
           }
           localStorage.setItem('theme', themeForProvider);
         },
+        setMapViewport: (mapCenter, mapZoom) => set({ mapCenter, mapZoom }),
+        setOnboardingCompleted: (mode, completed) =>
+          set((s) => ({
+            onboardingCompleted: { ...s.onboardingCompleted, [mode]: completed },
+          })),
+        setOnboardingStep: (step) => set({ onboardingStep: step }),
+
+        setSandboxVisible: (visible) => set({ sandboxVisible: visible }),
+        setShowBikeParkings: (show) => set({ showBikeParkings: show }),
+        setShowBikePaths: (show) => set({ showBikePaths: show }),
+        setShowBikeStations: (show) => set({ showBikeStations: show }),
+        setShowCongestionHeatmap: (show) => set({ showCongestionHeatmap: show }),
+        setShowElectricCharging: (show) => set({ showElectricCharging: show }),
+        setShowFreeWifi: (show) => set({ showFreeWifi: show }),
+
+        setShowParkingZones: (show) => set({ showParkingZones: show }),
+        setShowPedestrianZones: (show) => set({ showPedestrianZones: show }),
+        setShowPublicFountains: (show) => set({ showPublicFountains: show }),
+        setShowPublicGarages: (show) => set({ showPublicGarages: show }),
+        setShowRailwayStations: (show) => set({ showRailwayStations: show }),
+        setShowStudentRestaurants: (show) => set({ showStudentRestaurants: show }),
         setTheme: (theme) => {
           const providerForTheme: MapTileProvider = theme === 'dark' ? 'dark-matter' : 'osm';
-          set({ theme, mapTileProvider: providerForTheme });
+          set({ mapTileProvider: providerForTheme, theme });
           try {
             document.documentElement.setAttribute('data-theme', theme);
           } catch (_e) {
@@ -157,42 +189,24 @@ export const useSettingsStore = create<SettingsState>()(
           }
           localStorage.setItem('theme', theme);
         },
-        setGlobalOnboardingCompleted: (completed) => set({ globalOnboardingCompleted: completed }),
-        setOnboardingCompleted: (mode, completed) =>
-          set((s) => ({
-            onboardingCompleted: { ...s.onboardingCompleted, [mode]: completed }
-          })),
-        setOnboardingStep: (step) => set({ onboardingStep: step }),
+        showBikeParkings: false,
+        showBikePaths: false,
+        showBikeStations: true,
+        showCongestionHeatmap: false,
+        showElectricCharging: false,
+        showFreeWifi: false,
+        showParkingZones: false,
+        showPedestrianZones: false,
 
-        setShowBikeStations: (show) => set({ showBikeStations: show }),
-        setShowBikeParkings: (show) => set({ showBikeParkings: show }),
-        setShowBikePaths: (show) => set({ showBikePaths: show }),
-        setShowStudentRestaurants: (show) => set({ showStudentRestaurants: show }),
-        setShowPublicFountains: (show) => set({ showPublicFountains: show }),
-        setShowPedestrianZones: (show) => set({ showPedestrianZones: show }),
-        setShowFreeWifi: (show) => set({ showFreeWifi: show }),
-        setShowPublicGarages: (show) => set({ showPublicGarages: show }),
-        setShowElectricCharging: (show) => set({ showElectricCharging: show }),
-        setShowParkingZones: (show) => set({ showParkingZones: show }),
-        setShowCongestionHeatmap: (show) => set({ showCongestionHeatmap: show }),
-        setShowRailwayStations: (show) => set({ showRailwayStations: show }),
-        setAppMode: (mode) => set({ appMode: mode }),
-        setDismissedGpsTip: (dismissed) => set({ dismissedGpsTip: dismissed }),
-        setMapViewport: (mapCenter, mapZoom) => set({ mapCenter, mapZoom }),
+        showPublicFountains: true,
 
-        toggleFavouriteRoute: (id) =>
-          set((s) => ({
-            favouriteRouteIds: s.favouriteRouteIds.includes(id)
-              ? s.favouriteRouteIds.filter((r) => r !== id)
-              : [...s.favouriteRouteIds, id],
-          })),
+        showPublicGarages: true,
 
-        toggleFavouriteStop: (id) =>
-          set((s) => ({
-            favouriteStopIds: s.favouriteStopIds.includes(id)
-              ? s.favouriteStopIds.filter((r) => r !== id)
-              : [...s.favouriteStopIds, id],
-          })),
+        showRailwayStations: false,
+
+        showStudentRestaurants: false,
+
+        theme: initialTheme,
 
         toggleFavouriteNextbikeStation: (uid) =>
           set((s) => ({
@@ -200,40 +214,21 @@ export const useSettingsStore = create<SettingsState>()(
               ? s.favouriteNextbikeStationUids.filter((u) => u !== uid)
               : [...s.favouriteNextbikeStationUids, uid],
           })),
-
-        addRecentRoute: (id) =>
-          set((s) => {
-            const filtered = s.recentRoutes.filter((r) => r.id !== id);
-            return {
-              recentRoutes: [{ id, timestamp: Date.now() }, ...filtered].slice(0, MAX_RECENTS),
-            };
-          }),
-
-        addRecentStop: (id) =>
-          set((s) => {
-            const filtered = s.recentStops.filter((r) => r.id !== id);
-            return {
-              recentStops: [{ id, timestamp: Date.now() }, ...filtered].slice(0, MAX_RECENTS),
-            };
-          }),
-
-        clearRecents: () => set({ recentRoutes: [], recentStops: [] }),
-        removeRecentRoutes: (ids) =>
+        toggleFavouriteRoute: (id) =>
           set((s) => ({
-            recentRoutes: s.recentRoutes.filter((r) => !ids.includes(r.id)),
+            favouriteRouteIds: s.favouriteRouteIds.includes(id)
+              ? s.favouriteRouteIds.filter((r) => r !== id)
+              : [...s.favouriteRouteIds, id],
           })),
-        removeRecentStops: (ids) =>
+        toggleFavouriteStop: (id) =>
           set((s) => ({
-            recentStops: s.recentStops.filter((item) => !ids.includes(item.id)),
+            favouriteStopIds: s.favouriteStopIds.includes(id)
+              ? s.favouriteStopIds.filter((r) => r !== id)
+              : [...s.favouriteStopIds, id],
           })),
       };
     },
     {
-      name: 'kreni-settings',
-      // Bump version here whenever a default value changes and you want
-      // existing users' stored value to be overridden with the new default.
-      // migrate() receives the persisted state and should return the corrected state.
-      version: 4,
       migrate: (persisted: unknown, fromVersion: number) => {
         const state = persisted as Partial<SettingsState> & { showRoadClosures?: boolean };
         const next: Record<string, unknown> = { ...state };
@@ -249,6 +244,11 @@ export const useSettingsStore = create<SettingsState>()(
         }
         return next as Partial<SettingsState>;
       },
+      name: 'kreni-settings',
+      // Bump version here whenever a default value changes and you want
+      // existing users' stored value to be overridden with the new default.
+      // migrate() receives the persisted state and should return the corrected state.
+      version: 4,
     }
   )
 );

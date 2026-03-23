@@ -1,80 +1,82 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+
 import type { TimetableDeparture } from '../../hooks/useTimetableDepartures';
+
 import { TimetableDepartureCard } from './TimetableDepartureCard';
 
 /** Mock: tram, scheduled, za 5 min */
 const mockScheduled: TimetableDeparture = {
-  tripId: 'trip-1',
+  adjustedMinutes: 9 * 60 + 20,
+  delaySeconds: null,
+  minutesUntil: 5,
+  realtimeSource: null,
   routeId: 'route-1',
+  routeLongName: 'Dubec – Savski most – Mirogoj',
   routeShortName: '4',
   routeType: 0,
-  routeLongName: 'Dubec – Savski most – Mirogoj',
-  tripDestinationName: 'Mirogoj',
   scheduledMinutes: 9 * 60 + 20,
-  delaySeconds: null,
-  adjustedMinutes: 9 * 60 + 20,
-  realtimeSource: null,
-  minutesUntil: 5,
+  tripDestinationName: 'Mirogoj',
+  tripId: 'trip-1',
 };
 
 /** Mock: bus, realtime on time */
 const mockRealtimeOnTime: TimetableDeparture = {
   ...mockScheduled,
+  delaySeconds: 0,
+  minutesUntil: 2,
+  realtimeSource: 'stop',
+  routeLongName: 'Savski most – Zapruđe',
   routeShortName: '106',
   routeType: 3,
-  routeLongName: 'Savski most – Zapruđe',
   tripDestinationName: 'Zapruđe',
-  delaySeconds: 0,
-  realtimeSource: 'stop',
-  minutesUntil: 2,
 };
 
 /** Mock: tram, realtime late (+3 min) */
 const mockRealtimeLate: TimetableDeparture = {
   ...mockScheduled,
-  routeShortName: '6',
-  routeLongName: 'Črnomerec – Sopot',
-  tripDestinationName: 'Sopot',
-  delaySeconds: 180,
   adjustedMinutes: 9 * 60 + 23,
-  realtimeSource: 'stop',
+  delaySeconds: 180,
   minutesUntil: 8,
+  realtimeSource: 'stop',
+  routeLongName: 'Črnomerec – Sopot',
+  routeShortName: '6',
+  tripDestinationName: 'Sopot',
 };
 
 /** Mock: bus, realtime early (-2 min) */
 const mockRealtimeEarly: TimetableDeparture = {
   ...mockScheduled,
+  adjustedMinutes: 9 * 60 + 16,
+  delaySeconds: -120,
+  minutesUntil: 1,
+  realtimeSource: 'trip',
+  routeLongName: 'Knežija – Kvaternikov trg',
   routeShortName: '268',
   routeType: 3,
-  routeLongName: 'Knežija – Kvaternikov trg',
-  delaySeconds: -120,
-  adjustedMinutes: 9 * 60 + 16,
-  realtimeSource: 'trip',
-  minutesUntil: 1,
 };
 
 /** Mock: arriving now */
 const mockArrivingNow: TimetableDeparture = {
   ...mockScheduled,
-  routeShortName: '14',
-  routeLongName: 'Mihaljevac – Zapruđe',
-  tripDestinationName: 'Zapruđe',
+  adjustedMinutes: 9 * 60 + 15,
+  delaySeconds: 30,
   minutesUntil: 0,
   realtimeSource: 'stop',
-  delaySeconds: 30,
-  adjustedMinutes: 9 * 60 + 15,
+  routeLongName: 'Mihaljevac – Zapruđe',
+  routeShortName: '14',
+  tripDestinationName: 'Zapruđe',
 };
 
 const meta = {
-  title: 'Common / TimetableDepartureCard',
+  argTypes: {
+    compact: { control: 'boolean' },
+  },
   component: TimetableDepartureCard,
   parameters: {
     layout: 'centered',
   },
   tags: ['autodocs'],
-  argTypes: {
-    compact: { control: 'boolean' },
-  },
+  title: 'Common / TimetableDepartureCard',
 } satisfies Meta<typeof TimetableDepartureCard>;
 
 export default meta;
@@ -83,42 +85,42 @@ type Story = StoryObj<typeof meta>;
 
 export const Card: Story = {
   args: {
-    departure: mockScheduled,
     compact: false,
+    departure: mockScheduled,
   },
 };
 
 export const CardCompact: Story = {
   args: {
-    departure: mockScheduled,
     compact: true,
+    departure: mockScheduled,
   },
 };
 
 export const RealtimeOnTime: Story = {
   args: {
-    departure: mockRealtimeOnTime,
     compact: false,
+    departure: mockRealtimeOnTime,
   },
 };
 
 export const RealtimeLate: Story = {
   args: {
-    departure: mockRealtimeLate,
     compact: false,
+    departure: mockRealtimeLate,
   },
 };
 
 export const RealtimeEarly: Story = {
   args: {
-    departure: mockRealtimeEarly,
     compact: false,
+    departure: mockRealtimeEarly,
   },
 };
 
 export const ArrivingNow: Story = {
   args: {
-    departure: mockArrivingNow,
     compact: false,
+    departure: mockArrivingNow,
   },
 };
