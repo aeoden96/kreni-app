@@ -4,7 +4,7 @@ import L from 'leaflet';
 import { memo, useEffect, useState } from 'react';
 import { Marker, Tooltip } from 'react-leaflet';
 
-import { GTFS_PROXY_URL } from '../../config';
+import { GTFS_API_KEY, GTFS_PROXY_URL } from '../../config';
 import { cachedFetchWithTTL } from '../../stores/dataCache';
 
 const JAVNI_ZDENCI_PROXY_URL = GTFS_PROXY_URL ? `${GTFS_PROXY_URL}?endpoint=javni-zdenci` : null;
@@ -43,9 +43,14 @@ export const PublicFountainsMap = memo(function PublicFountainsMap({
       return;
     }
 
+    const headers: Record<string, string> = {};
+    if (GTFS_API_KEY) {
+      headers['X-API-Key'] = GTFS_API_KEY;
+    }
+
     cachedFetchWithTTL(
       JAVNI_ZDENCI_PROXY_URL,
-      () => fetch(JAVNI_ZDENCI_PROXY_URL).then((res) => res.json()),
+      () => fetch(JAVNI_ZDENCI_PROXY_URL, { headers }).then((res) => res.json()),
       ONE_WEEK_MS
     )
       .then((data) => setGeoData(data as FeatureCollection<Point>))

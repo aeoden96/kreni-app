@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { GTFS_PROXY_URL } from '../config';
+import { GTFS_API_KEY, GTFS_PROXY_URL } from '../config';
 
 export interface RoadClosure {
   direction: string; // e.g. "BOTH_DIRECTIONS"
@@ -147,7 +147,12 @@ export function useRoadClosures(enabled: boolean) {
 
         if (isMounted) setLoading(true);
 
-        const response = await fetch(`${GTFS_PROXY_URL}/?endpoint=road-closures`);
+        const headers: Record<string, string> = {};
+        if (GTFS_API_KEY) {
+          headers['X-API-Key'] = GTFS_API_KEY;
+        }
+
+        const response = await fetch(`${GTFS_PROXY_URL}/?endpoint=road-closures`, { headers });
         if (!response.ok) {
           throw new Error(`Failed to fetch road closures: ${response.status}`);
         }

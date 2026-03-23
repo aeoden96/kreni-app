@@ -1,57 +1,110 @@
-# Kreni <!-- omit in toc -->
+<div align="center">
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/aeoden96/kreni-app/deploy.yml?branch=master)](https://github.com/aeoden96/kreni-app/actions)
-[![Static Analysis](https://img.shields.io/github/actions/workflow/status/aeoden96/kreni-app/ci.yml?branch=master&label=ci)](https://github.com/aeoden96/kreni-app/actions)
+# Kreni — Zagreb's All-In-One Mobility & City Service Map
 
-**Kreni** is a blazing-fast, static frontend application for tracking Zagreb public transit (ZET buses/trams, and HŽPP trains). It relies on zero real-time backend databases or complex servers, instead offloading all heavy transit data processing to build-time.
+  <img src="docs/readme-assets/banner.png" alt="Kreni Banner" width="100%">
+
+**All on one map: track ZET trams and buses live, find free parking spots, public garages, Nextbike bicycles, and cycling paths in Zagreb. Also includes locations of public water fountains, EV charging stations, and student cafeterias.**
+
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/aeoden96/kreni-app/deploy.yml?branch=master&style=flat-square)](https://github.com/aeoden96/kreni-app/actions)
+[![Static Analysis](https://img.shields.io/github/actions/workflow/status/aeoden96/kreni-app/ci.yml?branch=master&label=ci&style=flat-square)](https://github.com/aeoden96/kreni-app/actions)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
+
+[**Live Demo**](https://kreni.app/) • [**Report Bug**](https://github.com/aeoden96/kreni-app/issues) • [**Request Feature**](https://github.com/aeoden96/kreni-app/issues)
+
+</div>
 
 ---
 
-## What makes Kreni different?
+## ✨ Overview
 
-Most public transit applications rely on heavy databases to query stops, routes, and schedules dynamically. **Kreni is completely static.**
+Kreni is a high-performance, **completely static** urban mobility dashboard for Zagreb. Unlike traditional city apps that rely on heavy backend databases, Kreni pre-processes massive datasets (GTFS transit feeds, city infrastructure, and real-time APIs) into hyper-optimized JSON shards.
 
-Instead of a backend database, it pre-processes massive GTFS (General Transit Feed Specification) feed archives into hundreds of thousands of hyper-optimized JSON chunks. These tiny JSON files are served directly from a CDN (Cloudflare Pages), meaning Kreni can handle virtually infinite traffic out-of-the-box with roughly zero database constraints.
+Served directly from a global CDN, it provides sub-second load times and seamless offline support, making it the most reliable way to navigate the city.
 
-It leverages:
+### 🚀 Key Features
 
-- **React 19, TypeScript, and Vite 7** for the frontend UI.
-- **Tailwind CSS v4 + DaisyUI 5** for a completely customized and responsive design.
-- **Leaflet** for highly detailed, interactive transit maps.
-- **Playwright & Vitest** for rock-solid test coverage.
+<table>
+  <tr>
+    <td width="33%" valign="top">
+      <h4>🚋 Transit Tracking</h4>
+      Live positional updates for <b>ZET</b> buses/trams and <b>HŽPP</b> trains with smooth map interpolations.
+    </td>
+    <td width="33%" valign="top">
+      <h4>🅿️ Smart Parking</h4>
+      Find free parking spots and public garages with real-time availability across the city.
+    </td>
+    <td width="33%" valign="top">
+      <h4>🚲 Cycling & Micro-mobility</h4>
+      Integration with <b>Nextbike</b> stations and detailed maps of Zagreb's cycling paths.
+    </td>
+  </tr>
+  <tr>
+    <td width="33%" valign="top">
+      <h4>🚰 Public Utilities</h4>
+      Locate public water fountains (česme) and <b>EV charging stations</b> near you.
+    </td>
+    <td width="33%" valign="top">
+      <h4>🎓 Student Life</h4>
+      Essential map of student cafeterias (<b>menze</b>) for the ZG student community.
+    </td>
+    <td width="33%" valign="top">
+      <h4>⚡ Edge Computing</h4>
+      Zero-database architecture using <b>Cloudflare Pages + KV</b> for virtually infinite scalability.
+    </td>
+  </tr>
+</table>
 
-## Architecture & Infrastructure Workflows
+## Screenshots
 
-The beauty of Kreni lies in its automated infrastructural workflows driven by GitHub Actions:
+<div align="center">
+  <img src="public/screenshot-wide.png" width="800px" alt="Desktop Live Map"/><br/>
+  <i>Integrated City Dashboard View</i>
+</div>
 
-### 1. Zero-Downtime Data Processing (`deploy.yml`)
+---
 
-When Kreni deploys, the CI pipeline:
+## Built With
 
-- Downloads the latest massive GTFS ZIP archives from ZET and HŽPP.
-- Slices these 114+ MB feeds locally using Python and Bash scripts (`scripts/run.sh`, `scripts/run_train.sh`).
-- Generates highly fractured and minimal JSON chunks (e.g., individual files for specific route terminuses, stop timetables, geographical shapes, etc.).
-- Saves these index files to `public/data/` and `public/data-train/`.
-- Uploads the lightweight built project directly to **Cloudflare Pages**.
+<div align="center">
+  <img src="https://img.shields.io/badge/React_19-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB" />
+  <img src="https://img.shields.io/badge/TypeScript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/Vite_7-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS_v4-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white" />
+  <img src="https://img.shields.io/badge/DaisyUI_5-%235A0EF8.svg?style=for-the-badge&logo=daisyui&logoColor=white" />
+  <img src="https://img.shields.io/badge/Leaflet-19991D?style=for-the-badge&logo=Leaflet&logoColor=white" />
+  <img src="https://img.shields.io/badge/Cloudflare_Pages-%23F38020.svg?style=for-the-badge&logo=cloudflare&logoColor=white" />
+</div>
 
-This eliminates the need to calculate routes on-the-fly. The client simply fetches the exact `.json` file it needs.
+---
 
-### 2. Automated Service Alerts (`parse-service-alerts.yml`)
+## Architecture & Infrastructure
 
-- Runs a cron job every 4 hours to fetch unstructured official service disruptions and announcements.
-- Uses an AI agent (via the Ollama API) to automatically parse, summarize, and categorize these service alerts into a clean structured format.
-- Writes the processed alerts directly into a **Cloudflare KV** store where the frontend reads them near-instantly.
+The power of Kreni lies in its automated data ingestion pipelines:
 
-### 3. Real-Time Telemetry & Tracking
+### 1. The Slicing Engine (`deploy.yml`)
 
-- The frontend dynamically interpolates vehicle schedules (based on shape data and the time of day) and supplements it with actual, real-time positional updates fetched through a lightweight proxy edge-worker (`VITE_GTFS_PROXY_URL`).
+At build time, the CI downloads 114+ MB of raw GTFS archives and city-level GeoJSONs. It then "slices" them into thousands of minimal, pre-calculated JSON files.
+
+- **`initial.json`**: Core app state.
+- **`shapes/`**: High-precision vector paths.
+- **`data/`**: Highly sharded stop and route metadata.
+
+### 2. AI Service Alerts (`parse-service-alerts.yml`)
+
+A cron job fetches unstructured official announcements. An **AI agent (Ollama)** parses them into structured JSON, which is then pushed to Cloudflare KV for the frontend to consume.
 
 ---
 
 ## Quick Start
 
-You'll need Node.js 20+ and Python 3.12+ installed to run Kreni locally.
+### Prerequisites
+
+- **Node.js**: 20+
+- **Python**: 3.12+
+
+### Installation
 
 ```bash
 git clone https://github.com/aeoden96/kreni-app.git
@@ -60,56 +113,28 @@ cd kreni-app
 # 1. Install dependencies
 yarn install
 
-# 2. Process GTFS transit data locally (Required for first run)
-bash scripts/run.sh         # Process ZET data
-bash scripts/run_train.sh   # Process HŽPP train data
+# 2. Process city & transit data (Required for first run)
+bash scripts/run.sh         # ZET metadata
+bash scripts/run_train.sh   # HŽPP metadata
 
-# 3. Start the dev server
+# 3. Start development server
 yarn dev
 ```
 
 ### Script Commands
 
-- `yarn build`: Production build.
-- `yarn tsc`: Run TypeScript type-checking.
-- `yarn lint`: Run ESLint checks.
-- `yarn test`: Run unit tests via Vitest.
-- `yarn test:e2e`: Run End-to-End tests in Docker via Playwright.
-
----
-
-## Project Structure & Data Schemas
-
-### Folder Setup
-
-```text
-data/                   raw ZET GTFS input (114 MB)
-data-train/             raw HŽPP GTFS input
-public/data/            processed ZET JSON chunks (131 MB, ~30 MB gzipped)
-public/data-train/      processed HŽPP JSON chunks
-scripts/                Python and Bash GTFS data slicers
-src/                    React frontend application
-tests/                  Functional python tests for indexing validation
-tests-e2e/              Playwright End-to-End tests
-```
-
-### GTFS JSON Sharding Strategy
-
-The core Kreni data strategy breaks down the data into extremely specific directories to avoid over-fetching on the client network:
-
-- **`initial.json` (456 KB):** Loaded on startup. Contains only basic stops, routes, and the active calendar.
-- **`routes/{id}.json` (60 KB avg):** Metadata and trips for a specific route.
-- **`timetables/{id}.json` (190 KB avg):** Full schedules per route.
-- **`shapes/{id}.json` (10 KB avg):** Geographic paths/polylines per route variant at high precision.
-- **`stops/{id}.json` (3 KB avg):** What routes stop here and departure timestamps.
-- **`route_stops/{id}.json` (320 B avg):** Just an ordered list of stop IDs for a route.
-- **`stop_timetables/{id}.json` (30 KB avg):** Departures at a stop, pre-filtered (82% smaller than full route timetables).
-- **`route_active_trips/{id}.json` (72 KB avg):** Active shape data used to quickly interpolate/estimate vehicle locations based on the time of day if GPS isn't available.
+| Command         | Description                  |
+| :-------------- | :--------------------------- |
+| `yarn build`    | Production build             |
+| `yarn tsc`      | Type-checking                |
+| `yarn lint`     | ESLint + CSpell + SecretLint |
+| `yarn test`     | Unit tests (Vitest)          |
+| `yarn test:e2e` | Playwright E2E tests         |
 
 ---
 
 ## License & Legal
 
-Distributed under the **MIT License**. See [LICENSE](LICENSE) for more details.
+Distributed under the **MIT License**. See `LICENSE` for more information.
 
-**Legal Disclaimer:** This is an unofficial hobby-driven project. Kreni operates "as is" and provides no warranties regarding the accuracy, timeliness, or reliability of its transit information. It is not affiliated with, endorsed by, nor integrated with ZET (Zagrebački električni tramvaj), HŽPP (Hrvatske željeznice Putnički prijevoz), or any other official transit authorities in any formal capacity.
+**Disclaimer**: This is an unofficial hobby-driven project. Kreni operates "as is" and provides no warranties regarding the accuracy of its information. It is not affiliated with, endorsed by, or integrated with ZET, HŽPP, Nextbike, or any official Zagreb authorities in any formal capacity.
