@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0 (2026-03-23)
+
+
+### Features
+
+* add API key support for road closure data fetching ([6135ef2](https://github.com/aeoden96/kreni-app/commit/6135ef297a88fc28be28bd2df408fe961d3795a8))
+
 ## [2.0.0](https://github.com/aeoden96/kreni-app/compare/v1.5.7...v2.0.0) (2026-03-22)
 
 ### Features
