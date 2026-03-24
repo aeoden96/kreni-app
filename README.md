@@ -123,13 +123,13 @@ yarn dev
 
 ### Script Commands
 
-| Command         | Description                  |
-| :-------------- | :--------------------------- |
-| `yarn build`    | Production build             |
-| `yarn tsc`      | Type-checking                |
-| `yarn lint`     | ESLint + CSpell + SecretLint |
-| `yarn test`     | Unit tests (Vitest)          |
-| `yarn test:e2e` | Playwright E2E tests         |
+| Command         | Description          |
+| :-------------- | :------------------- |
+| `yarn build`    | Production build     |
+| `yarn tsc`      | Type-checking        |
+| `yarn lint`     | ESLint + SecretLint  |
+| `yarn test`     | Unit tests (Vitest)  |
+| `yarn test:e2e` | Playwright E2E tests |
 
 ---
 
