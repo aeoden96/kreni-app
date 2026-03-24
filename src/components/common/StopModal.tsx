@@ -3,7 +3,7 @@
  * Opened from the map popup expand button.
  */
 
-import { ArrowRight, Clock, Info, Navigation2, Star, X } from 'lucide-react';
+import { ArrowRight, CarTaxiFront, Clock, Info, Navigation2, Star, X } from 'lucide-react';
 import { memo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -20,6 +20,7 @@ import { useSettingsStore } from '../../stores/settingsStore';
 import { bearingToCompassKey, minutesToTime } from '../../utils/gtfs';
 import { compassLabelForBearing } from '../../utils/localizedCompass';
 import { ApproachingVehicleCard } from './ApproachingVehicleCard';
+import { RideHailingModal } from './RideHailingModal';
 import { type StopTab, StopTabSelector } from './StopTabSelector';
 import { TimetableDepartureCard } from './TimetableDepartureCard';
 
@@ -48,6 +49,7 @@ export const StopModal = memo(function StopModal({
   const { dismissedGpsTip, favouriteStopIds, setDismissedGpsTip, toggleFavouriteStop } =
     useSettingsStore();
   const isFav = favouriteStopIds.includes(stop.id);
+  const [rideHailingModalOpen, setRideHailingModalOpen] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [activeTab, setActiveTab] = useState<StopTab>(hasRealtime ? 'vehicles' : 'timetable');
   const [routesExpanded, setRoutesExpanded] = useState(false);
@@ -195,6 +197,13 @@ export const StopModal = memo(function StopModal({
         <div className="p-4 border-b border-base-300">
           <div className="flex items-center gap-3 mb-2">
             <h2 className="text-xl font-bold flex-1">{stop.name}</h2>
+            <button
+              className="btn btn-ghost btn-circle btn-sm"
+              onClick={() => setRideHailingModalOpen(true)}
+              title={t('stopView.rideHailing')}
+            >
+              <CarTaxiFront className="w-5 h-5" />
+            </button>
             <button
               className="btn btn-ghost btn-circle btn-sm"
               onClick={() => toggleFavouriteStop(stop.id)}
@@ -437,6 +446,11 @@ export const StopModal = memo(function StopModal({
             ))}
         </div>
       </div>
+      <RideHailingModal
+        isOpen={rideHailingModalOpen}
+        onClose={() => setRideHailingModalOpen(false)}
+        stop={stop}
+      />
     </div>
   );
 });

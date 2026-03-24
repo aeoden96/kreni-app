@@ -159,6 +159,15 @@ const en = {
         zetFeedTimeHint: 'When the feed was last updated by ZET.',
       },
     },
+    rideHailing: {
+      chooseApp: 'Choose an app to book',
+      departure: 'Departure',
+      destination: 'Destination',
+      fromHere: 'Ride from here',
+      question: 'Is this location your departure or destination?',
+      title: 'Get a Ride',
+      toHere: 'Ride to here',
+    },
     roadClosures: {
       bothDirections: 'Both directions',
       closedFrom: 'Effective from:',
@@ -381,6 +390,7 @@ const en = {
       noDeparturesInMins: 'No departures in the next {{minutes}} min',
       noGpsVehiclesNearby: 'No GPS vehicles nearby',
       otherPlatforms: 'Other platforms',
+      rideHailing: 'Ride hailing',
       searchingVehicles: 'Finding vehicles…',
       switchToStop: 'Switch to: {{name}}',
       tabTimetable: 'Timetable',

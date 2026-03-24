@@ -167,6 +167,15 @@ const hr = {
         zetFeedTimeHint: 'Označava kada je feed posljednji put ažuriran od strane ZET-a.',
       },
     },
+    rideHailing: {
+      chooseApp: 'Odaberi aplikaciju za narudžbu',
+      departure: 'Polazište',
+      destination: 'Odredište',
+      fromHere: 'Naruči vožnju odavde',
+      question: 'Je li ovo polazište ili odredište vaše vožnje?',
+      title: 'Naruči vožnju',
+      toHere: 'Naruči vožnju do ovdje',
+    },
     roadClosures: {
       bothDirections: 'Oba smjera',
       closedFrom: 'Važi od:',
@@ -392,6 +401,7 @@ const hr = {
       noDeparturesInMins: 'Nema polazaka u sljedećih {{minutes}} min',
       noGpsVehiclesNearby: 'Nema GPS vozila u blizini',
       otherPlatforms: 'Ostale platforme',
+      rideHailing: 'Prijevoz (Taxi)',
       searchingVehicles: 'Tražim vozila...',
       switchToStop: 'Prebaci na: {{name}}',
       tabTimetable: 'Red vožnje',
