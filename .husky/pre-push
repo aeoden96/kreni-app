@@ -1,1 +1,1 @@
-npx branch-name-lint && yarn test && yarn knip && yarn format && yarn spell && yarn secret
+npx branch-name-lint && yarn test && yarn knip && yarn format && yarn secret

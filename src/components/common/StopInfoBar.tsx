@@ -6,6 +6,7 @@ import type { TFunction } from 'i18next';
 
 import {
   ArrowRight,
+  CarTaxiFront,
   ChevronDown,
   ChevronUp,
   Info,
@@ -28,6 +29,7 @@ import { useTimetableDepartures } from '../../hooks/useTimetableDepartures';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { bearingToCompassKey } from '../../utils/gtfs';
 import { compassLabelForBearing } from '../../utils/localizedCompass';
+import { RideHailingModal } from './RideHailingModal';
 import { type StopTab, StopTabSelector } from './StopTabSelector';
 import { TimetableDepartureCard } from './TimetableDepartureCard';
 
@@ -56,6 +58,7 @@ export function StopInfoBar({
   const { dismissedGpsTip, favouriteStopIds, setDismissedGpsTip, toggleFavouriteStop } =
     useSettingsStore();
   const isFav = favouriteStopIds.includes(stop.id);
+  const [rideHailingModalOpen, setRideHailingModalOpen] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [activeTab, setActiveTab] = useState<StopTab>(hasRealtime ? 'vehicles' : 'timetable');
   const [routesExpanded, setRoutesExpanded] = useState(false);
@@ -183,13 +186,15 @@ export function StopInfoBar({
 
   return (
     <div
-      className={`fixed left-2 right-2 sm:left-4 sm:right-auto sm:max-w-md z-[1050] bg-base-100 rounded-xl shadow-2xl ${
-        stackBelow ? 'top-44 sm:top-44' : 'top-16 sm:top-20'
+      className={`fixed left-2 right-2 sm:left-4 sm:right-auto sm:max-w-md z-[1050] bg-base-100 rounded-xl shadow-2xl flex flex-col overflow-hidden ${
+        stackBelow
+          ? 'top-44 sm:top-44 max-h-[calc(100dvh-12rem)]'
+          : 'top-16 sm:top-20 max-h-[calc(100dvh-5rem)] sm:max-h-[calc(100dvh-6rem)]'
       }`}
       data-testid="stop-info-panel"
       style={{ animation: 'modal-fade-in 0.2s ease-out' }}
     >
-      <div className="p-4">
+      <div className="flex flex-1 min-h-0 flex-col overflow-y-auto overscroll-contain p-4">
         {/* Header */}
         <div className="mb-2">
           <div className="flex items-start justify-between gap-2 mb-1">
@@ -221,6 +226,13 @@ export function StopInfoBar({
               )}
             </div>
             <div className="flex items-center gap-1 shrink-0">
+              <button
+                className="btn btn-ghost btn-circle btn-xs"
+                onClick={() => setRideHailingModalOpen(true)}
+                title={t('stopView.rideHailing')}
+              >
+                <CarTaxiFront className="w-4 h-4" />
+              </button>
               <button
                 className="btn btn-ghost btn-circle btn-xs"
                 onClick={() => toggleFavouriteStop(stop.id)}
@@ -534,6 +546,11 @@ export function StopInfoBar({
             </div>
           ))}
       </div>
+      <RideHailingModal
+        isOpen={rideHailingModalOpen}
+        onClose={() => setRideHailingModalOpen(false)}
+        stop={stop}
+      />
     </div>
   );
 }

@@ -8,6 +8,5 @@
     "src/hooks/useParentStopSearch.ts",
     "vitest.shims.d.ts"
   ],
-  "ignoreDependencies": ["@vitest/coverage-v8"],
-  "ignoreBinaries": ["audit"]
+  "ignoreDependencies": ["@vitest/coverage-v8", "@secretlint/secretlint-rule-preset-recommend"]
 }
