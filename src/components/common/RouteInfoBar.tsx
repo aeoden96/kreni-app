@@ -11,7 +11,7 @@
 
 import type { TFunction } from 'i18next';
 
-import { Bus, MapPin, Maximize2, Navigation, Star, Train, X } from 'lucide-react';
+import { ArrowRight, Bus, MapPin, Maximize2, Navigation, Star, Train, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import type { Route, RouteTimetable, Stop } from '../../utils/gtfs';
@@ -212,11 +212,9 @@ export function RouteInfoBar({
         )
       : null;
 
-  // ── Header display name ────────────────────────────────────────────────────
-  const displayName =
-    hasVehiclePreview && clickedVehicle!.headsign && clickedVehicle!.headsign !== route.longName
-      ? `→ ${clickedVehicle!.headsign}`
-      : route.longName;
+  // ── Header: route name, or vehicle headsign with a vector arrow (avoid U+2192 — poor mobile font alignment)
+  const showHeadsignInsteadOfRouteName =
+    hasVehiclePreview && !!clickedVehicle!.headsign && clickedVehicle!.headsign !== route.longName;
 
   return (
     <div
@@ -242,8 +240,19 @@ export function RouteInfoBar({
               {route.shortName}
             </span>
             {/* Route name or vehicle headsign */}
-            <h3 className="font-bold text-base leading-tight text-base-content truncate">
-              {displayName}
+            <h3 className="font-bold text-base leading-tight text-base-content truncate flex items-center gap-1 min-w-0">
+              {showHeadsignInsteadOfRouteName ? (
+                <>
+                  <ArrowRight
+                    aria-hidden
+                    className="w-4 h-4 shrink-0 text-base-content/60 self-center"
+                    strokeWidth={2.5}
+                  />
+                  <span className="truncate">{clickedVehicle!.headsign}</span>
+                </>
+              ) : (
+                route.longName
+              )}
             </h3>
           </div>
 
@@ -257,7 +266,7 @@ export function RouteInfoBar({
               <Star
                 className="w-4 h-4"
                 color={isFav ? '#f59e0b' : 'currentColor'}
-                fill={isFav ? 'currentColor' : 'none'}
+                fill={isFav ? '#f59e0b' : 'none'}
               />
             </button>
             {/* Follow button — only shown when a vehicle is clicked but not yet followed */}

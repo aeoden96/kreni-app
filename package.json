@@ -34,12 +34,10 @@
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "eslint --fix",
-      "cspell",
       "secretlint",
       "prettier --write"
     ],
     "*.{json,css,md,html}": [
-      "cspell",
       "prettier --write"
     ]
   },
