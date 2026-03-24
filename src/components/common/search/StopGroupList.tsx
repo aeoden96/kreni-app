@@ -100,7 +100,7 @@ export function StopGroupList({
                   <Star
                     className="w-4 h-4"
                     color={isFav ? '#f59e0b' : 'currentColor'}
-                    fill={isFav ? 'currentColor' : 'none'}
+                    fill={isFav ? '#f59e0b' : 'none'}
                   />
                 </button>
               </div>

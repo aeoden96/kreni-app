@@ -81,7 +81,7 @@ export const BikeStations = memo(function BikeStations({ show, stations }: BikeS
                     title={isFav ? t('search.favouriteRemove') : t('search.favouriteAdd')}
                     type="button"
                   >
-                    <Star className="h-4 w-4" fill={isFav ? 'currentColor' : 'none'} />
+                    <Star className="h-4 w-4" fill={isFav ? '#f59e0b' : 'none'} />
                   </button>
                 </div>
               </div>
