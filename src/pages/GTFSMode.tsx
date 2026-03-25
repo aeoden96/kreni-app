@@ -7,7 +7,7 @@
  */
 
 import { Search, Train, X } from 'lucide-react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { RealtimeStatusPanelHandle } from '../components/common/RealtimeStatusPanel';
@@ -24,6 +24,7 @@ import { SearchModal } from '../components/common/SearchModal';
 import { StopInfoBar } from '../components/common/StopInfoBar';
 import { StopModal } from '../components/common/StopModal';
 import { MapView } from '../components/Map/MapView';
+import { MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD } from '../components/Map/mapZoomConstants';
 import { GTFSModeProvider } from '../contexts/GTFSModeContext';
 import { useAllVehiclePositions } from '../hooks/useAllVehiclePositions';
 import { useCongestionData } from '../hooks/useCongestionData';
@@ -39,6 +40,7 @@ import { useRssServiceAlerts } from '../hooks/useRssServiceAlerts';
 import { useSelectionParams } from '../hooks/useSelectionParams';
 import { useVehicleFollow } from '../hooks/useVehicleFollow';
 import { useVehiclePositions } from '../hooks/useVehiclePositions';
+import { useNavigationStore } from '../stores/navigationStore';
 import { useRealtimeStore } from '../stores/realtimeStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { trackEvent } from '../utils/analytics';
@@ -54,6 +56,14 @@ export function GTFSMode({ config }: GTFSModeProps) {
   const [routeModalOpen, setRouteModalOpen] = useState(false);
   const [stopModalOpen, setStopModalOpen] = useState(false);
   const [nearbyOpen, setNearbyOpen] = useState(false);
+  const [nearbyStopsListExpanded, setNearbyStopsListExpanded] = useState(false);
+
+  const setNearbyPanelOpen = useCallback((open: boolean) => {
+    setNearbyOpen(open);
+    if (!open) {
+      setNearbyStopsListExpanded(false);
+    }
+  }, []);
 
   const realtimePanelRef = useRef<RealtimeStatusPanelHandle>(null);
   /** Close Legend and "tehnički detalji" when user performs other actions (stop click, location, etc.) */
@@ -112,7 +122,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
     closeLegendAndDetails,
     config,
     selectStop,
-    setNearbyOpen,
+    setNearbyOpen: setNearbyPanelOpen,
     stops,
     stopsById,
   });
@@ -197,10 +207,31 @@ export function GTFSMode({ config }: GTFSModeProps) {
       clearStop();
       closeLegendAndDetails();
       setNearbyOpen(true);
+      setNearbyStopsListExpanded(false);
     },
     [clearStop, closeLegendAndDetails]
   );
   const { locateError, userLocation } = useGeolocation(onLocateSuccess);
+
+  const triggerLocate = useNavigationStore((s) => s.triggerLocate);
+  const prevNearbyListExpandedRef = useRef(false);
+
+  /** After expanding the nearby list on mobile, re-fly so the user marker clears the sheet. */
+  useEffect(() => {
+    if (!nearbyOpen || !userLocation) {
+      prevNearbyListExpandedRef.current = nearbyStopsListExpanded;
+      return;
+    }
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+    if (!isMobile) {
+      prevNearbyListExpandedRef.current = nearbyStopsListExpanded;
+      return;
+    }
+    if (nearbyStopsListExpanded && !prevNearbyListExpandedRef.current) {
+      triggerLocate();
+    }
+    prevNearbyListExpandedRef.current = nearbyStopsListExpanded;
+  }, [nearbyOpen, nearbyStopsListExpanded, userLocation, triggerLocate]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -305,7 +336,10 @@ export function GTFSMode({ config }: GTFSModeProps) {
           followedVehiclePos={followedVehiclePos}
           highlightStopIds={activeHighlightStopIds}
           locationPanOffsetY={
-            nearbyOpen && typeof window !== 'undefined' && window.innerWidth < 640
+            nearbyOpen &&
+            nearbyStopsListExpanded &&
+            typeof window !== 'undefined' &&
+            window.innerWidth < 640
               ? -Math.round(window.innerHeight / 4)
               : 0
           }
@@ -381,7 +415,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
         )}
 
         {/* Low-zoom hint when vehicles and stops are hidden (transit only) */}
-        {config.hasRealtime && mapZoom <= 14 && (
+        {config.hasRealtime && mapZoom <= MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD && (
           <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[1000]">
             <div className="badge badge-neutral gap-2 shadow text-xs sm:text-sm opacity-90 whitespace-nowrap">
               <span className="w-2 h-2 rounded-full bg-base-content/60" />
@@ -585,9 +619,9 @@ export function GTFSMode({ config }: GTFSModeProps) {
         {userLocation && (
           <NearbyStopsModal
             isOpen={nearbyOpen}
-            onClose={() => {
-              setNearbyOpen(false);
-            }}
+            listExpanded={nearbyStopsListExpanded}
+            onClose={() => setNearbyPanelOpen(false)}
+            onListExpandedChange={setNearbyStopsListExpanded}
             onSelectStop={handleSelectStopFromNearby}
             stops={platformStops}
             userLat={userLocation.lat}

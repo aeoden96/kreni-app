@@ -68,9 +68,12 @@ const en = {
       tabRoutes: 'Lines',
     },
     nearbyStops: {
+      collapsedHint: '{{count}} stops nearby — open list',
+      collapseList: 'Hide stop list',
       distanceKm: '{{km}} km',
       distanceMeters: '{{meters}} m',
       empty: 'No stops nearby',
+      expandList: 'Show stop list',
       subtitle: 'Sorted by distance from your location',
       title: 'Nearby stops',
     },

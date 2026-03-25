@@ -123,24 +123,35 @@ function MapLocater({
   });
 
   const locateTrigger = useNavigationStore((s) => s.locateTrigger);
-  const lastTriggerRef = useRef(0);
+  /** `triggerLocate()` runs in the same sync turn as `setUserLocation`; React may not
+   *  have committed coords yet, so we wait until `userLocation` is non-null before flying. */
+  const lastProcessedTriggerRef = useRef(0);
+  const pendingLocateFlyRef = useRef(false);
 
   useEffect(() => {
-    if (userLocation && locateTrigger > lastTriggerRef.current) {
-      lastTriggerRef.current = locateTrigger;
-      const zoom = 16;
-      const offsetY = panOffsetYRef.current;
-      if (offsetY !== 0) {
-        // Pre-shift the fly target so the location marker lands in the
-        // upper centre once the bottom sheet is visible — single animation.
-        const point = map.project([userLocation.lat, userLocation.lon], zoom);
-        const adjusted = map.unproject(L.point(point.x, point.y + offsetY), zoom);
-        map.flyTo(adjusted, zoom, { duration: 1.5 });
-      } else {
-        map.flyTo([userLocation.lat, userLocation.lon], zoom, { duration: 1.5 });
-      }
+    if (locateTrigger > lastProcessedTriggerRef.current) {
+      lastProcessedTriggerRef.current = locateTrigger;
+      pendingLocateFlyRef.current = true;
     }
-    // panOffsetY intentionally omitted from deps — read via ref to avoid re-flying when modal closes.
+  }, [locateTrigger]);
+
+  useEffect(() => {
+    if (!userLocation || !pendingLocateFlyRef.current) return;
+    pendingLocateFlyRef.current = false;
+
+    const zoom = 16;
+    const offsetY = panOffsetYRef.current;
+    if (offsetY !== 0) {
+      // Pre-shift the fly target so the location marker lands in the
+      // upper centre once the bottom sheet is visible — single animation.
+      const point = map.project([userLocation.lat, userLocation.lon], zoom);
+      const adjusted = map.unproject(L.point(point.x, point.y + offsetY), zoom);
+      map.flyTo(adjusted, zoom, { duration: 1.5 });
+    } else {
+      map.flyTo([userLocation.lat, userLocation.lon], zoom, { duration: 1.5 });
+    }
+    // `locateTrigger` in deps so a later trigger (e.g. expand list on mobile) re-flies;
+    // panOffsetY is read via ref at fly time.
   }, [userLocation, map, locateTrigger]);
   return null;
 }
