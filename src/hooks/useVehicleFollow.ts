@@ -55,11 +55,18 @@ export function useVehicleFollow(
     setFollowedVehicleTripId(null);
   }, []);
 
+  /** Leave single-vehicle / follow UI and return to the route vehicle list. */
+  const handleBackToRouteOverview = useCallback(() => {
+    setLastClickedVehicle(null);
+    setFollowedVehicleTripId(null);
+  }, []);
+
   return {
     followedTripUpdate,
     followedVehicleParsedPos: followedRawPos,
     followedVehiclePos,
     followedVehicleTripId,
+    handleBackToRouteOverview,
     handleFollowDisengage,
     handleFollowStart,
     handleUnfollow,

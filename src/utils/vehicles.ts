@@ -6,8 +6,9 @@
  * future reference or fallback purposes.
  */
 
-import type { ActiveTrip, Route } from './gtfs';
-import type { ParsedTripUpdate, ParsedVehiclePosition } from './realtime';
+import type { ActiveTrip, Route, RouteTimetable, Stop } from './gtfs';
+
+import { type ParsedTripUpdate, type ParsedVehiclePosition, VehicleStopStatus } from './realtime';
 
 export interface AllVehiclePosition extends VehiclePosition {
   routeId: string;
@@ -29,6 +30,26 @@ export interface VehiclePosition {
   timestamp?: number; // POSIX timestamp of the GPS fix
   tripId: string;
   vehicleId?: string;
+}
+
+/** Maps to `t('routeBar.<kind>')` in the UI. */
+type RouteVehicleStopLabelKind = 'arrivingAt' | 'atStop' | 'nextStop';
+
+interface RouteVehicleStopPreview {
+  currentStop: null | Stop;
+  currentStopId: string | undefined;
+  derivedNextStop: null | Stop;
+  derivedNextStopId: null | string;
+  /** Fractional index along `orderedStopIdsForSort` (for ordering vehicles on a direction). */
+  directionSortProgress: number;
+  gpsNextStop: null | Stop;
+  gpsPrimaryIdx: number;
+  labelKind: null | RouteVehicleStopLabelKind;
+  /** Resolved index for timetable primary row + upcoming stops; -1 if unknown. */
+  primaryIdx: number;
+  stopDetail: null | string;
+  stopStatus: ParsedVehiclePosition['status'];
+  tripStops: [string, number, number][] | null;
 }
 
 /**
@@ -77,6 +98,128 @@ export function computeVehicleStopProgress(
   }
 
   return bestIndex;
+}
+
+/**
+ * GPS-first next-stop resolution for a single trip (same rules as RouteInfoBar).
+ * Optionally computes `directionSortProgress` when `orderedStopIdsForSort` is provided.
+ */
+export function getRouteVehicleStopPreview(args: {
+  orderedStopIdsForSort?: string[];
+  routeTimetable?: null | RouteTimetable;
+  stopsById: Map<string, Stop>;
+  tripId: string;
+  tripUpdate?: null | ParsedTripUpdate;
+  vehicleLat: number;
+  vehicleLon: number;
+  vehiclePos?: null | ParsedVehiclePosition;
+}): RouteVehicleStopPreview {
+  const {
+    orderedStopIdsForSort,
+    routeTimetable,
+    stopsById,
+    tripId,
+    tripUpdate,
+    vehicleLat,
+    vehicleLon,
+    vehiclePos,
+  } = args;
+
+  const tripStops = routeTimetable?.[tripId] ?? null;
+
+  const currentStopId = vehiclePos?.currentStopId;
+  const stopStatus = vehiclePos?.status;
+  const currentStop =
+    currentStopId !== undefined && currentStopId !== ''
+      ? (stopsById.get(currentStopId) ?? null)
+      : null;
+
+  const stopUpdates = tripUpdate?.stopTimeUpdates ?? [];
+  const derivedNextStopId = !currentStop && stopUpdates.length > 0 ? stopUpdates[0].stopId : null;
+  const derivedNextStop =
+    derivedNextStopId !== null ? (stopsById.get(derivedNextStopId) ?? null) : null;
+
+  let gpsPrimaryIdx = -1;
+  if (vehiclePos && tripStops) {
+    const coords: Array<{ lat: number; lon: number }> = [];
+    for (const [stopId] of tripStops) {
+      const s = stopsById.get(stopId);
+      if (!s) {
+        coords.length = 0;
+        break;
+      }
+      coords.push({ lat: s.lat, lon: s.lon });
+    }
+    if (coords.length >= 2) {
+      const progress = computeVehicleStopProgress(
+        vehiclePos.latitude,
+        vehiclePos.longitude,
+        coords
+      );
+      gpsPrimaryIdx = Math.min(Math.ceil(progress), tripStops.length - 1);
+    }
+  }
+
+  const gpsNextStop =
+    gpsPrimaryIdx !== -1 && tripStops ? (stopsById.get(tripStops[gpsPrimaryIdx][0]) ?? null) : null;
+
+  let primaryIdx = gpsPrimaryIdx;
+  if (primaryIdx === -1 && tripStops) {
+    const primaryId = currentStopId || derivedNextStopId;
+    primaryIdx = primaryId ? tripStops.findIndex(([id]) => id === primaryId) : -1;
+  }
+
+  let labelKind: null | RouteVehicleStopLabelKind = null;
+  let stopDetail: null | string = null;
+  if (gpsNextStop) {
+    labelKind = 'nextStop';
+    stopDetail = gpsNextStop.name;
+  } else if (currentStop) {
+    if (stopStatus === VehicleStopStatus.STOPPED_AT) {
+      labelKind = 'atStop';
+      stopDetail = currentStop.name;
+    } else if (stopStatus === VehicleStopStatus.INCOMING_AT) {
+      labelKind = 'arrivingAt';
+      stopDetail = currentStop.name;
+    } else {
+      labelKind = 'nextStop';
+      stopDetail = currentStop.name;
+    }
+  } else if (derivedNextStop) {
+    labelKind = 'nextStop';
+    stopDetail = derivedNextStop.name;
+  }
+
+  let directionSortProgress = 0;
+  if (orderedStopIdsForSort?.length) {
+    const coords: Array<{ lat: number; lon: number }> = [];
+    for (const id of orderedStopIdsForSort) {
+      const s = stopsById.get(id);
+      if (!s) {
+        coords.length = 0;
+        break;
+      }
+      coords.push({ lat: s.lat, lon: s.lon });
+    }
+    if (coords.length >= 2) {
+      directionSortProgress = computeVehicleStopProgress(vehicleLat, vehicleLon, coords);
+    }
+  }
+
+  return {
+    currentStop,
+    currentStopId,
+    derivedNextStop,
+    derivedNextStopId,
+    directionSortProgress,
+    gpsNextStop,
+    gpsPrimaryIdx,
+    labelKind,
+    primaryIdx,
+    stopDetail,
+    stopStatus,
+    tripStops,
+  };
 }
 
 /**

@@ -171,6 +171,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
     followedVehicleParsedPos,
     followedVehiclePos,
     followedVehicleTripId,
+    handleBackToRouteOverview,
     handleFollowDisengage,
     handleFollowStart,
     handleUnfollow,
@@ -491,14 +492,18 @@ export function GTFSMode({ config }: GTFSModeProps) {
                 followCandidateTripId={isFollowing ? null : clickedTripId}
                 followedVehiclePos={followedVehicleParsedPos}
                 isFollowing={isFollowing}
+                onBackToRouteOverview={handleBackToRouteOverview}
                 onClose={handleClearRoute}
                 onExpand={handleExpandRoute}
                 onFollowStart={handleFollowStart}
                 onUnfollow={handleUnfollow}
+                onVehicleSelect={handleVehicleSelect}
                 orderedStops={orderedStops}
                 route={selectedRoute}
                 routeTimetable={routeTimetable}
                 stopsById={stopsById}
+                tripUpdates={tripUpdates}
+                vehiclePositions={vehiclePositions}
                 vehicles={vehicles}
               />
             );
