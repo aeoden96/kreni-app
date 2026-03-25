@@ -187,11 +187,17 @@ const en = {
     routeBar: {
       arrivingAt: 'Arriving at',
       atStop: 'At stop',
+      backToRouteOverview: 'All vehicles on route',
       delayEarly: '{{time}} early',
       delayLate: '+{{time}} late',
+      gpsActiveNoStop: 'GPS active · no stop data yet',
+      liveVehiclesOnRoute: 'Live vehicles on route',
       nextStop: 'Next stop',
       noActiveVehicles: 'No active vehicles',
       onTime: 'on time',
+      oppositeTerminusNote: 'Still at terminus',
+      positionUnknown: 'Position unknown',
+      waitingGpsSignal: 'Waiting for GPS…',
     },
     routeModal: {
       noStops: 'No stops available',

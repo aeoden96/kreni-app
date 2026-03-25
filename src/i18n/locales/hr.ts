@@ -196,11 +196,17 @@ const hr = {
     routeBar: {
       arrivingAt: 'Dolazi na',
       atStop: 'Na postaji',
+      backToRouteOverview: 'Sva vozila na liniji',
       delayEarly: '{{time}} ispred',
       delayLate: '+{{time}} kašnjenje',
+      gpsActiveNoStop: 'GPS aktivan · nema podataka o postaji',
+      liveVehiclesOnRoute: 'Aktivna vozila na liniji',
       nextStop: 'Sljedeća postaja',
       noActiveVehicles: 'Nema aktivnih vozila',
       onTime: 'na vrijeme',
+      oppositeTerminusNote: 'Još je na krajnoj postaji',
+      positionUnknown: 'Položaj nepoznat',
+      waitingGpsSignal: 'Čeka se GPS signal…',
     },
     routeModal: {
       noStops: 'Nema dostupnih stajališta',

@@ -180,11 +180,17 @@ const de = {
     routeBar: {
       arrivingAt: 'Fährt ein nach',
       atStop: 'An der Haltestelle',
+      backToRouteOverview: 'Alle Fahrzeuge auf der Linie',
       delayEarly: '{{time}} zu früh',
       delayLate: '+{{time}} Verspätung',
+      gpsActiveNoStop: 'GPS aktiv · noch keine Haltestellendaten',
+      liveVehiclesOnRoute: 'Aktive Fahrzeuge auf der Linie',
       nextStop: 'Nächste Haltestelle',
       noActiveVehicles: 'Keine aktiven Fahrzeuge',
       onTime: 'pünktlich',
+      oppositeTerminusNote: 'Noch am Endpunkt',
+      positionUnknown: 'Position unbekannt',
+      waitingGpsSignal: 'Warte auf GPS…',
     },
     routeModal: {
       noStops: 'Keine Haltestellen verfügbar',
