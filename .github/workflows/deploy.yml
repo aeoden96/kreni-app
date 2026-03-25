@@ -1,8 +1,18 @@
 name: Deploy to Cloudflare Pages
 
 on:
-  release:
-    types: [published]
+  workflow_call:
+    inputs:
+      force_gtfs:
+        description: 'Force re-download and re-process GTFS data (ignore cache)'
+        type: boolean
+        default: false
+        required: false
+      skip_ci:
+        description: 'Skip CI tests'
+        type: boolean
+        default: false
+        required: false
   workflow_dispatch:
     inputs:
       force_gtfs:

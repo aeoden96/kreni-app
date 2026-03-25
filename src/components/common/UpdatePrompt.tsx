@@ -52,10 +52,12 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
     fetch(`${import.meta.env.BASE_URL}changelog.json?t=${Date.now()}`, { cache: 'no-store' })
       .then((r) => (r.ok ? (r.json() as Promise<ReleaseNotes[]>) : null))
       .then((data) => {
-        if (data && Array.isArray(data)) {
+        if (data && Array.isArray(data) && data.length > 0) {
           setFullChangelog(data);
-          const current = data.find((r) => r.version === __APP_VERSION__);
-          if (current) setNotes(current);
+          // Show the latest release (data[0]) — the version the user is
+          // about to update TO.  We can't match __APP_VERSION__ because the
+          // running bundle still has the OLD version baked in.
+          setNotes(data[0]);
         }
       })
       .catch(() => {
@@ -94,7 +96,7 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
               >
                 {t('updatePrompt.title')}
                 <span className="block mt-0.5 text-xs font-normal text-base-content/55">
-                  v{__APP_VERSION__}
+                  v{notes?.version ?? __APP_VERSION__}
                 </span>
               </p>
             </div>
@@ -132,7 +134,7 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
                   </div>
                 ))}
               </div>
-            ) : notes?.version === __APP_VERSION__ && notes.changes.length > 0 ? (
+            ) : notes && notes.changes.length > 0 ? (
               <ul className="space-y-1.5 text-sm text-base-content/70 leading-relaxed">
                 {notes.changes.map((c, i) => (
                   <li className="flex gap-2" key={i}>

@@ -29,6 +29,7 @@ dist-ssr
 *.sw?
 
 dev-dist/
+public/changelog.json
 
 __pycache__/
 
