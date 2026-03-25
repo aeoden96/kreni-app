@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.2.0](https://github.com/aeoden96/kreni-app/compare/v2.1.0...v2.2.0) (2026-03-25)
+
+
+### Features
+
+* enhance route view with vehicle selection and improved stop previews ([#21](https://github.com/aeoden96/kreni-app/issues/21)) ([b9546a0](https://github.com/aeoden96/kreni-app/commit/b9546a0f8d1bfeb31a53988b8b8cc89ee8db6076))
+
+
+### Bug Fixes
+
+* improve map interaction and stop visibility logic ([#19](https://github.com/aeoden96/kreni-app/issues/19)) ([340ce41](https://github.com/aeoden96/kreni-app/commit/340ce4190b788f62bc5fe8cd8a629494f5643c67))
+
 ## [2.1.0](https://github.com/aeoden96/kreni-app/compare/v2.0.0...v2.1.0) (2026-03-24)
 
 
