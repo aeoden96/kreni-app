@@ -70,9 +70,12 @@ const hr = {
       tabRoutes: 'Linije',
     },
     nearbyStops: {
+      collapsedHint: '{{count}} stanica u blizini — otvori popis',
+      collapseList: 'Sakrij popis stanica',
       distanceKm: '{{km}} km',
       distanceMeters: '{{meters}} m',
       empty: 'Nema stanica u blizini',
+      expandList: 'Prikaži popis stanica',
       subtitle: 'Sortirano po udaljenosti od vaše lokacije',
       title: 'Obližnje stanice',
     },

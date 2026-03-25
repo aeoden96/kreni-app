@@ -36,7 +36,7 @@ interface StopMarkersProps {
   highlightStopIds: string[];
   isParentStationView: boolean;
   onStopClick: (stopId: string) => void;
-  /** 0-1 factor applied to all marker opacity (individual mode zoom fading). Selected stops always stay at 1. */
+  /** 0 or 1: hide non-selected stops at low zoom (transit); selected stops always stay at 1. */
   opacityFactor?: number;
   parentChildCounts: Map<string, number>; // platform-counts per parent station id
   /** Optional parent station list (used when individual mode wants parent labels/lines) */

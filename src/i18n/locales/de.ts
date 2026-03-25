@@ -68,9 +68,12 @@ const de = {
       tabRoutes: 'Linien',
     },
     nearbyStops: {
+      collapsedHint: '{{count}} Haltestellen in der Nähe — Liste öffnen',
+      collapseList: 'Liste ausblenden',
       distanceKm: '{{km}} km',
       distanceMeters: '{{meters}} m',
       empty: 'Keine Haltestellen in der Nähe',
+      expandList: 'Liste anzeigen',
       subtitle: 'Nach Entfernung von Ihrem Standort sortiert',
       title: 'Haltestellen in der Nähe',
     },

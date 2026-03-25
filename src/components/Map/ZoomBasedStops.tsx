@@ -9,6 +9,7 @@ import type { Route, Stop } from '../../utils/gtfs';
 
 import { useGTFSMode } from '../../contexts/GTFSModeContext';
 import { useMapBounds } from '../../hooks/useMapBounds';
+import { MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD } from './mapZoomConstants';
 import { StopMarkers } from './StopMarkers';
 
 interface ZoomBasedStopsProps {
@@ -83,20 +84,9 @@ export function ZoomBasedStops({
     return parents;
   }, [highlightSet, platformStops]);
 
-  // Always show platform stops; opacity scales with zoom.
-  // zoom >= 17  → factor 1.0 (fully visible)
-  // 14 < zoom < 17 → linearly 0 → 1
-  // zoom <= 14  → factor 0 (invisible)
-  // In train mode (alwaysShowStops) stops are always fully visible.
-  const FADE_MIN = 14;
-  const FADE_MAX = 17;
-  const opacityFactor = alwaysShowStops
-    ? 1
-    : zoom >= FADE_MAX
-      ? 1
-      : zoom <= FADE_MIN
-        ? 0
-        : (zoom - FADE_MIN) / (FADE_MAX - FADE_MIN);
+  // Transit: either full-opacity stops or none — same threshold as the
+  // "zoom in" badge (MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD). Train mode always shows stops.
+  const opacityFactor = alwaysShowStops || zoom > MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD ? 1 : 0;
 
   let visiblePlatforms = platformStops.filter((s) => bounds.contains([s.lat, s.lon]));
   // When a route is selected, only show stops on that route (always keep the selected stop).
