@@ -9,7 +9,7 @@
  *       { vehicleId: 'v1', tripId: '0_20_101_1_10007', routeId: '1', lat: 45.815, lng: 15.982 },
  *     ]);
  *     await page.goto('/');
- *     // The app calls http://localhost:9999/?endpoint=vehicle-positions
+ *     // The app polls http://localhost:9999/?endpoint=vehicle-positions once per cycle
  *     // which page.route() intercepts and fulfills with the protobuf binary.
  *   });
  *

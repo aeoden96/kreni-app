@@ -28,31 +28,24 @@ beforeEach(() => {
 });
 
 it('propagates worker metadata from fetchRealtimeFeed to the store', async () => {
-  const { fetchRealtimeFeed } = (await import('../utils/realtime')) as any;
+  const { fetchRealtimeFeed, REALTIME_COMBINED_FEED_ENDPOINT } =
+    (await import('../utils/realtime')) as any;
 
-  fetchRealtimeFeed
-    .mockResolvedValueOnce({
-      feed: { entity: [], header: { timestamp: 0 } },
-      metadata: {
-        cacheAgeSeconds: 4,
-        cacheStatus: 'HIT',
-        fetchTimeMs: 123,
-        httpStatus: 200,
-        workerTimestamp: '2026-03-14T20:45:10Z',
-      },
-    })
-    .mockResolvedValueOnce({
-      feed: { entity: [], header: { timestamp: 0 } },
-      metadata: {
-        cacheAgeSeconds: null,
-        cacheStatus: null,
-        fetchTimeMs: 98,
-        httpStatus: 200,
-        workerTimestamp: null,
-      },
-    });
+  fetchRealtimeFeed.mockResolvedValueOnce({
+    feed: { entity: [], header: { timestamp: 0 } },
+    metadata: {
+      cacheAgeSeconds: 4,
+      cacheStatus: 'HIT',
+      fetchTimeMs: 123,
+      httpStatus: 200,
+      workerTimestamp: '2026-03-14T20:45:10Z',
+    },
+  });
 
   await useRealtimeStore.getState().fetchAll();
+
+  expect(fetchRealtimeFeed).toHaveBeenCalledTimes(1);
+  expect(fetchRealtimeFeed).toHaveBeenCalledWith(REALTIME_COMBINED_FEED_ENDPOINT);
 
   const state = useRealtimeStore.getState();
   expect(state.workerTimestamp).toBe('2026-03-14T20:45:10Z');

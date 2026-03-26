@@ -16,6 +16,12 @@ const GtfsRealtimeBindings: typeof _GtfsRT = ((_GtfsRT as any).default ??
   _GtfsRT) as typeof _GtfsRT;
 import { GTFS_API_KEY, GTFS_PROXY_URL } from '../config';
 
+/**
+ * Worker query param for the ZET combined GTFS-RT protobuf (vehicles + trip updates + alerts).
+ * `trip-updates` is an alias on the worker with the same upstream payload and shared cache.
+ */
+export const REALTIME_COMBINED_FEED_ENDPOINT = 'vehicle-positions' as const;
+
 // ============================================
 // Enums — `erasableSyntaxOnly` is enabled, so native TypeScript
 // `enum` declarations are not allowed. Use const objects + type aliases.

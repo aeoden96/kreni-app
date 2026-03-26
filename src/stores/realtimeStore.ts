@@ -16,6 +16,7 @@ import {
   parseServiceAlerts,
   parseTripUpdates,
   parseVehiclePositions,
+  REALTIME_COMBINED_FEED_ENDPOINT,
   type VehicleSnapshot,
 } from '../utils/realtime';
 
@@ -34,7 +35,7 @@ interface RealtimeState {
   clear: () => void;
   /** Error from the last failed fetch, null if last fetch succeeded */
   error: Error | null;
-  /** Fetch both vehicle-positions and trip-updates feeds in parallel */
+  /** Fetch combined GTFS-RT feed once per poll; parse vehicles, trip updates, and alerts */
   fetchAll: () => Promise<void>;
   /** Last fetch round-trip time (ms) measured when contacting the proxy */
   fetchLatencyMs: null | number;
@@ -76,18 +77,12 @@ export const useRealtimeStore = create<RealtimeState>()((set) => ({
     set({ loading: true });
 
     try {
-      const [vehicleRes, tripRes] = await Promise.all([
-        fetchRealtimeFeed('vehicle-positions'),
-        fetchRealtimeFeed('trip-updates'),
-      ]);
+      const { feed, metadata } = await fetchRealtimeFeed(REALTIME_COMBINED_FEED_ENDPOINT);
 
-      const { feed: vehicleFeed, metadata } = vehicleRes;
-      const { feed: tripFeed } = tripRes;
-
-      const positions = parseVehiclePositions(vehicleFeed);
-      const updates = parseTripUpdates(tripFeed);
-      const alerts = parseServiceAlerts(vehicleFeed);
-      const stats = getFeedStatistics(vehicleFeed);
+      const positions = parseVehiclePositions(feed);
+      const updates = parseTripUpdates(feed);
+      const alerts = parseServiceAlerts(feed);
+      const stats = getFeedStatistics(feed);
 
       const vehiclePositions = new Map<string, ParsedVehiclePosition>();
       for (const pos of positions) {
