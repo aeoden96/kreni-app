@@ -59,7 +59,26 @@ jobs:
           python-version: '3.12'
 
       - name: Download GTFS data
-        run: curl -L https://www.zet.hr/gtfs-scheduled/latest -o gtfs.zip
+        run: |
+          VERSION_FILE=".gtfs-static-version"
+          if [ -f "$VERSION_FILE" ]; then
+            VERSION="$(tr -d '[:space:]' < "$VERSION_FILE")"
+          else
+            VERSION="latest"
+          fi
+
+          if [ "$VERSION" = "latest" ]; then
+            GTFS_URL="https://www.zet.hr/gtfs-scheduled/latest"
+          elif echo "$VERSION" | grep -Eq '^[0-9]{6}$'; then
+            GTFS_URL="https://www.zet.hr/gtfs-scheduled/scheduled-000-${VERSION}.zip"
+          else
+            echo "Invalid GTFS version '$VERSION' in $VERSION_FILE"
+            exit 1
+          fi
+
+          echo "Using GTFS version: $VERSION"
+          echo "Downloading: $GTFS_URL"
+          curl -fL "$GTFS_URL" -o gtfs.zip
 
       - name: Compute GTFS hash
         id: gtfs-hash
