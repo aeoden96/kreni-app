@@ -7,6 +7,14 @@ import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-lea
 import { useNavigationStore } from '../../stores/navigationStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 
+const CYCLOSM_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://www.cyclosm.org/">CyclOSM</a>';
+
+const CYCLOSM_TILE = {
+  attribution: CYCLOSM_ATTRIBUTION,
+  url: 'https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
+} as const;
+
 /** Exposes the Leaflet map instance on window.__leafletMap for E2E tests. */
 function MapTestRef() {
   const map = useMap();
@@ -44,12 +52,15 @@ const TILE_PROVIDERS = {
 
 interface BaseMapProps extends MapContainerProps {
   children?: React.ReactNode;
+  /** When true, use CyclOSM full bike map tiles instead of theme-based CARTO/OSM basemap */
+  cyclosmBasemap?: boolean;
   locationPanOffsetY?: number;
   userLocation?: null | { lat: number; lon: number };
 }
 
 export function BaseMap({
   children,
+  cyclosmBasemap,
   locationPanOffsetY = 0,
   userLocation,
   ...mapProps
@@ -64,7 +75,9 @@ export function BaseMap({
     : theme === 'dark'
       ? 'dark-matter'
       : 'positron';
-  const tileConfig = TILE_PROVIDERS[providerId];
+  const defaultTileConfig = TILE_PROVIDERS[providerId];
+  const tileConfig = cyclosmBasemap ? CYCLOSM_TILE : defaultTileConfig;
+  const tileLayerKey = cyclosmBasemap ? 'cyclosm' : providerId;
 
   return (
     <MapContainer
@@ -81,7 +94,7 @@ export function BaseMap({
       <TileLayer
         attribution={tileConfig.attribution}
         keepBuffer={3}
-        key={providerId}
+        key={tileLayerKey}
         updateWhenIdle={true}
         url={tileConfig.url}
       />
