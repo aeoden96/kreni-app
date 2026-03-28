@@ -1,14 +1,19 @@
 import type { TFunction } from 'i18next';
 
 import L from 'leaflet';
+import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Marker, Polyline, Popup } from 'react-leaflet';
+import { CircleMarker, Marker, Pane, Polyline, Popup } from 'react-leaflet';
 
 import type { RoadClosure } from '../../hooks/useRoadClosures';
 
 import i18n from '../../i18n';
 import { useSettingsStore } from '../../stores/settingsStore';
-import { formatRoadClosureInstant, roadClosureReasonLabel } from '../../utils/roadClosureDisplay';
+import {
+  formatRoadClosureInstant,
+  roadClosureDirectionLabel,
+  roadClosureReasonLabel,
+} from '../../utils/roadClosureDisplay';
 
 interface RoadClosuresProps {
   closures: RoadClosure[];
@@ -22,6 +27,10 @@ export function RoadClosures({ closures, show }: RoadClosuresProps) {
   if (!show || closures.length === 0) return null;
 
   const lineColor = theme === 'dark' ? '#ef4444' : '#dc2626'; // Tailwind red-500 / red-600
+  /** Wide invisible stroke on top of the visible line — easy to tap on touch screens. */
+  const hitStrokeWeight = 30;
+  /** Above default overlayPane (400) so async layers (e.g. parking polygons) stay underneath. */
+  const closurePaneZ = 450;
 
   // Construction icon for point closures (if polyline has no/one point)
   const createConstructionIcon = () =>
@@ -41,25 +50,60 @@ export function RoadClosures({ closures, show }: RoadClosuresProps) {
     });
 
   return (
-    <>
+    <Pane name="zet-road-closures" style={{ zIndex: closurePaneZ }}>
       {closures.map((closure) => {
-        // If it's a valid polyline
+        // If it's a valid polyline: visible line (non-interactive) + wide hit slab + midpoint handle
         if (closure.polyline && closure.polyline.length > 1) {
+          const popup = (
+            <Popup className="road-closure-popup" pane="popupPane">
+              <RoadClosurePopupBody closure={closure} locale={i18n.language} t={t} />
+            </Popup>
+          );
+          const mid = polylineMidpoint(closure.polyline);
+
           return (
-            <Polyline
-              key={closure.id}
-              pathOptions={{
-                color: lineColor,
-                dashArray: '10, 10', // Dashed line to indicate under construction/closed
-                opacity: 0.8,
-                weight: 6,
-              }}
-              positions={closure.polyline}
-            >
-              <Popup className="road-closure-popup">
-                <RoadClosurePopupBody closure={closure} locale={i18n.language} t={t} />
-              </Popup>
-            </Polyline>
+            <Fragment key={closure.id}>
+              <Polyline
+                interactive={false}
+                pathOptions={{
+                  color: lineColor,
+                  dashArray: '10, 10', // Dashed line to indicate under construction/closed
+                  lineCap: 'round',
+                  lineJoin: 'round',
+                  opacity: 0.85,
+                  weight: 7,
+                }}
+                positions={closure.polyline}
+              />
+              <Polyline
+                pathOptions={{
+                  bubblingMouseEvents: false,
+                  color: lineColor,
+                  lineCap: 'round',
+                  lineJoin: 'round',
+                  opacity: 0,
+                  weight: hitStrokeWeight,
+                }}
+                positions={closure.polyline}
+              >
+                {popup}
+              </Polyline>
+              <CircleMarker
+                center={mid}
+                pathOptions={{
+                  color: lineColor,
+                  fillColor: lineColor,
+                  fillOpacity: 0.38,
+                  lineCap: 'round',
+                  lineJoin: 'round',
+                  opacity: 0.95,
+                  weight: 2,
+                }}
+                radius={22}
+              >
+                {popup}
+              </CircleMarker>
+            </Fragment>
           );
         }
 
@@ -68,7 +112,7 @@ export function RoadClosures({ closures, show }: RoadClosuresProps) {
           const point = closure.polyline[0];
           return (
             <Marker icon={createConstructionIcon()} key={closure.id} position={point}>
-              <Popup>
+              <Popup className="road-closure-popup" pane="popupPane">
                 <RoadClosurePopupBody closure={closure} locale={i18n.language} t={t} />
               </Popup>
             </Marker>
@@ -77,8 +121,26 @@ export function RoadClosures({ closures, show }: RoadClosuresProps) {
 
         return null;
       })}
-    </>
+    </Pane>
   );
+}
+
+/** Vertex-based midpoint along the polyline (good enough for a tap handle). */
+function polylineMidpoint(coords: [number, number][]): [number, number] {
+  const n = coords.length;
+  if (n === 0) {
+    return [0, 0];
+  }
+  if (n === 1) {
+    return coords[0];
+  }
+  const mid = (n - 1) / 2;
+  const i = Math.floor(mid);
+  const j = Math.ceil(mid);
+  if (i === j) {
+    return coords[i];
+  }
+  return [(coords[i][0] + coords[j][0]) / 2, (coords[i][1] + coords[j][1]) / 2];
 }
 
 function RoadClosurePopupBody({
@@ -103,9 +165,7 @@ function RoadClosurePopupBody({
         </p>
         <p>
           <strong>{t('roadClosures.directionLabel')}</strong>{' '}
-          {closure.direction === 'BOTH_DIRECTIONS'
-            ? t('roadClosures.bothDirections')
-            : closure.direction}
+          {roadClosureDirectionLabel(closure.direction, t)}
         </p>
         {from ? (
           <p>
