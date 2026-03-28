@@ -1,9 +1,5 @@
 const en = {
   translation: {
-    alertsTab: {
-      emptySubtitle: 'There are no active service alerts right now',
-      emptyTitle: 'No alerts',
-    },
     app: {
       title: 'Kreni — Zagreb live: ZET, Parking, Bikes & City Services',
     },
@@ -49,15 +45,6 @@ const en = {
       directRoutesCount_other: '{{count}} routes',
       pickStops: 'Choose origin and destination',
     },
-    favouritesTab: {
-      emptyHint: 'Add stops and lines to favourites with the ⭐ icon for quick access',
-      favouriteRoutes: 'Favourite lines',
-      favouriteStops: 'Favourite stops',
-      loading: 'Loading…',
-      noFavourites: 'No favourites yet',
-      recentRoutes: 'Recent lines',
-      recentStops: 'Recent stops',
-    },
     feedbackPage: {
       iframeTitle: 'Feedback',
       title: 'Feedback',
@@ -71,14 +58,6 @@ const en = {
       trainNoLiveTracking: 'Live train tracking is not available',
       zoomForStopsAndVehicles: 'Zoom in to show stops and vehicles',
     },
-    listApp: {
-      gpsError: 'GPS error',
-      liveVehicles: '{{count}} live',
-      tabAlerts: 'Alerts',
-      tabFavourites: 'Favourites',
-      tabNearby: 'Nearby',
-      tabRoutes: 'Lines',
-    },
     nearbyStops: {
       collapsedHint: '{{count}} stops nearby — open list',
       collapseList: 'Hide stop list',
@@ -89,19 +68,6 @@ const en = {
       subtitle: 'Sorted by distance from your location',
       title: 'Nearby stops',
     },
-    nearbyTab: {
-      arrivingNow: 'due',
-      emptyHint: 'Allow location access to show the nearest stops',
-      emptyTitle: 'Stops nearby',
-      findMyLocation: 'Find my location',
-      geoNotSupported: 'Geolocation is not available in this browser.',
-      geoPermissionDenied: 'Location unavailable. Check your browser permissions.',
-      minutes_one: '{{count}} min',
-      minutes_other: '{{count}} min',
-      noVehiclesNearby: 'No vehicles nearby',
-      refresh: 'Refresh',
-      sectionTitle: 'Nearest stops',
-    },
     onboarding: {
       cityBody0: 'Find drinking fountains, student restaurants and other city amenities.',
       cityTitle0: 'City life',
@@ -109,8 +75,6 @@ const en = {
       cyclingTitle0: 'Cycling',
       drivingBody0: 'Check traffic and current road closures before you leave.',
       drivingTitle0: 'Driving',
-      listBody0: 'Quick browse of all lines and stops as text, without loading the map.',
-      listTitle0: 'List view',
       modeSwitchBody:
         'Tap the main button top right (Spider menu) to switch quickly between public transport, cycling, driving and city content.',
       modeSwitchTitle: 'Switching modes',
@@ -126,12 +90,9 @@ const en = {
       transitBody1: 'Tap a stop on the map to open details and check arrivals and departures.',
       transitBody2:
         'When you tap a group of stops or vehicles, a picker opens so you can choose exactly what to follow.',
-      transitBody3:
-        'Besides the map, a list view is available — handy when you only want to find a line without the map.',
       transitTitle0: 'Public transport',
       transitTitle1: 'Stop details',
       transitTitle2: 'Precise selection',
-      transitTitle3: 'Map or list',
       welcomeBody: 'Your live guide to Zagreb transit, cycling, and city services.',
       welcomeTitle: 'Welcome to Kreni',
     },
@@ -389,8 +350,6 @@ const en = {
         fountains: 'Fountains',
         freeWifi: 'WiFi',
         garages: 'Garages',
-        list: 'List',
-        map: 'Map',
         pedestrianZones: 'Zones',
         studentRestaurants: 'Canteens',
         zones: 'Zones',

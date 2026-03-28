@@ -1,9 +1,5 @@
 const de = {
   translation: {
-    alertsTab: {
-      emptySubtitle: 'Derzeit keine aktiven Verkehrshinweise',
-      emptyTitle: 'Keine Hinweise',
-    },
     app: {
       title: 'Kreni — Zagreb live: ÖPNV, Parken, Fahrräder & städtische Dienste',
     },
@@ -49,15 +45,6 @@ const de = {
       directRoutesCount_other: '{{count}} Linien',
       pickStops: 'Start und Ziel wählen',
     },
-    favouritesTab: {
-      emptyHint: 'Haltestellen und Linien mit dem ⭐-Symbol zu den Favoriten hinzufügen',
-      favouriteRoutes: 'Lieblingslinien',
-      favouriteStops: 'Lieblingshaltestellen',
-      loading: 'Laden…',
-      noFavourites: 'Noch keine Favoriten',
-      recentRoutes: 'Letzte Linien',
-      recentStops: 'Letzte Haltestellen',
-    },
     feedbackPage: {
       iframeTitle: 'Feedback',
       title: 'Feedback',
@@ -71,14 +58,6 @@ const de = {
       trainNoLiveTracking: 'Live-Zugverfolgung ist nicht verfügbar',
       zoomForStopsAndVehicles: 'Hineinzoomen, um Haltestellen und Fahrzeuge anzuzeigen',
     },
-    listApp: {
-      gpsError: 'GPS-Fehler',
-      liveVehicles: '{{count}} live',
-      tabAlerts: 'Hinweise',
-      tabFavourites: 'Favoriten',
-      tabNearby: 'In der Nähe',
-      tabRoutes: 'Linien',
-    },
     nearbyStops: {
       collapsedHint: '{{count}} Haltestellen in der Nähe — Liste öffnen',
       collapseList: 'Liste ausblenden',
@@ -89,19 +68,6 @@ const de = {
       subtitle: 'Nach Entfernung von Ihrem Standort sortiert',
       title: 'Haltestellen in der Nähe',
     },
-    nearbyTab: {
-      arrivingNow: 'kommt',
-      emptyHint: 'Standortzugriff erlauben, um die nächsten Haltestellen anzuzeigen',
-      emptyTitle: 'Haltestellen in der Nähe',
-      findMyLocation: 'Meinen Standort finden',
-      geoNotSupported: 'Geolocation wird in diesem Browser nicht unterstützt.',
-      geoPermissionDenied: 'Standort nicht verfügbar. Bitte Browser-Berechtigungen prüfen.',
-      minutes_one: '{{count}} Min.',
-      minutes_other: '{{count}} Min.',
-      noVehiclesNearby: 'Keine Fahrzeuge in der Nähe',
-      refresh: 'Aktualisieren',
-      sectionTitle: 'Nächste Haltestellen',
-    },
     onboarding: {
       cityBody0: 'Trinkbrunnen, Mensen und andere städtische Angebote finden.',
       cityTitle0: 'Stadtleben',
@@ -109,8 +75,6 @@ const de = {
       cyclingTitle0: 'Radfahren',
       drivingBody0: 'Verkehr und aktuelle Straßensperrungen vor der Fahrt prüfen.',
       drivingTitle0: 'Autofahren',
-      listBody0: 'Schneller Überblick über alle Linien und Haltestellen als Text, ohne Karte.',
-      listTitle0: 'Listenansicht',
       modeSwitchBody:
         'Tippe oben rechts auf den Hauptknopf (Spider-Menü), um schnell zwischen ÖPNV, Rad, Auto und Stadtinfos zu wechseln.',
       modeSwitchTitle: 'Modus wechseln',
@@ -121,12 +85,9 @@ const de = {
       transitBody1: 'Tippe auf eine Haltestelle, um Details und Ankünfte/Abfahrten zu sehen.',
       transitBody2:
         'Bei Gruppen von Haltestellen oder Fahrzeugen öffnet sich eine Auswahl, damit du genau das wählen kannst, was du verfolgen willst.',
-      transitBody3:
-        'Neben der Karte gibt es eine Listenansicht — praktisch, wenn du nur eine Linie suchst.',
       transitTitle0: 'Öffentlicher Verkehr',
       transitTitle1: 'Haltestellendetails',
       transitTitle2: 'Genaue Auswahl',
-      transitTitle3: 'Karte oder Liste',
     },
     realtimePanel: {
       detailsHeading: 'Technische Details',
@@ -382,8 +343,6 @@ const de = {
         fountains: 'Brunnen',
         freeWifi: 'WLAN',
         garages: 'Garagen',
-        list: 'Liste',
-        map: 'Karte',
         pedestrianZones: 'Zonen',
         studentRestaurants: 'Mensen',
         zones: 'Zonen',

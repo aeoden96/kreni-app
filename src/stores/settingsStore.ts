@@ -7,7 +7,6 @@ import { persist } from 'zustand/middleware';
  * - standard: theme-based map + bike paths GeoJSON (Grad Zagreb / data.zagreb.hr source)
  */
 export type CyclosmMapVariant = 'full' | 'standard';
-type AppMode = 'list' | 'map';
 
 type MapTileProvider = 'dark-matter' | 'osm' | 'positron';
 
@@ -23,7 +22,6 @@ const MAX_RECENTS = 10;
 interface SettingsState {
   addRecentRoute: (id: string) => void;
   addRecentStop: (id: string) => void;
-  appMode: AppMode;
   clearRecents: () => void;
   /** CyclOSM tile style (cycling map, when bike paths layer is shown) */
   cyclosmMapVariant: CyclosmMapVariant;
@@ -55,7 +53,6 @@ interface SettingsState {
   /** Remove specific stop IDs from recents */
   removeRecentStops: (ids: string[]) => void;
   sandboxVisible: boolean;
-  setAppMode: (mode: AppMode) => void;
   setCyclosmMapVariant: (variant: CyclosmMapVariant) => void;
   setDetailedMap: (detailed: boolean) => void;
   setDismissedGpsTip: (dismissed: boolean) => void;
@@ -130,7 +127,6 @@ export const useSettingsStore = create<SettingsState>()(
               recentStops: [{ id, timestamp: Date.now() }, ...filtered].slice(0, MAX_RECENTS),
             };
           }),
-        appMode: 'map',
         clearRecents: () => set({ recentRoutes: [], recentStops: [] }),
         cyclosmMapVariant: 'full',
         detailedMap: true,
@@ -156,7 +152,6 @@ export const useSettingsStore = create<SettingsState>()(
             recentStops: s.recentStops.filter((item) => !ids.includes(item.id)),
           })),
         sandboxVisible: false,
-        setAppMode: (mode) => set({ appMode: mode }),
         setCyclosmMapVariant: (variant) => set({ cyclosmMapVariant: variant }),
         setDetailedMap: (detailed) => set({ detailedMap: detailed }),
         setDismissedGpsTip: (dismissed) => set({ dismissedGpsTip: dismissed }),
@@ -261,6 +256,7 @@ export const useSettingsStore = create<SettingsState>()(
           if (v === 'lite') {
             next.cyclosmMapVariant = 'full';
           }
+          delete next.appMode;
         }
         return next as Partial<SettingsState>;
       },
