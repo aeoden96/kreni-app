@@ -1,6 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+/**
+ * Cycling basemap when Staze (bike paths) is on:
+ * - full: CyclOSM bike map tiles
+ * - standard: theme-based map + bike paths GeoJSON (Grad Zagreb / data.zagreb.hr source)
+ */
+export type CyclosmMapVariant = 'full' | 'standard';
+
 type MapTileProvider = 'dark-matter' | 'osm' | 'positron';
 
 interface RecentItem {
@@ -16,8 +23,11 @@ interface SettingsState {
   addRecentRoute: (id: string) => void;
   addRecentStop: (id: string) => void;
   clearRecents: () => void;
+  /** CyclOSM tile style (cycling map, when bike paths layer is shown) */
+  cyclosmMapVariant: CyclosmMapVariant;
   /** Prefer more detailed map tiles (Standard / HOT) */
   detailedMap: boolean;
+
   /** User dismissed the GPS-vs-timetable info tip in stop view */
   dismissedGpsTip: boolean;
 
@@ -43,6 +53,7 @@ interface SettingsState {
   /** Remove specific stop IDs from recents */
   removeRecentStops: (ids: string[]) => void;
   sandboxVisible: boolean;
+  setCyclosmMapVariant: (variant: CyclosmMapVariant) => void;
   setDetailedMap: (detailed: boolean) => void;
   setDismissedGpsTip: (dismissed: boolean) => void;
   setGlobalOnboardingCompleted: (completed: boolean) => void;
@@ -117,6 +128,7 @@ export const useSettingsStore = create<SettingsState>()(
             };
           }),
         clearRecents: () => set({ recentRoutes: [], recentStops: [] }),
+        cyclosmMapVariant: 'full',
         detailedMap: true,
         dismissedGpsTip: false,
         favouriteNextbikeStationUids: [],
@@ -140,6 +152,7 @@ export const useSettingsStore = create<SettingsState>()(
             recentStops: s.recentStops.filter((item) => !ids.includes(item.id)),
           })),
         sandboxVisible: false,
+        setCyclosmMapVariant: (variant) => set({ cyclosmMapVariant: variant }),
         setDetailedMap: (detailed) => set({ detailedMap: detailed }),
         setDismissedGpsTip: (dismissed) => set({ dismissedGpsTip: dismissed }),
         setGlobalOnboardingCompleted: (completed) => set({ globalOnboardingCompleted: completed }),
@@ -238,6 +251,11 @@ export const useSettingsStore = create<SettingsState>()(
           next.globalOnboardingCompleted = true;
         }
         if (fromVersion < 5) {
+          // Removed CyclOSM lite; map legacy value to full
+          const v = next.cyclosmMapVariant as string | undefined;
+          if (v === 'lite') {
+            next.cyclosmMapVariant = 'full';
+          }
           delete next.appMode;
         }
         return next as Partial<SettingsState>;

@@ -31,21 +31,21 @@ export function FavouriteNextbikePanel({ show, stations }: FavouriteNextbikePane
   return (
     <section
       aria-labelledby={headingId}
-      className="fixed top-[max(0.75rem,env(safe-area-inset-top))] left-[max(0.75rem,env(safe-area-inset-left))] right-[max(0.5rem,calc(7.25rem+env(safe-area-inset-right)))] z-[1900] w-auto max-w-none rounded-lg border border-base-300 bg-base-100/95 py-1.5 pl-1.5 pr-1 shadow-md backdrop-blur-sm sm:right-[max(1rem,calc(9.25rem+env(safe-area-inset-right)))]"
+      className="pointer-events-auto w-full min-w-0 rounded-xl border border-base-200 bg-base-100/95 px-2.5 py-2 shadow-lg backdrop-blur-sm"
     >
       <h2
-        className="mb-1 truncate px-0.5 text-[10px] font-semibold leading-tight text-base-content/90"
+        className="mb-1 truncate px-0.5 text-xs font-semibold uppercase tracking-wide text-base-content/70"
         id={headingId}
       >
         {t('cyclingMode.favouriteNextbikeTitle')}
       </h2>
-      <ul className="max-h-28 space-y-0.5 overflow-y-auto overscroll-contain pr-0.5">
+      <ul className="max-h-28 space-y-1 overflow-y-auto overscroll-contain pr-0.5">
         {favouriteUids.map((uid) => {
           const st = byUid.get(uid);
           const count = st?.bikes_available_to_rent;
           return (
             <li
-              className="flex items-center gap-1 rounded bg-base-200/50 py-0.5 pl-1 pr-0.5 text-[10px] leading-tight"
+              className="flex items-center gap-1 rounded-lg bg-base-200/50 py-1 pl-1.5 pr-1 text-xs leading-tight"
               key={uid}
             >
               <span className="min-w-0 flex-1 truncate font-medium text-base-content">
