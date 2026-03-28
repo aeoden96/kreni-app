@@ -18,6 +18,8 @@ interface CacheData {
   timestamp: number;
 }
 
+type NextbikeNetworkResult = { stations: BajsStation[]; timestamp: number };
+
 const CACHE_KEY = 'kreni-nextbike-cache';
 
 /** How long Nextbike data is considered fresh; also the poll interval when the hook is enabled. */
@@ -26,10 +28,11 @@ const API_URL =
   'https://maps.nextbike.net/maps/nextbike-live.json?city=1172&domains=hd&list_cities=0&bikes=0';
 
 /**
- * Module-level guard so concurrent effect invocations (e.g. React Strict Mode
- * double-invoke) never fire more than one real network request at a time.
+ * Single shared network request so Strict Mode's double effect run does not
+ * leave the second mount with no data: the first invocation may unmount before
+ * the fetch resolves, but the second awaits the same promise and applies state.
  */
-let networkFetchInFlight = false;
+let nextbikeNetworkPromise: null | Promise<NextbikeNetworkResult> = null;
 
 export function useNextbikeData(enabled: boolean) {
   const [stations, setStations] = useState<BajsStation[]>([]);
@@ -85,29 +88,16 @@ export function useNextbikeData(enabled: boolean) {
         }
       }
 
-      // Prevent concurrent fetches (e.g. Strict Mode double-invoke)
-      if (networkFetchInFlight) return;
-      networkFetchInFlight = true;
+      if (!nextbikeNetworkPromise) {
+        nextbikeNetworkPromise = fetchNextbikeFromNetwork().finally(() => {
+          nextbikeNetworkPromise = null;
+        });
+      }
 
       if (isMounted) setLoading(true);
 
       try {
-        const response = await fetch(API_URL);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch nextbike data: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        // Extract Zagreb stations
-        let newStations: BajsStation[] = [];
-        if (data.countries?.[0]?.cities?.[0]) {
-          newStations = data.countries[0].cities[0].places || [];
-        }
-
-        const now = Date.now();
-
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ stations: newStations, timestamp: now }));
+        const { stations: newStations, timestamp: now } = await nextbikeNetworkPromise;
 
         if (isMounted) {
           setStations(newStations);
@@ -120,8 +110,6 @@ export function useNextbikeData(enabled: boolean) {
           setError(err instanceof Error ? err : new Error('Unknown error fetching nextbike data'));
           setLoading(false);
         }
-      } finally {
-        networkFetchInFlight = false;
       }
     };
 
@@ -140,4 +128,23 @@ export function useNextbikeData(enabled: boolean) {
   }, [enabled]);
 
   return { error, lastFetched, loading, stations };
+}
+
+async function fetchNextbikeFromNetwork(): Promise<NextbikeNetworkResult> {
+  const response = await fetch(API_URL);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch nextbike data: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  let newStations: BajsStation[] = [];
+  if (data.countries?.[0]?.cities?.[0]) {
+    newStations = data.countries[0].cities[0].places || [];
+  }
+
+  const now = Date.now();
+  localStorage.setItem(CACHE_KEY, JSON.stringify({ stations: newStations, timestamp: now }));
+
+  return { stations: newStations, timestamp: now };
 }
