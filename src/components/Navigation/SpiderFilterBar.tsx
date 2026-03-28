@@ -1,10 +1,8 @@
-import { List, Map } from 'lucide-react';
 import { useTransition } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 
 import { useSettingsStore } from '../../stores/settingsStore';
-import { trackEvent } from '../../utils/analytics';
 
 type Props = {
   animationDelay?: number;
@@ -53,8 +51,6 @@ export function SpiderFilterBar({ animationDelay = 0, routePath }: Props) {
   const { t } = useTranslation();
 
   const {
-    appMode,
-    setAppMode,
     setShowBikeParkings,
     setShowBikePaths,
     setShowBikeStations,
@@ -80,34 +76,6 @@ export function SpiderFilterBar({ animationDelay = 0, routePath }: Props) {
   if (pathname !== routePath) return null;
 
   const ringClass = ringByPath[routePath] ?? 'ring-primary';
-
-  // ── / ─────────────────────────────────────────────────────────────────────
-  if (routePath === '/') {
-    return (
-      <FilterBarWrapper animationDelay={animationDelay}>
-        <FilterPill
-          active={appMode === 'list'}
-          icon={<List className="w-3 h-3" />}
-          label={t('spiderMenu.toggles.list')}
-          onClick={() => {
-            trackEvent('app_mode_changed', { mode: 'list' });
-            startTransition(() => setAppMode('list'));
-          }}
-          ringClass={ringClass}
-        />
-        <FilterPill
-          active={appMode === 'map'}
-          icon={<Map className="w-3 h-3" />}
-          label={t('spiderMenu.toggles.map')}
-          onClick={() => {
-            trackEvent('app_mode_changed', { mode: 'map' });
-            startTransition(() => setAppMode('map'));
-          }}
-          ringClass={ringClass}
-        />
-      </FilterBarWrapper>
-    );
-  }
 
   // ── /city ──────────────────────────────────────────────────────────────────
   if (routePath === '/city') {

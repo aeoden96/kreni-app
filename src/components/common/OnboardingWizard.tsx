@@ -2,12 +2,10 @@ import {
   Coffee,
   GitMerge,
   Layers,
-  List,
   Map,
   MapPin,
   MousePointerClick,
   Navigation,
-  Smartphone,
   X,
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
@@ -16,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { trackEvent } from '../../utils/analytics';
 
-type OnboardingVariant = 'city' | 'cycling' | 'driving' | 'list' | 'train' | 'transit';
+type OnboardingVariant = 'city' | 'cycling' | 'driving' | 'train' | 'transit';
 
 interface OnboardingWizardProps {
   variant: OnboardingVariant;
@@ -104,15 +102,6 @@ export function OnboardingWizard({ variant }: OnboardingWizardProps) {
           },
           modeSwitchStep,
         ];
-      case 'list':
-        return [
-          {
-            body: t('onboarding.listBody0'),
-            icon: <Smartphone className="w-6 h-6 text-primary" />,
-            title: t('onboarding.listTitle0'),
-          },
-          modeSwitchStep,
-        ];
       case 'train':
         return [
           {
@@ -140,12 +129,6 @@ export function OnboardingWizard({ variant }: OnboardingWizardProps) {
             icon: <MousePointerClick className="w-6 h-6 text-primary" />,
             title: t('onboarding.transitTitle2'),
             video: '/onboarding/spider_selector.webm',
-          },
-          {
-            body: t('onboarding.transitBody3'),
-            icon: <List className="w-6 h-6 text-primary" />,
-            title: t('onboarding.transitTitle3'),
-            video: '/onboarding/public_transport_switch_views.webm',
           },
           modeSwitchStep,
         ];
