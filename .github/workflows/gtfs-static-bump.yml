@@ -1,0 +1,112 @@
+# Probes ZET for scheduled-000-{pin+1}.zip; when it exists, opens a PR bumping .gtfs-static-version.
+# PR title includes feed_start_date from the new zip (merge when appropriate). Logic is in this file only.
+name: GTFS static version bump PR
+
+on:
+  schedule:
+    # Daily 07:00 UTC
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: gtfs-static-bump
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout default branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+
+      - name: Probe next static GTFS and open PR if needed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          VERSION_FILE=".gtfs-static-version"
+
+          if [[ ! -f "$VERSION_FILE" ]]; then
+            echo "No $VERSION_FILE; skipping."
+            exit 0
+          fi
+
+          PIN=$(tr -d '[:space:]' < "$VERSION_FILE")
+          if [[ -z "$PIN" ]]; then
+            echo "Empty pin; skipping."
+            exit 0
+          fi
+          if [[ "$PIN" == "latest" ]]; then
+            echo "Pin is 'latest'; this workflow only supports numeric pins. Skipping."
+            exit 0
+          fi
+          if [[ ${#PIN} -ne 6 || ! "$PIN" =~ ^[0-9]{6}$ ]]; then
+            echo "Invalid pin (need six digits); skipping."
+            exit 0
+          fi
+
+          git fetch origin
+          git checkout "$DEFAULT_BRANCH"
+          git pull origin "$DEFAULT_BRANCH" --ff-only
+
+          PIN=$(tr -d '[:space:]' < "$VERSION_FILE")
+          if [[ -z "$PIN" || "$PIN" == "latest" || ${#PIN} -ne 6 || ! "$PIN" =~ ^[0-9]{6}$ ]]; then
+            echo "After sync, $VERSION_FILE is not a six-digit pin (got ${PIN:-empty}); skipping."
+            exit 0
+          fi
+
+          NEXT=$((10#$PIN + 1))
+          NEXT=$(printf '%06d' "$NEXT")
+
+          ZIP_URL="https://www.zet.hr/gtfs-scheduled/scheduled-000-${NEXT}.zip"
+          CODE=$(curl -sI -o /dev/null -w '%{http_code}' "$ZIP_URL")
+          if [[ "$CODE" != "200" ]]; then
+            echo "Next zip not available (HTTP $CODE): $ZIP_URL"
+            exit 0
+          fi
+
+          BRANCH="chore/gtfs-static-${NEXT}"
+          OPEN=$(gh pr list --state open --head "$BRANCH" --json number --jq 'length')
+          if [[ "$OPEN" -gt 0 ]]; then
+            echo "Open PR already exists for head $BRANCH; skipping."
+            exit 0
+          fi
+
+          curl -fL "$ZIP_URL" -o gtfs.zip
+          # One-line CSV read: column order in feed_info.txt is not fixed; bash/cut is unsafe.
+          START_RAW="$(python3 -c 'import csv,io,zipfile,sys; z=zipfile.ZipFile("gtfs.zip"); r=next(csv.DictReader(io.TextIOWrapper(z.open("feed_info.txt"),encoding="utf-8")),None); (not r and sys.exit(1)); v=(r.get("feed_start_date") or "").strip(); (not v and sys.exit(1)); print(v)')"
+          rm -f gtfs.zip
+
+          if [[ ${#START_RAW} -eq 8 && "$START_RAW" =~ ^[0-9]+$ ]]; then
+            EFFECTIVE="${START_RAW:0:4}-${START_RAW:4:2}-${START_RAW:6:2}"
+          else
+            EFFECTIVE="$START_RAW"
+          fi
+
+          TITLE="chore(gtfs): bump static feed to ${NEXT} (effective ${EFFECTIVE})"
+          PR_BODY=$(mktemp)
+          {
+            echo "Automated proposal: ZET \`scheduled-000-${NEXT}.zip\` is available."
+            echo ""
+            echo "- **feed_start_date** (from \`feed_info.txt\`): \`${START_RAW}\` (${EFFECTIVE})"
+            echo "- Merge when appropriate for your release process."
+          } >"$PR_BODY"
+
+          git checkout -B "$BRANCH" "$DEFAULT_BRANCH"
+          printf '%s\n' "$NEXT" > "$VERSION_FILE"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add "$VERSION_FILE"
+          git commit -m "$TITLE"
+          git push -u origin "$BRANCH" --force-with-lease
+
+          gh pr create --base "$DEFAULT_BRANCH" --head "$BRANCH" --title "$TITLE" --body-file "$PR_BODY"
+          rm -f "$PR_BODY"
