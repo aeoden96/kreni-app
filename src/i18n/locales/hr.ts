@@ -1,9 +1,5 @@
 const hr = {
   translation: {
-    alertsTab: {
-      emptySubtitle: 'Trenutno nema aktivnih prometnih obavijesti',
-      emptyTitle: 'Nema obavijesti',
-    },
     app: {
       title: 'Kreni — Zagreb uživo: ZET, Parking, Bicikli i Gradske usluge',
     },
@@ -39,15 +35,6 @@ const hr = {
       directRoutesCount_other: '{{count}} linija',
       pickStops: 'Odaberite polazište i odredište',
     },
-    favouritesTab: {
-      emptyHint: 'Dodajte stanice i linije u favorite koristeći ⭐ ikonu za brzi pristup',
-      favouriteRoutes: 'Omiljene linije',
-      favouriteStops: 'Omiljene stanice',
-      loading: 'Učitavanje...',
-      noFavourites: 'Nema favorita',
-      recentRoutes: 'Nedavne linije',
-      recentStops: 'Nedavne stanice',
-    },
     feedbackPage: {
       iframeTitle: 'Povratne informacije',
       title: 'Povratne informacije',
@@ -61,14 +48,6 @@ const hr = {
       trainNoLiveTracking: 'Live praćenje vlakova nije dostupno',
       zoomForStopsAndVehicles: 'Zumiraj za prikaz stanica i vozila',
     },
-    listApp: {
-      gpsError: 'GPS greška',
-      liveVehicles: '{{count}} uživo',
-      tabAlerts: 'Obavijesti',
-      tabFavourites: 'Favoriti',
-      tabNearby: 'U blizini',
-      tabRoutes: 'Linije',
-    },
     nearbyStops: {
       collapsedHint: '{{count}} stanica u blizini — otvori popis',
       collapseList: 'Sakrij popis stanica',
@@ -79,20 +58,6 @@ const hr = {
       subtitle: 'Sortirano po udaljenosti od vaše lokacije',
       title: 'Obližnje stanice',
     },
-    nearbyTab: {
-      arrivingNow: 'dolazi',
-      emptyHint: 'Dopustite pristup lokaciji za prikaz najbližih stanica',
-      emptyTitle: 'Stanice u blizini',
-      findMyLocation: 'Pronađi moju lokaciju',
-      geoNotSupported: 'Geolokacija nije dostupna u ovom pregledniku.',
-      geoPermissionDenied: 'Lokacija nije dostupna. Provjerite dozvole preglednika.',
-      minutes_few: '{{count}} min',
-      minutes_one: '{{count}} min',
-      minutes_other: '{{count}} min',
-      noVehiclesNearby: 'Nema vozila u blizini',
-      refresh: 'Osvježi',
-      sectionTitle: 'Najbliže stanice',
-    },
     onboarding: {
       cityBody0:
         'Pronađi javne fontane za pitku vodu, studentske restorane i druge gradske sadržaje.',
@@ -102,9 +67,6 @@ const hr = {
       cyclingTitle0: 'Biciklizam',
       drivingBody0: 'Provjeri stanje u prometu i aktualna zatvaranja cesta prije polaska.',
       drivingTitle0: 'Vožnja Auta',
-      listBody0:
-        'Brzi pregled svih linija i stanica u jednostavnom tekstualnom formatu, bez učitavanja karte.',
-      listTitle0: 'Prikaz Liste',
       modeSwitchBody:
         'Klikni na glavni gumb gore desno (Spider izbornik) za brzo prebacivanje između javnog prijevoza, bicikla, auta ili gradskog sadržaja.',
       modeSwitchTitle: 'Promjena načina rada',
@@ -121,12 +83,9 @@ const hr = {
         'Klikni na stanicu na karti kako bi otvorio detalje i provjerio raspored dolazaka i odlazećih linija.',
       transitBody2:
         'Kada klikneš na grupu stanica ili vozila, otvara se izbornik iz kojeg lako možeš odabrati točno ono što želiš pratiti.',
-      transitBody3:
-        'Uz kartu, dostupan je i prikaz u obliku liste. Korisno kada samo želiš pronaći liniju bez gledanja u kartu.',
       transitTitle0: 'Javni prijevoz',
       transitTitle1: 'Pregled stanice',
       transitTitle2: 'Precizan odabir',
-      transitTitle3: 'Karta ili Lista',
       welcomeBody: 'Vaš vodič uživo za zagrebački javni prijevoz, biciklizam i gradske usluge.',
       welcomeTitle: 'Dobrodošli u Kreni',
     },
@@ -388,8 +347,6 @@ const hr = {
         fountains: 'Zdenci',
         freeWifi: 'WiFi',
         garages: 'Garaže',
-        list: 'Popis',
-        map: 'Karta',
         pedestrianZones: 'Zona',
         studentRestaurants: 'Menze',
         zones: 'Zone',

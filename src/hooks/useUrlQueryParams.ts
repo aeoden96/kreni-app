@@ -37,7 +37,6 @@ export function useUrlQueryParams() {
   // 1. Sync URL -> Store on Mount + URL changes + Route changes
   useEffect(() => {
     const layersParam = searchParams.get('layers');
-    const viewParam = searchParams.get('view');
 
     const updates: Partial<StoreState> = {};
     let hasChanges = false;
@@ -60,13 +59,6 @@ export function useUrlQueryParams() {
           hasChanges = true;
         }
       });
-    }
-
-    if (location.pathname === '/' && (viewParam === 'map' || viewParam === 'list')) {
-      if (useSettingsStore.getState().appMode !== viewParam) {
-        updates.appMode = viewParam;
-        hasChanges = true;
-      }
     }
 
     if (hasChanges) {
@@ -99,11 +91,7 @@ export function useUrlQueryParams() {
             newParams.delete('layers');
           }
 
-          if (location.pathname === '/' && state.appMode) {
-            newParams.set('view', state.appMode);
-          } else if (location.pathname !== '/') {
-            newParams.delete('view');
-          }
+          newParams.delete('view');
 
           if (newParams.toString() !== prev.toString()) {
             return newParams;
@@ -122,8 +110,6 @@ export function useUrlQueryParams() {
       let changed = false;
 
       const activeRouteLayers = ROUTE_LAYERS[location.pathname] || [];
-
-      if (location.pathname === '/' && state.appMode !== prevState.appMode) changed = true;
 
       activeRouteLayers.forEach((urlKey) => {
         const storeKey = LAYER_KEYS[urlKey];

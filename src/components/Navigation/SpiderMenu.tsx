@@ -46,14 +46,13 @@ export function SpiderMenu() {
   const location = useLocation();
   const { t } = useTranslation();
 
-  const { appMode, setOnboardingCompleted, setOnboardingStep } = useSettingsStore();
+  const { setOnboardingCompleted, setOnboardingStep } = useSettingsStore();
   const { isTracking, locating, onLocateClick } = useNavigationStore();
 
   const toggleMenu = () => setIsOpen((prev) => !prev);
   const closeMenu = () => setIsOpen(false);
 
-  const isHeaderMode =
-    (location.pathname === '/' && appMode === 'list') || location.pathname === '/settings';
+  const isHeaderMode = location.pathname === '/settings';
 
   /** Same footprint as hub trigger (locate + menu buttons align) */
   const triggerSizeClass = isHeaderMode
@@ -64,12 +63,7 @@ export function SpiderMenu() {
   const currentIconColor = routeIconColors[location.pathname] ?? 'text-white';
 
   const handleHelp = () => {
-    const variant =
-      location.pathname === '/'
-        ? appMode === 'list'
-          ? 'list'
-          : 'transit'
-        : location.pathname.substring(1);
+    const variant = location.pathname === '/' ? 'transit' : location.pathname.substring(1);
     setOnboardingStep(0);
     setOnboardingCompleted(variant, false);
     closeMenu();
