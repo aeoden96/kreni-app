@@ -104,9 +104,9 @@ const CACHE_KEY = 'kreni-nextbike-cache';
 export const NEXTBIKE_CACHE_TTL_MS = 60 * 1000;
 
 /** Minimum time between manual “refresh now” actions (anti-spam). */
-export const NEXTBIKE_MANUAL_REFETCH_COOLDOWN_MS = 20 * 1000;
+const NEXTBIKE_MANUAL_REFETCH_COOLDOWN_MS = 20 * 1000;
 
-export const NEXTBIKE_API_URL =
+const NEXTBIKE_API_URL =
   'https://maps.nextbike.net/maps/nextbike-live.json?city=1172&domains=hd&list_cities=0&bikes=0';
 
 /**

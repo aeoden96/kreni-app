@@ -2,30 +2,22 @@
  * Official “Moj ZET” app (ZET). Deep-link hosts (api.zet.hr) return 403 in a normal browser;
  * we route taps to Play / App Store or an Android intent with Play Store fallback instead.
  */
-export const ZET_ANDROID_PACKAGE = 'com.zetmobile';
+const ZET_ANDROID_PACKAGE = 'com.zetmobile';
 
-export const ZET_PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.zetmobile';
+const ZET_PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.zetmobile';
 
-export const ZET_APP_STORE_URL = 'https://apps.apple.com/hr/app/moj-zet/id6447687095';
+const ZET_APP_STORE_URL = 'https://apps.apple.com/hr/app/moj-zet/id6447687095';
 
 const ZET_DEEP_LINK_HOST_PROD = 'api.zet.hr';
 const ZET_DEEP_LINK_HOST_UAT = 'uat-api.zet.hr';
 
 const override = import.meta.env.VITE_ZET_APP_DEEP_LINK_URL;
 
-/** Canonical HTTPS deep-link origin (403 in browser; useful for docs / overrides only). */
-export const ZET_APP_BASE_URL =
-  override && override.length > 0
-    ? override
-    : import.meta.env.PROD
-      ? `https://${ZET_DEEP_LINK_HOST_PROD}/`
-      : `https://${ZET_DEEP_LINK_HOST_UAT}/`;
-
 /** Play Store listing artwork (app icon), used as the tap target for opening ZET. */
 export const ZET_APP_LOGO_URL =
   'https://play-lh.googleusercontent.com/cLt4CULMUPNLyVFWPNJ4HpNU3vnQ_5MPAjfJPwvg6PTO9cjcSIPXDBQEufyYTQ1GMYY';
 
-export type ZetAppLinkProps = {
+type ZetAppLinkProps = {
   href: string;
   /** Use same-tab navigation on mobile so Android intent: URLs behave reliably. */
   target: '_blank' | undefined;
