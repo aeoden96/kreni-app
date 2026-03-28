@@ -54,7 +54,10 @@ export function SettingsPage() {
     if (window.confirm(t('settings.confirmClearCache'))) {
       trackEvent('cache_cleared');
       clearCache();
-      window.location.reload();
+      // After clearing cached GTFS data, send the user back to the main
+      // route so they don't stay on `/settings` while the app reloads.
+      const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
+      window.location.href = `${baseUrl}/`;
     }
   };
 
@@ -68,7 +71,9 @@ export function SettingsPage() {
       }
       keysToRemove.forEach((key) => localStorage.removeItem(key));
       clearCache();
-      window.location.reload();
+      // After clearing all data, send the user back to the main route.
+      const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
+      window.location.href = `${baseUrl}/`;
     }
   };
 
