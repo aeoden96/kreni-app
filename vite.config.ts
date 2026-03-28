@@ -89,7 +89,7 @@ export default defineConfig({
             },
             urlPattern: /\/data\/.*\.json$/,
           },
-          // Runtime caching for map tiles (OSM HOT + CartoCDN)
+          // Runtime caching for map tiles (OSM HOT + CartoCDN + CyclOSM)
           // CacheFirst: serve from cache immediately, only fetch if not cached yet.
           // This is OSM-policy-compliant passive caching (no pre-fetching).
           {
@@ -119,6 +119,20 @@ export default defineConfig({
               },
             },
             urlPattern: /^https:\/\/(\w+\.)?basemaps\.cartocdn\.com\/.*/,
+          },
+          {
+            handler: 'CacheFirst',
+            options: {
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+              cacheName: 'map-tiles-cyclosm',
+              expiration: {
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+                maxEntries: 2000,
+              },
+            },
+            urlPattern: /^https:\/\/(\w+\.)?tile-cyclosm\.openstreetmap\.fr\/.*/,
           },
         ],
       },

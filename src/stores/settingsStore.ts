@@ -1,7 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-type AppMode = 'list' | 'map';
+/**
+ * Cycling basemap when Staze (bike paths) is on:
+ * - full: CyclOSM bike map tiles
+ * - standard: theme-based map + bike paths GeoJSON (Grad Zagreb / data.zagreb.hr source)
+ */
+export type CyclosmMapVariant = 'full' | 'standard';
+
 type MapTileProvider = 'dark-matter' | 'osm' | 'positron';
 
 interface RecentItem {
@@ -16,10 +22,12 @@ const MAX_RECENTS = 10;
 interface SettingsState {
   addRecentRoute: (id: string) => void;
   addRecentStop: (id: string) => void;
-  appMode: AppMode;
   clearRecents: () => void;
+  /** CyclOSM tile style (cycling map, when bike paths layer is shown) */
+  cyclosmMapVariant: CyclosmMapVariant;
   /** Prefer more detailed map tiles (Standard / HOT) */
   detailedMap: boolean;
+
   /** User dismissed the GPS-vs-timetable info tip in stop view */
   dismissedGpsTip: boolean;
 
@@ -45,7 +53,7 @@ interface SettingsState {
   /** Remove specific stop IDs from recents */
   removeRecentStops: (ids: string[]) => void;
   sandboxVisible: boolean;
-  setAppMode: (mode: AppMode) => void;
+  setCyclosmMapVariant: (variant: CyclosmMapVariant) => void;
   setDetailedMap: (detailed: boolean) => void;
   setDismissedGpsTip: (dismissed: boolean) => void;
   setGlobalOnboardingCompleted: (completed: boolean) => void;
@@ -119,8 +127,8 @@ export const useSettingsStore = create<SettingsState>()(
               recentStops: [{ id, timestamp: Date.now() }, ...filtered].slice(0, MAX_RECENTS),
             };
           }),
-        appMode: 'map',
         clearRecents: () => set({ recentRoutes: [], recentStops: [] }),
+        cyclosmMapVariant: 'full',
         detailedMap: true,
         dismissedGpsTip: false,
         favouriteNextbikeStationUids: [],
@@ -144,7 +152,7 @@ export const useSettingsStore = create<SettingsState>()(
             recentStops: s.recentStops.filter((item) => !ids.includes(item.id)),
           })),
         sandboxVisible: false,
-        setAppMode: (mode) => set({ appMode: mode }),
+        setCyclosmMapVariant: (variant) => set({ cyclosmMapVariant: variant }),
         setDetailedMap: (detailed) => set({ detailedMap: detailed }),
         setDismissedGpsTip: (dismissed) => set({ dismissedGpsTip: dismissed }),
         setGlobalOnboardingCompleted: (completed) => set({ globalOnboardingCompleted: completed }),
@@ -242,13 +250,21 @@ export const useSettingsStore = create<SettingsState>()(
           // Mark existing users so they don't see the new global welcome wizard
           next.globalOnboardingCompleted = true;
         }
+        if (fromVersion < 5) {
+          // Removed CyclOSM lite; map legacy value to full
+          const v = next.cyclosmMapVariant as string | undefined;
+          if (v === 'lite') {
+            next.cyclosmMapVariant = 'full';
+          }
+          delete next.appMode;
+        }
         return next as Partial<SettingsState>;
       },
       name: 'kreni-settings',
       // Bump version here whenever a default value changes and you want
       // existing users' stored value to be overridden with the new default.
       // migrate() receives the persisted state and should return the corrected state.
-      version: 4,
+      version: 5,
     }
   )
 );

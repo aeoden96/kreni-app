@@ -4,7 +4,6 @@ import {
   Building2,
   Car,
   Github,
-  List,
   Map,
   Moon,
   Play,
@@ -21,10 +20,7 @@ import { useSettingsStore } from '../../stores/settingsStore';
 
 // ─── Static config ─────────────────────────────────────────────────────────────
 
-type AppMode = 'list' | 'map';
-
 interface ModeItem {
-  appMode?: AppMode;
   bodyKey: string;
   icon: React.ComponentType<{ className?: string }>;
   key: string;
@@ -37,20 +33,11 @@ interface ModeItem {
  */
 const MODES: ModeItem[] = [
   {
-    appMode: 'map',
-    bodyKey: 'onboarding.featureTransitMapBody',
+    bodyKey: 'onboarding.featureTransitBody',
     icon: Map,
     key: 'transit-map',
     path: '/',
-    titleKey: 'onboarding.featureTransitMapTitle',
-  },
-  {
-    appMode: 'list',
-    bodyKey: 'onboarding.featureTransitListBody',
-    icon: List,
-    key: 'transit-list',
-    path: '/',
-    titleKey: 'onboarding.featureTransitListTitle',
+    titleKey: 'onboarding.featureTransitTitle',
   },
   {
     bodyKey: 'onboarding.cyclingBody0',
@@ -120,12 +107,6 @@ const FEATURE_VIDEOS: FeatureVideo[] = [
     src: 'onboarding/spider_selector.webm',
     titleKey: 'onboarding.transitTitle2',
   },
-  {
-    descKey: 'onboarding.transitBody3',
-    id: 'list-view',
-    src: 'onboarding/public_transport_switch_views.webm',
-    titleKey: 'onboarding.transitTitle3',
-  },
 ];
 
 // ─── Sub-component: feature video player ──────────────────────────────────────
@@ -136,7 +117,6 @@ export function GlobalWelcomeWizard() {
 
   const globalOnboardingCompleted = useSettingsStore((s) => s.globalOnboardingCompleted);
   const setGlobalOnboardingCompleted = useSettingsStore((s) => s.setGlobalOnboardingCompleted);
-  const setAppMode = useSettingsStore((s) => s.setAppMode);
   const theme = useSettingsStore((s) => s.theme);
   const setTheme = useSettingsStore((s) => s.setTheme);
 
@@ -160,8 +140,7 @@ export function GlobalWelcomeWizard() {
 
   const handleClose = () => setGlobalOnboardingCompleted(true);
 
-  const handleQuickStart = (path: string, nextAppMode?: AppMode) => {
-    if (nextAppMode) setAppMode(nextAppMode);
+  const handleQuickStart = (path: string) => {
     setGlobalOnboardingCompleted(true);
     navigate(path);
   };
@@ -353,13 +332,13 @@ export function GlobalWelcomeWizard() {
 
               {/* Bento mode cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {MODES.map(({ appMode: modeArg, bodyKey, icon: Icon, key, path, titleKey }) => (
+                {MODES.map(({ bodyKey, icon: Icon, key, path, titleKey }) => (
                   <button
                     className="group text-left rounded-2xl border border-base-content/8 bg-base-200/25 p-4
                                hover:bg-info/5 hover:border-info/25 hover:shadow-sm
                                transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-info/50"
                     key={key}
-                    onClick={() => handleQuickStart(path, modeArg)}
+                    onClick={() => handleQuickStart(path)}
                     type="button"
                   >
                     <div className="h-8 w-8 rounded-xl bg-info/10 flex items-center justify-center mb-3 group-hover:bg-info/18 transition-colors">
