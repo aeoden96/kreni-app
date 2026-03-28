@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.3.0](https://github.com/aeoden96/kreni-app/compare/v2.2.0...v2.3.0) (2026-03-28)
+
+
+### Features
+
+* enhance cycling mode features ([#24](https://github.com/aeoden96/kreni-app/issues/24)) ([0f43c0f](https://github.com/aeoden96/kreni-app/commit/0f43c0fa79dbb7798413b8e1d0d6cfa6fbce3b8d))
+* enhance GTFS data fetching with version selection support ([66dbefa](https://github.com/aeoden96/kreni-app/commit/66dbefa19e96eee90e6ce18358fcf30165bd30b3))
+* new onboarding modal ([#25](https://github.com/aeoden96/kreni-app/issues/25)) ([09087a6](https://github.com/aeoden96/kreni-app/commit/09087a64a332c53232b0b3d6397e98916c2064f8))
+* spider menu redesign ([#23](https://github.com/aeoden96/kreni-app/issues/23)) ([0179c68](https://github.com/aeoden96/kreni-app/commit/0179c68180559346d1bc91cbcae0d15ca5b4d62c))
+
+
+### Bug Fixes
+
+* enhance bike station data handling ([3f29012](https://github.com/aeoden96/kreni-app/commit/3f2901280082745ade828bd95813eed605040b55))
+* enhance road closures display and management with refresh functionality ([#27](https://github.com/aeoden96/kreni-app/issues/27)) ([fdae9e7](https://github.com/aeoden96/kreni-app/commit/fdae9e7fe8382a56b54a8ccd62cf8b22a09a55da))
+
 ## [2.2.1](https://github.com/aeoden96/kreni-app/compare/v2.2.0...v2.2.1) (2026-03-26)
 
 ### Bug Fixes
