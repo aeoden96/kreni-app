@@ -14,7 +14,14 @@ export function DrivingMode() {
   const showPublicGarages = useSettingsStore((s) => s.showPublicGarages);
   const showElectricCharging = useSettingsStore((s) => s.showElectricCharging);
   const showParkingZones = useSettingsStore((s) => s.showParkingZones);
-  const { closures } = useRoadClosures(true);
+  const {
+    closures,
+    loading: closuresLoading,
+    manualRefreshLocked,
+    manualRefreshSecondsLeft,
+    refetch: refetchClosures,
+    refreshedAtMs,
+  } = useRoadClosures(true);
 
   return (
     <div className="h-full w-full relative">
@@ -28,7 +35,16 @@ export function DrivingMode() {
       {/* Map Controls */}
       <OnboardingWizard variant="driving" />
       <div className="absolute bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-[1000] flex flex-col items-end gap-2">
-        {closures.length > 0 && <RoadClosuresListModal closures={closures} />}
+        {closures.length > 0 && (
+          <RoadClosuresListModal
+            closures={closures}
+            onRefresh={refetchClosures}
+            refreshCooldownSecondsLeft={manualRefreshSecondsLeft}
+            refreshedAtMs={refreshedAtMs}
+            refreshing={closuresLoading}
+            refreshLocked={manualRefreshLocked}
+          />
+        )}
       </div>
     </div>
   );
