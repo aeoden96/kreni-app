@@ -8,6 +8,12 @@ export function formatRoadClosureInstant(iso: string | undefined, locale: string
   return d.toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
+export function roadClosureDirectionLabel(direction: string, t: TFunction): string {
+  if (direction === 'BOTH_DIRECTIONS') return t('roadClosures.bothDirections');
+  if (direction === 'ONE_DIRECTION') return t('roadClosures.oneDirection');
+  return direction;
+}
+
 export function roadClosureReasonLabel(reason: string, t: TFunction): string {
   if (reason === 'ROAD_CLOSED_CONSTRUCTION') return t('roadClosures.reasonConstruction');
   if (reason === 'ROAD_CLOSED') return t('roadClosures.reasonClosed');

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { GTFS_API_KEY, GTFS_PROXY_URL } from '../config';
 
@@ -106,15 +106,139 @@ function pickIsoDateString(value: unknown): string {
 }
 
 /** Client cache TTL; matches poll interval and worker `max-age` for closures. */
-const CACHE_DURATION_MS = 60 * 60 * 1000; // 1 hour
+export const ROAD_CLOSURES_CACHE_DURATION_MS = 60 * 60 * 1000; // 1 hour
+
+/** Minimum gap between manual “refresh” taps (avoids hammering the proxy). */
+const ROAD_CLOSURES_MANUAL_REFRESH_COOLDOWN_MS = 45 * 1000;
 
 export function useRoadClosures(enabled: boolean) {
   const [closures, setClosures] = useState<RoadClosure[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  /** When the current list was last loaded from network or fresh localStorage (ms since epoch). */
+  const [refreshedAtMs, setRefreshedAtMs] = useState<null | number>(null);
 
-  // Ref to hold the latest interval ID
   const intervalRef = useRef<null | number>(null);
+  const isMountedRef = useRef(true);
+  const manualCooldownEndsRef = useRef(0);
+  const [manualCooldownEndsAt, setManualCooldownEndsAt] = useState(0);
+  const [manualCooldownTick, setManualCooldownTick] = useState(0);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!enabled) {
+      manualCooldownEndsRef.current = 0;
+      setManualCooldownEndsAt(0);
+    }
+  }, [enabled]);
+
+  useEffect(() => {
+    if (manualCooldownEndsAt === 0) {
+      return;
+    }
+    const deadline = manualCooldownEndsAt;
+    const id = window.setInterval(() => {
+      const now = Date.now();
+      if (now >= deadline) {
+        manualCooldownEndsRef.current = 0;
+        setManualCooldownEndsAt(0);
+        clearInterval(id);
+      }
+      setManualCooldownTick((n) => n + 1);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [manualCooldownEndsAt]);
+
+  const fetchData = useCallback(async (bypassCache: boolean) => {
+    try {
+      if (!bypassCache) {
+        const cacheStr = localStorage.getItem(CACHE_KEY);
+        if (cacheStr) {
+          try {
+            const cache: CacheData = JSON.parse(cacheStr);
+            if (Date.now() - cache.timestamp < ROAD_CLOSURES_CACHE_DURATION_MS) {
+              if (isMountedRef.current) {
+                setClosures(normalizeClosuresList(cache.closures));
+                setRefreshedAtMs(cache.timestamp);
+              }
+              return;
+            }
+          } catch (e) {
+            console.error('Failed to parse road closures cache', e);
+          }
+        }
+      }
+
+      if (isMountedRef.current) {
+        setLoading(true);
+      }
+
+      const headers: Record<string, string> = {};
+      if (GTFS_API_KEY) {
+        headers['X-API-Key'] = GTFS_API_KEY;
+      }
+
+      const response = await fetch(`${GTFS_PROXY_URL}/?endpoint=road-closures`, { headers });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch road closures: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (!data || !Array.isArray(data.closures)) {
+        console.error('Invalid road closures data format:', data);
+        throw new Error('Invalid road closures data format');
+      }
+
+      const newClosures = normalizeClosuresList(data.closures);
+      const fetchedAt = Date.now();
+
+      localStorage.setItem(
+        CACHE_KEY,
+        JSON.stringify({
+          closures: newClosures,
+          timestamp: fetchedAt,
+        } satisfies CacheData)
+      );
+
+      if (isMountedRef.current) {
+        setClosures(newClosures);
+        setError(null);
+        setLoading(false);
+        setRefreshedAtMs(fetchedAt);
+      }
+    } catch (err) {
+      console.error('Error fetching road closures:', err);
+      if (isMountedRef.current) {
+        setError(err instanceof Error ? err : new Error('Unknown error fetching road closures'));
+        setLoading(false);
+      }
+    }
+  }, []);
+
+  const refetch = useCallback(() => {
+    const now = Date.now();
+    if (now < manualCooldownEndsRef.current) {
+      return;
+    }
+    const ends = now + ROAD_CLOSURES_MANUAL_REFRESH_COOLDOWN_MS;
+    manualCooldownEndsRef.current = ends;
+    setManualCooldownEndsAt(ends);
+    void fetchData(true);
+  }, [fetchData]);
+
+  void manualCooldownTick;
+  const manualRefreshLocked = loading || Date.now() < manualCooldownEndsAt;
+  const manualRefreshSecondsLeft =
+    manualCooldownEndsAt > Date.now()
+      ? Math.max(1, Math.ceil((manualCooldownEndsAt - Date.now()) / 1000))
+      : null;
 
   useEffect(() => {
     if (!enabled) {
@@ -125,85 +249,27 @@ export function useRoadClosures(enabled: boolean) {
       return;
     }
 
-    let isMounted = true;
+    void fetchData(false);
 
-    const fetchData = async () => {
-      try {
-        // Check cache first
-        const cacheStr = localStorage.getItem(CACHE_KEY);
-        if (cacheStr) {
-          try {
-            const cache: CacheData = JSON.parse(cacheStr);
-            if (Date.now() - cache.timestamp < CACHE_DURATION_MS) {
-              if (isMounted) {
-                setClosures(normalizeClosuresList(cache.closures));
-              }
-              return;
-            }
-          } catch (e) {
-            console.error('Failed to parse road closures cache', e);
-          }
-        }
-
-        if (isMounted) setLoading(true);
-
-        const headers: Record<string, string> = {};
-        if (GTFS_API_KEY) {
-          headers['X-API-Key'] = GTFS_API_KEY;
-        }
-
-        const response = await fetch(`${GTFS_PROXY_URL}/?endpoint=road-closures`, { headers });
-        if (!response.ok) {
-          throw new Error(`Failed to fetch road closures: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (!data || !Array.isArray(data.closures)) {
-          console.error('Invalid road closures data format:', data);
-          throw new Error('Invalid road closures data format');
-        }
-
-        const newClosures = normalizeClosuresList(data.closures);
-        const fetchedAt = Date.now();
-
-        if (isMounted) {
-          setClosures(newClosures);
-          setLoading(false);
-          setError(null);
-        }
-
-        // Update cache
-        localStorage.setItem(
-          CACHE_KEY,
-          JSON.stringify({
-            closures: newClosures,
-            timestamp: fetchedAt,
-          })
-        );
-      } catch (err) {
-        console.error('Error fetching road closures:', err);
-        if (isMounted) {
-          setError(err instanceof Error ? err : new Error('Unknown error fetching road closures'));
-          setLoading(false);
-        }
-      }
-    };
-
-    // Fetch immediately
-    fetchData();
-
-    // Set up polling interval
-    intervalRef.current = window.setInterval(fetchData, CACHE_DURATION_MS);
+    intervalRef.current = window.setInterval(() => {
+      void fetchData(false);
+    }, ROAD_CLOSURES_CACHE_DURATION_MS);
 
     return () => {
-      isMounted = false;
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
     };
-  }, [enabled]);
+  }, [enabled, fetchData]);
 
-  return { closures, error, loading };
+  return {
+    closures,
+    error,
+    loading,
+    manualRefreshLocked,
+    manualRefreshSecondsLeft,
+    refetch,
+    refreshedAtMs,
+  };
 }
