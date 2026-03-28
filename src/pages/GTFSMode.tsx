@@ -29,7 +29,7 @@ import { GTFSModeProvider } from '../contexts/GTFSModeContext';
 import { useAllVehiclePositions } from '../hooks/useAllVehiclePositions';
 import { useCongestionData } from '../hooks/useCongestionData';
 import { useCurrentService } from '../hooks/useCurrentService';
-import { useGeolocation } from '../hooks/useGeolocation';
+import { useGeolocation, useRegisterGeolocationFirstFix } from '../hooks/useGeolocation';
 import { useInitialData } from '../hooks/useInitialData';
 import { useMapPanTarget } from '../hooks/useMapPanTarget';
 import { useRealtimeData } from '../hooks/useRealtimeData';
@@ -212,7 +212,8 @@ export function GTFSMode({ config }: GTFSModeProps) {
     },
     [clearStop, closeLegendAndDetails]
   );
-  const { locateError, userLocation } = useGeolocation(onLocateSuccess);
+  useRegisterGeolocationFirstFix(onLocateSuccess);
+  const { locateError, userLocation } = useGeolocation();
 
   const triggerLocate = useNavigationStore((s) => s.triggerLocate);
   const prevNearbyListExpandedRef = useRef(false);
