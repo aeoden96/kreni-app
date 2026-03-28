@@ -6,6 +6,7 @@ import type { ParsedServiceAlert } from '../../utils/realtime';
 import type { FeedStatistics } from '../../utils/realtime';
 
 import { REALTIME_POLL_INTERVAL } from '../../config';
+import { buildDirectionalStopPinPathData } from '../../utils/stopMarkersMath';
 import { BadgeWithPanel } from './BadgeWithPanel';
 import { RealtimeFeedToggleIcon } from './RealtimeFeedToggleIcon';
 import { RealtimeLegendToggleIcon } from './RealtimeLegendToggleIcon';
@@ -35,10 +36,15 @@ interface RealtimeStatusPanelProps {
 }
 
 const legendPopoverClass =
-  'absolute bottom-10 right-0 bg-base-100 rounded-xl shadow-xl border border-base-200 p-3 w-52 text-xs space-y-2';
+  'absolute bottom-10 right-0 bg-base-100 rounded-xl shadow-xl border border-base-200 p-3 w-56 text-xs space-y-2';
 
 const detailsPopoverClass =
   'absolute right-0 bottom-10 z-[1100] bg-base-100 rounded-xl shadow-xl border border-base-200 p-3 w-72 text-xs';
+
+/** Matches {@link ../../utils/vehicleIcon.makeVehicleIcon} (light map, moving vs stopped). */
+const LEGEND_TRAM = '#2563eb';
+const LEGEND_BUS = '#d97706';
+const VEHICLE_STROKE = 2.5;
 
 function LegendPanelContent() {
   const { t } = useTranslation();
@@ -46,280 +52,173 @@ function LegendPanelContent() {
     <>
       <p className="font-semibold text-base-content mb-1">{t('realtimePanel.legendTitle')}</p>
 
-      {/* Tram */}
+      {/* Tram vehicle — colours from directionColors tram palette */}
       <div className="flex items-center gap-2">
-        <div style={{ flexShrink: 0, height: 22, position: 'relative', width: 22 }}>
-          <svg
-            height="22"
-            style={{
-              left: 0,
-              position: 'absolute',
-              top: 0,
-              transform: 'rotate(0deg)',
-              transformOrigin: '11px 11px',
-            }}
-            viewBox="0 0 22 22"
-            width="22"
-          >
-            <polygon
-              fill="#2337ff"
-              points="11,1 8,6 14,6"
-              stroke="white"
-              strokeLinejoin="round"
-              strokeWidth="1"
-            />
-          </svg>
-          <svg
-            height="22"
-            style={{ left: 0, position: 'absolute', top: 0 }}
-            viewBox="0 0 22 22"
-            width="22"
-          >
-            <circle
-              cx="11"
-              cy="11"
-              fill="#2337ff"
-              fillOpacity="0.95"
-              r="7"
-              stroke="white"
-              strokeWidth="2"
-            />
-            <text
-              fill="white"
-              fontFamily="system-ui,sans-serif"
-              fontSize="7"
-              fontWeight="bold"
-              textAnchor="middle"
-              x="11"
-              y="14"
-            >
-              T1
-            </text>
-          </svg>
-        </div>
+        <LegendVehicleMovingIcon color={LEGEND_TRAM} label="T1" />
         <span className="text-base-content/80">{t('realtimePanel.legend.tramGpsKnown')}</span>
       </div>
       <div className="flex items-center gap-2">
-        <svg height="20" viewBox="0 0 20 20" width="20">
-          <circle
-            cx="10"
-            cy="10"
-            fill="#2337ff"
-            fillOpacity="0.85"
-            r="7"
-            stroke="white"
-            strokeWidth="2"
-          />
-          <text
-            fill="white"
-            fontFamily="system-ui,sans-serif"
-            fontSize="7"
-            fontWeight="bold"
-            textAnchor="middle"
-            x="10"
-            y="13"
-          >
-            T1
-          </text>
-        </svg>
+        <LegendVehicleStoppedIcon color={LEGEND_TRAM} label="T1" />
         <span className="text-base-content/80">{t('realtimePanel.legend.tramStopped')}</span>
       </div>
 
       <div className="divider my-0.5" />
 
-      {/* Bus */}
+      {/* Bus vehicle */}
       <div className="flex items-center gap-2">
-        <div style={{ flexShrink: 0, height: 22, position: 'relative', width: 22 }}>
-          <svg
-            height="22"
-            style={{
-              left: 0,
-              position: 'absolute',
-              top: 0,
-              transform: 'rotate(45deg)',
-              transformOrigin: '11px 11px',
-            }}
-            viewBox="0 0 22 22"
-            width="22"
-          >
-            <polygon
-              fill="#d97706"
-              points="11,1 8,6 14,6"
-              stroke="white"
-              strokeLinejoin="round"
-              strokeWidth="1"
-            />
-          </svg>
-          <svg
-            height="22"
-            style={{ left: 0, position: 'absolute', top: 0 }}
-            viewBox="0 0 22 22"
-            width="22"
-          >
-            <circle
-              cx="11"
-              cy="11"
-              fill="#d97706"
-              fillOpacity="0.95"
-              r="7"
-              stroke="white"
-              strokeWidth="2"
-            />
-            <text
-              fill="white"
-              fontFamily="system-ui,sans-serif"
-              fontSize="6"
-              fontWeight="bold"
-              textAnchor="middle"
-              x="11"
-              y="14"
-            >
-              109
-            </text>
-          </svg>
-        </div>
+        <LegendVehicleMovingIcon color={LEGEND_BUS} label="109" />
         <span className="text-base-content/80">{t('realtimePanel.legend.busGpsKnown')}</span>
       </div>
       <div className="flex items-center gap-2">
-        <svg height="20" viewBox="0 0 20 20" width="20">
-          <circle
-            cx="10"
-            cy="10"
-            fill="#d97706"
-            fillOpacity="0.85"
-            r="7"
-            stroke="white"
-            strokeWidth="2"
-          />
-          <text
-            fill="white"
-            fontFamily="system-ui,sans-serif"
-            fontSize="6"
-            fontWeight="bold"
-            textAnchor="middle"
-            x="10"
-            y="13"
-          >
-            109
-          </text>
-        </svg>
+        <LegendVehicleStoppedIcon color={LEGEND_BUS} label="109" />
         <span className="text-base-content/80">{t('realtimePanel.legend.busStopped')}</span>
       </div>
 
       <div className="divider my-0.5" />
 
-      {/* Stops */}
+      {/* Platform stops — same silhouette + colours as StopMarkers.makeStopIcon */}
       <div className="flex items-center gap-2">
-        <div style={{ flexShrink: 0, height: 18, position: 'relative', width: 18 }}>
-          <svg
-            height="18"
-            style={{
-              left: 0,
-              position: 'absolute',
-              top: 0,
-              transform: 'rotate(45deg)',
-              transformOrigin: '9px 9px',
-            }}
-            viewBox="0 0 18 18"
-            width="18"
-          >
-            <polygon
-              fill="#2563eb"
-              points="9,1 6,4 12,4"
-              stroke="white"
-              strokeLinejoin="round"
-              strokeWidth="1"
-            />
-          </svg>
-          <svg
-            height="18"
-            style={{ left: 0, position: 'absolute', top: 0 }}
-            viewBox="0 0 18 18"
-            width="18"
-          >
-            <circle
-              cx="9"
-              cy="9"
-              fill="#2563eb"
-              fillOpacity="0.9"
-              r="5"
-              stroke="white"
-              strokeWidth="1.5"
-            />
-          </svg>
-        </div>
+        <LegendPlatformStopIcon color={LEGEND_TRAM} />
         <span className="text-base-content/80">{t('realtimePanel.legend.stopTram')}</span>
       </div>
       <div className="flex items-center gap-2">
-        <div style={{ flexShrink: 0, height: 18, position: 'relative', width: 18 }}>
-          <svg
-            height="18"
-            style={{
-              left: 0,
-              position: 'absolute',
-              top: 0,
-              transform: 'rotate(0deg)',
-              transformOrigin: '9px 9px',
-            }}
-            viewBox="0 0 18 18"
-            width="18"
-          >
-            <polygon
-              fill="#d97706"
-              points="9,1 6,4 12,4"
-              stroke="white"
-              strokeLinejoin="round"
-              strokeWidth="1"
-            />
-          </svg>
-          <svg
-            height="18"
-            style={{ left: 0, position: 'absolute', top: 0 }}
-            viewBox="0 0 18 18"
-            width="18"
-          >
-            <circle
-              cx="9"
-              cy="9"
-              fill="#d97706"
-              fillOpacity="0.9"
-              r="5"
-              stroke="white"
-              strokeWidth="1.5"
-            />
-          </svg>
-        </div>
+        <LegendPlatformStopIcon color={LEGEND_BUS} />
         <span className="text-base-content/80">{t('realtimePanel.legend.stopBus')}</span>
       </div>
-      <div className="flex items-center gap-2">
-        <svg height="18" viewBox="0 0 18 18" width="18">
-          <circle
-            cx="9"
-            cy="9"
-            fill="#475569"
-            fillOpacity="0.9"
-            r="5"
-            stroke="white"
-            strokeWidth="1.5"
-          />
-        </svg>
-        <span className="text-base-content/80">{t('realtimePanel.legend.stopMixed')}</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <svg height="18" viewBox="0 0 18 18" width="18">
-          <circle
-            cx="9"
-            cy="9"
-            fill="#ff6b6b"
-            fillOpacity="1"
-            r="7"
-            stroke="white"
-            strokeWidth="2"
-          />
-        </svg>
-        <span className="text-base-content/80">{t('realtimePanel.legend.stopSelected')}</span>
-      </div>
     </>
+  );
+}
+
+/** Same path as map platform stops with bearing ({@link ../../utils/stopMarkersMath.buildDirectionalStopPinPathData}). */
+function LegendPlatformStopIcon({ color }: { color: string }) {
+  const size = 32;
+  const cx = size / 2;
+  return (
+    <svg
+      className="shrink-0"
+      height={size}
+      style={{ filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.35))' }}
+      viewBox={`0 0 ${size} ${size}`}
+      width={size}
+    >
+      <path
+        d={buildDirectionalStopPinPathData(cx)}
+        fill={color}
+        stroke="white"
+        strokeLinejoin="round"
+        strokeWidth={2.5}
+      />
+    </svg>
+  );
+}
+
+function LegendVehicleMovingIcon({ color, label }: { color: string; label: string }) {
+  const size = 42;
+  const cx = size / 2;
+  const r = 13;
+  const pinTipY = cx - r - 5;
+  const pinBaseY = cx - r;
+  const pinHalfW = 4;
+  const len = label.length;
+  const fontSize = len <= 1 ? 13 : len === 2 ? 11 : len === 3 ? 9 : 8;
+  const textY = cx + Math.round(fontSize * 0.38);
+  return (
+    <div
+      className="shrink-0"
+      style={{
+        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+        height: size,
+        position: 'relative',
+        width: size,
+      }}
+    >
+      <svg
+        height={size}
+        style={{
+          left: 0,
+          position: 'absolute',
+          top: 0,
+          transform: 'rotate(25deg)',
+          transformOrigin: `${cx}px ${cx}px`,
+        }}
+        viewBox={`0 0 ${size} ${size}`}
+        width={size}
+      >
+        <polygon
+          fill={color}
+          points={`${cx},${pinTipY} ${cx - pinHalfW},${pinBaseY} ${cx + pinHalfW},${pinBaseY}`}
+          stroke="white"
+          strokeLinejoin="round"
+          strokeWidth={VEHICLE_STROKE}
+        />
+      </svg>
+      <svg
+        height={size}
+        style={{ left: 0, position: 'absolute', top: 0 }}
+        viewBox={`0 0 ${size} ${size}`}
+        width={size}
+      >
+        <circle
+          cx={cx}
+          cy={cx}
+          fill={color}
+          fillOpacity={0.95}
+          r={r}
+          stroke="white"
+          strokeWidth={VEHICLE_STROKE}
+        />
+        <text
+          fill="white"
+          fontFamily="system-ui,sans-serif"
+          fontSize={fontSize}
+          fontWeight="bold"
+          textAnchor="middle"
+          x={cx}
+          y={textY}
+        >
+          {label}
+        </text>
+      </svg>
+    </div>
+  );
+}
+
+function LegendVehicleStoppedIcon({ color, label }: { color: string; label: string }) {
+  const size = 34;
+  const cx = size / 2;
+  const r = 12;
+  const len = label.length;
+  const fontSize = len <= 1 ? 13 : len === 2 ? 11 : len === 3 ? 9 : 8;
+  const textY = cx + Math.round(fontSize * 0.38);
+  return (
+    <svg
+      className="shrink-0"
+      height={size}
+      style={{ filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.35))' }}
+      viewBox={`0 0 ${size} ${size}`}
+      width={size}
+    >
+      <circle
+        cx={cx}
+        cy={cx}
+        fill={color}
+        fillOpacity={0.85}
+        r={r}
+        stroke="white"
+        strokeWidth={VEHICLE_STROKE}
+      />
+      <text
+        fill="white"
+        fontFamily="system-ui,sans-serif"
+        fontSize={fontSize}
+        fontWeight="bold"
+        textAnchor="middle"
+        x={cx}
+        y={textY}
+      >
+        {label}
+      </text>
+    </svg>
   );
 }
 
@@ -550,7 +449,7 @@ export const RealtimeStatusPanel = forwardRef<RealtimeStatusPanelHandle, Realtim
     ].join(' ');
 
     return (
-      <div className="absolute bottom-6 right-4 z-[1000] flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2">
         <ServiceAlerts
           alerts={alerts}
           onRouteClick={onRouteClick}

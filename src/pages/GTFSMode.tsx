@@ -23,6 +23,7 @@ import { RouteModal } from '../components/common/RouteModal';
 import { SearchModal } from '../components/common/SearchModal';
 import { StopInfoBar } from '../components/common/StopInfoBar';
 import { StopModal } from '../components/common/StopModal';
+import { ZetAppLogoLink } from '../components/common/ZetAppLogoLink';
 import { MapView } from '../components/Map/MapView';
 import { MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD } from '../components/Map/mapZoomConstants';
 import { GTFSModeProvider } from '../contexts/GTFSModeContext';
@@ -395,25 +396,33 @@ export function GTFSMode({ config }: GTFSModeProps) {
           </div>
         )}
 
-        {/* Realtime status badges (transit only) */}
-        {config.hasRealtime && realtimeStats && (
-          <RealtimeStatusPanel
-            alerts={serviceAlerts}
-            cacheAgeSeconds={cacheAgeSeconds}
-            cacheStatus={cacheStatus}
-            feedAgeStr={feedAgeStr}
-            fetchLatencyMs={fetchLatencyMs}
-            lastUpdate={lastUpdate}
-            nextPollAtMs={nextPollAtMs}
-            onRouteClick={(routeId, routeType) => handleSelectRoute(routeId, routeType)}
-            realtimeLoading={realtimeLoading}
-            realtimeStats={realtimeStats}
-            ref={realtimePanelRef}
-            routesById={routesById}
-            selectedRouteId={selectedRouteId}
-            timeAgoStr={timeAgoStr}
-            workerTimestamp={workerTimestamp}
-          />
+        {/* Realtime status badges + ZET app link (transit only); z above Leaflet bottom chrome */}
+        {config.id === 'transit' && (
+          <div className="absolute bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-[1100] flex items-center justify-end gap-2">
+            {config.hasRealtime && realtimeStats && (
+              <RealtimeStatusPanel
+                alerts={serviceAlerts}
+                cacheAgeSeconds={cacheAgeSeconds}
+                cacheStatus={cacheStatus}
+                feedAgeStr={feedAgeStr}
+                fetchLatencyMs={fetchLatencyMs}
+                lastUpdate={lastUpdate}
+                nextPollAtMs={nextPollAtMs}
+                onRouteClick={(routeId, routeType) => handleSelectRoute(routeId, routeType)}
+                realtimeLoading={realtimeLoading}
+                realtimeStats={realtimeStats}
+                ref={realtimePanelRef}
+                routesById={routesById}
+                selectedRouteId={selectedRouteId}
+                timeAgoStr={timeAgoStr}
+                workerTimestamp={workerTimestamp}
+              />
+            )}
+            <ZetAppLogoLink
+              className="btn btn-circle btn-sm min-h-8 min-w-8 size-8 shrink-0 border-none bg-base-100 p-0 shadow transition-[box-shadow,transform,filter] duration-200 ring-1 ring-base-300/60 hover:ring-primary/55 hover:brightness-110 active:scale-95"
+              imgClassName="size-full rounded-full object-cover"
+            />
+          </div>
         )}
 
         {/* Low-zoom hint when vehicles and stops are hidden (transit only) */}

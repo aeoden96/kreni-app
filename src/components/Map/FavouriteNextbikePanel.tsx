@@ -51,7 +51,7 @@ export function FavouriteNextbikePanel({ show, stations }: FavouriteNextbikePane
               <span className="min-w-0 flex-1 truncate font-medium text-base-content">
                 {st?.name ?? t('cyclingMode.favouriteNextbikeUnknown')}
               </span>
-              <span className="shrink-0 font-bold tabular-nums text-info">
+              <span className="shrink-0 font-bold tabular-nums text-nextbike dark:text-nextbike-bright">
                 {count !== undefined
                   ? t('cyclingMode.favouriteNextbikeRentableBikes', { count })
                   : '—'}

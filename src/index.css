@@ -10,6 +10,10 @@
   --color-dark: #2b2d42;
   --color-medium: #8d99ae;
   --color-light: #edf2f4;
+  /* Nextbike / Bajs official brand; keep in sync with NEXTBIKE_BRAND_HEX in nextbikeAppLinks.ts */
+  --color-nextbike: #0046d7;
+  /* Lighter blue for Nextbike accents on dark backgrounds (popups, favourites) */
+  --color-nextbike-bright: #7eb8ff;
 
   /* Responsive typography using clamp() for fluid scaling */
   --text-xs: clamp(11px, 0.7rem, 12px);
