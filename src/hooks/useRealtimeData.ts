@@ -46,6 +46,15 @@ export function useRealtimeData(enabled: boolean = true) {
       }, effectiveMs);
     };
 
+    /** Skip scheduling while the tab is in the background (saves network / worker load). */
+    const scheduleNextIfVisible = (delayMs: number, runRound: () => Promise<void>) => {
+      if (document.visibilityState !== 'visible') {
+        setNextPollAtMs(null);
+        return;
+      }
+      scheduleNext(delayMs, runRound);
+    };
+
     if (!enabled) {
       clearTimer();
       setNextPollAtMs(null);
@@ -67,20 +76,20 @@ export function useRealtimeData(enabled: boolean = true) {
 
       if (pendingResyncRef.current) {
         pendingResyncRef.current = false;
-        scheduleNext(MIN_RETRY_DELAY_MS, runRound);
+        scheduleNextIfVisible(MIN_RETRY_DELAY_MS, runRound);
         return;
       }
 
       const state = useRealtimeStore.getState();
       if (state.error && !didErrorRetryRef.current) {
         didErrorRetryRef.current = true;
-        scheduleNext(ERROR_RETRY_DELAY_MS, runRound);
+        scheduleNextIfVisible(ERROR_RETRY_DELAY_MS, runRound);
         return;
       }
 
       didErrorRetryRef.current = false;
       const adaptiveDelayMs = getAdaptiveDelayMs(state.cacheAgeSeconds);
-      scheduleNext(adaptiveDelayMs, runRound);
+      scheduleNextIfVisible(adaptiveDelayMs, runRound);
     };
 
     const requestResync = () => {
@@ -98,9 +107,28 @@ export function useRealtimeData(enabled: boolean = true) {
       void runRound();
     };
 
+    /**
+     * Tab became visible: always kick a round (or queue behind in-flight).
+     * Must not use requestResync()'s time coalesce — we clear the poll timer on
+     * hide, so skipping here can leave polling stopped until the next unrelated
+     * resync (e.g. `online`) if the user returns within RESUME_COALESCE_WINDOW_MS
+     * of a previous trigger.
+     */
+    const resumePollingAfterTabFocus = () => {
+      if (!active) return;
+      if (inFlightRef.current) {
+        pendingResyncRef.current = true;
+        return;
+      }
+      void runRound();
+    };
+
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        requestResync();
+        resumePollingAfterTabFocus();
+      } else {
+        clearTimer();
+        setNextPollAtMs(null);
       }
     };
 
@@ -113,7 +141,9 @@ export function useRealtimeData(enabled: boolean = true) {
       }
     };
 
-    void runRound();
+    if (document.visibilityState === 'visible') {
+      void runRound();
+    }
     document.addEventListener('visibilitychange', onVisibilityChange);
     window.addEventListener('online', onOnline);
     window.addEventListener('pageshow', onPageShow);

@@ -21,7 +21,8 @@ export default defineConfig({
       includeAssets: ['favicon.svg', 'favicon.png', 'pwa-192x192.png'],
       manifest: {
         background_color: '#ffffff',
-        description: 'Pratite tramvaje, autobuse i vlakove ZET-a uživo na karti Zagreba.',
+        description:
+          'Zet uzivo na karti Zagreba — tramvaji, autobusi i vlakovi ZET-a uživo; parking, bicikli i ostale gradske usluge na jednoj karti.',
         display: 'standalone',
         icons: [
           {
