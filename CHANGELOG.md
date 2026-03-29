@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.1](https://github.com/aeoden96/kreni-app/compare/v2.3.0...v2.3.1) (2026-03-29)
+
+
+### Bug Fixes
+
+* nearby vehicles now show correctly ([e9cd760](https://github.com/aeoden96/kreni-app/commit/e9cd760f1e57155ab6c8eecab7b1079f591e83c5))
+
 ## [2.3.0](https://github.com/aeoden96/kreni-app/compare/v2.2.0...v2.3.0) (2026-03-28)
 
 
