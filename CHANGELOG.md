@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.2](https://github.com/aeoden96/kreni-app/compare/v2.3.1...v2.3.2) (2026-03-29)
+
+
+### Bug Fixes
+
+* [FORCE] update SEO metadata and improve visibility handling in realtime data hook ([96e0ab4](https://github.com/aeoden96/kreni-app/commit/96e0ab436966431df00bdc90bd6410c01307eaf3))
+
 ## [2.3.1](https://github.com/aeoden96/kreni-app/compare/v2.3.0...v2.3.1) (2026-03-29)
 
 
