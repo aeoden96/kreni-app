@@ -51,6 +51,8 @@ export interface ApproachingVehicle {
 
 /** Show all trips arriving within this many minutes */
 const LOOKAHEAD_MINUTES = 30;
+/** When a trip has GPS but scheduled ETA is past the lookahead window, still show it if this close */
+const GPS_OUTSIDE_SCHEDULE_WINDOW_MAX_M = 15_000;
 /** Allow trips that arrived up to this many seconds ago (grace window for scheduled) */
 const ARRIVED_GRACE_SECONDS = 30;
 /** Keep GPS-tracked vehicles visible until they are this many metres past the stop */
@@ -209,8 +211,22 @@ export function useApproachingVehicles(
         // Skip trips outside the time window.
         // For GPS-tracked vehicles, we allow negative arrivingInSeconds (already passed by schedule)
         // because we'll use distance-based filtering below. For scheduled-only, apply strict grace.
-        if (!vehiclePositions.has(tripId) && arrivingInSeconds < -ARRIVED_GRACE_SECONDS) continue;
-        if (etaAbsoluteSeconds > windowEnd) continue;
+        const hasVehiclePos = vehiclePositions.has(tripId);
+        if (!hasVehiclePos && arrivingInSeconds < -ARRIVED_GRACE_SECONDS) continue;
+        // Scheduled-only: cap by lookahead window. GPS trips can exceed it — static "minutes from
+        // midnight" at this stop often lags real position (next block / wrong service day slice),
+        // which previously hid all live vehicles while scheduled-only rows still appeared.
+        if (!hasVehiclePos && etaAbsoluteSeconds > windowEnd) continue;
+        if (hasVehiclePos && etaAbsoluteSeconds > windowEnd) {
+          const vp = vehiclePositions.get(tripId)!;
+          if (
+            !targetStop ||
+            haversineMeters(vp.latitude, vp.longitude, targetStop.lat, targetStop.lon) >
+              GPS_OUTSIDE_SCHEDULE_WINDOW_MAX_M
+          ) {
+            continue;
+          }
+        }
 
         // Compute stops away via GPS → fractional stop-index projection
         let stopsAway: null | number = null;
