@@ -355,7 +355,6 @@ const en = {
       privacyTitle: 'Privacy',
       repositoryHint: 'View source code and contribute',
       repositoryTitle: 'GitHub Repository',
-      sandboxHint: 'Tool to set time manually and test timetables',
       sandboxTitle: 'Sandbox mode',
       sandboxToggle: 'Show sandbox',
       size: 'Size',

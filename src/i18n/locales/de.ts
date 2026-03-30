@@ -350,7 +350,6 @@ const de = {
       privacyTitle: 'Datenschutz',
       repositoryHint: 'Quellcode ansehen und beitragen',
       repositoryTitle: 'GitHub Repository',
-      sandboxHint: 'Werkzeug zum manuellen Setzen der Zeit und Testen der Fahrpläne',
       sandboxTitle: 'Sandbox-Modus',
       sandboxToggle: 'Sandbox anzeigen',
       size: 'Größe',

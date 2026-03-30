@@ -10,11 +10,9 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
-  Clock,
   Copy,
   MapPin,
-  Pause,
-  Play,
+  Presentation,
   Radio,
   X,
 } from 'lucide-react';
@@ -25,11 +23,9 @@ import type { Route, Stop } from '../../utils/gtfs';
 import type { ParsedVehiclePosition } from '../../utils/realtime';
 
 import { useGTFSMode } from '../../contexts/GTFSModeContext';
-import { useDebug } from '../../hooks/useDebug';
 import { useStopDiagnostic } from '../../hooks/useStopDiagnostic';
 import { useRealtimeStore } from '../../stores/realtimeStore';
-import { useSettingsStore } from '../../stores/settingsStore';
-import { getCurrentTimeMinutes, minutesToTime, timeToMinutes } from '../../utils/gtfs';
+import { minutesToTime } from '../../utils/gtfs';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -39,7 +35,7 @@ interface DebugPanelProps {
   stopsById?: Map<string, Stop>;
 }
 
-type TabId = 'feed' | 'sandbox' | 'stop';
+type TabId = 'feed' | 'stop';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -108,14 +104,10 @@ export function DebugPanel({
   selectedStopId = null,
   stopsById = new Map(),
 }: DebugPanelProps) {
-  const { debugTime, isDebugMode, isPlaying, setDebugMode, setDebugTime, setIsPlaying, timeSpeed } =
-    useDebug();
-  const sandboxVisible = useSettingsStore((state) => state.sandboxVisible);
   const vehiclePositions = useRealtimeStore((s) => s.vehiclePositions);
   const lastUpdate = useRealtimeStore((s) => s.lastUpdate);
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabId>('sandbox');
-  const [timeInput, setTimeInput] = useState('');
+  const [activeTab, setActiveTab] = useState<TabId>('feed');
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [copied, setCopied] = useState(false);
 
@@ -126,59 +118,6 @@ export function DebugPanel({
 
   const { dataDir } = useGTFSMode();
   const stopDiag = useStopDiagnostic(selectedStopId, stopsById, routesById, nowMs, { dataDir });
-
-  useEffect(() => {
-    if (!timeInput) {
-      const currentMinutes = debugTime ?? getCurrentTimeMinutes();
-      setTimeInput(minutesToTime(currentMinutes));
-    }
-  }, [debugTime, timeInput]);
-
-  useEffect(() => {
-    if (isPlaying && debugTime !== null) {
-      const interval = setInterval(() => {
-        setTimeInput(minutesToTime(debugTime));
-      }, 500);
-      return () => clearInterval(interval);
-    }
-  }, [isPlaying, debugTime]);
-
-  useEffect(() => {
-    if (debugTime !== null) {
-      setTimeInput(minutesToTime(debugTime));
-    }
-  }, [debugTime]);
-
-  const handleToggleSandboxMode = () => {
-    if (isDebugMode) {
-      setDebugMode(false);
-      setDebugTime(null);
-      setIsPlaying(false);
-    } else {
-      setDebugMode(true);
-      const currentMinutes = getCurrentTimeMinutes();
-      setDebugTime(currentMinutes);
-      setTimeInput(minutesToTime(currentMinutes));
-    }
-  };
-
-  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setTimeInput(value);
-    if (value.match(/^\d{2}:\d{2}$/)) {
-      const minutes = timeToMinutes(value);
-      setDebugTime(minutes);
-    }
-  };
-
-  const handleSetTime = (minutes: number) => {
-    setDebugTime(minutes);
-    setTimeInput(minutesToTime(minutes));
-  };
-
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
-  };
 
   const handleCopy = useCallback(() => {
     const vehicles = Array.from(vehiclePositions.values());
@@ -211,8 +150,6 @@ export function DebugPanel({
     });
   }, [vehiclePositions, lastUpdate, nowMs, selectedStopId, stopsById, stopDiag]);
 
-  if (!sandboxVisible) return null;
-
   if (!isOpen) {
     return (
       <button
@@ -220,13 +157,12 @@ export function DebugPanel({
         className="fixed bottom-4 left-4 z-[1000] btn btn-circle btn-secondary btn-sm shadow-lg"
         onClick={() => setIsOpen(true)}
       >
-        <Clock className="w-4 h-4" />
+        <Presentation className="w-4 h-4" />
       </button>
     );
   }
 
   const tabs: { icon: React.ReactNode; id: TabId; label: string }[] = [
-    { icon: <Clock className="w-3 h-3" />, id: 'sandbox', label: 'Sandbox' },
     { icon: <Radio className="w-3 h-3" />, id: 'feed', label: 'Live Feed' },
     { icon: <Bus className="w-3 h-3" />, id: 'stop', label: 'Stop' },
   ];
@@ -235,7 +171,7 @@ export function DebugPanel({
     <div className="fixed bottom-4 left-4 z-[2000] card bg-base-100 shadow-xl w-96 max-h-[60vh] flex flex-col">
       <div className="px-4 pt-3 pb-2 flex items-center justify-between shrink-0">
         <h3 className="font-bold text-sm flex items-center gap-2">
-          <Clock className="w-4 h-4" />
+          <Presentation className="w-4 h-4" />
           Debug Panel
         </h3>
         <div className="flex items-center gap-1">
@@ -275,83 +211,6 @@ export function DebugPanel({
       </div>
 
       <div className="overflow-y-auto flex-1 px-4 py-3">
-        {activeTab === 'sandbox' && (
-          <div className="space-y-3">
-            <div className="form-control">
-              <label className="label cursor-pointer">
-                <span className="label-text">Omogući postavljanje vremena</span>
-                <input
-                  checked={isDebugMode}
-                  className="toggle toggle-primary"
-                  onChange={handleToggleSandboxMode}
-                  type="checkbox"
-                />
-              </label>
-            </div>
-
-            {isDebugMode && (
-              <>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Current time (HH:MM)</span>
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      className="input input-bordered input-sm flex-1"
-                      onChange={handleTimeChange}
-                      type="time"
-                      value={timeInput}
-                    />
-                    <button
-                      aria-label={isPlaying ? 'Pause' : 'Play'}
-                      className={`btn btn-sm ${isPlaying ? 'btn-warning' : 'btn-success'}`}
-                      onClick={handlePlayPause}
-                    >
-                      {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  {isPlaying && (
-                    <label className="label">
-                      <span className="label-text-alt text-warning">
-                        ⚡ Auto-advancing ({timeSpeed} min/sec)
-                      </span>
-                    </label>
-                  )}
-                </div>
-
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Quick presets</span>
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[6, 9, 12, 15, 18, 22].map((h) => (
-                      <button
-                        className="btn btn-xs btn-outline"
-                        key={h}
-                        onClick={() => handleSetTime(h * 60)}
-                        type="button"
-                      >
-                        {String(h).padStart(2, '0')}:00
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="alert alert-info">
-                  <div className="text-sm">
-                    <div className="font-bold">
-                      Sandbox: {debugTime !== null ? minutesToTime(debugTime) : '--:--'}
-                    </div>
-                    <div className="text-xs opacity-70">
-                      Real: {minutesToTime(getCurrentTimeMinutes())}
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
         {activeTab === 'feed' && <LiveFeedTab nowMs={nowMs} routesById={routesById} />}
 
         {activeTab === 'stop' && (

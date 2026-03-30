@@ -367,7 +367,6 @@ const hr = {
       privacyTitle: 'Privatnost',
       repositoryHint: 'Pregledaj izvorni kod i doprinesi projektu',
       repositoryTitle: 'GitHub Repozitorij',
-      sandboxHint: 'Alat za ručno postavljanje vremena i testiranje reda vožnje',
       sandboxTitle: 'Sandbox način rada',
       sandboxToggle: 'Prikaži Sandbox',
       size: 'Veličina',
