@@ -1,42 +1,43 @@
 # Changelog
 
-## [2.3.3](https://github.com/aeoden96/kreni-app/compare/v2.3.2...v2.3.3) (2026-03-30)
-
+## [2.3.4](https://github.com/aeoden96/kreni-app/compare/v2.3.3...v2.3.4) (2026-03-30)
 
 ### Bug Fixes
 
-* implement vehicle position snapping for inactive tabs ([7ece738](https://github.com/aeoden96/kreni-app/commit/7ece7385aaeeb51d559f8f060e93182a3a84cc84))
-* improve service worker update frequency ([ad98630](https://github.com/aeoden96/kreni-app/commit/ad9863062fd50e63db1a5440ac5dc0e1a5433777))
+- fix debug panel visibility [FORCE] ([29aa6c1](https://github.com/aeoden96/kreni-app/commit/29aa6c1))
+
+## [2.3.3](https://github.com/aeoden96/kreni-app/compare/v2.3.2...v2.3.3) (2026-03-30)
+
+### Bug Fixes
+
+- implement vehicle position snapping for inactive tabs ([7ece738](https://github.com/aeoden96/kreni-app/commit/7ece7385aaeeb51d559f8f060e93182a3a84cc84))
+- improve service worker update frequency ([ad98630](https://github.com/aeoden96/kreni-app/commit/ad9863062fd50e63db1a5440ac5dc0e1a5433777))
 
 ## [2.3.2](https://github.com/aeoden96/kreni-app/compare/v2.3.1...v2.3.2) (2026-03-29)
 
-
 ### Bug Fixes
 
-* [FORCE] update SEO metadata and improve visibility handling in realtime data hook ([96e0ab4](https://github.com/aeoden96/kreni-app/commit/96e0ab436966431df00bdc90bd6410c01307eaf3))
+- [FORCE] update SEO metadata and improve visibility handling in realtime data hook ([96e0ab4](https://github.com/aeoden96/kreni-app/commit/96e0ab436966431df00bdc90bd6410c01307eaf3))
 
 ## [2.3.1](https://github.com/aeoden96/kreni-app/compare/v2.3.0...v2.3.1) (2026-03-29)
 
-
 ### Bug Fixes
 
-* nearby vehicles now show correctly ([e9cd760](https://github.com/aeoden96/kreni-app/commit/e9cd760f1e57155ab6c8eecab7b1079f591e83c5))
+- nearby vehicles now show correctly ([e9cd760](https://github.com/aeoden96/kreni-app/commit/e9cd760f1e57155ab6c8eecab7b1079f591e83c5))
 
 ## [2.3.0](https://github.com/aeoden96/kreni-app/compare/v2.2.0...v2.3.0) (2026-03-28)
 
-
 ### Features
 
-* enhance cycling mode features ([#24](https://github.com/aeoden96/kreni-app/issues/24)) ([0f43c0f](https://github.com/aeoden96/kreni-app/commit/0f43c0fa79dbb7798413b8e1d0d6cfa6fbce3b8d))
-* enhance GTFS data fetching with version selection support ([66dbefa](https://github.com/aeoden96/kreni-app/commit/66dbefa19e96eee90e6ce18358fcf30165bd30b3))
-* new onboarding modal ([#25](https://github.com/aeoden96/kreni-app/issues/25)) ([09087a6](https://github.com/aeoden96/kreni-app/commit/09087a64a332c53232b0b3d6397e98916c2064f8))
-* spider menu redesign ([#23](https://github.com/aeoden96/kreni-app/issues/23)) ([0179c68](https://github.com/aeoden96/kreni-app/commit/0179c68180559346d1bc91cbcae0d15ca5b4d62c))
-
+- enhance cycling mode features ([#24](https://github.com/aeoden96/kreni-app/issues/24)) ([0f43c0f](https://github.com/aeoden96/kreni-app/commit/0f43c0fa79dbb7798413b8e1d0d6cfa6fbce3b8d))
+- enhance GTFS data fetching with version selection support ([66dbefa](https://github.com/aeoden96/kreni-app/commit/66dbefa19e96eee90e6ce18358fcf30165bd30b3))
+- new onboarding modal ([#25](https://github.com/aeoden96/kreni-app/issues/25)) ([09087a6](https://github.com/aeoden96/kreni-app/commit/09087a64a332c53232b0b3d6397e98916c2064f8))
+- spider menu redesign ([#23](https://github.com/aeoden96/kreni-app/issues/23)) ([0179c68](https://github.com/aeoden96/kreni-app/commit/0179c68180559346d1bc91cbcae0d15ca5b4d62c))
 
 ### Bug Fixes
 
-* enhance bike station data handling ([3f29012](https://github.com/aeoden96/kreni-app/commit/3f2901280082745ade828bd95813eed605040b55))
-* enhance road closures display and management with refresh functionality ([#27](https://github.com/aeoden96/kreni-app/issues/27)) ([fdae9e7](https://github.com/aeoden96/kreni-app/commit/fdae9e7fe8382a56b54a8ccd62cf8b22a09a55da))
+- enhance bike station data handling ([3f29012](https://github.com/aeoden96/kreni-app/commit/3f2901280082745ade828bd95813eed605040b55))
+- enhance road closures display and management with refresh functionality ([#27](https://github.com/aeoden96/kreni-app/issues/27)) ([fdae9e7](https://github.com/aeoden96/kreni-app/commit/fdae9e7fe8382a56b54a8ccd62cf8b22a09a55da))
 
 ## [2.2.1](https://github.com/aeoden96/kreni-app/compare/v2.2.0...v2.2.1) (2026-03-26)
 

@@ -84,6 +84,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
   } = useSelectionParams();
 
   const mapZoom = useSettingsStore((s) => s.mapZoom);
+  const sandboxVisible = useSettingsStore((s) => s.sandboxVisible);
   const { addRecentRoute, addRecentStop } = useSettingsStore();
 
   const showCongestionHeatmap = false; // useSettingsStore((s) => s.showCongestionHeatmap);
@@ -582,8 +583,8 @@ export function GTFSMode({ config }: GTFSModeProps) {
           </div>
         )}
 
-        {/* Debug panel (transit only) */}
-        {config.hasRealtime && (
+        {/* Debug panel (transit only, requires sandbox mode enabled in Settings) */}
+        {config.hasRealtime && sandboxVisible && (
           <DebugPanel
             routesById={routesById}
             selectedStopId={selectedStopId}
