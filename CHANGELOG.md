@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.3.3](https://github.com/aeoden96/kreni-app/compare/v2.3.2...v2.3.3) (2026-03-30)
+
+
+### Bug Fixes
+
+* implement vehicle position snapping for inactive tabs ([7ece738](https://github.com/aeoden96/kreni-app/commit/7ece7385aaeeb51d559f8f060e93182a3a84cc84))
+* improve service worker update frequency ([ad98630](https://github.com/aeoden96/kreni-app/commit/ad9863062fd50e63db1a5440ac5dc0e1a5433777))
+
 ## [2.3.2](https://github.com/aeoden96/kreni-app/compare/v2.3.1...v2.3.2) (2026-03-29)
 
 
