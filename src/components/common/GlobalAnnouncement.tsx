@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export interface GlobalAnnouncementData {
+interface GlobalAnnouncementData {
   expiresAt?: string;
   id: string;
   link?: string;
