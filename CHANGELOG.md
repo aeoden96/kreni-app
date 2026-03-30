@@ -2,6 +2,13 @@
 
 ## [2.3.4](https://github.com/aeoden96/kreni-app/compare/v2.3.3...v2.3.4) (2026-03-30)
 
+
+### Bug Fixes
+
+* restrict debug panel visibility to sandbox mode in GTFSMode page [FORCE] ([8a5375c](https://github.com/aeoden96/kreni-app/commit/8a5375c4386b158f8bbc765e9b0da58332cd70e7))
+
+## [2.3.4](https://github.com/aeoden96/kreni-app/compare/v2.3.3...v2.3.4) (2026-03-30)
+
 ### Bug Fixes
 
 - fix debug panel visibility [FORCE] ([29aa6c1](https://github.com/aeoden96/kreni-app/commit/29aa6c1))
