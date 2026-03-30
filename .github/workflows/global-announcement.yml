@@ -1,0 +1,111 @@
+name: Global Announcement
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+          - set
+          - clear
+        default: 'set'
+      message:
+        description: 'The announcement message (required if setting)'
+        required: false
+        type: string
+      type:
+        description: 'Banner type'
+        required: false
+        type: choice
+        options:
+          - info
+          - warning
+          - error
+          - success
+        default: 'info'
+      durationHours:
+        description: 'Duration in hours (0 to persist forever)'
+        required: false
+        type: number
+        default: 2
+      link:
+        description: 'Optional hyperlink URL'
+        required: false
+        type: string
+      linkText:
+        description: 'Optional text for the hyperlink'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  update-announcement:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup payload
+        id: process
+        run: |
+          if [[ "${{ github.event.inputs.action }}" == "clear" ]]; then
+            echo "Notice: Clear action selected. Proceeding to delete."
+            exit 0
+          fi
+
+          if [[ -z "${{ github.event.inputs.message }}" ]]; then
+            echo "Error: Message is required when setting an announcement."
+            exit 1
+          fi
+
+          # Generate current timestamp for ID (triggers new banner to users)
+          ID=$(date +%s000)
+          
+          # Calculate expiresAt if durationHours > 0
+          EXPIRES_AT="null"
+          HOURS="${{ github.event.inputs.durationHours }}"
+          if [[ "$HOURS" != "0" && "$HOURS" != "" ]]; then
+            EXPIRES_AT="\"$(date -u -d "+${HOURS} hours" +'%Y-%m-%dT%H:%M:%SZ')\""
+          fi
+
+          # Safely build JSON payload using jq
+          JSON_PAYLOAD=$(jq -n -c \
+            --arg id "$ID" \
+            --arg msg "${{ github.event.inputs.message }}" \
+            --arg type "${{ github.event.inputs.type }}" \
+            --arg link "${{ github.event.inputs.link }}" \
+            --arg linkText "${{ github.event.inputs.linkText }}" \
+            --argjson expires "$EXPIRES_AT" \
+            '{
+              id: $id,
+              message: $msg,
+              type: $type,
+              expiresAt: $expires,
+              link: (if $link == "" then null else $link end),
+              linkText: (if $linkText == "" then null else $linkText end)
+            }')
+
+          # Pass multiple-line string to GITHUB_ENV safely (though -c makes it one line, good practice)
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          {
+            echo "PAYLOAD<<$EOF"
+            echo "$JSON_PAYLOAD"
+            echo "$EOF"
+          } >> "$GITHUB_ENV"
+
+      - name: Update Cloudflare KV (Set)
+        if: github.event.inputs.action == 'set'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: kv:key put --namespace-id ${{ secrets.CF_KV_NAMESPACE_ID }} "global-announcement" "$PAYLOAD"
+
+      - name: Update Cloudflare KV (Clear)
+        if: github.event.inputs.action == 'clear'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: kv:key delete --namespace-id ${{ secrets.CF_KV_NAMESPACE_ID }} "global-announcement"
