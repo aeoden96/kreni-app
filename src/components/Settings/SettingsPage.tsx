@@ -7,6 +7,7 @@ import {
   Database,
   Download,
   ExternalLink,
+  History,
   Info,
   Languages,
   Mail,
@@ -16,6 +17,7 @@ import {
   Sun,
   Trash2,
 } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -25,6 +27,7 @@ import { getCurrentLanguage, setLanguage, type SupportedLanguage } from '../../i
 import { useDataCacheStore } from '../../stores/dataCache';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { trackEvent } from '../../utils/analytics';
+import { ChangelogModal } from '../common/ChangelogModal';
 import { FlatLanguageFlags } from '../Navigation/FlatLanguageFlags';
 
 // Map tile providers handled automatically via theme + detailedMap setting
@@ -38,6 +41,7 @@ export function SettingsPage() {
   const setSandboxVisible = useSettingsStore((state) => state.setSandboxVisible);
   const detailedMap = useSettingsStore((state) => state.detailedMap);
   const setDetailedMap = useSettingsStore((state) => state.setDetailedMap);
+  const [isChangelogOpen, setIsChangelogOpen] = useState(false);
 
   const clearCache = useDataCacheStore((state) => state.clearCache);
   const getCacheStats = useDataCacheStore((state) => state.getCacheStats);
@@ -310,6 +314,13 @@ export function SettingsPage() {
                   </span>
                 </div>
               )}
+              <button
+                className="btn btn-outline btn-sm w-full mt-2 flex items-center gap-2"
+                onClick={() => setIsChangelogOpen(true)}
+              >
+                <History className="w-4 h-4" />
+                {t('settings.viewChangelog', 'View Changelog')}
+              </button>
             </div>
           </div>
         </div>
@@ -635,6 +646,8 @@ export function SettingsPage() {
           </div>
         </div>
       </div>
+
+      <ChangelogModal isOpen={isChangelogOpen} onClose={() => setIsChangelogOpen(false)} />
     </div>
   );
 }

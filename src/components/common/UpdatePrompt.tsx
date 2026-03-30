@@ -80,7 +80,7 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
       <div
         aria-labelledby="update-prompt-title"
         aria-modal="true"
-        className="fixed z-[9999] inset-x-4 bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:inset-x-auto sm:bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] w-auto sm:w-[min(100%,28rem)] max-w-lg mx-auto safe-left safe-right animate-[modal-fade-in_0.2s_ease-out]"
+        className="fixed z-[9999] inset-x-4 top-[calc(1rem+env(safe-area-inset-top,0px))] sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:inset-x-auto sm:top-8 w-auto sm:w-[min(100%,28rem)] max-w-lg mx-auto safe-left safe-right animate-[modal-fade-in_0.2s_ease-out]"
         role="alertdialog"
       >
         <div className="rounded-2xl bg-base-100 border border-base-300 shadow-2xl px-5 py-5 sm:px-6 sm:py-6 max-h-[min(70svh,32rem)] flex flex-col overflow-hidden">
@@ -112,6 +112,12 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
 
           {/* CONTENT ROW (Scrollable) - Offset by pl-14 to align with text */}
           <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain mt-3 pl-14 pr-1 -mr-0.5 [scrollbar-gutter:stable] pb-1">
+            <p className="mb-3 text-[11px] text-base-content/70 italic leading-tight bg-base-200/50 p-2 rounded-lg border border-base-300">
+              {t(
+                'updatePrompt.englishNote',
+                '* Detailed release notes are automatically generated from project commits and are available in English only.'
+              )}
+            </p>
             {showFull ? (
               <div className="space-y-4">
                 {fullChangelog.map((rel) => (
@@ -163,14 +169,6 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
               >
                 {t('updatePrompt.seeFullChangelog', 'See full changelog')}
               </button>
-            )}
-            {showFull && (
-              <p className="mt-4 text-[10px] text-base-content/40 italic leading-tight">
-                {t(
-                  'updatePrompt.englishNote',
-                  '* Detailed release notes are automatically generated from project commits and are available in English only.'
-                )}
-              </p>
             )}
           </div>
 
