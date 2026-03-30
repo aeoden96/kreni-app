@@ -3,8 +3,10 @@
  * the realtimeStore. Call this once near the top of the component tree.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
+import { queryKeys } from '../api/queryKeys';
 import { REALTIME_POLL_INTERVAL } from '../config';
 import { useRealtimeStore } from '../stores/realtimeStore';
 
@@ -15,151 +17,47 @@ import { useRealtimeStore } from '../stores/realtimeStore';
 // a generous buffer prevents a HIT on the very next request in edge cases.
 const CACHE_POST_EXPIRY_BUFFER_MS = 1500;
 const MIN_RETRY_DELAY_MS = 1000;
-const ERROR_RETRY_DELAY_MS = 3000;
-const RESUME_COALESCE_WINDOW_MS = 1200;
 
 export function useRealtimeData(enabled: boolean = true) {
-  const { error, lastUpdate, loading, stats, tripUpdates, vehiclePositions } = useRealtimeStore();
+  // Sync downstream data from the Zustand cache (where fetchAll populates)
+  const {
+    error: storeError,
+    lastUpdate,
+    stats,
+    tripUpdates,
+    vehiclePositions,
+  } = useRealtimeStore();
 
-  const [nextPollAtMs, setNextPollAtMs] = useState<null | number>(null);
-
-  const timeoutRef = useRef<null | number>(null);
-  const inFlightRef = useRef(false);
-  const pendingResyncRef = useRef(false);
-  const didErrorRetryRef = useRef(false);
-  const lastResumeTriggerRef = useRef(0);
-
-  useEffect(() => {
-    const clearTimer = () => {
-      if (timeoutRef.current != null) {
-        window.clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-    };
-
-    const scheduleNext = (delayMs: number, runRound: () => Promise<void>) => {
-      clearTimer();
-      const effectiveMs = Math.max(MIN_RETRY_DELAY_MS, delayMs);
-      setNextPollAtMs(Date.now() + effectiveMs);
-      timeoutRef.current = window.setTimeout(() => {
-        void runRound();
-      }, effectiveMs);
-    };
-
-    /** Skip scheduling while the tab is in the background (saves network / worker load). */
-    const scheduleNextIfVisible = (delayMs: number, runRound: () => Promise<void>) => {
-      if (document.visibilityState !== 'visible') {
-        setNextPollAtMs(null);
-        return;
-      }
-      scheduleNext(delayMs, runRound);
-    };
-
-    if (!enabled) {
-      clearTimer();
-      setNextPollAtMs(null);
-      return;
-    }
-
-    let active = true;
-
-    const runRound = async () => {
-      if (!active || inFlightRef.current) return;
-
-      inFlightRef.current = true;
-      clearTimer();
-      setNextPollAtMs(null);
+  // Let React Query handle the resilient background scheduling and focus deduction
+  const {
+    data: cacheAgeSeconds,
+    error: queryError,
+    isFetching,
+  } = useQuery({
+    enabled,
+    queryFn: async () => {
+      // We still use Zustand's engine to perform the heavy lifting and parse payloads
       await useRealtimeStore.getState().fetchAll();
-      inFlightRef.current = false;
+      return useRealtimeStore.getState().cacheAgeSeconds;
+    },
+    queryKey: queryKeys.realtime.all,
+    // Dynamically adjust polling delay based on the server's cache age
+    refetchInterval: (query) => getAdaptiveDelayMs(query.state.data ?? null),
+    // Standard polling best-practices for battery/data saving:
+    refetchIntervalInBackground: false,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
+    retry: true,
+  });
 
-      if (!active) return;
+  const error = queryError ?? storeError;
+  const loading = isFetching;
 
-      if (pendingResyncRef.current) {
-        pendingResyncRef.current = false;
-        scheduleNextIfVisible(MIN_RETRY_DELAY_MS, runRound);
-        return;
-      }
-
-      const state = useRealtimeStore.getState();
-      if (state.error && !didErrorRetryRef.current) {
-        didErrorRetryRef.current = true;
-        scheduleNextIfVisible(ERROR_RETRY_DELAY_MS, runRound);
-        return;
-      }
-
-      didErrorRetryRef.current = false;
-      const adaptiveDelayMs = getAdaptiveDelayMs(state.cacheAgeSeconds);
-      scheduleNextIfVisible(adaptiveDelayMs, runRound);
-    };
-
-    const requestResync = () => {
-      if (!active) return;
-
-      const now = Date.now();
-      if (now - lastResumeTriggerRef.current < RESUME_COALESCE_WINDOW_MS) return;
-      lastResumeTriggerRef.current = now;
-
-      if (inFlightRef.current) {
-        pendingResyncRef.current = true;
-        return;
-      }
-
-      void runRound();
-    };
-
-    /**
-     * Tab became visible: always kick a round (or queue behind in-flight).
-     * Must not use requestResync()'s time coalesce — we clear the poll timer on
-     * hide, so skipping here can leave polling stopped until the next unrelated
-     * resync (e.g. `online`) if the user returns within RESUME_COALESCE_WINDOW_MS
-     * of a previous trigger.
-     */
-    const resumePollingAfterTabFocus = () => {
-      if (!active) return;
-      if (inFlightRef.current) {
-        pendingResyncRef.current = true;
-        return;
-      }
-      void runRound();
-    };
-
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        resumePollingAfterTabFocus();
-      } else {
-        clearTimer();
-        setNextPollAtMs(null);
-      }
-    };
-
-    const onOnline = () => requestResync();
-    const onPageShow = (event: PageTransitionEvent) => {
-      if (event.persisted) {
-        // bfcache restore: all React state and refs are frozen from before the
-        // kill. Reloading is the only reliable way to get a clean slate.
-        window.location.reload();
-      }
-    };
-
-    if (document.visibilityState === 'visible') {
-      void runRound();
-    }
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    window.addEventListener('online', onOnline);
-    window.addEventListener('pageshow', onPageShow);
-
-    return () => {
-      active = false;
-      inFlightRef.current = false; // release guard so remount/re-enable starts cleanly
-      clearTimer();
-      setNextPollAtMs(null);
-      pendingResyncRef.current = false;
-      didErrorRetryRef.current = false;
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-      window.removeEventListener('online', onOnline);
-      window.removeEventListener('pageshow', onPageShow);
-    };
-  }, [enabled]);
+  // Derive the next poll time based on React Query's delay formula
+  const nextPollAtMs = useMemo(() => {
+    if (!enabled || isFetching || !lastUpdate) return null;
+    return lastUpdate + getAdaptiveDelayMs(cacheAgeSeconds ?? null);
+  }, [enabled, isFetching, lastUpdate, cacheAgeSeconds]);
 
   return {
     error,

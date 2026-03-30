@@ -41,6 +41,7 @@
     ]
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.95.2",
     "gtfs-realtime-bindings": "^1.1.1",
     "i18next": "^25.10.4",
     "idb-keyval": "^6.2.2",

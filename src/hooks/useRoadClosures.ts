@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useCallback, useEffect, useState } from 'react';
 
+import { queryKeys } from '../api/queryKeys';
 import { GTFS_API_KEY, GTFS_PROXY_URL } from '../config';
 
 export interface RoadClosure {
@@ -12,14 +14,6 @@ export interface RoadClosure {
   startDate: string; // ISO 8601 or POSIX
   streetName: string; // E.g. Kamenarka
 }
-
-interface CacheData {
-  closures: RoadClosure[];
-  timestamp: number;
-}
-
-/** Bumped when payload shape changes (drops bad legacy CKAN-normalized cache). */
-const CACHE_KEY = 'kreni-road-closures-cache-v2';
 
 function normalizeClosuresList(raw: unknown): RoadClosure[] {
   if (!Array.isArray(raw)) return [];
@@ -112,156 +106,59 @@ export const ROAD_CLOSURES_CACHE_DURATION_MS = 60 * 60 * 1000; // 1 hour
 const ROAD_CLOSURES_MANUAL_REFRESH_COOLDOWN_MS = 45 * 1000;
 
 export function useRoadClosures(enabled: boolean) {
-  const [closures, setClosures] = useState<RoadClosure[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  /** When the current list was last loaded from network or fresh localStorage (ms since epoch). */
-  const [refreshedAtMs, setRefreshedAtMs] = useState<null | number>(null);
+  const {
+    data,
+    dataUpdatedAt,
+    error,
+    isFetching,
+    refetch: queryRefetch,
+  } = useQuery({
+    enabled,
+    queryFn: fetchRoadClosuresFromNetwork,
+    queryKey: queryKeys.roadClosures.all,
+    refetchInterval: ROAD_CLOSURES_CACHE_DURATION_MS,
+    refetchOnWindowFocus: false,
+    staleTime: ROAD_CLOSURES_MANUAL_REFRESH_COOLDOWN_MS,
+  });
 
-  const intervalRef = useRef<null | number>(null);
-  const isMountedRef = useRef(true);
-  const manualCooldownEndsRef = useRef(0);
-  const [manualCooldownEndsAt, setManualCooldownEndsAt] = useState(0);
-  const [manualCooldownTick, setManualCooldownTick] = useState(0);
+  const closures = data ?? [];
+  const loading = isFetching;
+  const refreshedAtMs = dataUpdatedAt;
 
+  const [now, setNow] = useState(() => Date.now());
+
+  // We keep a minor interval purely to update the UI countdown visually
   useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
+    if (!dataUpdatedAt) return;
 
-  useEffect(() => {
-    if (!enabled) {
-      manualCooldownEndsRef.current = 0;
-      setManualCooldownEndsAt(0);
-    }
-  }, [enabled]);
+    const cooldownEndsAt = dataUpdatedAt + ROAD_CLOSURES_MANUAL_REFRESH_COOLDOWN_MS;
 
-  useEffect(() => {
-    if (manualCooldownEndsAt === 0) {
-      return;
-    }
-    const deadline = manualCooldownEndsAt;
+    if (Date.now() >= cooldownEndsAt) return; // No need to tick if already expired
+
     const id = window.setInterval(() => {
-      const now = Date.now();
-      if (now >= deadline) {
-        manualCooldownEndsRef.current = 0;
-        setManualCooldownEndsAt(0);
+      setNow(Date.now());
+      if (Date.now() >= cooldownEndsAt) {
         clearInterval(id);
       }
-      setManualCooldownTick((n) => n + 1);
     }, 1000);
+
     return () => clearInterval(id);
-  }, [manualCooldownEndsAt]);
+  }, [dataUpdatedAt]);
 
-  const fetchData = useCallback(async (bypassCache: boolean) => {
-    try {
-      if (!bypassCache) {
-        const cacheStr = localStorage.getItem(CACHE_KEY);
-        if (cacheStr) {
-          try {
-            const cache: CacheData = JSON.parse(cacheStr);
-            if (Date.now() - cache.timestamp < ROAD_CLOSURES_CACHE_DURATION_MS) {
-              if (isMountedRef.current) {
-                setClosures(normalizeClosuresList(cache.closures));
-                setRefreshedAtMs(cache.timestamp);
-              }
-              return;
-            }
-          } catch (e) {
-            console.error('Failed to parse road closures cache', e);
-          }
-        }
-      }
-
-      if (isMountedRef.current) {
-        setLoading(true);
-      }
-
-      const headers: Record<string, string> = {};
-      if (GTFS_API_KEY) {
-        headers['X-API-Key'] = GTFS_API_KEY;
-      }
-
-      const response = await fetch(`${GTFS_PROXY_URL}/?endpoint=road-closures`, { headers });
-      if (!response.ok) {
-        throw new Error(`Failed to fetch road closures: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (!data || !Array.isArray(data.closures)) {
-        console.error('Invalid road closures data format:', data);
-        throw new Error('Invalid road closures data format');
-      }
-
-      const newClosures = normalizeClosuresList(data.closures);
-      const fetchedAt = Date.now();
-
-      localStorage.setItem(
-        CACHE_KEY,
-        JSON.stringify({
-          closures: newClosures,
-          timestamp: fetchedAt,
-        } satisfies CacheData)
-      );
-
-      if (isMountedRef.current) {
-        setClosures(newClosures);
-        setError(null);
-        setLoading(false);
-        setRefreshedAtMs(fetchedAt);
-      }
-    } catch (err) {
-      console.error('Error fetching road closures:', err);
-      if (isMountedRef.current) {
-        setError(err instanceof Error ? err : new Error('Unknown error fetching road closures'));
-        setLoading(false);
-      }
-    }
-  }, []);
+  const cooldownEndsAt = dataUpdatedAt
+    ? dataUpdatedAt + ROAD_CLOSURES_MANUAL_REFRESH_COOLDOWN_MS
+    : 0;
+  const manualRefreshLocked = loading || now < cooldownEndsAt;
+  const manualRefreshSecondsLeft =
+    cooldownEndsAt > now ? Math.max(1, Math.ceil((cooldownEndsAt - now) / 1000)) : null;
 
   const refetch = useCallback(() => {
     const now = Date.now();
-    if (now < manualCooldownEndsRef.current) {
+    if (now < cooldownEndsAt || isFetching) {
       return;
     }
-    const ends = now + ROAD_CLOSURES_MANUAL_REFRESH_COOLDOWN_MS;
-    manualCooldownEndsRef.current = ends;
-    setManualCooldownEndsAt(ends);
-    void fetchData(true);
-  }, [fetchData]);
-
-  void manualCooldownTick;
-  const manualRefreshLocked = loading || Date.now() < manualCooldownEndsAt;
-  const manualRefreshSecondsLeft =
-    manualCooldownEndsAt > Date.now()
-      ? Math.max(1, Math.ceil((manualCooldownEndsAt - Date.now()) / 1000))
-      : null;
-
-  useEffect(() => {
-    if (!enabled) {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      return;
-    }
-
-    void fetchData(false);
-
-    intervalRef.current = window.setInterval(() => {
-      void fetchData(false);
-    }, ROAD_CLOSURES_CACHE_DURATION_MS);
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [enabled, fetchData]);
+    void queryRefetch();
+  }, [cooldownEndsAt, isFetching, queryRefetch]);
 
   return {
     closures,
@@ -272,4 +169,25 @@ export function useRoadClosures(enabled: boolean) {
     refetch,
     refreshedAtMs,
   };
+}
+
+async function fetchRoadClosuresFromNetwork(): Promise<RoadClosure[]> {
+  const headers: Record<string, string> = {};
+  if (GTFS_API_KEY) {
+    headers['X-API-Key'] = GTFS_API_KEY;
+  }
+
+  const response = await fetch(`${GTFS_PROXY_URL}/?endpoint=road-closures`, { headers });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch road closures: ${response.status}`);
+  }
+
+  const payload = await response.json();
+
+  if (!payload || !Array.isArray(payload.closures)) {
+    console.error('Invalid road closures data format:', payload);
+    throw new Error('Invalid road closures data format');
+  }
+
+  return normalizeClosuresList(payload.closures);
 }

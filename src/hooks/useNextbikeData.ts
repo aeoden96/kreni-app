@@ -1,4 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { queryKeys } from '../api/queryKeys';
 
 export interface BajsStation {
   active_place: number;
@@ -34,13 +37,6 @@ export interface NextbikeStationDiff {
 }
 
 const MAX_STATION_DIFFS = 50;
-
-interface CacheData {
-  stations: BajsStation[];
-  timestamp: number;
-}
-
-type NextbikeNetworkResult = { stations: BajsStation[]; timestamp: number };
 
 type StationCounts = {
   bikes: number;
@@ -98,8 +94,6 @@ function computeStationDiffs(
   return out;
 }
 
-const CACHE_KEY = 'kreni-nextbike-cache';
-
 /** How long Nextbike data is considered fresh; also the poll interval when the hook is enabled. */
 export const NEXTBIKE_CACHE_TTL_MS = 60 * 1000;
 
@@ -109,153 +103,61 @@ const NEXTBIKE_MANUAL_REFETCH_COOLDOWN_MS = 20 * 1000;
 const NEXTBIKE_API_URL =
   'https://maps.nextbike.net/maps/nextbike-live.json?city=1172&domains=hd&list_cities=0&bikes=0';
 
-/**
- * Single shared network request so Strict Mode's double effect run does not
- * leave the second mount with no data: the first invocation may unmount before
- * the fetch resolves, but the second awaits the same promise and applies state.
- */
-let nextbikeNetworkPromise: null | Promise<NextbikeNetworkResult> = null;
-
 export function useNextbikeData(enabled: boolean) {
-  const [stations, setStations] = useState<BajsStation[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  // Initialise from localStorage so the timestamp survives page re-mounts
-  const [lastFetched, setLastFetched] = useState<number>(() => {
-    try {
-      const cached = localStorage.getItem(CACHE_KEY);
-      if (cached) return (JSON.parse(cached) as CacheData).timestamp;
-    } catch {
-      /* ignore */
-    }
-    return 0;
-  });
-
-  /** Timestamp (ms) until which manual refetch is blocked; UI reads this for countdown. */
-  const [manualCooldownUntil, setManualCooldownUntil] = useState(0);
-  const manualCooldownUntilRef = useRef(0);
-
-  const intervalRef = useRef<null | number>(null);
-  const mountedRef = useRef(true);
-  /** Snapshot before applying the latest network response (for station diffs). */
   const prevSnapshotRef = useRef<Map<number, StationCounts> | null>(null);
 
   const [fetchDiffState, setFetchDiffState] = useState<NextbikeFetchDiffState>({ status: 'none' });
   const [diffOverflowCount, setDiffOverflowCount] = useState(0);
 
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
+  const { data, dataUpdatedAt, error, isFetching, refetch } = useQuery({
+    enabled,
+    queryFn: fetchNextbikeFromNetwork,
+    queryKey: queryKeys.nextbike.all,
+    refetchInterval: NEXTBIKE_CACHE_TTL_MS,
+    staleTime: NEXTBIKE_MANUAL_REFETCH_COOLDOWN_MS,
+  });
 
-  const runNetworkFetch = useCallback(async () => {
-    if (!nextbikeNetworkPromise) {
-      nextbikeNetworkPromise = fetchNextbikeFromNetwork().finally(() => {
-        nextbikeNetworkPromise = null;
-      });
-    }
+  const stations = data ?? [];
+  const loading = isFetching;
+  const lastFetched = dataUpdatedAt;
 
-    setLoading(true);
-
-    try {
-      const { stations: newStations, timestamp: now } = await nextbikeNetworkPromise;
-
-      if (mountedRef.current) {
-        const prev = prevSnapshotRef.current;
-        const allDiffs = computeStationDiffs(prev, newStations);
-
-        if (!prev || prev.size === 0) {
-          setFetchDiffState({ status: 'none' });
-          setDiffOverflowCount(0);
-        } else if (allDiffs.length === 0) {
-          setFetchDiffState({ status: 'unchanged' });
-          setDiffOverflowCount(0);
-        } else {
-          const items = allDiffs.slice(0, MAX_STATION_DIFFS);
-          setFetchDiffState({ items, status: 'changes' });
-          setDiffOverflowCount(Math.max(0, allDiffs.length - items.length));
-        }
-
-        prevSnapshotRef.current = buildSnapshot(newStations);
-        setStations(newStations);
-        setLastFetched(now);
-        setLoading(false);
-        setError(null);
-      }
-    } catch (err) {
-      if (mountedRef.current) {
-        setError(err instanceof Error ? err : new Error('Unknown error fetching nextbike data'));
-        setLoading(false);
-      }
-    }
-  }, []);
-
-  const tryLoadFreshCache = useCallback((): boolean => {
-    try {
-      const cacheStr = localStorage.getItem(CACHE_KEY);
-      if (!cacheStr) return false;
-      const cache: CacheData = JSON.parse(cacheStr);
-      if (Date.now() - cache.timestamp >= NEXTBIKE_CACHE_TTL_MS) return false;
-      if (mountedRef.current) {
-        const normalized = cache.stations.map((s) =>
-          normalizeBajsPlace(s as unknown as Record<string, unknown>)
-        );
-        prevSnapshotRef.current = buildSnapshot(normalized);
-        setFetchDiffState({ status: 'none' });
-        setDiffOverflowCount(0);
-        setStations(normalized);
-        setLastFetched(cache.timestamp);
-      }
-      return true;
-    } catch (e) {
-      console.error('Failed to parse nextbike cache', e);
-      return false;
-    }
-  }, []);
+  // Manual cooldown logic to prevent refresh spam
+  const manualCooldownUntil = useMemo(() => {
+    if (!dataUpdatedAt) return 0;
+    return dataUpdatedAt + NEXTBIKE_MANUAL_REFETCH_COOLDOWN_MS;
+  }, [dataUpdatedAt]);
 
   const refetchManual = useCallback(async (): Promise<'cooldown' | 'ok'> => {
     if (!enabled) return 'cooldown';
     const now = Date.now();
-    if (now < manualCooldownUntilRef.current) return 'cooldown';
-    const until = now + NEXTBIKE_MANUAL_REFETCH_COOLDOWN_MS;
-    manualCooldownUntilRef.current = until;
-    setManualCooldownUntil(until);
-    await runNetworkFetch();
+    if (now < manualCooldownUntil || isFetching) return 'cooldown';
+    await refetch();
     return 'ok';
-  }, [enabled, runNetworkFetch]);
+  }, [enabled, manualCooldownUntil, isFetching, refetch]);
 
+  // Compute station availability differences every time the data actually changes
   useEffect(() => {
-    if (!enabled) {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+    if (!data) return;
+
+    const prev = prevSnapshotRef.current;
+    if (prev && prev.size > 0) {
+      const allDiffs = computeStationDiffs(prev, data);
+
+      if (allDiffs.length === 0) {
+        setFetchDiffState({ status: 'unchanged' });
+        setDiffOverflowCount(0);
+      } else {
+        const items = allDiffs.slice(0, MAX_STATION_DIFFS);
+        setFetchDiffState({ items, status: 'changes' });
+        setDiffOverflowCount(Math.max(0, allDiffs.length - items.length));
       }
-      return;
+    } else {
+      setFetchDiffState({ status: 'none' });
+      setDiffOverflowCount(0);
     }
 
-    /**
-     * @param force – when true (scheduled interval) always fetch from the
-     *   network, bypassing the localStorage freshness check. This avoids the
-     *   countdown getting stuck because a timer fired a few ms early.
-     */
-    const fetchData = async (force = false) => {
-      if (!force && tryLoadFreshCache()) return;
-      await runNetworkFetch();
-    };
-
-    void fetchData(false);
-    intervalRef.current = window.setInterval(() => void fetchData(true), NEXTBIKE_CACHE_TTL_MS);
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [enabled, tryLoadFreshCache, runNetworkFetch]);
+    prevSnapshotRef.current = buildSnapshot(data);
+  }, [data]);
 
   return {
     diffOverflowCount,
@@ -269,7 +171,7 @@ export function useNextbikeData(enabled: boolean) {
   };
 }
 
-async function fetchNextbikeFromNetwork(): Promise<NextbikeNetworkResult> {
+async function fetchNextbikeFromNetwork(): Promise<BajsStation[]> {
   // API sends Cache-Control: max-age=86400; without this, the browser disk cache
   // can serve stale JSON and polls never see live updates.
   const response = await fetch(NEXTBIKE_API_URL, { cache: 'no-store' });
@@ -277,18 +179,15 @@ async function fetchNextbikeFromNetwork(): Promise<NextbikeNetworkResult> {
     throw new Error(`Failed to fetch nextbike data: ${response.status}`);
   }
 
-  const data = await response.json();
+  const payload = await response.json();
 
   let newStations: BajsStation[] = [];
-  if (data.countries?.[0]?.cities?.[0]) {
-    const places = data.countries[0].cities[0].places || [];
+  if (payload.countries?.[0]?.cities?.[0]) {
+    const places = payload.countries[0].cities[0].places || [];
     newStations = places.map((p: Record<string, unknown>) => normalizeBajsPlace(p));
   }
 
-  const now = Date.now();
-  localStorage.setItem(CACHE_KEY, JSON.stringify({ stations: newStations, timestamp: now }));
-
-  return { stations: newStations, timestamp: now };
+  return newStations;
 }
 
 function normalizeBajsPlace(raw: Record<string, unknown>): BajsStation {
