@@ -84,22 +84,42 @@ export function useAnimatedVehiclePosition(
 
   // Detect new GPS fixes and start a new ease from the current animated position.
   const mountedRef = useRef(false);
-  const prevGpsRef = useRef<Vec2>({ lat, lon });
+  const prevGpsRef = useRef<{ lat: number; lon: number; time: number }>({
+    lat,
+    lon,
+    time: 0,
+  });
 
   useEffect(() => {
     // Skip first render — marker is already at the correct GPS position.
     if (!mountedRef.current) {
       mountedRef.current = true;
+      prevGpsRef.current = { lat, lon, time: performance.now() };
       return;
     }
     if (lat === prevGpsRef.current.lat && lon === prevGpsRef.current.lon) return;
-    prevGpsRef.current = { lat, lon };
+
+    const now = performance.now();
+    const timeSinceLastUpdate = now - prevGpsRef.current.time;
+    prevGpsRef.current = { lat, lon, time: now };
+
+    // If the browser tab was inactive or network was paused, a lot of time may have
+    // passed, meaning the vehicle has moved a large distance. Skip the slow animation
+    // and snap it instantly.
+    if (timeSinceLastUpdate > REALTIME_POLL_INTERVAL * 2.5) {
+      animPosRef.current = { lat, lon };
+      if (markerRef.current) {
+        markerRef.current.setLatLng([lat, lon]);
+      }
+      easeRef.current = null;
+      return;
+    }
 
     easeRef.current = {
       from: { ...animPosRef.current },
-      startTime: performance.now(),
+      startTime: now,
       to: { lat, lon },
     };
     wakeUpRef.current?.();
-  }, [lat, lon]);
+  }, [lat, lon, markerRef]);
 }
