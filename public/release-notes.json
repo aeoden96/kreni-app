@@ -1,0 +1,228 @@
+[
+  {
+    "de": {
+      "changes": ["Fix debug panel visibility [FORCE]"],
+      "title": "Update v2.3.4 (DE)"
+    },
+    "en": {
+      "changes": ["Fix debug panel visibility [FORCE]"],
+      "title": "Update v2.3.4 (EN)"
+    },
+    "force": true,
+    "hr": {
+      "changes": ["Fix debug panel visibility [FORCE]"],
+      "title": "Update v2.3.4 (HR)"
+    },
+    "version": "2.3.4"
+  },
+  {
+    "de": {
+      "changes": [
+        "Implement vehicle position snapping for inactive tabs",
+        "Improve service worker update frequency"
+      ],
+      "title": "Update v2.3.3 (DE)"
+    },
+    "en": {
+      "changes": [
+        "Implement vehicle position snapping for inactive tabs",
+        "Improve service worker update frequency"
+      ],
+      "title": "Update v2.3.3 (EN)"
+    },
+    "force": false,
+    "hr": {
+      "changes": [
+        "Implement vehicle position snapping for inactive tabs",
+        "Improve service worker update frequency"
+      ],
+      "title": "Update v2.3.3 (HR)"
+    },
+    "version": "2.3.3"
+  },
+  {
+    "de": {
+      "changes": [
+        "[FORCE] update SEO metadata and improve visibility handling in realtime data hook"
+      ],
+      "title": "Update v2.3.2 (DE)"
+    },
+    "en": {
+      "changes": [
+        "[FORCE] update SEO metadata and improve visibility handling in realtime data hook"
+      ],
+      "title": "Update v2.3.2 (EN)"
+    },
+    "force": true,
+    "hr": {
+      "changes": [
+        "[FORCE] update SEO metadata and improve visibility handling in realtime data hook"
+      ],
+      "title": "Update v2.3.2 (HR)"
+    },
+    "version": "2.3.2"
+  },
+  {
+    "de": {
+      "changes": ["Nearby vehicles now show correctly"],
+      "title": "Update v2.3.1 (DE)"
+    },
+    "en": {
+      "changes": ["Nearby vehicles now show correctly"],
+      "title": "Update v2.3.1 (EN)"
+    },
+    "force": false,
+    "hr": {
+      "changes": ["Nearby vehicles now show correctly"],
+      "title": "Update v2.3.1 (HR)"
+    },
+    "version": "2.3.1"
+  },
+  {
+    "de": {
+      "changes": [
+        "Enhance cycling mode features (#24)",
+        "Enhance GTFS data fetching with version selection support",
+        "New onboarding modal (#25)",
+        "Spider menu redesign (#23)",
+        "Enhance bike station data handling",
+        "Enhance road closures display and management with refresh functionality (#27)"
+      ],
+      "title": "Update v2.3.0 (DE)"
+    },
+    "en": {
+      "changes": [
+        "Enhance cycling mode features (#24)",
+        "Enhance GTFS data fetching with version selection support",
+        "New onboarding modal (#25)",
+        "Spider menu redesign (#23)",
+        "Enhance bike station data handling",
+        "Enhance road closures display and management with refresh functionality (#27)"
+      ],
+      "title": "Update v2.3.0 (EN)"
+    },
+    "force": false,
+    "hr": {
+      "changes": [
+        "Enhance cycling mode features (#24)",
+        "Enhance GTFS data fetching with version selection support",
+        "New onboarding modal (#25)",
+        "Spider menu redesign (#23)",
+        "Enhance bike station data handling",
+        "Enhance road closures display and management with refresh functionality (#27)"
+      ],
+      "title": "Update v2.3.0 (HR)"
+    },
+    "version": "2.3.0"
+  },
+  {
+    "de": {
+      "changes": [
+        "Restore realtime vehicle matching after GTFS trip ID segment drift by adding normalized fallback joins",
+        "Pin static GTFS feed version in local/CI pipeline via `.gtfs-static-version` to allow manual, controlled upgrades"
+      ],
+      "title": "Update v2.2.1 (DE)"
+    },
+    "en": {
+      "changes": [
+        "Restore realtime vehicle matching after GTFS trip ID segment drift by adding normalized fallback joins",
+        "Pin static GTFS feed version in local/CI pipeline via `.gtfs-static-version` to allow manual, controlled upgrades"
+      ],
+      "title": "Update v2.2.1 (EN)"
+    },
+    "force": false,
+    "hr": {
+      "changes": [
+        "Restore realtime vehicle matching after GTFS trip ID segment drift by adding normalized fallback joins",
+        "Pin static GTFS feed version in local/CI pipeline via `.gtfs-static-version` to allow manual, controlled upgrades"
+      ],
+      "title": "Update v2.2.1 (HR)"
+    },
+    "version": "2.2.1"
+  },
+  {
+    "de": {
+      "changes": [
+        "Enhance route view with vehicle selection and improved stop previews (#21)",
+        "Improve map interaction and stop visibility logic (#19)"
+      ],
+      "title": "Update v2.2.0 (DE)"
+    },
+    "en": {
+      "changes": [
+        "Enhance route view with vehicle selection and improved stop previews (#21)",
+        "Improve map interaction and stop visibility logic (#19)"
+      ],
+      "title": "Update v2.2.0 (EN)"
+    },
+    "force": false,
+    "hr": {
+      "changes": [
+        "Enhance route view with vehicle selection and improved stop previews (#21)",
+        "Improve map interaction and stop visibility logic (#19)"
+      ],
+      "title": "Update v2.2.0 (HR)"
+    },
+    "version": "2.2.0"
+  },
+  {
+    "de": {
+      "changes": ["Taxi hailing action (#16)", "Misc style fixes (#18)"],
+      "title": "Update v2.1.0 (DE)"
+    },
+    "en": {
+      "changes": ["Taxi hailing action (#16)", "Misc style fixes (#18)"],
+      "title": "Update v2.1.0 (EN)"
+    },
+    "force": false,
+    "hr": {
+      "changes": ["Taxi hailing action (#16)", "Misc style fixes (#18)"],
+      "title": "Update v2.1.0 (HR)"
+    },
+    "version": "2.1.0"
+  },
+  {
+    "de": {
+      "changes": [
+        "**Open Source:** Initial public release of the project",
+        "**Release Automation:** Integrated Release Please for automated versioning and GitHub Releases",
+        "**Changelog UI:** Built a native changelog viewer within the application updates modal"
+      ],
+      "title": "Update v2.0.0 (DE)"
+    },
+    "en": {
+      "changes": [
+        "**Open Source:** Initial public release of the project",
+        "**Release Automation:** Integrated Release Please for automated versioning and GitHub Releases",
+        "**Changelog UI:** Built a native changelog viewer within the application updates modal"
+      ],
+      "title": "Update v2.0.0 (EN)"
+    },
+    "force": false,
+    "hr": {
+      "changes": [
+        "**Open Source:** Initial public release of the project",
+        "**Release Automation:** Integrated Release Please for automated versioning and GitHub Releases",
+        "**Changelog UI:** Built a native changelog viewer within the application updates modal"
+      ],
+      "title": "Update v2.0.0 (HR)"
+    },
+    "version": "2.0.0"
+  },
+  {
+    "de": {
+      "changes": ["Added dark mode", "New map layers", "Crash on startup"],
+      "title": "Update v1.5.7 (DE)"
+    },
+    "en": {
+      "changes": ["Added dark mode", "New map layers", "Crash on startup"],
+      "title": "Update v1.5.7 (EN)"
+    },
+    "force": false,
+    "hr": {
+      "changes": ["Added dark mode", "New map layers", "Crash on startup"],
+      "title": "Update v1.5.7 (HR)"
+    },
+    "version": "1.5.7"
+  }
+]

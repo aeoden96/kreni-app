@@ -24,6 +24,11 @@ export const Default: Story = {
 export const Fallback: Story = {
   args: {
     storybook: true,
-    storybookNotes: { changes: [], version: '0.0.0' },
+    storybookNotes: {
+      de: { changes: [], title: '' },
+      en: { changes: [], title: '' },
+      hr: { changes: [], title: '' },
+      version: '0.0.0',
+    },
   },
 };

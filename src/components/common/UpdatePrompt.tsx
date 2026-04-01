@@ -4,16 +4,22 @@ import { useTranslation } from 'react-i18next';
 
 import { useAppUpdate } from '../../hooks/useAppUpdate';
 
-interface ReleaseNotes {
+interface LocalizedNotes {
   changes: string[];
+  title: string;
+}
+
+interface ReleaseNotes {
+  de: LocalizedNotes;
+  en: LocalizedNotes;
   force?: boolean;
+  hr: LocalizedNotes;
   version: string;
 }
 
 interface UpdatePromptProps {
   /** Storybook only: when true, shows the banner with mock data (no real hook/fetch). */
   storybook?: boolean;
-  /** Storybook only: override mock notes. Omit version or use wrong version to show fallback bullets. */
   storybookNotes?: null | ReleaseNotes;
 }
 
@@ -25,38 +31,32 @@ interface UpdatePromptProps {
 const noop = () => {};
 
 export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePromptProps = {}) {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const hook = useAppUpdate();
   const needRefresh = storybook || hook.needRefresh;
   const updateApp = storybook ? noop : hook.updateApp;
   const [dismissed, setDismissed] = useState(false);
   const [notes, setNotes] = useState<null | ReleaseNotes>(null);
-  const [fullChangelog, setFullChangelog] = useState<ReleaseNotes[]>([]);
-  const [showFull, setShowFull] = useState(false);
 
   useEffect(() => {
     if (!needRefresh) return;
     if (storybook) {
       setNotes(
         storybookNotes ?? {
-          changes: [
-            t('updatePrompt.storyPerf'),
-            t('updatePrompt.storyFeatures'),
-            t('updatePrompt.storyFixes'),
-          ],
+          de: { changes: [t('updatePrompt.storyPerf')], title: 'Neues Update' },
+          en: { changes: [t('updatePrompt.storyPerf')], title: 'New Update' },
+          hr: { changes: [t('updatePrompt.storyPerf')], title: 'Novo ažuriranje' },
           version: __APP_VERSION__,
         }
       );
       return;
     }
-    fetch(`${import.meta.env.BASE_URL}changelog.json?t=${Date.now()}`, { cache: 'no-store' })
+    fetch(`${import.meta.env.BASE_URL}release-notes.json?t=${Date.now()}`, { cache: 'no-store' })
       .then((r) => (r.ok ? (r.json() as Promise<ReleaseNotes[]>) : null))
       .then((data) => {
         if (data && Array.isArray(data) && data.length > 0) {
-          setFullChangelog(data);
           // Show the latest release (data[0]) — the version the user is
-          // about to update TO.  We can't match __APP_VERSION__ because the
-          // running bundle still has the OLD version baked in.
+          // about to update TO.
           setNotes(data[0]);
         }
       })
@@ -112,43 +112,44 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
 
           {/* CONTENT ROW (Scrollable) - Offset by pl-14 to align with text */}
           <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain mt-3 pl-14 pr-1 -mr-0.5 [scrollbar-gutter:stable] pb-1">
-            <p className="mb-3 text-[11px] text-base-content/70 italic leading-tight bg-base-200/50 p-2 rounded-lg border border-base-300">
-              {t(
-                'updatePrompt.englishNote',
-                '* Detailed release notes are automatically generated from project commits and are available in English only.'
-              )}
-            </p>
-            {showFull ? (
-              <div className="space-y-4">
-                {fullChangelog.map((rel) => (
-                  <div className="space-y-1" key={rel.version}>
-                    <div className="font-bold text-sm text-base-content/90">v{rel.version}</div>
-                    <ul className="space-y-1 text-sm text-base-content/70 leading-relaxed">
-                      {rel.changes.map((c, i) => (
+            {notes ? (
+              (() => {
+                // Fallback safely to English or Croatian
+                const lang = i18n.language.slice(0, 2) as 'de' | 'en' | 'hr';
+                const currentNotes = notes[lang] || notes.en || notes.hr;
+
+                if (!currentNotes || currentNotes.changes.length === 0) {
+                  return (
+                    <ul className="space-y-1.5 text-sm text-base-content/70 leading-relaxed">
+                      <li className="flex gap-2">
+                        <span className="shrink-0 text-primary font-bold leading-[1.35]">·</span>
+                        <span>{t('updatePrompt.fallbackGeneral')}</span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="shrink-0 text-primary font-bold leading-[1.35]">·</span>
+                        <span>{t('updatePrompt.fallbackPerformance')}</span>
+                      </li>
+                    </ul>
+                  );
+                }
+                return (
+                  <div className="space-y-3">
+                    {currentNotes.title && (
+                      <p className="font-semibold text-sm text-base-content/90">
+                        {currentNotes.title}
+                      </p>
+                    )}
+                    <ul className="space-y-1.5 text-sm text-base-content/70 leading-relaxed">
+                      {currentNotes.changes.map((c, i) => (
                         <li className="flex gap-2" key={i}>
                           <span className="shrink-0 text-primary font-bold leading-[1.35]">·</span>
                           <span>{c}</span>
                         </li>
                       ))}
-                      {rel.changes.length === 0 && (
-                        <li className="flex gap-2">
-                          <span className="shrink-0 text-base-300 font-bold leading-[1.35]">-</span>
-                          <span className="italic opacity-60">No specific features logged.</span>
-                        </li>
-                      )}
                     </ul>
                   </div>
-                ))}
-              </div>
-            ) : notes && notes.changes.length > 0 ? (
-              <ul className="space-y-1.5 text-sm text-base-content/70 leading-relaxed">
-                {notes.changes.map((c, i) => (
-                  <li className="flex gap-2" key={i}>
-                    <span className="shrink-0 text-primary font-bold leading-[1.35]">·</span>
-                    <span>{c}</span>
-                  </li>
-                ))}
-              </ul>
+                );
+              })()
             ) : (
               <ul className="space-y-1.5 text-sm text-base-content/70 leading-relaxed">
                 <li className="flex gap-2">
@@ -160,15 +161,6 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
                   <span>{t('updatePrompt.fallbackPerformance')}</span>
                 </li>
               </ul>
-            )}
-
-            {!showFull && fullChangelog.length > 0 && (
-              <button
-                className="mt-3 text-xs text-primary underline hover:text-primary-focus cursor-pointer block"
-                onClick={() => setShowFull(true)}
-              >
-                {t('updatePrompt.seeFullChangelog', 'See full changelog')}
-              </button>
             )}
           </div>
 

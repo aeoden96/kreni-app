@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
+      pr: ${{ steps.release.outputs.pr }}
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
@@ -25,3 +26,36 @@ jobs:
     if: ${{ needs.release-please.outputs.release_created }}
     uses: ./.github/workflows/deploy.yml
     secrets: inherit
+
+  translate-notes:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.pr != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ fromJson(needs.release-please.outputs.pr).headBranchName }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Sync and Translate
+        env:
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+        run: |
+          node scripts/generate-changelog.js
+          node scripts/generate-release-notes.mjs
+
+      - name: Commit user release notes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'chore: update user release notes [skip ci]'
+          file_pattern: 'public/release-notes.json'

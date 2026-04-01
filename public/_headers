@@ -1,0 +1,24 @@
+# Cloudflare Pages — https://developers.cloudflare.com/pages/configuration/headers/
+#
+# Hashed Vite bundles: long-lived at the edge (filenames change each release).
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# PWA + app shell: revalidate so new deploys and service workers are picked up quickly.
+/sw.js
+  Cache-Control: no-cache
+
+/manifest.webmanifest
+  Cache-Control: no-cache
+
+/index.html
+  Cache-Control: no-cache
+
+/changelog.json
+  Cache-Control: no-cache
+
+/
+  Cache-Control: no-cache
+
+/data/*
+  Cache-Control: no-cache

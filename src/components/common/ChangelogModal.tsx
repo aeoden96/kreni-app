@@ -1,4 +1,4 @@
-import { History, X } from 'lucide-react';
+import { ExternalLink, History, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -7,20 +7,28 @@ interface ChangelogModalProps {
   onClose: () => void;
 }
 
-interface ReleaseNotes {
+interface LocalizedNotes {
   changes: string[];
+  title: string;
+}
+
+interface ReleaseNotes {
+  de: LocalizedNotes;
+  en: LocalizedNotes;
+  force?: boolean;
+  hr: LocalizedNotes;
   version: string;
 }
 
 export function ChangelogModal({ isOpen, onClose }: ChangelogModalProps) {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const [changelog, setChangelog] = useState<ReleaseNotes[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!isOpen) return;
     setLoading(true);
-    fetch(`${import.meta.env.BASE_URL}changelog.json?t=${Date.now()}`, { cache: 'no-store' })
+    fetch(`${import.meta.env.BASE_URL}release-notes.json?t=${Date.now()}`, { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : []))
       .then((data: ReleaseNotes[]) => {
         if (Array.isArray(data)) setChangelog(data);
@@ -68,13 +76,6 @@ export function ChangelogModal({ isOpen, onClose }: ChangelogModalProps) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-base-100/50">
-          <p className="text-[11px] text-base-content/70 italic leading-tight bg-base-200/50 p-2 rounded-lg border border-base-300">
-            {t(
-              'updatePrompt.englishNote',
-              '* Detailed release notes are automatically generated from project commits and are available in English only.'
-            )}
-          </p>
-
           {loading ? (
             <div className="flex justify-center p-8">
               <span className="loading loading-spinner text-primary" />
@@ -83,27 +84,51 @@ export function ChangelogModal({ isOpen, onClose }: ChangelogModalProps) {
             <p className="text-center text-sm opacity-50 p-8">{t('common.noData')}</p>
           ) : (
             <div className="space-y-6">
-              {changelog.map((rel) => (
-                <div className="space-y-2" key={rel.version}>
-                  <h3 className="font-bold text-base text-base-content/90">v{rel.version}</h3>
-                  <ul className="space-y-1.5 text-sm text-base-content/70 leading-relaxed pl-1">
-                    {rel.changes.map((c, i) => (
-                      <li className="flex gap-2" key={i}>
-                        <span className="shrink-0 text-primary font-bold leading-[1.35]">·</span>
-                        <span>{c}</span>
-                      </li>
-                    ))}
-                    {rel.changes.length === 0 && (
-                      <li className="flex gap-2">
-                        <span className="shrink-0 text-base-300 font-bold leading-[1.35]">-</span>
-                        <span className="italic opacity-60">No specific features logged.</span>
-                      </li>
-                    )}
-                  </ul>
-                </div>
-              ))}
+              {changelog.map((rel) => {
+                const lang = i18n.language.slice(0, 2) as 'de' | 'en' | 'hr';
+                const notes = rel[lang] || rel.en || rel.hr;
+
+                return (
+                  <div className="space-y-2" key={rel.version}>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-base text-base-content/90">v{rel.version}</h3>
+                      {notes?.title && (
+                        <span className="text-sm text-base-content/60 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                          — {notes.title}
+                        </span>
+                      )}
+                    </div>
+                    <ul className="space-y-1.5 text-sm text-base-content/70 leading-relaxed pl-1">
+                      {notes?.changes.map((c, i) => (
+                        <li className="flex gap-2" key={i}>
+                          <span className="shrink-0 text-primary font-bold leading-[1.35]">·</span>
+                          <span>{c}</span>
+                        </li>
+                      ))}
+                      {(!notes || notes.changes.length === 0) && (
+                        <li className="flex gap-2">
+                          <span className="shrink-0 text-base-300 font-bold leading-[1.35]">-</span>
+                          <span className="italic opacity-60">No specific features logged.</span>
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                );
+              })}
             </div>
           )}
+        </div>
+
+        <div className="p-4 border-t border-base-200 bg-base-100 shrink-0">
+          <a
+            className="btn btn-outline btn-sm w-full flex items-center justify-center gap-2"
+            href="https://github.com/aeoden96/kreni-app/releases"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            {t('updatePrompt.technicalChanges', 'Tehničke promjene')}
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
         </div>
       </div>
     </div>
