@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 
 import { queryKeys } from '../api/queryKeys';
-import { GTFS_API_KEY, GTFS_PROXY_URL } from '../config';
+import { STATIC_DATA_URL } from '../config';
 
 export interface RoadClosure {
   direction: string; // e.g. "BOTH_DIRECTIONS"
@@ -172,12 +172,7 @@ export function useRoadClosures(enabled: boolean) {
 }
 
 async function fetchRoadClosuresFromNetwork(): Promise<RoadClosure[]> {
-  const headers: Record<string, string> = {};
-  if (GTFS_API_KEY) {
-    headers['X-API-Key'] = GTFS_API_KEY;
-  }
-
-  const response = await fetch(`${GTFS_PROXY_URL}/?endpoint=road-closures`, { headers });
+  const response = await fetch(`${STATIC_DATA_URL}/road-closures.json`);
   if (!response.ok) {
     throw new Error(`Failed to fetch road closures: ${response.status}`);
   }

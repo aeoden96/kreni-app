@@ -4,6 +4,7 @@ import L from 'leaflet';
 import { memo, useEffect, useState } from 'react';
 import { Marker, Tooltip } from 'react-leaflet';
 
+import { STATIC_DATA_URL } from '../../config';
 import { cachedFetch, dataFetch } from '../../stores/dataCache';
 
 interface PublicGaragesMapProps {
@@ -16,9 +17,9 @@ export const PublicGaragesMap = memo(function PublicGaragesMap({ show }: PublicG
   useEffect(() => {
     if (!show || geoData) return;
 
-    const url = `${import.meta.env.BASE_URL}static_data/javne_garaze.json`;
+    const url = `${STATIC_DATA_URL}/public-garages.geojson`;
     cachedFetch(url, () => dataFetch(url).then((res) => res.json()))
-      .then((data) => setGeoData(data))
+      .then((data) => setGeoData(data as FeatureCollection<Point>))
       .catch((err) => console.error('Failed to load public garages:', err));
   }, [show, geoData]);
 

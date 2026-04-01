@@ -4,10 +4,10 @@ import L from 'leaflet';
 import { memo, useEffect, useState } from 'react';
 import { Marker, Tooltip } from 'react-leaflet';
 
-import { GTFS_API_KEY, GTFS_PROXY_URL } from '../../config';
+import { STATIC_DATA_URL } from '../../config';
 import { cachedFetchWithTTL } from '../../stores/dataCache';
 
-const JAVNI_ZDENCI_PROXY_URL = GTFS_PROXY_URL ? `${GTFS_PROXY_URL}?endpoint=javni-zdenci` : null;
+const JAVNI_ZDENCI_R2_URL = `${STATIC_DATA_URL}/public-water-fountains.geojson`;
 
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -38,19 +38,10 @@ export const PublicFountainsMap = memo(function PublicFountainsMap({
 
   useEffect(() => {
     if (!show || geoData) return;
-    if (!JAVNI_ZDENCI_PROXY_URL) {
-      console.warn('VITE_GTFS_PROXY_URL is not set – cannot load public fountains');
-      return;
-    }
-
-    const headers: Record<string, string> = {};
-    if (GTFS_API_KEY) {
-      headers['X-API-Key'] = GTFS_API_KEY;
-    }
 
     cachedFetchWithTTL(
-      JAVNI_ZDENCI_PROXY_URL,
-      () => fetch(JAVNI_ZDENCI_PROXY_URL, { headers }).then((res) => res.json()),
+      JAVNI_ZDENCI_R2_URL,
+      () => fetch(JAVNI_ZDENCI_R2_URL).then((res) => res.json()),
       ONE_WEEK_MS
     )
       .then((data) => setGeoData(data as FeatureCollection<Point>))

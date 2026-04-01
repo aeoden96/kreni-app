@@ -6,6 +6,9 @@
 /** Base URL of the GTFS Realtime proxy Cloudflare Worker */
 export const GTFS_PROXY_URL = import.meta.env.VITE_GTFS_PROXY_URL || '';
 
+/** Base URL for the static datasets stored in the R2 Bucket */
+export const STATIC_DATA_URL = import.meta.env.VITE_STATIC_DATA_URL || 'https://data.kreni.app';
+
 /** Optional API key for the proxy worker */
 export const GTFS_API_KEY: string | undefined = import.meta.env.VITE_GTFS_API_KEY;
 
