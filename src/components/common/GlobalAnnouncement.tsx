@@ -3,6 +3,8 @@ import { X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { GTFS_API_KEY, GTFS_PROXY_URL } from '../../config';
+
 interface GlobalAnnouncementData {
   expiresAt?: string;
   id: string;
@@ -35,7 +37,14 @@ export function GlobalAnnouncement() {
 
   const { data: announcement } = useQuery<GlobalAnnouncementData | null>({
     queryFn: async () => {
-      const res = await fetch(`${import.meta.env.VITE_GTFS_PROXY_URL}/announcement`);
+      if (!GTFS_PROXY_URL) return null;
+
+      const headers: Record<string, string> = {};
+      if (GTFS_API_KEY) {
+        headers['X-API-Key'] = GTFS_API_KEY;
+      }
+
+      const res = await fetch(`${GTFS_PROXY_URL}/announcement`, { headers });
       if (!res.ok) return null;
       try {
         const json = await res.json();
