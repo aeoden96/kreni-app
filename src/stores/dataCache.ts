@@ -136,6 +136,8 @@ export const useDataCacheStore = create<DataCacheState>()(
 const inFlight = new Map<string, Promise<unknown>>();
 
 export async function cachedFetch<T>(url: string, fetcher: () => Promise<T>): Promise<T> {
+  await ensureCacheHydrated();
+
   const store = useDataCacheStore.getState();
 
   // Check persistent cache first
@@ -174,6 +176,8 @@ export async function cachedFetchWithTTL<T>(
   fetcher: () => Promise<T>,
   ttlMs: number
 ): Promise<T> {
+  await ensureCacheHydrated();
+
   const store = useDataCacheStore.getState();
 
   const cached = store.getEntryWithTTL<T>(url, ttlMs);
@@ -265,4 +269,24 @@ export function dataFetch(url: string, init?: RequestInit): Promise<Response> {
       ...init?.headers,
     },
   });
+}
+
+let hydrationPromise: null | Promise<void> = null;
+
+function ensureCacheHydrated(): Promise<void> {
+  if (useDataCacheStore.persist.hasHydrated()) {
+    return Promise.resolve();
+  }
+
+  if (!hydrationPromise) {
+    hydrationPromise = new Promise((resolve) => {
+      const unsub = useDataCacheStore.persist.onFinishHydration(() => {
+        unsub();
+        hydrationPromise = null;
+        resolve();
+      });
+    });
+  }
+
+  return hydrationPromise;
 }
