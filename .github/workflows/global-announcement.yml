@@ -61,7 +61,7 @@ jobs:
 
           # Generate current timestamp for ID (triggers new banner to users)
           ID=$(date +%s000)
-          
+
           # Calculate expiresAt if durationHours > 0
           EXPIRES_AT="null"
           HOURS="${{ github.event.inputs.durationHours }}"
@@ -94,13 +94,14 @@ jobs:
             echo "$EOF"
           } >> "$GITHUB_ENV"
 
+      # Use bash so $PAYLOAD expands (wrangler-action does not run the command through a shell).
       - name: Update Cloudflare KV (Set)
         if: github.event.inputs.action == 'set'
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: kv:key put --namespace-id ${{ secrets.CF_KV_NAMESPACE_ID }} "global-announcement" "$PAYLOAD"
+        run: npx wrangler@3 kv key put --namespace-id="$CF_KV_NAMESPACE_ID" "global-announcement" "$PAYLOAD"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CF_KV_NAMESPACE_ID: ${{ secrets.CF_KV_NAMESPACE_ID }}
 
       - name: Update Cloudflare KV (Clear)
         if: github.event.inputs.action == 'clear'

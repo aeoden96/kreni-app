@@ -1,1 +1,1 @@
-npx branch-name-lint branch-name-lint.json && yarn test && yarn knip && yarn format && yarn secret
+npx branch-name-lint branch-name-lint.json && yarn test && yarn knip && yarn secret

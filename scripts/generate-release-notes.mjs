@@ -24,26 +24,27 @@ const OLLAMA_API_URL = 'https://ollama.com/api/chat';
 const OLLAMA_MODEL = 'gemma3:12b';
 const LIVE_NOTES_URL = 'https://kreni.app/release-notes.json';
 
-const PROMPT_TEMPLATE = `You are a product manager translating technical release notes for a public transit app in Zagreb into user-friendly bullet points.
-You will receive an array of technical changes.
-Rewrite them to be short, clear, and engaging (1-2 sentences max per bullet), emphasizing the benefit to the end user.
-- Completely remove technical jargon (e.g., 'GTFS', 'fallback joins', 'React', 'refactored', 'commits').
-- Omit the release marker '[FORCE]' everywhere — it is internal tooling only; never include it in titles or bullets.
-- Ignore issue numbers like '#24'.
-- If a change is a bug fix, rephrase it positively (e.g., "Nearby vehicles now show correctly").
-- You may use a relevant emoji at the start of each bullet point if it makes sense (🚲 for bikes, 🚌 for bus, ✨ for new features, etc).
-- Format the output in the requested language: {TARGET_LANG}
+const PROMPT_TEMPLATE = `You rewrite technical changelog lines for a public transit app (Zagreb) into plain language for end users.
 
-Return ONLY valid JSON in this exact structure:
+Input: a JSON array of short technical change strings. Your output must stay VERY compact — do not invent details, do not add marketing fluff, and do not expand beyond what the input implies.
+
+Rules:
+- Output one bullet per input line unless two lines are clearly the same topic (then merge into one bullet). Never output more bullets than the input has lines.
+- Each bullet: ONE short phrase or single sentence, max ~15 words. No second sentences, no clauses that restate the same idea.
+- Title: max 6 words, optional one leading emoji. No subtitle, no punctuation beyond maybe an exclamation if natural.
+- Strip jargon (GTFS, React, refactored, commits, API names) but keep the same meaning; do not introduce new features or benefits not hinted in the input.
+- Omit '[FORCE]' and issue numbers like '#24' everywhere.
+- Bug fixes: short positive wording (e.g. "Nearby vehicles display correctly").
+- Optional: one small emoji at the start of a bullet if it fits (🚲 🚌 ✨); skip if unsure.
+- Language for all strings: {TARGET_LANG}
+
+Return ONLY valid JSON:
 {
-  "title": "A short, engaging title for this release (use an emoji)",
-  "changes": [
-    "...",
-    "..."
-  ]
+  "title": "...",
+  "changes": ["...", "..."]
 }
 
-No markdown blocks outside the JSON, no explanations.`;
+No markdown fences, no commentary.`;
 
 async function fetchLiveNotes() {
   console.log(`[release-notes] Fetching live notes from ${LIVE_NOTES_URL}...`);
@@ -68,13 +69,15 @@ async function fetchLiveNotes() {
 async function main() {
   const changelogPath = path.resolve(publicPath, 'changelog.json');
   if (!fs.existsSync(changelogPath)) {
-    console.error(`[release-notes] public/changelog.json not found! Run generate-changelog.js first.`);
+    console.error(
+      `[release-notes] public/changelog.json not found! Run generate-changelog.js first.`
+    );
     process.exit(1);
   }
 
   const rawChangelog = JSON.parse(fs.readFileSync(changelogPath, 'utf-8'));
   const liveNotes = await fetchLiveNotes();
-  const liveNotesMap = new Map(liveNotes.map(n => [n.version, n]));
+  const liveNotesMap = new Map(liveNotes.map((n) => [n.version, n]));
 
   const mergedNotes = [];
 
@@ -86,15 +89,21 @@ async function main() {
     }
 
     console.log(`[release-notes] Translating version ${release.version}...`);
-    
+
     // If there are no changes or it's just an empty fallback, provide defaults
     if (!release.changes || release.changes.length === 0) {
       mergedNotes.push({
-        de: { changes: ["Fehlerbehebungen und Leistungsverbesserungen."], title: "Kleine Updates ✨" },
-        en: { changes: ["Bug fixes and performance improvements."], title: "Minor Updates ✨" },
+        de: {
+          changes: ['Fehlerbehebungen und Leistungsverbesserungen.'],
+          title: 'Kleine Updates ✨',
+        },
+        en: { changes: ['Bug fixes and performance improvements.'], title: 'Minor Updates ✨' },
         force: release.force,
-        hr: { changes: ["Ispravke grešaka i poboljšanja performansi."], title: "Manja ažuriranja ✨" },
-        version: release.version
+        hr: {
+          changes: ['Ispravke grešaka i poboljšanja performansi.'],
+          title: 'Manja ažuriranja ✨',
+        },
+        version: release.version,
       });
       continue;
     }
@@ -107,9 +116,9 @@ async function main() {
     } catch (err) {
       console.error(`[release-notes] Error translating v${release.version}:`, err.message);
       // Fallback
-      hrData = { changes: release.changes, title: "Ažuriranje" };
-      enData = { changes: release.changes, title: "Update" };
-      deData = { changes: release.changes, title: "Aktualisieren" };
+      hrData = { changes: release.changes, title: 'Ažuriranje' };
+      enData = { changes: release.changes, title: 'Update' };
+      deData = { changes: release.changes, title: 'Aktualisieren' };
     }
 
     mergedNotes.push({
@@ -117,12 +126,12 @@ async function main() {
       en: enData,
       force: release.force,
       hr: hrData,
-      version: release.version
+      version: release.version,
     });
   }
 
   const outputJson = JSON.stringify(mergedNotes, null, 2);
-  
+
   const publicOutPath = path.resolve(publicPath, 'release-notes.json');
   fs.writeFileSync(publicOutPath, outputJson);
   console.log(`[release-notes] Wrote ${mergedNotes.length} releases to ${publicOutPath}`);
@@ -139,11 +148,14 @@ async function translateWithLlm(version, changes, targetLang) {
     console.warn(`[release-notes] OLLAMA_API_KEY not set. Using raw changes for ${targetLang}.`);
     return {
       changes: changes,
-      title: `Update v${version} (${targetLang.toUpperCase()})`
+      title: `Update v${version} (${targetLang.toUpperCase()})`,
     };
   }
-  
-  const systemPrompt = PROMPT_TEMPLATE.replace('{TARGET_LANG}', targetLang === 'hr' ? 'Croatian' : targetLang === 'de' ? 'German' : 'English');
+
+  const systemPrompt = PROMPT_TEMPLATE.replace(
+    '{TARGET_LANG}',
+    targetLang === 'hr' ? 'Croatian' : targetLang === 'de' ? 'German' : 'English'
+  );
   const userContent = JSON.stringify(changes, null, 2);
 
   console.log(`[release-notes]   - Calling Ollama for ${targetLang.toUpperCase()}...`);
@@ -152,17 +164,17 @@ async function translateWithLlm(version, changes, targetLang) {
       format: 'json',
       messages: [
         { content: systemPrompt, role: 'system' },
-        { content: userContent, role: 'user' }
+        { content: userContent, role: 'user' },
       ],
       model: OLLAMA_MODEL,
-      options: { temperature: 0.1 },
-      stream: false
+      options: { num_predict: 800, temperature: 0.1 },
+      stream: false,
     }),
     headers: {
       Authorization: `Bearer ${OLLAMA_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    method: 'POST'
+    method: 'POST',
   });
 
   if (!res.ok) {
@@ -174,11 +186,14 @@ async function translateWithLlm(version, changes, targetLang) {
   const content = json.message?.content;
   if (!content) throw new Error('Empty response from Ollama');
 
-  const cleaned = content.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+  const cleaned = content
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
   return JSON.parse(cleaned);
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error('[release-notes] Fatal error:', err);
   process.exit(1);
 });

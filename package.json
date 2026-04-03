@@ -28,6 +28,7 @@
     "build-storybook": "storybook build",
     "prepare": "husky",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "secret": "secretlint ."
   },
   "lint-staged": {
