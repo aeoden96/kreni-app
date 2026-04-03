@@ -1,7 +1,8 @@
 {
   "branchNameLinter": {
     "prefixes": false,
-    "regex": "^(feat|fix|docs|chore|refactor|test|style|perf|ci)/[a-z0-9\\-]+$",
+    "separator": false,
+    "regex": "^(?:(?:feat|fix|docs|chore|refactor|test|style|perf|ci)/[a-z0-9\\-]+|release-please--[a-z0-9\\-]+)$",
     "skip": ["master"],
     "disallowed": ["main", "develop"],
     "msgDoesNotMatchRegex": "Branch name must start with a type (feat/, fix/, etc.) and use kebab-case. Example: feat/branch-name-lint"
