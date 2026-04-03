@@ -82,6 +82,8 @@ const de = {
       unconfigured: 'Das Feedback-Formular ist noch nicht eingerichtet.',
     },
     gtfs: {
+      bottomToolsCollapseAria: 'Kartenwerkzeuge ausblenden',
+      bottomToolsExpandAria: 'Kartenwerkzeuge einblenden (Hinweise, Legende, Live-Feed, ZET-App)',
       initialError: 'Fehler beim Laden der Daten: {{message}}',
       loadingRoute: 'Route wird geladen…',
       loadingTrain: 'Zugdaten werden geladen…',

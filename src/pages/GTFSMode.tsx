@@ -23,6 +23,7 @@ import { RouteModal } from '../components/common/RouteModal';
 import { SearchModal } from '../components/common/SearchModal';
 import { StopInfoBar } from '../components/common/StopInfoBar';
 import { StopModal } from '../components/common/StopModal';
+import { TransitBottomToolsFab } from '../components/common/TransitBottomToolsFab';
 import { ZetAppLogoLink } from '../components/common/ZetAppLogoLink';
 import { MapView } from '../components/Map/MapView';
 import { MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD } from '../components/Map/mapZoomConstants';
@@ -58,6 +59,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
   const [stopModalOpen, setStopModalOpen] = useState(false);
   const [nearbyOpen, setNearbyOpen] = useState(false);
   const [nearbyStopsListExpanded, setNearbyStopsListExpanded] = useState(false);
+  const [transitBottomToolsOpen, setTransitBottomToolsOpen] = useState(false);
 
   const setNearbyPanelOpen = useCallback((open: boolean) => {
     setNearbyOpen(open);
@@ -67,10 +69,16 @@ export function GTFSMode({ config }: GTFSModeProps) {
   }, []);
 
   const realtimePanelRef = useRef<RealtimeStatusPanelHandle>(null);
+
+  const setTransitBottomToolsOpenWithPanels = useCallback((next: boolean) => {
+    if (!next) realtimePanelRef.current?.closeLegends();
+    setTransitBottomToolsOpen(next);
+  }, []);
+
   /** Close Legend and "tehnički detalji" when user performs other actions (stop click, location, etc.) */
   const closeLegendAndDetails = useCallback(() => {
-    realtimePanelRef.current?.closeLegends();
-  }, []);
+    setTransitBottomToolsOpenWithPanels(false);
+  }, [setTransitBottomToolsOpenWithPanels]);
 
   // URL-backed selection state (route, stop, direction)
   const {
@@ -399,30 +407,40 @@ export function GTFSMode({ config }: GTFSModeProps) {
 
         {/* Realtime status badges + ZET app link (transit only); z above Leaflet bottom chrome */}
         {config.id === 'transit' && (
-          <div className="absolute bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-[1100] flex items-center justify-end gap-2">
-            {config.hasRealtime && realtimeStats && (
-              <RealtimeStatusPanel
-                alerts={serviceAlerts}
-                cacheAgeSeconds={cacheAgeSeconds}
-                cacheStatus={cacheStatus}
-                feedAgeStr={feedAgeStr}
-                fetchLatencyMs={fetchLatencyMs}
-                lastUpdate={lastUpdate}
-                nextPollAtMs={nextPollAtMs}
-                onRouteClick={(routeId, routeType) => handleSelectRoute(routeId, routeType)}
-                realtimeLoading={realtimeLoading}
-                realtimeStats={realtimeStats}
-                ref={realtimePanelRef}
-                routesById={routesById}
-                selectedRouteId={selectedRouteId}
-                timeAgoStr={timeAgoStr}
-                workerTimestamp={workerTimestamp}
+          <div className="absolute bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-[1100] flex items-center justify-end">
+            {config.hasRealtime && realtimeStats ? (
+              <TransitBottomToolsFab
+                onOpenChange={setTransitBottomToolsOpenWithPanels}
+                open={transitBottomToolsOpen}
+              >
+                <ZetAppLogoLink
+                  className="btn btn-circle btn-sm min-h-8 min-w-8 size-8 shrink-0 border-none bg-base-100 p-0 shadow transition-[box-shadow,transform,filter] duration-200 ring-1 ring-base-300/60 hover:ring-primary/55 hover:brightness-110 active:scale-95"
+                  imgClassName="size-full rounded-full object-cover"
+                />
+                <RealtimeStatusPanel
+                  alerts={serviceAlerts}
+                  cacheAgeSeconds={cacheAgeSeconds}
+                  cacheStatus={cacheStatus}
+                  feedAgeStr={feedAgeStr}
+                  fetchLatencyMs={fetchLatencyMs}
+                  lastUpdate={lastUpdate}
+                  nextPollAtMs={nextPollAtMs}
+                  onRouteClick={(routeId, routeType) => handleSelectRoute(routeId, routeType)}
+                  realtimeLoading={realtimeLoading}
+                  realtimeStats={realtimeStats}
+                  ref={realtimePanelRef}
+                  routesById={routesById}
+                  selectedRouteId={selectedRouteId}
+                  timeAgoStr={timeAgoStr}
+                  workerTimestamp={workerTimestamp}
+                />
+              </TransitBottomToolsFab>
+            ) : (
+              <ZetAppLogoLink
+                className="btn btn-circle btn-sm min-h-8 min-w-8 size-8 shrink-0 border-none bg-base-100 p-0 shadow transition-[box-shadow,transform,filter] duration-200 ring-1 ring-base-300/60 hover:ring-primary/55 hover:brightness-110 active:scale-95"
+                imgClassName="size-full rounded-full object-cover"
               />
             )}
-            <ZetAppLogoLink
-              className="btn btn-circle btn-sm min-h-8 min-w-8 size-8 shrink-0 border-none bg-base-100 p-0 shadow transition-[box-shadow,transform,filter] duration-200 ring-1 ring-base-300/60 hover:ring-primary/55 hover:brightness-110 active:scale-95"
-              imgClassName="size-full rounded-full object-cover"
-            />
           </div>
         )}
 
@@ -430,7 +448,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
         {config.hasRealtime && mapZoom <= MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD && (
           <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[1000]">
             <div className="badge badge-neutral gap-2 shadow text-xs sm:text-sm opacity-90 whitespace-nowrap">
-              <span className="w-2 h-2 rounded-full bg-base-content/60" />
+              <span className="w-2 h-2 rounded-full bg-amber-50 animate-ping" />
               {t('gtfs.zoomForStopsAndVehicles')}
             </div>
           </div>
@@ -533,18 +551,19 @@ export function GTFSMode({ config }: GTFSModeProps) {
           />
         )}
 
-        {/* Floating search bar */}
+        {/* Floating search: circular icon (same footprint as locate) until route is shown in-bar */}
         <div className="absolute top-2 left-2 right-32 sm:left-4 sm:right-auto sm:top-4 z-[1000]">
-          <div className="w-full sm:w-80 flex items-center gap-2 bg-base-100 rounded-xl px-4 py-3 shadow-lg">
-            <button
-              className="flex-1 flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
-              onClick={() => {
-                trackEvent('search_opened');
-                setSearchModalOpen(true);
-              }}
-            >
-              <Search className="w-5 h-5 text-base-content/50 shrink-0" />
-              {selectedRoute && routeModalOpen ? (
+          {selectedRoute && routeModalOpen ? (
+            <div className="w-full sm:w-80 flex items-center gap-2 bg-base-100 rounded-xl px-4 py-3 shadow-lg">
+              <button
+                className="flex-1 flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
+                onClick={() => {
+                  trackEvent('search_opened');
+                  setSearchModalOpen(true);
+                }}
+                type="button"
+              >
+                <Search className="w-5 h-5 text-base-content/50 shrink-0" />
                 <span className="text-sm flex-1">
                   <span
                     className="badge font-bold mr-2 text-white"
@@ -554,24 +573,33 @@ export function GTFSMode({ config }: GTFSModeProps) {
                   </span>
                   <span className="text-base-content/70">{selectedRoute.longName}</span>
                 </span>
-              ) : (
-                <span className="text-base-content/50 text-sm flex-1">
-                  {config.id === 'train'
-                    ? t('search.barPlaceholderTrains')
-                    : t('search.barPlaceholderLines')}
-                </span>
-              )}
-            </button>
-            {selectedRoute && routeModalOpen && (
+              </button>
               <button
                 aria-label={t('search.clearSelectionAria')}
                 className="btn btn-ghost btn-circle btn-xs min-h-[32px] min-w-[32px]"
                 onClick={handleClearRoute}
+                type="button"
               >
                 <X className="w-4 h-4" />
               </button>
-            )}
-          </div>
+            </div>
+          ) : (
+            <button
+              aria-label={
+                config.id === 'train'
+                  ? t('search.barPlaceholderTrains')
+                  : t('search.barPlaceholderLines')
+              }
+              className="btn btn-circle btn-gps-inactive p-0 min-h-0 w-10 h-10 min-h-10 sm:w-14 sm:h-14 sm:min-h-14 shadow-2xl transition-all duration-300 ring-2 ring-white/5"
+              onClick={() => {
+                trackEvent('search_opened');
+                setSearchModalOpen(true);
+              }}
+              type="button"
+            >
+              <Search className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+          )}
         </div>
 
         {/* Locate error toast */}

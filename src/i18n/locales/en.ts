@@ -80,6 +80,8 @@ const en = {
       unconfigured: 'The feedback form is not set up yet.',
     },
     gtfs: {
+      bottomToolsCollapseAria: 'Hide map tools',
+      bottomToolsExpandAria: 'Show map tools (alerts, legend, live feed, ZET app)',
       initialError: 'Error loading data: {{message}}',
       loadingRoute: 'Loading route…',
       loadingTrain: 'Loading train data…',

@@ -83,6 +83,8 @@ const hr = {
       unconfigured: 'Obrazac za povratnu informacije još nije postavljen.',
     },
     gtfs: {
+      bottomToolsCollapseAria: 'Sakrij alate karte',
+      bottomToolsExpandAria: 'Prikaži alate karte (obavijesti, legenda, live feed, ZET aplikacija)',
       initialError: 'Greška pri učitavanju podataka: {{message}}',
       loadingRoute: 'Učitavanje rute...',
       loadingTrain: 'Učitavanje podataka o vlakovima...',
