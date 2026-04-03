@@ -59,7 +59,9 @@ export function GTFSMode({ config }: GTFSModeProps) {
   const [stopModalOpen, setStopModalOpen] = useState(false);
   const [nearbyOpen, setNearbyOpen] = useState(false);
   const [nearbyStopsListExpanded, setNearbyStopsListExpanded] = useState(false);
-  const [transitBottomToolsOpen, setTransitBottomToolsOpen] = useState(false);
+
+  const transitBottomToolsOpen = useSettingsStore((s) => s.transitBottomToolsOpen);
+  const setTransitBottomToolsOpen = useSettingsStore((s) => s.setTransitBottomToolsOpen);
 
   const setNearbyPanelOpen = useCallback((open: boolean) => {
     setNearbyOpen(open);
@@ -70,10 +72,13 @@ export function GTFSMode({ config }: GTFSModeProps) {
 
   const realtimePanelRef = useRef<RealtimeStatusPanelHandle>(null);
 
-  const setTransitBottomToolsOpenWithPanels = useCallback((next: boolean) => {
-    if (!next) realtimePanelRef.current?.closeLegends();
-    setTransitBottomToolsOpen(next);
-  }, []);
+  const setTransitBottomToolsOpenWithPanels = useCallback(
+    (next: boolean) => {
+      if (!next) realtimePanelRef.current?.closeLegends();
+      setTransitBottomToolsOpen(next);
+    },
+    [setTransitBottomToolsOpen]
+  );
 
   /** Close Legend and "tehnički detalji" when user performs other actions (stop click, location, etc.) */
   const closeLegendAndDetails = useCallback(() => {

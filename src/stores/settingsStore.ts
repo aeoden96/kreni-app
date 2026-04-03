@@ -107,6 +107,7 @@ interface SettingsState {
   setShowSurveillanceCameras: (show: boolean) => void;
   setShowTaxiStands: (show: boolean) => void;
   setTheme: (theme: Theme) => void;
+  setTransitBottomToolsOpen: (open: boolean) => void;
   showBikeParkings: boolean;
   showBikePaths: boolean;
   showBikeStations: boolean;
@@ -175,6 +176,8 @@ interface SettingsState {
     sourceId?: string;
     title: string;
   }) => MapPlaceFavouriteToggleResult;
+  /** Expanded state of transit map bottom tools FAB (realtime / ZET link strip) */
+  transitBottomToolsOpen: boolean;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -313,6 +316,7 @@ export const useSettingsStore = create<SettingsState>()(
           }
           localStorage.setItem('theme', theme);
         },
+        setTransitBottomToolsOpen: (open) => set({ transitBottomToolsOpen: open }),
         showBikeParkings: false,
         showBikePaths: false,
         showBikeStations: true,
@@ -427,6 +431,7 @@ export const useSettingsStore = create<SettingsState>()(
           }
           return 'added';
         },
+        transitBottomToolsOpen: false,
       };
     },
     {
