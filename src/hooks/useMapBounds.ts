@@ -24,3 +24,25 @@ export function useMapBounds(): LatLngBounds {
 
   return bounds;
 }
+
+export function useMapViewport(): { bounds: LatLngBounds; zoom: number } {
+  const map = useMap();
+  const [viewport, setViewport] = useState(() => ({
+    bounds: map.getBounds(),
+    zoom: map.getZoom(),
+  }));
+
+  useEffect(() => {
+    const update = () => {
+      setViewport({ bounds: map.getBounds(), zoom: map.getZoom() });
+    };
+    map.on('moveend', update);
+    map.on('zoomend', update);
+    return () => {
+      map.off('moveend', update);
+      map.off('zoomend', update);
+    };
+  }, [map]);
+
+  return viewport;
+}

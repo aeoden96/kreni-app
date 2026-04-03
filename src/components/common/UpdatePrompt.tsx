@@ -37,9 +37,15 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
   const updateApp = storybook ? noop : hook.updateApp;
   const [dismissed, setDismissed] = useState(false);
   const [notes, setNotes] = useState<null | ReleaseNotes>(null);
+  /** False until release-notes fetch finishes (or storybook notes are set). Avoids flashing the modal before we know `force`. */
+  const [notesResolved, setNotesResolved] = useState(false);
 
   useEffect(() => {
-    if (!needRefresh) return;
+    if (!needRefresh) {
+      setNotes(null);
+      setNotesResolved(false);
+      return;
+    }
     if (storybook) {
       setNotes(
         storybookNotes ?? {
@@ -49,30 +55,50 @@ export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePrompt
           version: __APP_VERSION__,
         }
       );
+      setNotesResolved(true);
       return;
     }
+
+    let cancelled = false;
+    setNotesResolved(false);
+
     fetch(`${import.meta.env.BASE_URL}release-notes.json?t=${Date.now()}`, { cache: 'no-store' })
       .then((r) => (r.ok ? (r.json() as Promise<ReleaseNotes[]>) : null))
       .then((data) => {
+        if (cancelled) return;
         if (data && Array.isArray(data) && data.length > 0) {
           // Show the latest release (data[0]) — the version the user is
           // about to update TO.
           setNotes(data[0]);
+        } else {
+          setNotes(null);
         }
       })
       .catch(() => {
-        /* silently ignore */
+        if (!cancelled) setNotes(null);
+      })
+      .finally(() => {
+        if (!cancelled) setNotesResolved(true);
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [needRefresh, storybook, storybookNotes, t]);
 
   // Force-update: auto-apply without user interaction
   useEffect(() => {
-    if (needRefresh && notes?.force) {
+    if (!needRefresh || !notesResolved || storybook) return;
+    if (notes?.force) {
       updateApp();
     }
-  }, [needRefresh, notes, updateApp]);
+  }, [needRefresh, notes, notesResolved, storybook, updateApp]);
 
   if (!needRefresh || dismissed) return null;
+
+  // Do not show the dialog until we know whether this release is forced (prevents a 1–2s flash).
+  if (!storybook && !notesResolved) return null;
+  if (!storybook && notes?.force) return null;
 
   return (
     <>

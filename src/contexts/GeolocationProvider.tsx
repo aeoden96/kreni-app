@@ -24,8 +24,7 @@ const GeolocationContext = createContext<GeolocationContextValue | null>(null);
 const FirstFixCallbackRefContext =
   createContext<null | React.MutableRefObject<LocateFirstFix | null>>(null);
 
-const MISSING_PROVIDER =
-  'useGeolocation must be used within GeolocationProvider (inside AppLayout after onboarding).';
+const MISSING_PROVIDER = 'useGeolocation must be used within GeolocationProvider.';
 
 export function GeolocationProvider({ children }: { children: ReactNode }) {
   const [userLocation, setUserLocation] = useState<GeolocationContextValue['userLocation']>(null);

@@ -6,6 +6,7 @@ import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-lea
 
 import { useNavigationStore } from '../../stores/navigationStore';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { MAP_LEAFLET_MAX_ZOOM } from './mapZoomConstants';
 
 const CYCLOSM_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://www.cyclosm.org/">CyclOSM</a>';
@@ -83,7 +84,7 @@ export function BaseMap({
     <MapContainer
       center={mapCenter}
       className="w-full h-full"
-      maxZoom={18}
+      maxZoom={MAP_LEAFLET_MAX_ZOOM}
       minZoom={11}
       preferCanvas={false}
       style={{ height: '100%', width: '100%' }}
@@ -112,6 +113,8 @@ export function BaseMap({
       )}
 
       <MapLocater panOffsetY={locationPanOffsetY} userLocation={userLocation} />
+      <MapFlyToDispatcher />
+      <MapPulseRing />
       <MapTestRef />
       <MapStateHandler />
 
@@ -167,6 +170,57 @@ function MapLocater({
     // panOffsetY is read via ref at fly time.
   }, [userLocation, map, locateTrigger]);
   return null;
+}
+
+const MAP_FLY_TO_DEFAULT_ZOOM = 17;
+
+function MapFlyToDispatcher() {
+  const map = useMap();
+  const mapFlyToRequestId = useNavigationStore((s) => s.mapFlyToRequestId);
+  const lastHandledIdRef = useRef(0);
+
+  useEffect(() => {
+    if (mapFlyToRequestId === 0) return;
+    if (mapFlyToRequestId === lastHandledIdRef.current) return;
+    const pending = useNavigationStore.getState().mapFlyToPending;
+    if (!pending) return;
+    lastHandledIdRef.current = mapFlyToRequestId;
+    useNavigationStore.setState({ mapFlyToPending: null });
+    const z = Math.min(pending.zoom ?? MAP_FLY_TO_DEFAULT_ZOOM, map.getMaxZoom());
+    map.flyTo([pending.lat, pending.lng], z, { duration: 1.15, easeLinearity: 0.25 });
+  }, [map, mapFlyToRequestId]);
+
+  return null;
+}
+
+function MapPulseRing() {
+  const mapPulse = useNavigationStore((s) => s.mapPulse);
+  const clearMapPulse = useNavigationStore((s) => s.clearMapPulse);
+
+  useEffect(() => {
+    if (!mapPulse) return;
+    const ms = Math.max(0, mapPulse.until - Date.now());
+    const timer = window.setTimeout(() => clearMapPulse(), ms);
+    return () => window.clearTimeout(timer);
+  }, [mapPulse, clearMapPulse]);
+
+  if (!mapPulse) return null;
+
+  const icon = L.divIcon({
+    className: 'map-favourite-pulse-icon',
+    html: '<div class="map-favourite-pulse-ring" aria-hidden="true"></div>',
+    iconAnchor: [28, 28],
+    iconSize: [56, 56],
+  });
+
+  return (
+    <Marker
+      icon={icon}
+      interactive={false}
+      position={[mapPulse.lat, mapPulse.lng]}
+      zIndexOffset={700}
+    />
+  );
 }
 
 function MapStateHandler() {

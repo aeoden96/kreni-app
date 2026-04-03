@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { queryKeys } from '../api/queryKeys';
+import { GTFS_API_KEY, GTFS_PROXY_URL } from '../config';
 
 export interface BajsStation {
   active_place: number;
@@ -100,8 +101,7 @@ export const NEXTBIKE_CACHE_TTL_MS = 60 * 1000;
 /** Minimum time between manual “refresh now” actions (anti-spam). */
 const NEXTBIKE_MANUAL_REFETCH_COOLDOWN_MS = 20 * 1000;
 
-const NEXTBIKE_API_URL =
-  'https://maps.nextbike.net/maps/nextbike-live.json?city=1172&domains=hd&list_cities=0&bikes=0';
+const NEXTBIKE_ENDPOINT = 'nextbike';
 
 export function useNextbikeData(enabled: boolean) {
   const prevSnapshotRef = useRef<Map<number, StationCounts> | null>(null);
@@ -172,9 +172,19 @@ export function useNextbikeData(enabled: boolean) {
 }
 
 async function fetchNextbikeFromNetwork(): Promise<BajsStation[]> {
+  if (!GTFS_PROXY_URL) {
+    throw new Error('GTFS proxy URL is not configured. Set VITE_GTFS_PROXY_URL in your .env file.');
+  }
+
+  const nextbikeUrl = `${GTFS_PROXY_URL}/?endpoint=${NEXTBIKE_ENDPOINT}`;
+  const headers: Record<string, string> = {};
+  if (GTFS_API_KEY) {
+    headers['X-API-Key'] = GTFS_API_KEY;
+  }
+
   // API sends Cache-Control: max-age=86400; without this, the browser disk cache
   // can serve stale JSON and polls never see live updates.
-  const response = await fetch(NEXTBIKE_API_URL, { cache: 'no-store' });
+  const response = await fetch(nextbikeUrl, { cache: 'no-store', headers });
   if (!response.ok) {
     throw new Error(`Failed to fetch nextbike data: ${response.status}`);
   }

@@ -1,19 +1,21 @@
 import type { TFunction } from 'i18next';
 
 import L from 'leaflet';
-import { Fragment } from 'react';
+import { Fragment, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CircleMarker, Marker, Pane, Polyline, Popup } from 'react-leaflet';
 
-import type { RoadClosure } from '../../hooks/useRoadClosures';
+import type { RoadClosure } from '../../../../hooks/useRoadClosures';
 
-import i18n from '../../i18n';
-import { useSettingsStore } from '../../stores/settingsStore';
+import { useStaticLayerRenderGate } from '../../../../hooks/useStaticLayerRenderGate';
+import i18n from '../../../../i18n';
+import { useSettingsStore } from '../../../../stores/settingsStore';
+import { latLngPolylineIntersectsMapBounds } from '../../../../utils/geoViewportCulling';
 import {
   formatRoadClosureInstant,
   roadClosureDirectionLabel,
   roadClosureReasonLabel,
-} from '../../utils/roadClosureDisplay';
+} from '../../../../utils/roadClosureDisplay';
 
 interface RoadClosuresProps {
   closures: RoadClosure[];
@@ -23,8 +25,16 @@ interface RoadClosuresProps {
 export function RoadClosures({ closures, show }: RoadClosuresProps) {
   const { t } = useTranslation();
   const theme = useSettingsStore((s) => s.theme);
+  const { bounds, shouldRenderDetail } = useStaticLayerRenderGate({ variant: 'driving' });
+
+  const visibleClosures = useMemo(() => {
+    if (!shouldRenderDetail) return [];
+    return closures.filter((c) => latLngPolylineIntersectsMapBounds(bounds, c.polyline));
+  }, [bounds, closures, shouldRenderDetail]);
 
   if (!show || closures.length === 0) return null;
+  if (!shouldRenderDetail) return null;
+  if (visibleClosures.length === 0) return null;
 
   const lineColor = theme === 'dark' ? '#ef4444' : '#dc2626'; // Tailwind red-500 / red-600
   /** Wide invisible stroke on top of the visible line — easy to tap on touch screens. */
@@ -51,7 +61,7 @@ export function RoadClosures({ closures, show }: RoadClosuresProps) {
 
   return (
     <Pane name="zet-road-closures" style={{ zIndex: closurePaneZ }}>
-      {closures.map((closure) => {
+      {visibleClosures.map((closure) => {
         // If it's a valid polyline: visible line (non-interactive) + wide hit slab + midpoint handle
         if (closure.polyline && closure.polyline.length > 1) {
           const popup = (

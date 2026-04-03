@@ -3,6 +3,115 @@ const de = {
     app: {
       title: 'Kreni — Zagreb live: ÖPNV, Parken, Fahrräder & städtische Dienste',
     },
+    cityLayers: {
+      animalZones: {
+        desc: 'Zonen, in denen Nutztiere in der Stadt erlaubt sind.',
+        label: 'Haustierbereiche',
+      },
+      architectureCompetitions: {
+        desc: 'Öffentliche Architektur- und Planungswettbewerbe der Stadt.',
+        label: 'Architekturwettbewerbe',
+      },
+      badge: 'Entdecken',
+      cameras: {
+        desc: 'Offene Daten: städtische Überwachungskameras im öffentlichen Raum.',
+        label: 'Überwachungskameras',
+      },
+      cultural: {
+        desc: 'Museen, Theater, Galerien und Kulturzentren in Zagreb.',
+        label: 'Kultureinrichtungen',
+      },
+      dogParks: {
+        desc: 'Ausgewiesene Flächen, auf denen Hunde frei laufen dürfen.',
+        label: 'Hundegebiete',
+      },
+      evacuation: {
+        desc: 'Offizielle Evakuierungs- und Sammelplätze der Stadt.',
+        label: 'Evakuierungsgebiete',
+      },
+      fountains: {
+        desc: 'Öffentliche Trinkwasserstellen und Wasserpunkte (inkl. pojilice) — kostenlos.',
+        label: 'Trinkbrunnen',
+      },
+      fountainsExtra: {
+        desc: 'Weitere öffentliche Wasserstellen (Pojilice) aus städtischen Open Data.',
+        label: 'Wasserstellen (Pojilice)',
+      },
+      galleries: {
+        desc: 'Kunstgalerien und Ausstellungsorte aus städtischen Open Data.',
+        label: 'Galerien',
+      },
+      gardens: {
+        desc: 'Stadtgärten mit Parzellenumriss und Markierung in der Mitte jeder Fläche.',
+        label: 'Stadtgärten',
+      },
+      gasStations: {
+        desc: 'Tankstellen mit Zapfsäulen im Stadtgebiet.',
+        label: 'Tankstellen',
+      },
+      graffiti: {
+        desc: 'Gemeldete Graffiti-Standorte aus städtischen Instandhaltungsdaten.',
+        label: 'Graffiti-Meldungen',
+      },
+      groupCityLife: 'Stadtleben',
+      groupEssentials: 'Grundlegendes',
+      groupHealth: 'Gesundheit',
+      groupPractical: 'Praktisches',
+      groupSafety: 'Sicherheit',
+      groupTransport: 'Transport',
+      healthHomes: {
+        desc: 'Gesundheitszentren (Dom zdravlja) für allgemeine und Fachmedizin.',
+        label: 'Gesundheitszentren',
+      },
+      healthInst: {
+        desc: 'Krankenhäuser und größere Gesundheitseinrichtungen in Zagreb.',
+        label: 'Gesundheitseinrichtungen',
+      },
+      markets: {
+        desc: 'Wochenmärkte und Markthallen mit frischen lokalen Produkten.',
+        label: 'Märkte',
+      },
+      panelTitle: 'Stadtführer',
+      pedestrian: {
+        desc: 'Fahrzeugfreie Straßen im Stadtzentrum — auf der Karte hervorgehoben.',
+        label: 'Fußgängerzonen',
+      },
+      pharmacies: {
+        desc: 'Zugelassene Apotheken — die nächste finden.',
+        label: 'Apotheken',
+      },
+      playgrounds: {
+        desc: 'Öffentliche Sport- und Spielflächen, für alle zugänglich.',
+        label: 'Spielplätze',
+      },
+      recycling: {
+        desc: 'Recyclinghöfe (reciklažna dvorišta) für Sperrmüll und Sondermüll.',
+        label: 'Recyclinghöfe',
+      },
+      resetAll: 'Alle zurücksetzen',
+      restaurants: {
+        desc: 'Subventionierte Uni-Mensen — offen für alle Studierenden.',
+        label: 'Studentenmensen',
+      },
+      sportsFacilities: {
+        desc: 'Sporthallen, Schwimmbäder und Freizeitzentren mit öffentlicher Nutzung.',
+        label: 'Sporteinrichtungen',
+      },
+      taxi: {
+        desc: 'Offizielle Taxi-Haltestellen in der Stadt.',
+        label: 'Taxistände',
+      },
+      toilets: {
+        desc: 'Öffentliche WC-Anlagen der Stadt Zagreb.',
+        label: 'Öffentliche Toiletten',
+      },
+      tooManyDesc: 'Zu viele Ebenen können die Karte unübersichtlich machen — deaktiviere einige.',
+      tooManyTitle: 'Das ist eine Menge!',
+      wifi: {
+        desc: 'Kostenlose WLAN-Hotspots der Stadt Zagreb.',
+        label: 'Gratis WLAN',
+      },
+    },
     common: {
       back: 'Zurück',
       close: 'Schließen',
@@ -17,6 +126,26 @@ const de = {
       showDetails: 'Details anzeigen',
       showRouteDetails: 'Routendetails anzeigen',
       stopFollowingVehicle: 'Fahrzeugverfolgung beenden',
+    },
+    cyclingLayers: {
+      badge: 'Filter',
+      bikeParkings: {
+        desc: 'Öffentliche Fahrradstellplätze und Ständer aus Open Data.',
+        label: 'Fahrradstellplätze',
+      },
+      bikePaths: {
+        desc: 'CyclOSM-Radkarte oder Zagreb-Radwege-Overlay.',
+        label: 'Radwege',
+      },
+      bikeStations: {
+        desc: 'Live-Marker für Bajs-(Nextbike-)Stationen und Verfügbarkeit.',
+        label: 'Bajs-Stationen',
+      },
+      panelTitle: 'Filter',
+      resetAll: 'Alle aus',
+      tooManyDesc:
+        'Mehrere Ebenen gleichzeitig können die Karte beim Fahren unübersichtlich machen.',
+      tooManyTitle: 'Viele Ebenen aktiv',
     },
     cyclingMode: {
       cyclosmLegendTitle: 'CyclOSM-Legende',
@@ -76,6 +205,43 @@ const de = {
       directRoutesCount_other: '{{count}} Linien',
       pickStops: 'Start und Ziel wählen',
     },
+    drivingLayers: {
+      badge: 'Straßenebenen',
+      cameras: {
+        desc: 'Standorte von Überwachungskameras aus öffentlichen Sicherheitsdaten.',
+        label: 'Überwachungskameras',
+      },
+      ev: {
+        desc: 'Öffentliche EV-Ladestationen mit verfügbaren Ladepunkten.',
+        label: 'EV-Laden',
+      },
+      garages: {
+        desc: 'Öffentliche Garagen in Zagreb mit eingezeichneten Einfahrten und Parkinfos.',
+        label: 'Garagen',
+      },
+      gasStations: {
+        desc: 'Tankstellen in der Stadt für eine schnelle Kraftstoffplanung unterwegs.',
+        label: 'Tankstellen',
+      },
+      groupDriving: 'Autofahren',
+      moreLayers: 'Weitere Ebenen',
+      panelTitle: 'Fahrebenen',
+      resetAll: 'Alle zurücksetzen',
+      roadClosures: {
+        desc: 'Blendet Straßensperrungen auf der Karte ein oder aus; das Badge bleibt sichtbar.',
+        label: 'Straßensperrungen',
+      },
+      taxi: {
+        desc: 'Offizielle Taxistandorte für Abholung und Ausstieg im Stadtgebiet.',
+        label: 'Taxistände',
+      },
+      tooManyDesc: 'Mehrere Ebenen können die Karte während der Fahrt unübersichtlich machen.',
+      tooManyTitle: 'Viele Ebenen aktiv',
+      zones: {
+        desc: 'Parkzonen und Straßenblöcke mit Kontroll- und Gebührenregeln.',
+        label: 'Zonen',
+      },
+    },
     feedbackPage: {
       iframeTitle: 'Feedback',
       title: 'Feedback',
@@ -92,6 +258,22 @@ const de = {
       zetOpenApp: 'ZET-App öffnen',
       zetOpenAppAria: 'Die ZET-App öffnen',
       zoomForStopsAndVehicles: 'Hineinzoomen, um Haltestellen und Fahrzeuge anzuzeigen',
+    },
+    map: {
+      zoomForLayers: 'Hineinzoomen, um Kartenebenen anzuzeigen',
+    },
+    mapSavedPlaces: {
+      atCap:
+        'Du kannst höchstens {{max}} Orte speichern. Entferne einen, um einen neuen hinzuzufügen.',
+      badge: 'Gespeichert',
+      empty: 'Noch keine gespeicherten Orte.',
+      emptyHint:
+        'Öffne die Details einer Kartenmarkierung und tippe auf den Stern, um den Ort zu speichern.',
+      go: 'Auf Karte zeigen',
+      panelTitle: 'Gespeicherte Orte',
+      remove: 'Entfernen',
+      starRemove: 'Aus gespeicherten Orten entfernen',
+      starSave: 'Ort speichern',
     },
     nearbyStops: {
       collapsedHint: '{{count}} Haltestellen in der Nähe — Liste öffnen',

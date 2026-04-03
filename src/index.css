@@ -324,11 +324,19 @@ body {
 .leaflet-tooltip {
   border-radius: 12px !important;
   border: none !important;
+  box-sizing: border-box !important;
+  max-width: min(300px, calc(100vw - 2rem)) !important;
+  opacity: 0.98 !important;
+  overflow: hidden !important;
   padding: 8px 12px !important;
+  width: min(300px, calc(100vw - 2rem)) !important;
   box-shadow:
     0 10px 15px -3px rgb(0 0 0 / 0.1),
     0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
   font-family: inherit !important;
+  overflow-wrap: anywhere !important;
+  white-space: normal !important;
+  word-break: break-word !important;
 }
 
 [data-theme='light'] .leaflet-tooltip {
@@ -467,6 +475,32 @@ body {
   }
 
   100% {
+    opacity: 0;
+  }
+}
+
+.map-favourite-pulse-icon {
+  pointer-events: none;
+}
+
+.map-favourite-pulse-ring {
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  border-radius: 50%;
+  border: 3px solid rgba(168, 85, 247, 0.85);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+  animation: map-favourite-pulse-once 2.2s ease-out forwards;
+}
+
+@keyframes map-favourite-pulse-once {
+  0% {
+    transform: scale(0.35);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1.65);
     opacity: 0;
   }
 }
@@ -833,4 +867,127 @@ body {
 
 .dark .spider-list-item:hover {
   background: #374151;
+}
+
+/* ── City Layers Panel — CSS remnants (pseudo-elements & keyframes) ─────── */
+
+/* Custom toggle checkbox — impossible to replicate with Tailwind alone */
+.city-layer-toggle {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 36px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(128, 128, 128, 0.3);
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.city-layer-toggle::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  top: 50%;
+  left: 2px;
+  transform: translateY(-50%);
+  transition:
+    transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background 0.2s ease;
+}
+
+[data-theme='dark'] .city-layer-toggle {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='dark'] .city-layer-toggle::after {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+[data-theme='light'] .city-layer-toggle {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='light'] .city-layer-toggle::after {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.city-layer-toggle:checked {
+  background: #a855f7;
+  border-color: #9333ea;
+}
+
+.city-layer-toggle:checked::after {
+  transform: translateY(-50%) translateX(16px);
+  background: #fff;
+}
+
+/* Driving layers panel — orange switch (default .city-layer-toggle is purple when checked) */
+.city-layer-toggle--driving:checked {
+  background: #f97316;
+  border-color: #ea580c;
+}
+
+/* Thin scrollbar track for the panel body */
+.city-layers-panel-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Vertical only — horizontal gutter comes from children (e.g. px-4) or utilities on this node */
+  padding-top: 8px;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.city-layers-panel-body::-webkit-scrollbar {
+  width: 3px;
+}
+
+.city-layers-panel-body::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.3);
+  border-radius: 2px;
+}
+
+/* Panel slide animations */
+@keyframes city-panel-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes city-panel-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes city-layers-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

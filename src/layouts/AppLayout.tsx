@@ -5,7 +5,6 @@ import { GlobalAnnouncement } from '../components/common/GlobalAnnouncement';
 import { GlobalWelcomeWizard } from '../components/common/GlobalWelcomeWizard';
 import { UpdatePrompt } from '../components/common/UpdatePrompt';
 import { SpiderMenu } from '../components/Navigation/SpiderMenu';
-import { GeolocationProvider } from '../contexts/GeolocationProvider';
 import { usePageTracking } from '../hooks/usePageTracking';
 import { useUrlQueryParams } from '../hooks/useUrlQueryParams';
 import { useSettingsStore } from '../stores/settingsStore';
@@ -46,9 +45,7 @@ export function AppLayout() {
       <GlobalAnnouncement />
       <h1 className="sr-only">{t('app.title')}</h1>
       <div className="flex-1 relative overflow-hidden">
-        <GeolocationProvider>
-          <Outlet />
-        </GeolocationProvider>
+        <Outlet />
       </div>
       <SpiderMenu />
       <UpdatePrompt />

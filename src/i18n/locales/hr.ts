@@ -3,6 +3,115 @@ const hr = {
     app: {
       title: 'Kreni — Zagreb uživo: ZET, Parking, Bicikli i Gradske usluge',
     },
+    cityLayers: {
+      animalZones: {
+        desc: 'Zone u kojima su domaće životinje (blago) dopuštene u gradu.',
+        label: 'Zone kućnih životinja',
+      },
+      architectureCompetitions: {
+        desc: 'Javna arhitektonska i planerska natjecanja objavljena od strane Grada.',
+        label: 'Arhitektonska natjecanja',
+      },
+      badge: 'Istraži',
+      cameras: {
+        desc: 'Otvoreni podaci: nadzorne kamere Grada Zagreba na javnim površinama.',
+        label: 'Nadzorne kamere',
+      },
+      cultural: {
+        desc: 'Muzeji, kazališta, galerije i kulturni centri diljem Zagreba.',
+        label: 'Kulturne ustanove',
+      },
+      dogParks: {
+        desc: 'Označena mjesta gdje psi smiju biti bez povodca.',
+        label: 'Površine za pse',
+      },
+      evacuation: {
+        desc: 'Službena mjesta za evakuaciju i zbirna mjesta koja je odredio Grad.',
+        label: 'Evakuacijska područja',
+      },
+      fountains: {
+        desc: 'Javni zdenci i pojilice s pitkom vodom — besplatno, samo natoči.',
+        label: 'Zdenci',
+      },
+      fountainsExtra: {
+        desc: 'Dodatne javne pojilice i točke s pitkom vodom iz gradskih otvorenih podataka.',
+        label: 'Pojilice',
+      },
+      galleries: {
+        desc: 'Umjetničke galerije i izložbeni prostori iz gradskih otvorenih podataka.',
+        label: 'Galerije',
+      },
+      gardens: {
+        desc: 'Gradski vrtovi — obris parcele i oznaka u sredini svake površine.',
+        label: 'Gradski vrtovi',
+      },
+      gasStations: {
+        desc: 'Benzinske postaje s pumpama u gradu.',
+        label: 'Benzinske postaje',
+      },
+      graffiti: {
+        desc: 'Prijavljene grafit-lokacije iz gradskih podataka o održavanju.',
+        label: 'Grafiti',
+      },
+      groupCityLife: 'Gradski život',
+      groupEssentials: 'Osnove',
+      groupHealth: 'Zdravstvo',
+      groupPractical: 'Praktično',
+      groupSafety: 'Sigurnost',
+      groupTransport: 'Prijevoz',
+      healthHomes: {
+        desc: 'Domovi zdravlja za opću i specijalističku zdravstvenu skrb.',
+        label: 'Domovi zdravlja',
+      },
+      healthInst: {
+        desc: 'Bolnice i veće zdravstvene ustanove u Zagrebu.',
+        label: 'Zdravstvene ustanove',
+      },
+      markets: {
+        desc: 'Gradske tržnice sa svježom lokalnom hranom i namirnicama.',
+        label: 'Tržnice',
+      },
+      panelTitle: 'Gradski vodič',
+      pedestrian: {
+        desc: 'Ulice bez motornog prometa u centru grada — istaknute na karti.',
+        label: 'Pješačke zone',
+      },
+      pharmacies: {
+        desc: 'Licencirane ljekarne — pronađi najbližu.',
+        label: 'Ljekarne',
+      },
+      playgrounds: {
+        desc: 'Javna sportska igrališta i dječja igrališta, dostupna svima.',
+        label: 'Igrališta',
+      },
+      recycling: {
+        desc: 'Reciklažna dvorišta za krupni i opasni otpad.',
+        label: 'Reciklažna dvorišta',
+      },
+      resetAll: 'Resetiraj sve',
+      restaurants: {
+        desc: 'Subvencionirani studentski restorani — otvoreni za sve studente.',
+        label: 'Menze',
+      },
+      sportsFacilities: {
+        desc: 'Sportske dvorane, bazeni i rekreacijski centri dostupni javnosti.',
+        label: 'Sportske ustanove',
+      },
+      taxi: {
+        desc: 'Službena stajališta taxi vozila u gradu.',
+        label: 'Taxi stajališta',
+      },
+      toilets: {
+        desc: 'Javni WC-i kojima upravlja Grad Zagreb.',
+        label: 'Javni WC-i',
+      },
+      tooManyDesc: 'Previše slojeva može zatrpati kartu — pokušaj isključiti neke.',
+      tooManyTitle: 'To je puno!',
+      wifi: {
+        desc: 'Besplatne WiFi pristupne točke Grada Zagreba.',
+        label: 'Besplatni WiFi',
+      },
+    },
     common: {
       back: 'Natrag',
       close: 'Zatvori',
@@ -17,6 +126,25 @@ const hr = {
       showDetails: 'Prikaži detalje',
       showRouteDetails: 'Prikaži detalje rute',
       stopFollowingVehicle: 'Prestani pratiti vozilo',
+    },
+    cyclingLayers: {
+      badge: 'Filteri',
+      bikeParkings: {
+        desc: 'Javna biciklistička parkirališta i broj stalaka iz otvorenih podataka.',
+        label: 'Parkirališta',
+      },
+      bikePaths: {
+        desc: 'CyclOSM karta biciklističkih staza ili sloj staza Grada Zagreba.',
+        label: 'Staze',
+      },
+      bikeStations: {
+        desc: 'Označivači stanica Bajs (Nextbike) s dostupnošću u stvarnom vremenu.',
+        label: 'Stanice Bajs',
+      },
+      panelTitle: 'Filteri',
+      resetAll: 'Isključi sve',
+      tooManyDesc: 'Više slojeva odjednom može zakrčiti kartu tijekom vožnje.',
+      tooManyTitle: 'Puno aktivnih slojeva',
     },
     cyclingMode: {
       cyclosmLegendTitle: 'Legenda CyclOSM',
@@ -77,6 +205,43 @@ const hr = {
       directRoutesCount_other: '{{count}} linija',
       pickStops: 'Odaberite polazište i odredište',
     },
+    drivingLayers: {
+      badge: 'Filteri',
+      cameras: {
+        desc: 'Točke nadzornih kamera iz javno dostupnih podataka sigurnosnih službi.',
+        label: 'Nadzorne kamere',
+      },
+      ev: {
+        desc: 'Javne punionice za električna vozila s dostupnim mjestima za punjenje.',
+        label: 'EV punionice',
+      },
+      garages: {
+        desc: 'Javne garaže u Zagrebu s označenim ulazima i podacima o parkiranju.',
+        label: 'Garaže',
+      },
+      gasStations: {
+        desc: 'Benzinske postaje po gradu za lakše planiranje vožnje i točenja goriva.',
+        label: 'Benzinske postaje',
+      },
+      groupDriving: 'Vožnja',
+      moreLayers: 'Još slojeva',
+      panelTitle: 'Filteri',
+      resetAll: 'Resetiraj sve',
+      roadClosures: {
+        desc: 'Uključi ili isključi prikaz zatvaranja cesta na karti (badge ostaje vidljiv).',
+        label: 'Zatvaranja cesta',
+      },
+      taxi: {
+        desc: 'Službene lokacije taxi stajališta za lakše planiranje preuzimanja i iskrcaja.',
+        label: 'Taxi stajališta',
+      },
+      tooManyDesc: 'Više slojeva može učiniti kartu prenatrpanom.',
+      tooManyTitle: 'Aktivno je više slojeva',
+      zones: {
+        desc: 'Parking zone i ulični blokovi s pravilima naplate i kontrole.',
+        label: 'Zone',
+      },
+    },
     feedbackPage: {
       iframeTitle: 'Povratne informacije',
       title: 'Povratne informacije',
@@ -93,6 +258,20 @@ const hr = {
       zetOpenApp: 'Otvori ZET aplikaciju',
       zetOpenAppAria: 'Otvori aplikaciju ZET',
       zoomForStopsAndVehicles: 'Zumiraj za prikaz stanica i vozila',
+    },
+    map: {
+      zoomForLayers: 'Zumiraj za prikaz slojeva karte',
+    },
+    mapSavedPlaces: {
+      atCap: 'Možeš spremiti najviše {{max}} mjesta. Ukloni jedno da dodaš novo.',
+      badge: 'Spremljeno',
+      empty: 'Još nema spremljenih mjesta.',
+      emptyHint: 'Otvori detalje oznake na karti i dodirni zvjezdicu da spremiš mjesto.',
+      go: 'Prikaži na karti',
+      panelTitle: 'Spremljena mjesta',
+      remove: 'Ukloni',
+      starRemove: 'Ukloni iz spremljenih',
+      starSave: 'Spremi mjesto',
     },
     nearbyStops: {
       collapsedHint: '{{count}} stanica u blizini — otvori popis',

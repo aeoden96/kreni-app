@@ -1,6 +1,6 @@
 import type { LeafletMouseEvent } from 'leaflet';
 
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Polygon } from 'react-leaflet';
 
@@ -8,9 +8,11 @@ import type {
   GeoJSONParkingFeature,
   ParkingZoneProperties,
   ParkingZonesData,
-} from '../../types/parkingZones';
+} from '../../../../types/parkingZones';
 
-import { cachedFetch, dataFetch } from '../../stores/dataCache';
+import { useStaticLayerRenderGate } from '../../../../hooks/useStaticLayerRenderGate';
+import { cachedFetch, dataFetch } from '../../../../stores/dataCache';
+import { parkingOuterRingIntersectsMapBounds } from '../../../../utils/geoViewportCulling';
 import { ParkingZoneModal } from './ParkingZoneModal';
 
 interface ParkingZonesMapProps {
@@ -18,6 +20,7 @@ interface ParkingZonesMapProps {
 }
 
 export const ParkingZonesMap = memo(function ParkingZonesMap({ show }: ParkingZonesMapProps) {
+  const { bounds, shouldRenderDetail } = useStaticLayerRenderGate({ variant: 'driving' });
   const [data, setData] = useState<null | ParkingZonesData>(null);
   const [selectedZone, setSelectedZone] = useState<null | ParkingZoneProperties>(null);
 
@@ -30,11 +33,22 @@ export const ParkingZonesMap = memo(function ParkingZonesMap({ show }: ParkingZo
       .catch((err) => console.error('Failed to load parking zones:', err));
   }, [show, data]);
 
+  const visibleFeatures = useMemo(() => {
+    if (!data || !shouldRenderDetail) return [];
+    return data.features.filter((feature: GeoJSONParkingFeature) =>
+      parkingOuterRingIntersectsMapBounds(
+        bounds,
+        feature.geometry.coordinates[0] as [number, number][]
+      )
+    );
+  }, [bounds, data, shouldRenderDetail]);
+
   if (!show || !data) return null;
+  if (!shouldRenderDetail) return null;
 
   return (
     <>
-      {data.features.map((feature: GeoJSONParkingFeature) => {
+      {visibleFeatures.map((feature: GeoJSONParkingFeature) => {
         // GeoJSON coordinates are [lng, lat]; Leaflet expects [lat, lng]
         const positions = feature.geometry.coordinates[0].map(
           ([lng, lat]) => [lat, lng] as [number, number]

@@ -28,6 +28,7 @@ const PROMPT_TEMPLATE = `You are a product manager translating technical release
 You will receive an array of technical changes.
 Rewrite them to be short, clear, and engaging (1-2 sentences max per bullet), emphasizing the benefit to the end user.
 - Completely remove technical jargon (e.g., 'GTFS', 'fallback joins', 'React', 'refactored', 'commits').
+- Omit the release marker '[FORCE]' everywhere — it is internal tooling only; never include it in titles or bullets.
 - Ignore issue numbers like '#24'.
 - If a change is a bug fix, rephrase it positively (e.g., "Nearby vehicles now show correctly").
 - You may use a relevant emoji at the start of each bullet point if it makes sense (🚲 for bikes, 🚌 for bus, ✨ for new features, etc).

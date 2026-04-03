@@ -7,6 +7,7 @@ import './index.css';
 import './i18n';
 import { SettingsPage } from './components/Settings/SettingsPage.tsx';
 import { DebugProvider } from './contexts/DebugContext.tsx';
+import { GeolocationProvider } from './contexts/GeolocationProvider.tsx';
 import { AppLayout } from './layouts/AppLayout.tsx';
 import { CityLifeMode } from './pages/CityLifeMode.tsx';
 import { CyclingMode } from './pages/CyclingMode.tsx';
@@ -24,7 +25,13 @@ createRoot(document.getElementById('root')!).render(
         <BrowserRouter basename={import.meta.env.BASE_URL}>
           <Routes>
             <Route element={<TallyFeedbackPage />} path="/feedback" />
-            <Route element={<AppLayout />}>
+            <Route
+              element={
+                <GeolocationProvider>
+                  <AppLayout />
+                </GeolocationProvider>
+              }
+            >
               <Route element={<PublicTransportMode />} path="/" />
               <Route element={<TrainMode />} path="/train" />
               <Route element={<CyclingMode />} path="/cycling" />

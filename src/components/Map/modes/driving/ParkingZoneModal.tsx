@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronUp, X } from 'lucide-react';
 import { useState } from 'react';
 
-import type { ParkingZoneProperties, SubzoneInfo, ZoneInfo } from '../../types/parkingZones';
+import type { ParkingZoneProperties, SubzoneInfo, ZoneInfo } from '../../../../types/parkingZones';
 
 interface ParkingZoneModalProps {
   onClose: () => void;

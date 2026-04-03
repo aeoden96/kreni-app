@@ -3,7 +3,7 @@ import type { FeatureCollection, LineString, MultiLineString } from 'geojson';
 import { memo, useEffect, useState } from 'react';
 import { GeoJSON } from 'react-leaflet';
 
-import { cachedFetch, dataFetch } from '../../stores/dataCache';
+import { cachedFetch, dataFetch } from '../../../../stores/dataCache';
 
 interface BikePathsProps {
   show: boolean;
