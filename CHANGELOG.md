@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.0.0](https://github.com/aeoden96/kreni-app/compare/v2.3.3...v3.0.0) (2026-04-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* map layers by mode, clustering, and saved places
+
+### Features
+
+* implement localized release notes with automated generation and display support ([ac3e13b](https://github.com/aeoden96/kreni-app/commit/ac3e13b77700fd0371d85c6da1c902bf648a4260))
+* map layers by mode, clustering, and saved places ([43355c0](https://github.com/aeoden96/kreni-app/commit/43355c030e8375cc6f115f849250d9c551715714))
+
+
+### Bug Fixes
+
+* restrict debug panel visibility to sandbox mode in GTFSMode page [FORCE] ([8a5375c](https://github.com/aeoden96/kreni-app/commit/8a5375c4386b158f8bbc765e9b0da58332cd70e7))
+
 ## [2.3.4](https://github.com/aeoden96/kreni-app/compare/v2.3.3...v2.3.4) (2026-03-30)
 
 ### Bug Fixes
