@@ -22,10 +22,8 @@
     "hr": {
       "title": "✨ Poboljšanja karte i korisničkog iskustva!",
       "changes": [
-        "🗺️ Sada možete filtrirati mapu po vrsti prijevoza (autobus, tramvaj, vlak) i grupirati vozila za bolji pregled. Spremljena mjesta su također lakše vidljiva na karti!",
-        "📝 U aplikaciji su sada dostupne lokalizirane obavijesti o novostima, prikazane na vašem jeziku.",
-        "🗺️ Sada možete filtrirati mapu po vrsti prijevoza (autobus, tramvaj, vlak) i grupirati vozila za bolji pregled. Spremljena mjesta su također lakše vidljiva na karti!",
-        "🛠️ Panel za testiranje je sada dostupan samo u testnoj verziji aplikacije."
+        "🗺️ Sada možete filtrirati mapu po vrsti prijevoza i dodavati favorite.",
+        "📝 U aplikaciji su sada dostupne lokalizirane obavijesti o novostima, prikazane na vašem jeziku."
       ]
     },
     "version": "3.0.0"
