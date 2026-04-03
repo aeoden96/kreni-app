@@ -264,7 +264,19 @@ export const useSettingsStore = create<SettingsState>()(
           }
           localStorage.setItem('theme', themeForProvider);
         },
-        setMapViewport: (mapCenter, mapZoom) => set({ mapCenter, mapZoom }),
+        setMapViewport: (mapCenter, mapZoom) =>
+          set((s) => {
+            const [lat, lng] = mapCenter;
+            const [prevLat, prevLng] = s.mapCenter;
+            if (
+              Math.abs(prevLat - lat) < 1e-7 &&
+              Math.abs(prevLng - lng) < 1e-7 &&
+              s.mapZoom === mapZoom
+            ) {
+              return s;
+            }
+            return { mapCenter, mapZoom };
+          }),
         setOnboardingCompleted: (mode, completed) =>
           set((s) => ({
             onboardingCompleted: { ...s.onboardingCompleted, [mode]: completed },

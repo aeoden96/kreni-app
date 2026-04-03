@@ -71,23 +71,23 @@ export const TaxiStandsMap = memo(function TaxiStandsMap({ show }: Props) {
         const nadlezan = firstStringProp(p, ['nadlezan', 'Nadlezan']);
         const markerKey = firstStringProp(p, ['OBJECTID', 'objectid', 'ObjectID']) ?? `taxi-${i}`;
         const sourceId = firstStringProp(p, ['OBJECTID', 'objectid', 'ObjectID']);
+        const title = lokacija || 'Taxi stajalište';
         return (
           <Marker icon={icon} key={markerKey} position={[coords[1], coords[0]]}>
             <MapTooltip
-              description={lokacija}
               headerActions={
                 <MapFavouriteStarButton
                   lat={coords[1]}
                   layerId="taxiStands"
                   lng={coords[0]}
                   sourceId={sourceId}
-                  title={lokacija || 'Taxi stajalište'}
+                  title={title}
                 />
               }
               keyValues={{
                 Nadležan: nadlezan,
               }}
-              title="Taxi stajalište"
+              title={title}
             />
           </Marker>
         );

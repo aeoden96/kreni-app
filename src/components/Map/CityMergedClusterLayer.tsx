@@ -5,7 +5,6 @@ import { Marker, useMap } from 'react-leaflet';
 import Supercluster from 'supercluster';
 
 import { useMapViewport } from '../../hooks/useMapBounds';
-import { useStaticLayerRenderGate } from '../../hooks/useStaticLayerRenderGate';
 import {
   createCityClusterBubbleIcon,
   getCityClusterLeafIcon,
@@ -19,7 +18,7 @@ import {
   type MergedPointClusterLayerId,
 } from './cityPointClusterConstants';
 import { useCityMergedPointFeatures } from './CityPointsClusterContext';
-import { MAP_LEAFLET_MAX_ZOOM } from './mapZoomConstants';
+import { MAP_LEAFLET_MAX_ZOOM, MAP_ZOOM_CITY_STATIC_LAYERS_MIN } from './mapZoomConstants';
 import { getNextbikeClusterLeafIcon } from './modes/cycling/nextbikeClusterLeafIcon';
 
 /**
@@ -69,7 +68,7 @@ function topLayersByCount(
 export const CityMergedClusterLayer = memo(function CityMergedClusterLayer() {
   const map = useMap();
   const { bounds, zoom } = useMapViewport();
-  const { shouldRenderDetail } = useStaticLayerRenderGate();
+  const shouldRenderDetail = zoom > MAP_ZOOM_CITY_STATIC_LAYERS_MIN;
   const mergedFeatures = useCityMergedPointFeatures();
 
   const index = useMemo(() => {

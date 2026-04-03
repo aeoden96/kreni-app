@@ -367,12 +367,12 @@ function renderLeafTooltipBody(
     case 'taxiStands': {
       const lokacija = firstStringProp(p, ['lokacija', 'Lokacija']);
       const nadlezan = firstStringProp(p, ['nadlezan', 'Nadlezan']);
+      const title = lokacija || 'Taxi stajalište';
       return {
-        description: lokacija,
         keyValues: {
           Nadležan: nadlezan,
         },
-        title: 'Taxi stajalište',
+        title,
       };
     }
     case 'toilets':
