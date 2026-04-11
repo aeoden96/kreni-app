@@ -12,6 +12,7 @@ import { AppLayout } from './layouts/AppLayout.tsx';
 import { CityLifeMode } from './pages/CityLifeMode.tsx';
 import { CyclingMode } from './pages/CyclingMode.tsx';
 import { DrivingMode } from './pages/DrivingMode.tsx';
+import { PrivacyPage } from './pages/PrivacyPage.tsx';
 import { PublicTransportMode } from './pages/PublicTransportMode.tsx';
 import { TallyFeedbackPage } from './pages/TallyFeedbackPage.tsx';
 import { TrainMode } from './pages/TrainMode.tsx';
@@ -25,6 +26,7 @@ createRoot(document.getElementById('root')!).render(
         <BrowserRouter basename={import.meta.env.BASE_URL}>
           <Routes>
             <Route element={<TallyFeedbackPage />} path="/feedback" />
+            <Route element={<PrivacyPage />} path="/privacy" />
             <Route
               element={
                 <GeolocationProvider>

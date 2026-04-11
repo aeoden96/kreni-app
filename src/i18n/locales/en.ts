@@ -331,6 +331,21 @@ const en = {
       welcomeFooterNote: 'No sign-in required',
       welcomeTitle: 'Welcome to Kreni',
     },
+    privacyPage: {
+      disclaimerBody:
+        'This app is an unofficial hobby project and is not affiliated with ZET, HŽ or the City of Zagreb. Data is shown as-is; we do not guarantee accuracy. Live data may be delayed. Use at your own risk.',
+      disclaimerTitle: 'Disclaimer',
+      licenseBody: 'This project is open source under the MIT licence.',
+      licenseTitle: 'Licence',
+      mapAttributionLink: '© OpenStreetMap contributors',
+      mapAttributionTitle: 'Map',
+      privacyBody:
+        'Kreni does not collect, store or share your location. All location (GPS) processing happens only on your device.',
+      privacyTitle: 'Privacy',
+      summary:
+        'This page explains what data Kreni uses and what it does not collect when you use the app.',
+      title: 'Privacy Policy',
+    },
     realtimePanel: {
       detailsHeading: 'Technical details',
       detailsTitle: 'ZET data refreshed {{timeAgo}} ago (every {{pollSec}} s)',
@@ -533,6 +548,9 @@ const en = {
       mapTitle: 'Map',
       privacyBody:
         'Kreni does not collect, store or share your location. All location (GPS) processing happens only on your device.',
+      privacyPolicyAction: 'Read policy',
+      privacyPolicyHint: 'How Kreni handles your data, location, and map sources',
+      privacyPolicyTitle: 'Privacy policy',
       privacyTitle: 'Privacy',
       repositoryHint: 'View source code and contribute',
       repositoryTitle: 'GitHub Repository',

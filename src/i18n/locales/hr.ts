@@ -338,6 +338,21 @@ const hr = {
       welcomeFooterNote: 'Bez prijave',
       welcomeTitle: 'Dobrodošli u Kreni',
     },
+    privacyPage: {
+      disclaimerBody:
+        'Ova aplikacija je neslužbeni hobby projekt i nije povezana sa ZET-om, HŽ-om ili Gradom Zagrebom. Podaci se prikazuju "kakvi jesu" (as-is) i ne garantiramo njihovu točnost. Podaci uživo mogu kasniti. Koristite na vlastitu odgovornost.',
+      disclaimerTitle: 'Odricanje od odgovornosti',
+      licenseBody: 'Ovaj projekt je otvorenog koda (Open Source) pod MIT licencom.',
+      licenseTitle: 'Licenca',
+      mapAttributionLink: '© OpenStreetMap contributors',
+      mapAttributionTitle: 'Karta',
+      privacyBody:
+        'Kreni ne prikuplja, ne sprema niti dijeli vašu lokaciju. Sva obrada podataka o lokaciji (GPS) događa se isključivo na vašem uređaju.',
+      privacyTitle: 'Privatnost',
+      summary:
+        'Ova stranica objašnjava koje podatke Kreni koristi i koje podatke ne prikuplja tijekom korištenja aplikacije.',
+      title: 'Pravila privatnosti',
+    },
     realtimePanel: {
       detailsHeading: 'Tehnički detalji',
       detailsTitle: 'ZET podaci osvježeni prije {{timeAgo}} (osvježavanje svakih {{pollSec}} s)',
@@ -545,6 +560,9 @@ const hr = {
       mapTitle: 'Karta',
       privacyBody:
         'Kreni ne prikuplja, ne sprema niti dijeli vašu lokaciju. Sva obrada podataka o lokaciji (GPS) događa se isključivo na vašem uređaju.',
+      privacyPolicyAction: 'Otvori pravila',
+      privacyPolicyHint: 'Kako Kreni obrađuje podatke, lokaciju i izvore karata',
+      privacyPolicyTitle: 'Pravila privatnosti',
       privacyTitle: 'Privatnost',
       repositoryHint: 'Pregledaj izvorni kod i doprinesi projektu',
       repositoryTitle: 'GitHub Repozitorij',

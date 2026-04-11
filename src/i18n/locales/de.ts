@@ -329,6 +329,21 @@ const de = {
       transitTitle2: 'Genaue Auswahl',
       welcomeFooterNote: 'Ohne Anmeldung',
     },
+    privacyPage: {
+      disclaimerBody:
+        'Diese App ist ein inoffizielles Hobbyprojekt und nicht mit ZET, HŽ oder der Stadt Zagreb verbunden. Daten werden „wie besehen“ angezeigt; keine Gewähr für Richtigkeit. Live-Daten können verzögert sein. Nutzung auf eigenes Risiko.',
+      disclaimerTitle: 'Haftungsausschluss',
+      licenseBody: 'Dieses Projekt ist Open Source unter der MIT-Lizenz.',
+      licenseTitle: 'Lizenz',
+      mapAttributionLink: '© OpenStreetMap-Mitwirkende',
+      mapAttributionTitle: 'Karte',
+      privacyBody:
+        'Kreni erfasst, speichert oder teilt Ihren Standort nicht. Die Standortverarbeitung (GPS) erfolgt ausschließlich auf Ihrem Gerät.',
+      privacyTitle: 'Datenschutz',
+      summary:
+        'Diese Seite erklärt, welche Daten Kreni verwendet und welche Daten bei der Nutzung der App nicht erfasst werden.',
+      title: 'Datenschutzerklärung',
+    },
     realtimePanel: {
       detailsHeading: 'Technische Details',
       detailsTitle: 'ZET-Daten zuletzt {{timeAgo}} (alle {{pollSec}} s)',
@@ -531,6 +546,9 @@ const de = {
       mapTitle: 'Karte',
       privacyBody:
         'Kreni erfasst, speichert oder teilt Ihren Standort nicht. Die Standortverarbeitung (GPS) erfolgt ausschließlich auf Ihrem Gerät.',
+      privacyPolicyAction: 'Richtlinie lesen',
+      privacyPolicyHint: 'Wie Kreni Daten, Standort und Kartenquellen verarbeitet',
+      privacyPolicyTitle: 'Datenschutzerklärung',
       privacyTitle: 'Datenschutz',
       repositoryHint: 'Quellcode ansehen und beitragen',
       repositoryTitle: 'GitHub Repository',

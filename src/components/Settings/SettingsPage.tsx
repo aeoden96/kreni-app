@@ -14,6 +14,7 @@ import {
   Map,
   MessageSquare,
   Moon,
+  Shield,
   Sun,
   Trash2,
 } from 'lucide-react';
@@ -381,43 +382,18 @@ export function SettingsPage() {
           </div>
         </div>
 
-        {/* Legal & Credits Section */}
+        {/* Privacy Policy Section */}
         <div className="card bg-base-100 shadow-sm">
           <div className="card-body">
-            <h2 className="card-title text-lg">{t('settings.legalTitle')}</h2>
-            <div className="space-y-4 text-sm text-base-content/80 leading-relaxed">
-              <section>
-                <h3 className="font-bold mb-1 text-base-content">
-                  {t('settings.disclaimerTitle')}
-                </h3>
-                <p>{t('settings.disclaimerBody')}</p>
-              </section>
-
-              <section>
-                <h3 className="font-bold mb-1 text-base-content">{t('settings.privacyTitle')}</h3>
-                <p>{t('settings.privacyBody')}</p>
-              </section>
-
-              <section>
-                <h3 className="font-bold mb-1 text-base-content">
-                  {t('settings.mapAttributionTitle')}
-                </h3>
-                <p>
-                  <a
-                    className="link link-primary"
-                    href="https://www.openstreetmap.org/copyright"
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    {t('settings.mapAttributionLink')}
-                  </a>
-                </p>
-              </section>
-
-              <section>
-                <h3 className="font-bold mb-1 text-base-content">{t('settings.licenseTitle')}</h3>
-                <p>{t('settings.licenseBody')}</p>
-              </section>
+            <h2 className="card-title text-lg flex items-center gap-2">
+              <Shield className="w-5 h-5" />
+              {t('settings.privacyPolicyTitle')}
+            </h2>
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-sm text-base-content/70">{t('settings.privacyPolicyHint')}</p>
+              <button className="btn btn-sm btn-outline" onClick={() => navigate('/privacy')}>
+                {t('settings.privacyPolicyAction')}
+              </button>
             </div>
           </div>
         </div>
