@@ -1,0 +1,37 @@
+{
+  "name": "Kreni — Zagreb javni prijevoz",
+  "short_name": "Kreni",
+  "description": "Zet uzivo na karti Zagreba — tramvaji, autobusi i vlakovi ZET-a uživo; parking, bicikli i ostale gradske usluge na jednoj karti.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#102a44",
+  "theme_color": "#1e3a5f",
+  "lang": "hr",
+  "scope": "/",
+  "icons": [
+    { "purpose": "any", "sizes": "192x192", "src": "pwa-192x192.png", "type": "image/png" },
+    { "purpose": "any", "sizes": "512x512", "src": "pwa-512x512.png", "type": "image/png" },
+    {
+      "purpose": "maskable",
+      "sizes": "512x512",
+      "src": "pwa-512x512-maskable.png",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "form_factor": "wide",
+      "label": "Kreni desktop view with map and route list",
+      "sizes": "1280x720",
+      "src": "screenshot-wide.png",
+      "type": "image/png"
+    },
+    {
+      "form_factor": "narrow",
+      "label": "Kreni mobile view",
+      "sizes": "750x1334",
+      "src": "screenshot-mobile.png",
+      "type": "image/png"
+    }
+  ]
+}

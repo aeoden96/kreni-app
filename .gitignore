@@ -49,3 +49,13 @@ test-results/
 
 *storybook.log
 storybook-static
+
+# Bubblewrap (TWA CLI) — local / regenerated
+.gradle/
+build/
+*.jks 
+*.keystore 
+android.keystore*
+*.apk 
+*.aab 
+*.idsig
