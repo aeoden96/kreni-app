@@ -32,7 +32,7 @@ def twaManifest = [
     navigationColorDark: '#000000', // The color used for the dark navbar.
     navigationDividerColor: '#000000', // The navbar divider color.
     navigationDividerColorDark: '#000000', // The dark navbar divider color.
-    backgroundColor: '#102A44', // Splash background — deep navy to match maskable logo field.
+    backgroundColor: '#102A44', // The color used for the splash screen background.
     enableNotifications: true, // Set to true to enable notification delegation.
     // Every shortcut must include the following fields:
     // - name: String that will show up in the shortcut.
@@ -57,8 +57,8 @@ android {
         applicationId "app.kreni.twa"
         minSdkVersion 21
         targetSdkVersion 35
-        versionCode 2
-        versionName "2"
+        versionCode 3
+        versionName "3"
 
         // The name for the application
         resValue "string", "appName", twaManifest.name
@@ -207,11 +207,9 @@ repositories {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-
-    implementation 'androidx.core:core-splashscreen:1.0.1'
-
+    
         implementation 'com.google.androidbrowserhelper:locationdelegation:1.1.2'
-
+    
         implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.2'
-
+    
 }

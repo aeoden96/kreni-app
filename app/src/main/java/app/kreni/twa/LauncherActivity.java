@@ -20,7 +20,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
-import androidx.core.splashscreen.SplashScreen;
+
 
 public class LauncherActivity
         extends com.google.androidbrowserhelper.trusted.LauncherActivity {
@@ -30,7 +30,6 @@ public class LauncherActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
         // Setting an orientation crashes the app due to the transparent background on Android 8.0
         // Oreo and below. We only set the orientation on Oreo and above. This only affects the

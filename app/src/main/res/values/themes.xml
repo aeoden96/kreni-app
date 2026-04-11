@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <style name="Theme.TwaLauncherSplash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/backgroundColor</item>
-        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
-        <item name="postSplashScreenTheme">@android:style/Theme.Translucent.NoTitleBar</item>
-    </style>
-</resources>
