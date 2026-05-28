@@ -68,7 +68,6 @@ export function useSearchModal({
       setTimeout(() => searchInputRef.current?.focus(), 100);
     } else {
       setSearchQuery('');
-      setStopsMode('search');
     }
   }, [isOpen]);
 
@@ -212,6 +211,10 @@ export function useSearchModal({
     } else {
       setDirToStop(stop);
       setDirToQuery('');
+      if (!dirFromStop) {
+        setDirActiveField('from');
+        setTimeout(() => searchInputRef.current?.focus(), 50);
+      }
     }
   };
 
@@ -274,6 +277,7 @@ export function useSearchModal({
     setDirActiveField,
     setDirFromStop,
     setDirToQuery,
+    setDirToStop,
     setExpandedStopKeys,
     setFilter,
     setRecentsExpanded,

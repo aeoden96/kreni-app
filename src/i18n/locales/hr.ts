@@ -448,6 +448,7 @@ const hr = {
     search: {
       barPlaceholderLines: 'Pretraži linije…',
       barPlaceholderTrains: 'Pretraži vlakove…',
+      browseStops: 'Pretraži stanice',
       clearSelectionAria: 'Očisti odabir',
       compass: {
         e: 'istoku',
@@ -463,6 +464,8 @@ const hr = {
       directionsToggleOn: 'Traži smjer između dvije stanice',
       directRoutesMany: '{{count}} linije',
       directRoutesSingle: '1 linija',
+      dirFromLabel: 'Odakle',
+      dirToLabel: 'Kamo',
       emptyNoResults: 'Nema rezultata',
       emptyNoRoutes: 'Nema linija',
       emptyTypeStopName: 'Upišite naziv stanice',
@@ -484,6 +487,7 @@ const hr = {
         stopName: 'Naziv stanice...',
         toWhere: 'Kamo?',
       },
+      planJourney: 'Planiraj put',
       recentClear: 'Očisti',
       recentSection: 'Nedavno pregledano',
       routeDirectionMeta: 'Smjer {{direction}} · {{count}} stanica',

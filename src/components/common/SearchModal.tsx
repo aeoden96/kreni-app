@@ -63,6 +63,7 @@ export const SearchModal = memo(function SearchModal(props: SearchModalProps) {
     setDirActiveField,
     setDirFromStop,
     setDirToQuery,
+    setDirToStop,
     setExpandedStopKeys,
     setFilter,
     setRecentsExpanded,
@@ -96,6 +97,7 @@ export const SearchModal = memo(function SearchModal(props: SearchModalProps) {
           badgeColor={badgeColor}
           buses={buses}
           config={config}
+          dirActiveField={dirActiveField}
           dirFromStop={dirFromStop}
           dirToInputRef={dirToInputRef}
           dirToQuery={dirToQuery}
@@ -105,6 +107,7 @@ export const SearchModal = memo(function SearchModal(props: SearchModalProps) {
           filter={filter}
           isDirsMode={isDirsMode}
           onClose={props.onClose}
+          onDirStopSelect={handleDirStopSelect}
           onDirSwap={handleDirSwap}
           onSelectRoute={handleSelectRoute}
           onSelectStop={handleSelectStop}
@@ -113,6 +116,7 @@ export const SearchModal = memo(function SearchModal(props: SearchModalProps) {
           setDirActiveField={setDirActiveField}
           setDirFromStop={setDirFromStop}
           setDirToQuery={setDirToQuery}
+          setDirToStop={setDirToStop}
           setFilter={setFilter}
           setSearchQuery={setSearchQuery}
           setStopsMode={setStopsMode}

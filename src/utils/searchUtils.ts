@@ -17,9 +17,9 @@ export type ParentStopGroup = {
 };
 
 export type RecentMergedItem = RecentRouteItem | RecentStopItem;
+
 export type RecentRouteItem = { data: Route; type: 'route' };
 export type RecentStopItem = { data: Stop; type: 'stop' };
-
 interface RecentItem {
   id: string;
   timestamp: number;
@@ -33,8 +33,8 @@ export function filterParentStops(
   parentStops: Stop[],
   query: string
 ): { hasMore: boolean; stops: Stop[] } {
-  const q = query.trim().toLowerCase();
-  const source = q ? parentStops.filter((s) => s.name.toLowerCase().includes(q)) : parentStops;
+  const q = normalize(query.trim());
+  const source = q ? parentStops.filter((s) => normalize(s.name).includes(q)) : parentStops;
   const sorted = source.slice().sort((a, b) => a.name.localeCompare(b.name));
   const limit = 20;
   return { hasMore: sorted.length > limit, stops: sorted.slice(0, limit) };
@@ -46,9 +46,9 @@ export function filterParentStops(
  */
 export function filterRoutes(sourceRoutes: Route[], query: string): Route[] {
   if (!query.trim()) return sourceRoutes;
-  const q = query.toLowerCase();
+  const q = normalize(query);
   return sourceRoutes.filter(
-    (route) => route.shortName.toLowerCase().includes(q) || route.longName.toLowerCase().includes(q)
+    (route) => normalize(route.shortName).includes(q) || normalize(route.longName).includes(q)
   );
 }
 
@@ -74,8 +74,8 @@ export function groupPlatformStops(
   platformStops: Stop[],
   query: string
 ): { groups: ParentStopGroup[]; hasMore: boolean } {
-  const q = query.trim().toLowerCase();
-  const source = q ? platformStops.filter((s) => s.name.toLowerCase().includes(q)) : platformStops;
+  const q = normalize(query.trim());
+  const source = q ? platformStops.filter((s) => normalize(s.name).includes(q)) : platformStops;
 
   const groupsByKey = new Map<string, Stop[]>();
   for (const s of source) {
@@ -146,4 +146,9 @@ export function mergeAndFilterRecents(
     return resolved.filter((x) => x.type === 'route' && routeTypeMatch(x.data.type));
   }
   return resolved;
+}
+
+/** Lowercase + strip diacritics so "crnomerec" matches "Črnomerec". */
+function normalize(str: string): string {
+  return str.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }

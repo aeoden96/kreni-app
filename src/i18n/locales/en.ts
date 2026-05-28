@@ -438,6 +438,7 @@ const en = {
     search: {
       barPlaceholderLines: 'Search lines…',
       barPlaceholderTrains: 'Search trains…',
+      browseStops: 'Browse stops',
       clearSelectionAria: 'Clear selection',
       compass: {
         e: 'east',
@@ -453,6 +454,8 @@ const en = {
       directionsToggleOn: 'Find routes between two stops',
       directRoutesMany: '{{count}} routes',
       directRoutesSingle: '1 route',
+      dirFromLabel: 'From',
+      dirToLabel: 'To',
       emptyNoResults: 'No results',
       emptyNoRoutes: 'No lines',
       emptyTypeStopName: 'Enter a stop name',
@@ -474,6 +477,7 @@ const en = {
         stopName: 'Stop name…',
         toWhere: 'To where?',
       },
+      planJourney: 'Plan journey',
       recentClear: 'Clear',
       recentSection: 'Recently viewed',
       routeDirectionMeta: 'Direction {{direction}} · {{count}} stops',

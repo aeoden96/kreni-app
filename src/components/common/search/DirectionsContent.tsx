@@ -42,7 +42,9 @@ export function DirectionsContent({
   if (dirFromStop && dirToStop) {
     return (
       <div className="p-4 space-y-3">
-        <div className="text-xs text-base-content/60 px-1">{dirResultLabel}</div>
+        <div aria-live="polite" className="text-xs text-base-content/60 px-1">
+          {dirResultLabel}
+        </div>
         {dirLoading && (
           <div className="flex items-center gap-2 text-sm text-base-content/60 px-1">
             <Loader2 className="w-4 h-4 animate-spin" />

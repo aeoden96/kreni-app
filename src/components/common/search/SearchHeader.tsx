@@ -23,6 +23,7 @@ interface SearchHeaderProps {
   badgeColor: string;
   buses: Route[];
   config: GTFSModeConfig;
+  dirActiveField: 'from' | 'to';
   dirFromStop: null | Stop;
   dirToInputRef: RefObject<HTMLInputElement | null>;
   dirToQuery: string;
@@ -34,6 +35,7 @@ interface SearchHeaderProps {
   isDirsMode: boolean;
 
   onClose: () => void;
+  onDirStopSelect: (stop: Stop) => void;
   onDirSwap: () => void;
   onSelectRoute: (route: Route) => void;
   onSelectStop: (stop: Stop) => void;
@@ -42,6 +44,7 @@ interface SearchHeaderProps {
   setDirActiveField: (field: 'from' | 'to') => void;
   setDirFromStop: (stop: null | Stop) => void;
   setDirToQuery: (q: string) => void;
+  setDirToStop: (stop: null | Stop) => void;
 
   setFilter: (f: FilterType) => void;
   setSearchQuery: (q: string) => void;
@@ -55,6 +58,7 @@ export function SearchHeader({
   badgeColor,
   buses,
   config,
+  dirActiveField,
   dirFromStop,
   dirToInputRef,
   dirToQuery,
@@ -64,6 +68,7 @@ export function SearchHeader({
   filter,
   isDirsMode,
   onClose,
+  onDirStopSelect,
   onDirSwap,
   onSelectRoute,
   onSelectStop,
@@ -72,6 +77,7 @@ export function SearchHeader({
   setDirActiveField,
   setDirFromStop,
   setDirToQuery,
+  setDirToStop,
   setFilter,
   setSearchQuery,
   setStopsMode,
@@ -156,142 +162,174 @@ export function SearchHeader({
         )}
       </div>
 
-      {/* Row 1: search / from-field input + directions toggle */}
-      {(isRouteFilter || filter === 'stanice') && (
-        <div className="flex items-center gap-2 mt-3">
-          <div className="relative flex-1">
-            {isDirsMode && dirFromStop ? (
-              <div className="input input-bordered w-full min-h-[44px] flex items-center gap-2 px-3 pr-10 text-sm">
-                <MapPin className="w-4 h-4 text-primary/70 shrink-0" />
-                <span className="flex-1 truncate">{dirFromStop.name}</span>
-              </div>
-            ) : (
-              <>
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/50" />
-                <input
-                  className="input input-bordered w-full pl-10 pr-10 min-h-[44px] text-base"
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    if (isDirsMode) setDirActiveField('from');
-                  }}
-                  onFocus={() => {
-                    if (isDirsMode) setDirActiveField('from');
-                  }}
-                  placeholder={
-                    isDirsMode
-                      ? t('search.placeholder.fromWhere')
-                      : filter === 'stanice'
-                        ? t('search.placeholder.stopName')
-                        : t('search.placeholder.routeQuery')
-                  }
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchQuery}
-                />
-                {searchQuery && (
-                  <button
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content/80"
-                    onClick={() => setSearchQuery('')}
-                    type="button"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </>
-            )}
-            {isDirsMode && dirFromStop && (
-              <button
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content/80"
-                onClick={() => {
-                  setDirFromStop(null);
-                  setDirActiveField('from');
-                  setTimeout(() => searchInputRef.current?.focus(), 50);
-                }}
-                type="button"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-
-          {filter === 'stanice' && (
-            <button
-              aria-pressed={stopsMode === 'directions'}
-              className={`btn btn-square min-h-[44px] w-[44px] shrink-0 ${
-                stopsMode === 'directions' ? 'btn-primary' : 'btn-ghost border border-base-300'
-              }`}
-              onClick={() => setStopsMode(stopsMode === 'search' ? 'directions' : 'search')}
-              title={
-                stopsMode === 'search'
-                  ? t('search.directionsToggleOn')
-                  : t('search.directionsToggleOff')
-              }
-              type="button"
-            >
-              <ArrowLeftRight className="w-4 h-4" />
-            </button>
-          )}
+      {/* Browse / Plan journey segmented control (Stanice tab only) */}
+      {filter === 'stanice' && (
+        <div className="tabs tabs-boxed w-full mt-3">
+          <button
+            className={`tab flex-1 min-h-[40px] gap-1.5 text-sm ${stopsMode === 'search' ? 'tab-active' : ''}`}
+            onClick={() => setStopsMode('search')}
+            type="button"
+          >
+            <Search className="w-4 h-4" />
+            {t('search.browseStops')}
+          </button>
+          <button
+            aria-label={
+              stopsMode === 'search'
+                ? t('search.directionsToggleOn')
+                : t('search.directionsToggleOff')
+            }
+            aria-pressed={stopsMode === 'directions'}
+            className={`tab flex-1 min-h-[40px] gap-1.5 text-sm ${stopsMode === 'directions' ? 'tab-active' : ''}`}
+            onClick={() => setStopsMode(stopsMode === 'search' ? 'directions' : 'search')}
+            type="button"
+          >
+            <ArrowLeftRight className="w-4 h-4" />
+            {t('search.planJourney')}
+          </button>
         </div>
       )}
 
-      {/* Row 2: to-field input + swap button (directions mode only) */}
-      {isDirsMode && (
-        <div className="flex items-center gap-2 mt-2">
+      {/* Route / stop search input (non-directions mode) */}
+      {(isRouteFilter || (filter === 'stanice' && stopsMode === 'search')) && (
+        <div className="flex items-center gap-2 mt-3">
           <div className="relative flex-1">
-            {dirToStop ? (
-              <div className="input input-bordered w-full min-h-[44px] flex items-center gap-2 px-3 pr-10 text-sm">
-                <MapPin className="w-4 h-4 text-primary/70 shrink-0" />
-                <span className="flex-1 truncate">{dirToStop.name}</span>
-              </div>
-            ) : (
-              <>
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/50" />
-                <input
-                  className="input input-bordered w-full pl-10 pr-10 min-h-[44px] text-base"
-                  onChange={(e) => {
-                    setDirToQuery(e.target.value);
-                    setDirActiveField('to');
-                  }}
-                  onFocus={() => setDirActiveField('to')}
-                  placeholder={t('search.placeholder.toWhere')}
-                  ref={dirToInputRef}
-                  type="text"
-                  value={dirToQuery}
-                />
-                {dirToQuery && (
-                  <button
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content/80"
-                    onClick={() => setDirToQuery('')}
-                    type="button"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </>
-            )}
-            {dirToStop && (
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/50" />
+            <input
+              className="input input-bordered w-full pl-10 pr-10 min-h-[44px] text-base"
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={
+                filter === 'stanice'
+                  ? t('search.placeholder.stopName')
+                  : t('search.placeholder.routeQuery')
+              }
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+            />
+            {searchQuery && (
               <button
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content/80"
-                onClick={() => {
-                  setDirToQuery('');
-                  setTimeout(() => dirToInputRef.current?.focus(), 50);
-                }}
+                onClick={() => setSearchQuery('')}
                 type="button"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
           </div>
+        </div>
+      )}
 
-          <button
-            aria-label={t('search.swapStopsAria')}
-            className="btn btn-square min-h-[44px] w-[44px] shrink-0 btn-ghost border border-base-300"
-            disabled={!dirFromStop && !dirToStop}
-            onClick={onDirSwap}
-            type="button"
-          >
-            <ArrowUpDown className="w-4 h-4" />
-          </button>
+      {/* Directions from / to group */}
+      {isDirsMode && (
+        <div aria-label={t('search.planJourney')} role="group">
+          {/* From field */}
+          <div className="mt-3">
+            <p className="text-xs text-base-content/50 mb-1 px-1">{t('search.dirFromLabel')}</p>
+            <div className="relative">
+              {dirFromStop ? (
+                <button
+                  className="input input-bordered w-full min-h-[44px] flex items-center gap-2 px-3 pr-10 text-sm text-left hover:bg-base-200 transition-colors"
+                  onClick={() => {
+                    setDirFromStop(null);
+                    setDirActiveField('from');
+                    setTimeout(() => searchInputRef.current?.focus(), 50);
+                  }}
+                  type="button"
+                >
+                  <MapPin className="w-4 h-4 text-primary/70 shrink-0" />
+                  <span className="flex-1 truncate">{dirFromStop.name}</span>
+                  <X className="w-4 h-4 text-base-content/40 shrink-0" />
+                </button>
+              ) : (
+                <>
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/50" />
+                  <input
+                    className={`input input-bordered w-full pl-10 pr-10 min-h-[44px] text-base transition-shadow ${dirActiveField === 'from' ? 'ring-2 ring-primary/40' : ''}`}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setDirActiveField('from');
+                    }}
+                    onFocus={() => setDirActiveField('from')}
+                    placeholder={t('search.placeholder.fromWhere')}
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchQuery}
+                  />
+                  {searchQuery && (
+                    <button
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content/80"
+                      onClick={() => setSearchQuery('')}
+                      type="button"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Swap button — centered between the two rows */}
+          <div className="flex justify-center my-1">
+            <button
+              aria-label={t('search.swapStopsAria')}
+              className="btn btn-ghost btn-xs btn-circle"
+              disabled={!dirFromStop && !dirToStop}
+              onClick={onDirSwap}
+              type="button"
+            >
+              <ArrowUpDown className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* To field */}
+          <div>
+            <p className="text-xs text-base-content/50 mb-1 px-1">{t('search.dirToLabel')}</p>
+            <div className="relative">
+              {dirToStop ? (
+                <button
+                  className="input input-bordered w-full min-h-[44px] flex items-center gap-2 px-3 pr-10 text-sm text-left hover:bg-base-200 transition-colors"
+                  onClick={() => {
+                    setDirToStop(null);
+                    setDirToQuery('');
+                    setDirActiveField('to');
+                    setTimeout(() => dirToInputRef.current?.focus(), 50);
+                  }}
+                  type="button"
+                >
+                  <MapPin className="w-4 h-4 text-primary/70 shrink-0" />
+                  <span className="flex-1 truncate">{dirToStop.name}</span>
+                  <X className="w-4 h-4 text-base-content/40 shrink-0" />
+                </button>
+              ) : (
+                <>
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/50" />
+                  <input
+                    className={`input input-bordered w-full pl-10 pr-10 min-h-[44px] text-base transition-shadow ${dirActiveField === 'to' ? 'ring-2 ring-primary/40' : ''}`}
+                    onChange={(e) => {
+                      setDirToQuery(e.target.value);
+                      setDirActiveField('to');
+                    }}
+                    onFocus={() => setDirActiveField('to')}
+                    placeholder={t('search.placeholder.toWhere')}
+                    ref={dirToInputRef}
+                    type="text"
+                    value={dirToQuery}
+                  />
+                  {dirToQuery && (
+                    <button
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content/80"
+                      onClick={() => setDirToQuery('')}
+                      type="button"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -318,7 +356,7 @@ export function SearchHeader({
               </div>
             </div>
           )}
-          {filter === 'stanice' && stopsMode === 'search' && favStops.length > 0 && (
+          {filter === 'stanice' && favStops.length > 0 && !dirToQuery && (
             <div className="mt-3">
               <div className="flex items-center gap-1 text-xs text-base-content/60 mb-1.5">
                 <Star className="w-3 h-3 fill-current text-warning" />
@@ -329,7 +367,7 @@ export function SearchHeader({
                   <button
                     className="badge badge-outline badge-lg hover:badge-primary transition-colors cursor-pointer text-xs"
                     key={stop.id}
-                    onClick={() => onSelectStop(stop)}
+                    onClick={() => (isDirsMode ? onDirStopSelect(stop) : onSelectStop(stop))}
                   >
                     {stop.name}
                   </button>
