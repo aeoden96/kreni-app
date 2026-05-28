@@ -36,6 +36,7 @@ import { TimetableDepartureCard } from './TimetableDepartureCard';
 interface StopInfoBarProps {
   onClose: () => void;
   onExpand: (stopId: string) => void;
+  onRouteClick?: (routeId: string, routeType: number) => void;
   onStopSelect?: (stopId: string) => void;
   routesById: Map<string, Route>;
   /** When true, shifts the bar down so it sits below the RouteInfoBar */
@@ -47,6 +48,7 @@ interface StopInfoBarProps {
 export function StopInfoBar({
   onClose,
   onExpand,
+  onRouteClick,
   onStopSelect,
   routesById,
   stackBelow = false,
@@ -203,15 +205,26 @@ export function StopInfoBar({
               {stopRoutes.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1">
                   {(routesExpanded ? stopRoutes : stopRoutes.slice(0, ROUTES_COLLAPSED_MAX)).map(
-                    (route) => (
-                      <span
-                        className="badge badge-sm font-bold text-white"
-                        key={route.id}
-                        style={{ backgroundColor: route.type === 0 ? '#2563eb' : '#d97706' }}
-                      >
-                        {route.shortName}
-                      </span>
-                    )
+                    (route) =>
+                      onRouteClick ? (
+                        <button
+                          className="badge badge-sm font-bold text-white cursor-pointer hover:opacity-75 transition-opacity"
+                          key={route.id}
+                          onClick={() => onRouteClick(route.id, route.type)}
+                          style={{ backgroundColor: route.type === 0 ? '#2563eb' : '#d97706' }}
+                          type="button"
+                        >
+                          {route.shortName}
+                        </button>
+                      ) : (
+                        <span
+                          className="badge badge-sm font-bold text-white"
+                          key={route.id}
+                          style={{ backgroundColor: route.type === 0 ? '#2563eb' : '#d97706' }}
+                        >
+                          {route.shortName}
+                        </span>
+                      )
                   )}
                   {!routesExpanded && stopRoutes.length > ROUTES_COLLAPSED_MAX && (
                     <button
@@ -272,30 +285,24 @@ export function StopInfoBar({
             </div>
           )}
           {siblingPlatforms.length > 0 && !isAllTerminus && (
-            <div className="mt-1.5">
-              <div className="flex items-center gap-1.5 mb-1">
-                <p className="text-[10px] uppercase tracking-wide text-base-content/40">
-                  {t('stopView.otherPlatforms')}
-                </p>
-                {siblingPlatforms.length > 1 && (
-                  <button
-                    aria-expanded={platformsExpanded}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium text-base-content/70 bg-base-200 border border-base-300 hover:bg-base-300 hover:border-base-content/20 active:scale-[0.98] transition-colors"
-                    onClick={() => setPlatformsExpanded((e) => !e)}
-                    type="button"
-                  >
-                    {platformsExpanded
-                      ? t('common.hide')
-                      : t('common.showAllCount', { count: siblingPlatforms.length })}
-                    {platformsExpanded ? (
-                      <ChevronUp className="w-3 h-3" />
-                    ) : (
-                      <ChevronDown className="w-3 h-3" />
-                    )}
-                  </button>
-                )}
-              </div>
-
+            <div className="mt-1">
+              {siblingPlatforms.length > 1 && (
+                <button
+                  aria-expanded={platformsExpanded}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] text-base-content/50 bg-base-200/70 border border-base-300 hover:bg-base-200 hover:text-base-content/70 active:scale-[0.98] transition-colors mb-1"
+                  onClick={() => setPlatformsExpanded((e) => !e)}
+                  type="button"
+                >
+                  <Navigation2 className="w-3 h-3 shrink-0" />
+                  <span>{t('stopView.otherPlatforms')}</span>
+                  <span className="font-semibold">{siblingPlatforms.length}</span>
+                  {platformsExpanded ? (
+                    <ChevronUp className="w-3 h-3" />
+                  ) : (
+                    <ChevronDown className="w-3 h-3" />
+                  )}
+                </button>
+              )}
               {(platformsExpanded || siblingPlatforms.length === 1) && (
                 <div className="flex flex-col gap-1">
                   {sortedSiblingPlatforms.map((s) => {
@@ -465,17 +472,23 @@ export function StopInfoBar({
                 }
 
                 return (
-                  <div
-                    className={`flex items-center gap-2 rounded-lg px-1.5 py-1 -mx-1.5 transition-colors ${
+                  <button
+                    className={`w-full flex items-center gap-2 rounded-lg px-1.5 py-1 -mx-1.5 transition-colors text-left ${
                       vehicle.passedStop
                         ? 'opacity-50'
                         : isAtStop
-                          ? 'bg-success/10 ring-1 ring-success/60'
+                          ? 'bg-success/10 ring-1 ring-success/60 hover:bg-success/20'
                           : d !== null && d < 100
-                            ? 'bg-success/5 ring-1 ring-success/30'
-                            : ''
-                    }`}
+                            ? 'bg-success/5 ring-1 ring-success/30 hover:bg-success/10'
+                            : 'hover:bg-base-200/70'
+                    } ${onRouteClick ? 'cursor-pointer' : 'cursor-default'}`}
                     key={vehicle.tripId}
+                    onClick={
+                      onRouteClick
+                        ? () => onRouteClick(vehicle.routeId, vehicle.routeType)
+                        : undefined
+                    }
+                    type="button"
                   >
                     <span
                       className="badge badge-sm font-bold min-w-[2.5rem] justify-center shrink-0 text-white"
@@ -519,9 +532,18 @@ export function StopInfoBar({
                         </div>
                       )}
                     </div>
-                  </div>
+                  </button>
                 );
               })}
+              {liveVehicles.length > topVehicles.length && (
+                <button
+                  className="w-full text-xs text-base-content/50 hover:text-base-content/80 py-1 text-center transition-colors"
+                  onClick={() => onExpand(stop.id)}
+                  type="button"
+                >
+                  {t('stopView.seeAllCount', { count: liveVehicles.length })} →
+                </button>
+              )}
             </div>
           ))}
 
@@ -543,6 +565,15 @@ export function StopInfoBar({
               {topDepartures.map((dep) => (
                 <TimetableDepartureCard compact departure={dep} key={dep.tripId} />
               ))}
+              {timetableDepartures.length > topDepartures.length && (
+                <button
+                  className="w-full text-xs text-base-content/50 hover:text-base-content/80 py-1 text-center transition-colors"
+                  onClick={() => onExpand(stop.id)}
+                  type="button"
+                >
+                  {t('stopView.seeAllCount', { count: timetableDepartures.length })} →
+                </button>
+              )}
             </div>
           ))}
       </div>

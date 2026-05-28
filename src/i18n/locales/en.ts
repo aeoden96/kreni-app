@@ -635,6 +635,7 @@ const en = {
       otherPlatforms: 'Other platforms',
       rideHailing: 'Ride hailing',
       searchingVehicles: 'Finding vehicles…',
+      seeAllCount: 'See all {{count}}',
       switchToStop: 'Switch to: {{name}}',
       tabTimetable: 'Timetable',
       tabVehiclesNearby: 'Nearby vehicles',

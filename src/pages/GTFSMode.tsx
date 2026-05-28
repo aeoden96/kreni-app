@@ -548,6 +548,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
           <StopInfoBar
             onClose={handleCloseStopInfo}
             onExpand={handleExpandStop}
+            onRouteClick={handleRouteClickFromStop}
             onStopSelect={handleSelectStop}
             routesById={routesById}
             stackBelow={false}

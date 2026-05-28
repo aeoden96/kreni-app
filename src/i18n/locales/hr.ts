@@ -647,6 +647,7 @@ const hr = {
       otherPlatforms: 'Ostale platforme',
       rideHailing: 'Prijevoz (Taxi)',
       searchingVehicles: 'Tražim vozila...',
+      seeAllCount: 'Prikaži svih {{count}}',
       switchToStop: 'Prebaci na: {{name}}',
       tabTimetable: 'Red vožnje',
       tabVehiclesNearby: 'Vozila u blizini',

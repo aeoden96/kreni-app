@@ -243,13 +243,18 @@ export const StopModal = memo(function StopModal({
             <div className="flex flex-wrap gap-1 mb-3">
               {(routesExpanded ? stopRoutes : stopRoutes.slice(0, ROUTES_COLLAPSED_MAX)).map(
                 (route) => (
-                  <span
-                    className="badge badge-sm font-bold text-white"
+                  <button
+                    className="badge badge-sm font-bold text-white cursor-pointer hover:opacity-75 transition-opacity"
                     key={route.id}
+                    onClick={() => {
+                      onRouteClick(route.id, route.type);
+                      onClose();
+                    }}
                     style={{ backgroundColor: route.type === 0 ? '#2563eb' : '#d97706' }}
+                    type="button"
                   >
                     {route.shortName}
-                  </span>
+                  </button>
                 )
               )}
               {!routesExpanded && stopRoutes.length > ROUTES_COLLAPSED_MAX && (
