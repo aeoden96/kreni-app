@@ -20,6 +20,12 @@ plugins {
     id 'com.android.application'
 }
 
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 def twaManifest = [
     applicationId: 'app.kreni.twa',
     hostName: 'kreni.app', // The domain being opened in the TWA.
@@ -150,9 +156,18 @@ android {
 
         
     }
+    signingConfigs {
+        release {
+            storeFile rootProject.file(keystoreProperties['storeFile'] ?: 'android.keystore')
+            storePassword keystoreProperties['storePassword']
+            keyAlias keystoreProperties['keyAlias'] ?: 'android'
+            keyPassword keystoreProperties['keyPassword']
+        }
+    }
     buildTypes {
         release {
             minifyEnabled true
+            signingConfig signingConfigs.release
         }
     }
     compileOptions {
