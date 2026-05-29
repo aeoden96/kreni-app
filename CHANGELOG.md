@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.1.0](https://github.com/aeoden96/kreni-app/compare/v3.0.0...v3.1.0) (2026-05-29)
+
+
+### Features
+
+* **modals:** improved UI and functionality ([dfa3358](https://github.com/aeoden96/kreni-app/commit/dfa335815d889761b1d6774e295148ccf0f6dcc6))
+* **search:** enhance search modal with new direction handling and accessibility improvements ([f9300e8](https://github.com/aeoden96/kreni-app/commit/f9300e82f3e63d3fb19fa9ebdc62d201b07d6436))
+
 ## [3.0.0](https://github.com/aeoden96/kreni-app/compare/v2.3.3...v3.0.0) (2026-04-03)
 
 
