@@ -1,288 +1,313 @@
 [
   {
     "de": {
-      "title": "✨ Neue Kartenfunktionen für deine Reise!",
+      "title": "Updates",
       "changes": [
-        "🚌 Die Karte zeigt jetzt Busse, Straßenbahnen und andere Verkehrsmittel in separaten Schichten, was die Übersicht erleichtert.",
-        "📍 Gefundene Fahrzeuge werden jetzt besser gruppiert, sodass du auch in belebten Gebieten schnell einen Überblick bekommst.",
-        "❤️ Deine gespeicherten Orte werden jetzt auf der Karte angezeigt, damit du schnell zu deinen Lieblingshaltestellen navigieren kannst.",
-        "ℹ️ Die App zeigt jetzt Release Notes in deiner Sprache an – so bleibst du immer auf dem neuesten Stand!"
+        "Dialogfenster: Verbesserte Benutzeroberfläche und Funktionen",
+        "Suche: Verbesserte Suchfunktion mit neuen Routenoptionen"
       ]
     },
     "en": {
-      "title": "✨ Smoother Navigation & Personalized Views!",
+      "title": "Zagreb Transit Updates",
       "changes": [
-        "🚲 Easily view different transit options (bus, tram, bike) on the map with customizable layers and clustering.",
-        "🗺️ Your saved locations and preferred routes are now even easier to find and manage on the map.",
-        "📰 We've made our release notes available in your preferred language, keeping you informed about the latest updates.",
-        "🛠️ (Internal - no user impact) Debugging tools are now only visible in test environments."
+        "Modals have a better look and work better!",
+        "Search now handles directions and is more accessible."
+      ]
+    },
+    "force": false,
+    "hr": {
+      "title": "Ažuriranja aplikacije",
+      "changes": [
+        "Poboljšano sučelje i funkcionalnost izbornika.",
+        "Pretraživanje sada bolje prikazuje smjerove i poboljšana pristupačnost."
+      ]
+    },
+    "version": "3.1.0"
+  },
+  {
+    "de": {
+      "title": "Updates",
+      "changes": [
+        "Karten zeigen jetzt verschiedene Transportmittel.",
+        "Lokalisierte Versionshinweise verfügbar.",
+        "Debug-Modus ist jetzt eingeschränkt."
+      ]
+    },
+    "en": {
+      "title": "Zagreb Transit Updates",
+      "changes": [
+        "Improved map display for different transit types.",
+        "Release notes are now in your language!",
+        "Improved map display for different transit types.",
+        "Debug tools are hidden unless testing."
       ]
     },
     "force": true,
     "hr": {
-      "title": "✨ Poboljšanja karte i korisničkog iskustva!",
+      "title": "Ažuriranja aplikacije",
       "changes": [
-        "🗺️ Sada možete filtrirati mapu po vrsti prijevoza i dodavati favorite.",
-        "📝 U aplikaciji su sada dostupne lokalizirane obavijesti o novostima, prikazane na vašem jeziku."
+        "Prikaz mapa po vrsti prijevoza i spremljenim mjestima.",
+        "Automatski prikaz lokaliziranih obavijesti.",
+        "Debug panel vidljiv samo u testnom načinu."
       ]
     },
     "version": "3.0.0"
   },
   {
     "de": {
-      "title": "✨ Verbesserungen für deine Fahrt!",
+      "title": "Aktualisierungen",
       "changes": [
-        "Die Entwicklerkonsole ist jetzt unsichtbar, damit sie dich nicht ablenkt."
+        "Debug-Anzeige funktioniert jetzt richtig!"
       ]
     },
     "en": {
-      "title": "✨ Smoother Experience!",
+      "title": "Zagreb Transit Updates",
       "changes": [
-        "The debug panel is now hidden, ensuring a cleaner and more focused app experience."
+        "Debug panel now appears correctly!"
       ]
     },
     "force": true,
     "hr": {
-      "title": "✨ Poboljšanja za vaše putovanje!",
+      "title": "Ažuriranja",
       "changes": [
-        "Popravili smo prikaz odabornika za lakše korištenje."
+        "Prikaz ladice za otklanjanje pogrešaka je popravljen!"
       ]
     },
     "version": "2.3.4"
   },
   {
     "de": {
-      "title": "✨ Zagreb Transit App - Verbesserungen für dich!",
+      "title": "Updates",
       "changes": [
-        "🚌 Die Fahrzeugpositionen werden jetzt genauer angezeigt, auch wenn du gerade nicht aktiv eine Linie verfolgst.",
-        "⚡️ Die App aktualisiert sich jetzt häufiger im Hintergrund, damit du immer die aktuellsten Informationen hast."
+        "Fahrzeugpositionen werden jetzt genauer angezeigt.",
+        "Updates werden häufiger heruntergeladen."
       ]
     },
     "en": {
-      "title": "✨ Smoother Rides Ahead!",
+      "title": "Zagreb Transit Updates",
       "changes": [
-        "🚌 Your map now updates more reliably, even when you're not actively looking at a specific route.",
-        "⚡ We've made updates behind the scenes to ensure the app stays fresh and up-to-date."
+        "Inactive tabs now show vehicle locations better.",
+        "App updates happen more often!"
       ]
     },
     "force": false,
     "hr": {
-      "title": "✨ Poboljšanja u aplikaciji za lakše putovanje!",
+      "title": "Ažuriranja aplikacije",
       "changes": [
-        "🚌 Sada je lakše pratiti vozila čak i ako ih trenutno ne gledate – pozicija vozila se ažurira i na neaktivnim stranicama.",
-        "⚡ Aplikacija se brže ažurira s najnovijim informacijama o linijama i vozilima."
+        "Položaj vozila se sada ispravlja za neaktivne kartice.",
+        "Ažuriranja aplikacije su češća."
       ]
     },
     "version": "2.3.3"
   },
   {
     "de": {
-      "title": "✨ Verbesserte Suchbarkeit!",
+      "title": "Updates",
       "changes": [
-        "Wir haben die Suchfunktion verbessert, damit Sie noch schneller die gewünschten Verbindungen finden."
+        "Verbesserte Sichtbarkeit der Echtzeitdaten."
       ]
     },
     "en": {
-      "title": "✨ Improved Search & Real-Time Updates!",
+      "title": "App Updates",
       "changes": [
-        "We've made it easier to find what you're looking for in the app, so you can plan your journey faster."
+        "Improved how the app appears in searches!"
       ]
     },
     "force": true,
     "hr": {
-      "title": "✨ Poboljšanja pretraživanja i prikazivanja informacija!",
+      "title": "Ažuriranja",
       "changes": [
-        "Poboljšali smo pretraživanje linija i stanica kako biste ih brže pronašli."
+        "Poboljšana vidljivost podataka u stvarnom vremenu."
       ]
     },
     "version": "2.3.2"
   },
   {
     "de": {
-      "title": "🚌 Verbesserungen für deine Fahrt!",
+      "title": "Updates",
       "changes": [
-        "Die Anzeige von Fahrzeugen in deiner Nähe funktioniert jetzt zuverlässig."
+        "Naheliegende Fahrzeuge werden jetzt korrekt angezeigt!"
       ]
     },
     "en": {
-      "title": "🚌 Smoother Rides Ahead!",
+      "title": "Zagreb Transit Updates",
       "changes": [
-        "Nearby vehicles are now displayed accurately, so you can always see what's around the corner."
+        "Nearby vehicles display correctly!"
       ]
     },
     "force": false,
     "hr": {
-      "title": "🚌 Poboljšanja u vožnji! (Better Rides!)",
+      "title": "Ažuriranja",
       "changes": [
-        "Sada točno vidite vozila u blizini, tako da uvijek znate gdje ste i što vas čeka."
+        "Prikaz vozila u blizini je ispravan!"
       ]
     },
     "version": "2.3.1"
   },
   {
     "de": {
-      "title": "✨ Neue Funktionen und Verbesserungen für Ihre Fahrten!",
+      "title": "Updates",
       "changes": [
-        "🚲 Die Fahrradroutenplanung wurde verbessert – finden Sie jetzt noch einfacher die beste Strecke!",
-        "🚌 Wir haben die Datenabfrage optimiert, um Ihnen stets aktuelle Fahrpläne und Informationen zu zeigen.",
-        "✨ Begrüßen Sie ein neues Tutorial, das Ihnen den Einstieg in die App erleichtert.",
-        "🕸️ Das Menü wurde neu gestaltet, um die Navigation noch intuitiver zu gestalten.",
-        "🚲 Die Informationen zu Fahrradstationen wurden verbessert, sodass Sie immer wissen, wo Sie Fahrräder mieten können.",
-        "🚧 Straßensperrungen werden jetzt noch besser angezeigt und aktualisiert – so vermeiden Sie unerwartete Verzögerungen!"
+        "Verbesserte Fahrradfunktionen!",
+        "Datenabruf für Fahrpläne verbessert.",
+        "Neues Begrüßungsfenster.",
+        "Überarbeitetes Menü.",
+        "Verbesserte Fahrradstation-Daten.",
+        "Straßensperrungen werden besser angezeigt."
       ]
     },
     "en": {
-      "title": "🚲 Zagreb Transit: Smoother Rides Ahead!",
+      "title": "Zagreb Transit Updates",
       "changes": [
-        "🚲 Explore Zagreb like never before with improved cycling mode features – find routes and stations with ease!",
-        "✨ Welcome to the app! A new onboarding modal will guide you through the key features and help you get started.",
-        "🕸️ We've given the main menu a fresh look, making it even easier to navigate and find what you need.",
-        "🚲 Bike station information is now more reliable and accurate, so you can plan your cycling trips with confidence.",
-        "🚧 Stay informed about road closures with updated information and automatic refreshes – avoid unexpected delays!",
-        "🚌 We've made improvements behind the scenes to ensure faster and more accurate transit data."
+        "🚲 Improved cycling mode.",
+        "Updated transit data source.",
+        "New app introduction.",
+        "Spider menu has been redesigned.",
+        "✨ Better bike station information.",
+        "Road closures now update automatically."
       ]
     },
     "force": false,
     "hr": {
-      "title": "🚴 Novi i poboljšani Zagreb u pokretu!",
+      "title": "Ažuriranja aplikacije",
       "changes": [
-        "🚲 Sada je vožnja biciklom još bolja uz poboljšane značajke! Uživajte u još preciznijim i korisnijim informacijama.",
-        "✨ Dobrodošli! Novi uvodni prikaz pomoći će vam da se brzo snađete u aplikaciji i iskoristite sve njene prednosti.",
-        "🕷️ Izgled izbornika je sada moderniji i jednostavniji za korištenje – sve što vam treba je na dohvat ruke!",
-        "🚲 Poboljšana podrška za podatke o stanicama za bicikliranje – pronađite bicikl brzo i lako.",
-        "🚧 Sada možete vidjeti zatvorene ceste i dobiti ažurna obavijestima o promjenama u prometu.",
-        "🚌 Poboljšano preuzimanje podataka o linijama – aplikacija je brža i pouzdanija."
+        "Poboljšani prikaz biciklističkih ruta!",
+        "Poboljšano učitavanje podataka o prijevozu.",
+        "Novi uvodni zaslon.",
+        "Redizajn izbornika.",
+        "Poboljšano upravljanje podacima o bicikličkim stanicama.",
+        "Poboljšan prikaz i ažuriranje zatvaranja cesta."
       ]
     },
     "version": "2.3.0"
   },
   {
     "de": {
-      "title": "🚌 Zagreb Transit App - Verbesserungen!",
+      "title": "Zagreb Transit Updates",
       "changes": [
-        "Echtzeit-Fahrzeugdaten werden jetzt zuverlässiger angezeigt, auch wenn es zu kleinen Änderungen in den Fahrplänen kommt.",
-        "Wir haben die Fahrplandaten-Aktualisierungen verbessert, um sicherzustellen, dass du immer die aktuellsten Informationen hast."
+        "Echtzeit-Fahrzeuganzeige funktioniert wieder!",
+        "Fahrplan-Updates werden jetzt besser gesteuert."
       ]
     },
     "en": {
-      "title": "🚌 Smoother Rides Ahead!",
+      "title": "Zagreb Transit Updates",
       "changes": [
-        "Real-time vehicle locations are now more accurate, even with schedule changes.",
-        "We've made it easier to manage updates to our transit data, ensuring you always have the latest information."
+        "Realtime vehicle matching is now more reliable.",
+        "Improved control over data updates!"
       ]
     },
     "force": false,
     "hr": {
-      "title": "🚌 Poboljšanja u praćenju vozila u stvarnom vremenu!",
+      "title": "Ažuriranja aplikacije",
       "changes": [
-        "Praćenje vozila u stvarnom vremenu je sada pouzdanije i točnije, čak i ako dođe do promjena u podacima.",
-        "Osigurana je kontrola nad ažuriranjem podataka o vozilima, što znači da ćete uvijek dobiti najnovije informacije."
+        "Poboljšano prikazivanje vozila u stvarnom vremenu.",
+        "Ručno ažuriranje podataka o linijama je sada moguće."
       ]
     },
     "version": "2.2.1"
   },
   {
     "de": {
-      "title": "✨ Verbesserte Routenplanung!",
+      "title": "Updates",
       "changes": [
-        "🚌 Wähle jetzt direkt Fahrzeuge in deiner Route aus und erhalte detailliertere Vorschauen der Haltestellen.",
-        "🗺️ Die Karte ist jetzt noch einfacher zu bedienen und Haltestellen sind besser sichtbar."
+        "Routenansicht: Fahrzeuge und Haltestellen besser dargestellt.",
+        "Karteninteraktion und Haltestellen sind jetzt klarer."
       ]
     },
     "en": {
-      "title": "✨ Smoother Route Planning!",
+      "title": "Zagreb Transit Updates",
       "changes": [
-        "🚌 Easily pick specific vehicles on your route to see their real-time location.",
-        "🗺️ It's now even easier to see stops and interact with the map for a better planning experience."
+        "Route view now shows vehicles and stop previews.",
+        "Map interactions and stop visibility are better."
       ]
     },
     "force": false,
     "hr": {
-      "title": "🚌 Poboljšanja za vaše putovanje!",
+      "title": "Ažuriranja aplikacije",
       "changes": [
-        "✨ Sada možete odabrati vozila na ruti i dobiti pregled stopova – putovanje je još jednostavnije!",
-        "🗺️ Interakcija s kartom je poboljšana, a stanice su sada jasnije vidljive."
+        "Poboljšan prikaz linija i vozila.",
+        "Poboljšana interakcija s kartom i vidljivost stanica."
       ]
     },
     "version": "2.2.0"
   },
   {
     "de": {
-      "title": "🚕 Neue Funktionen und Verbesserungen!",
+      "title": "Updates",
       "changes": [
-        "Du kannst jetzt direkt in der App ein Taxi rufen – noch einfacher und schneller!",
-        "Wir haben kleinere Designverbesserungen vorgenommen, damit die App noch schöner aussieht."
+        "Taxi bestellen ist jetzt möglich!",
+        "Kleinere Designverbesserungen"
       ]
     },
     "en": {
-      "title": "🚕 Easier Rides with Taxi Hailing!",
+      "title": "Zagreb Transit Updates",
       "changes": [
-        "You can now hail a taxi directly from the app for a seamless travel experience.",
-        "Enjoy a cleaner and more polished look throughout the app with various style improvements."
+        "Taxi booking is now available!",
+        "Minor visual improvements."
       ]
     },
     "force": false,
     "hr": {
-      "title": "🚕 Novo u aplikaciji: Poziv taksija!",
+      "title": "Ažuriranja aplikacije",
       "changes": [
-        "🚗 Sada možete naručiti taksi izravno iz aplikacije!",
-        "✨ Učinjeno je nekoliko sitnih stilskih poboljšanja kako bi vam aplikacija bila još ugodnija za korištenje."
+        "Dodana opcija za naručivanje taksija.",
+        "Popravci izgleda aplikacije."
       ]
     },
     "version": "2.1.0"
   },
   {
     "de": {
-      "title": "🎉 Neue Version: Bleiben Sie auf dem Laufenden!",
+      "title": "Neuerungen",
       "changes": [
-        "🚲 Der Quellcode ist jetzt öffentlich zugänglich – wir freuen uns auf Ihre Beiträge!",
-        "✨ Wir haben den Prozess der Veröffentlichung neuer Versionen automatisiert, damit Sie schneller von Verbesserungen profitieren.",
-        "ℹ️ Sie können jetzt die neuesten Änderungen direkt in der App einsehen, wenn ein Update verfügbar ist."
+        "Open Source: Projekt ist jetzt öffentlich.",
+        "Veröffentlichung: Automatisierte Versionierung und Updates.",
+        "Changelog: Neuer Bereich für App-Updates."
       ]
     },
     "en": {
-      "title": "🎉 Zagreb Transit App - Initial Release!",
+      "title": "Zagreb Transit App Updates",
       "changes": [
-        "🚲 We're excited to share our open-source project with you!",
-        "✨ You can now easily see what's new in each update directly within the app.",
-        "⚙️ Under the hood, we've streamlined our release process to bring you updates faster."
+        "Project is now open source!",
+        "Automated releases and versioning.",
+        "View updates directly in the app."
       ]
     },
     "force": false,
     "hr": {
-      "title": "🎉 Novi Zagreb Transit App: Prvi Koraci!",
+      "title": "Ažuriranja",
       "changes": [
-        "🚲 Sada je naš projekt otvorenog koda dostupan svima!",
-        "✨ Uveli smo automatizirano objavljivanje novih verzija, tako da ćete brže dobiti ažurirane informacije.",
-        "ℹ️ Možete sada pregledati povijest promjena izravno u aplikaciji, kako biste bili u toku s novostima."
+        "Izdanje aplikacije za javnost.",
+        "Automatsko ažuriranje verzija i objave.",
+        "Pregled povijesti promjena u aplikaciji."
       ]
     },
     "version": "2.0.0"
   },
   {
     "de": {
-      "title": "✨ Neue Zagreb Transit App Version ist da!",
+      "title": "Updates",
       "changes": [
-        "🌙 Genießen Sie jetzt eine dunkle Benutzeroberfläche für eine angenehmere Nutzung, besonders bei schlechten Lichtverhältnissen.",
-        "🗺️ Entdecken Sie neue Kartenansichten, um Ihre Reise noch besser zu planen und zu verfolgen.",
-        "🚀 Die App startet jetzt zuverlässig und ohne Probleme."
+        "Dunkler Modus hinzugefügt!",
+        "Neue Kartenansichten verfügbar",
+        "Absturz beim Start behoben"
       ]
     },
     "en": {
-      "title": "✨ Zagreb Transit App - Dark Mode & Map Updates!",
+      "title": "Zagreb Transit Updates",
       "changes": [
-        "🌙 Enjoy a sleek, eye-friendly experience with our new dark mode!",
-        "🗺️ Explore Zagreb's transit options with our new map layers, giving you more detailed information.",
-        "🚀 The app now starts reliably, so you can plan your journey without any hiccups."
+        "✨ Added dark mode!",
+        "🗺️ New map layers are available",
+        "Startup crashes are fixed"
       ]
     },
     "force": false,
     "hr": {
-      "title": "✨ Novi Zagrebški Promet: Tamno sučelje i još više opcija!",
+      "title": "Ažuriranje aplikacije",
       "changes": [
-        "🌙 Uživajte u tamnom sučelju za udobnije korištenje aplikacije u večernjim satima.",
-        "🗺️ Istražite Zagrebški Promet s novim mapama koje vam pružaju još više informacija.",
-        "✅ Aplikacija sada pouzdano pokreće, bez problema pri pokretanju."
+        "Dodat tamni način rada",
+        "Nove kartografske podloge",
+        "Popravljen pad pri pokretanju"
       ]
     },
     "version": "1.5.7"
