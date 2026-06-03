@@ -8,7 +8,6 @@ import { memo } from 'react';
 import type { Route, Stop } from '../../utils/gtfs';
 
 import { useSearchModal } from '../../hooks/useSearchModal';
-import { DirectionsContent } from './search/DirectionsContent';
 import { RecentsBar } from './search/RecentsBar';
 import { RouteList } from './search/RouteList';
 import { SearchHeader } from './search/SearchHeader';
@@ -29,48 +28,29 @@ export const SearchModal = memo(function SearchModal(props: SearchModalProps) {
     badgeColor,
     buses,
     config,
-    dirActiveField,
-    dirFromStop,
-    dirLoading,
-    dirResultLabel,
-    dirResults,
-    dirToInputRef,
-    dirToQuery,
-    dirToStop,
     expandedStopKeys,
     favouriteRouteIds,
     favouriteStopIds,
     favRoutes,
     favStops,
     filter,
-    filteredDirStops,
     filteredRoutes,
     filteredStopGroups,
     handleClearRecentsForTab,
-    handleDirStopSelect,
-    handleDirSwap,
-    handleSelectDirectionsRoute,
     handleSelectRoute,
     handleSelectStop,
     hasRecents,
-    isDirsMode,
     isRouteFilter,
     recentItemsMerged,
     recentsExpanded,
     routesById,
     searchInputRef,
     searchQuery,
-    setDirActiveField,
-    setDirFromStop,
-    setDirToQuery,
-    setDirToStop,
     setExpandedStopKeys,
     setFilter,
     setRecentsExpanded,
     setSearchQuery,
-    setStopsMode,
     stopsById,
-    stopsMode,
     toggleFavouriteRoute,
     toggleFavouriteStop,
     trainRoutes,
@@ -97,52 +77,22 @@ export const SearchModal = memo(function SearchModal(props: SearchModalProps) {
           badgeColor={badgeColor}
           buses={buses}
           config={config}
-          dirActiveField={dirActiveField}
-          dirFromStop={dirFromStop}
-          dirToInputRef={dirToInputRef}
-          dirToQuery={dirToQuery}
-          dirToStop={dirToStop}
           favRoutes={favRoutes}
           favStops={favStops}
           filter={filter}
-          isDirsMode={isDirsMode}
           onClose={props.onClose}
-          onDirStopSelect={handleDirStopSelect}
-          onDirSwap={handleDirSwap}
           onSelectRoute={handleSelectRoute}
           onSelectStop={handleSelectStop}
           searchInputRef={searchInputRef}
           searchQuery={searchQuery}
-          setDirActiveField={setDirActiveField}
-          setDirFromStop={setDirFromStop}
-          setDirToQuery={setDirToQuery}
-          setDirToStop={setDirToStop}
           setFilter={setFilter}
           setSearchQuery={setSearchQuery}
-          setStopsMode={setStopsMode}
-          stopsMode={stopsMode}
           trainRoutes={trainRoutes}
           trams={trams}
         />
 
         {/* Content list */}
         <div className="flex-1 overflow-y-auto overscroll-contain">
-          {isDirsMode && (
-            <DirectionsContent
-              dirActiveField={dirActiveField}
-              dirFromStop={dirFromStop}
-              dirLoading={dirLoading}
-              dirResultLabel={dirResultLabel}
-              dirResults={dirResults}
-              dirToQuery={dirToQuery}
-              dirToStop={dirToStop}
-              filteredDirStops={filteredDirStops}
-              onDirStopSelect={handleDirStopSelect}
-              onSelectDirectionsRoute={handleSelectDirectionsRoute}
-              searchQuery={searchQuery}
-            />
-          )}
-
           {isRouteFilter && (
             <RouteList
               badgeColor={badgeColor}
@@ -154,7 +104,7 @@ export const SearchModal = memo(function SearchModal(props: SearchModalProps) {
             />
           )}
 
-          {filter === 'stanice' && stopsMode === 'search' && (
+          {filter === 'stanice' && (
             <StopGroupList
               dataDir={config.dataDir}
               expandedStopKeys={expandedStopKeys}
@@ -171,7 +121,7 @@ export const SearchModal = memo(function SearchModal(props: SearchModalProps) {
         </div>
 
         {/* Recently viewed — sticky footer */}
-        {!isDirsMode && !searchQuery && hasRecents && (
+        {!searchQuery && hasRecents && (
           <RecentsBar
             onClearRecents={handleClearRecentsForTab}
             onSelectRoute={handleSelectRoute}

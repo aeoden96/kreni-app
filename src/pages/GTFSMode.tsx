@@ -6,7 +6,7 @@
  * prop-drilling.
  */
 
-import { Search, Train, X } from 'lucide-react';
+import { ArrowLeftRight, Search, Train, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -15,6 +15,7 @@ import type { GTFSModeConfig } from '../config/modes';
 import type { DirectionFilter } from '../hooks/useSelectionParams';
 
 import { DebugPanel } from '../components/common/DebugPanel';
+import { DirectionsModal } from '../components/common/DirectionsModal';
 import { NearbyStopsModal } from '../components/common/NearbyStopsModal';
 import { OnboardingWizard } from '../components/common/OnboardingWizard';
 import { RealtimeStatusPanel } from '../components/common/RealtimeStatusPanel';
@@ -55,6 +56,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
   const { t } = useTranslation();
   // Modal states
   const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const [directionsModalOpen, setDirectionsModalOpen] = useState(false);
   const [routeModalOpen, setRouteModalOpen] = useState(false);
   const [stopModalOpen, setStopModalOpen] = useState(false);
   const [nearbyOpen, setNearbyOpen] = useState(false);
@@ -608,6 +610,21 @@ export function GTFSMode({ config }: GTFSModeProps) {
           )}
         </div>
 
+        {/* Floating plan journey button */}
+        <div className="absolute top-2 left-14 sm:top-4 sm:left-20 z-[1000]">
+          <button
+            aria-label={t('search.planJourney')}
+            className="btn btn-circle btn-gps-inactive p-0 min-h-0 w-10 h-10 min-h-10 sm:w-14 sm:h-14 sm:min-h-14 shadow-2xl transition-all duration-300 ring-2 ring-white/5"
+            onClick={() => {
+              trackEvent('directions_opened');
+              setDirectionsModalOpen(true);
+            }}
+            type="button"
+          >
+            <ArrowLeftRight className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
+        </div>
+
         {/* Locate error toast */}
         {locateError && (
           <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[1300]">
@@ -625,6 +642,16 @@ export function GTFSMode({ config }: GTFSModeProps) {
             stopsById={stopsById}
           />
         )}
+
+        {/* Directions Modal */}
+        <DirectionsModal
+          isOpen={directionsModalOpen}
+          onClose={() => setDirectionsModalOpen(false)}
+          onSelectRoute={handleSelectRoute}
+          routes={routes}
+          stops={stops}
+          stopsById={stopsById}
+        />
 
         {/* Search Modal */}
         <SearchModal

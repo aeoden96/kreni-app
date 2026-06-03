@@ -1,4 +1,4 @@
-import { Bus, Loader2, MapPin, TrainFront } from 'lucide-react';
+import { Bus, Loader2, TrainFront } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import type { Route, Stop } from '../../../utils/gtfs';
@@ -11,31 +11,21 @@ interface DirectionResult {
 }
 
 interface DirectionsContentProps {
-  dirActiveField: 'from' | 'to';
   dirFromStop: null | Stop;
   dirLoading: boolean;
   dirResultLabel: string;
   dirResults: DirectionResult[];
-  dirToQuery: string;
   dirToStop: null | Stop;
-  filteredDirStops: { hasMore: boolean; stops: Stop[] };
-  onDirStopSelect: (stop: Stop) => void;
   onSelectDirectionsRoute: (routeId: string, routeType: number, direction: 'A' | 'B') => void;
-  searchQuery: string;
 }
 
 export function DirectionsContent({
-  dirActiveField,
   dirFromStop,
   dirLoading,
   dirResultLabel,
   dirResults,
-  dirToQuery,
   dirToStop,
-  filteredDirStops,
-  onDirStopSelect,
   onSelectDirectionsRoute,
-  searchQuery,
 }: DirectionsContentProps) {
   const { t } = useTranslation();
 
@@ -98,37 +88,5 @@ export function DirectionsContent({
     );
   }
 
-  // Stop picker for from/to selection
-  const activeQuery = dirActiveField === 'from' ? searchQuery : dirToQuery;
-
-  if (filteredDirStops.stops.length === 0) {
-    return (
-      <div className="p-8 text-center text-base-content/50">
-        {activeQuery ? t('search.emptyNoResults') : t('search.emptyTypeStopName')}
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <div className="divide-y divide-base-300">
-        {filteredDirStops.stops.map((stop) => (
-          <button
-            className="w-full flex items-center gap-3 py-3 px-4 text-left hover:bg-base-200 active:bg-base-300 transition-colors min-h-[52px]"
-            key={stop.id}
-            onClick={() => onDirStopSelect(stop)}
-            type="button"
-          >
-            <MapPin className="w-4 h-4 text-base-content/40 shrink-0" />
-            <span className="text-sm font-medium">{stop.name}</span>
-          </button>
-        ))}
-      </div>
-      {filteredDirStops.hasMore && (
-        <p className="px-4 py-2 text-xs text-base-content/50 text-center">
-          {t('search.listFirst20Hint')}
-        </p>
-      )}
-    </>
-  );
+  return null;
 }
