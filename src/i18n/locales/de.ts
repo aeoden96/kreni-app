@@ -298,7 +298,7 @@ const de = {
       featureTransitTitle: 'ÖPNV',
       githubCta: 'GitHub',
       heroBadge: 'Kostenlos und Open Source',
-      heroBullet0: 'ÖPNV live verfolgen — schnell und einfach.',
+      heroBullet0: 'Kein Tram verpassen — sieh Fahrzeuge live auf dem Weg zu deiner Haltestelle.',
       heroBullet1: 'Zwischen Modi wechseln: ÖPNV, Rad, Auto, Stadtleben.',
       heroBullet2: 'Favoriten speichern und zuletzt genutzte Stops/Linien griffbereit halten.',
       listBody0: 'Schneller Überblick über alle Linien und Haltestellen als Text, ohne Karte.',
@@ -327,7 +327,10 @@ const de = {
       transitTitle0: 'Öffentlicher Verkehr',
       transitTitle1: 'Haltestellendetails',
       transitTitle2: 'Genaue Auswahl',
+      welcomeBody:
+        'Straßenbahnen und Busse in Zagreb, live auf der Karte. Plus Radfahren, Autofahren und Stadtinfos.',
       welcomeFooterNote: 'Ohne Anmeldung',
+      welcomeTitle: 'Willkommen bei Kreni',
     },
     privacyPage: {
       disclaimerBody:

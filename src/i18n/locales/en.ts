@@ -293,7 +293,7 @@ const en = {
       featureTransitTitle: 'Transit',
       githubCta: 'GitHub',
       heroBadge: 'Free and open source',
-      heroBullet0: 'Track public transport live, quickly.',
+      heroBullet0: 'Never miss the next tram — see vehicles moving toward your stop.',
       heroBullet1: 'Switch between modes: transit, cycling, driving, city life.',
       heroBullet2: 'Save favourites and keep recent stops/lines handy.',
       listBody0: 'Quick browse of all lines and stops as text, without loading the map.',
@@ -327,7 +327,8 @@ const en = {
       transitTitle0: 'Public transport',
       transitTitle1: 'Stop details',
       transitTitle2: 'Precise selection',
-      welcomeBody: 'Your live guide to Zagreb transit, cycling, and city services.',
+      welcomeBody:
+        "Zagreb's trams and buses, live on the map. Plus cycling, driving, and city services.",
       welcomeFooterNote: 'No sign-in required',
       welcomeTitle: 'Welcome to Kreni',
     },

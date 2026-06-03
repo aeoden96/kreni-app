@@ -11,11 +11,11 @@ import {
   Train,
   X,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { getCurrentLanguage, setLanguage, type SupportedLanguage } from '../../i18n';
+import { getCurrentLanguage, setLanguage } from '../../i18n';
 import { useSettingsStore } from '../../stores/settingsStore';
 
 // ─── Static config ─────────────────────────────────────────────────────────────
@@ -146,9 +146,18 @@ export function GlobalWelcomeWizard() {
   };
 
   return (
-    <div className="fixed inset-0 z-9999 overflow-y-auto bg-linear-to-br from-info/20 via-sky-500/8 to-indigo-600/[0.14] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+    <div className="fixed inset-0 z-9999 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
       {/* Backdrop */}
-      <div aria-hidden className="fixed inset-0 bg-base-content/40" onClick={handleClose} />
+      <div
+        aria-hidden
+        className="fixed inset-0 overflow-hidden backdrop-blur-sm"
+        onClick={handleClose}
+      >
+        <div className="absolute inset-0 bg-base-content/55" />
+        <div className="absolute -top-48 -left-48 w-[800px] h-[800px] rounded-full bg-info/[0.18] blur-[160px] pointer-events-none" />
+        <div className="absolute -bottom-32 -right-32 w-[600px] h-[600px] rounded-full bg-indigo-500/[0.14] blur-[140px] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] rounded-full bg-sky-400/[0.06] blur-[100px] pointer-events-none" />
+      </div>
 
       <div className="relative min-h-svh flex items-start sm:items-center justify-center p-3 sm:p-6  ">
         <div
@@ -188,31 +197,32 @@ export function GlobalWelcomeWizard() {
               <X size={18} />
             </button>
 
-            {/* Top: OSS badge + language & theme */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 pr-10 sm:pr-12">
-              <div className="inline-flex w-fit items-center rounded-full border border-base-content/12 bg-base-200/40 px-3 py-1 text-xs font-semibold text-base-content/80 tracking-wide">
-                {t('onboarding.heroBadge', 'Besplatno i open source')}
-              </div>
+            {/* Top: language & theme */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-3 pr-10 sm:pr-12">
               <div className="flex flex-wrap items-center gap-2">
-                <label className="sr-only" htmlFor="welcome-wizard-language">
-                  {t('settings.languageTitle')}
-                </label>
-                <select
-                  className={[
-                    'h-8 min-h-8 max-w-44 cursor-pointer rounded-xl border border-base-content/12',
-                    'bg-base-100 px-2.5 text-xs font-medium text-base-content',
-                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-info/45',
-                  ].join(' ')}
-                  id="welcome-wizard-language"
-                  onChange={(e) => setLanguage(e.target.value as SupportedLanguage)}
-                  value={currentLang}
+                <div
+                  aria-label={t('settings.languageTitle')}
+                  className="inline-flex rounded-xl border border-base-content/12 bg-base-200/30 p-px"
+                  role="group"
                 >
                   {LANGUAGES.map(([lng, label]) => (
-                    <option key={lng} value={lng}>
-                      {label}
-                    </option>
+                    <button
+                      aria-label={label}
+                      aria-pressed={currentLang === lng}
+                      className={[
+                        'flex h-7 items-center justify-center rounded-[10px] px-2.5 text-xs font-medium transition-colors',
+                        currentLang === lng
+                          ? 'bg-info text-info-content shadow-sm'
+                          : 'text-base-content/45 hover:bg-base-200/80 hover:text-base-content/80',
+                      ].join(' ')}
+                      key={lng}
+                      onClick={() => setLanguage(lng)}
+                      type="button"
+                    >
+                      {lng.toUpperCase()}
+                    </button>
                   ))}
-                </select>
+                </div>
 
                 <div
                   aria-label={t('onboarding.themeTitle')}
@@ -258,7 +268,7 @@ export function GlobalWelcomeWizard() {
             <p className="mt-3 text-sm sm:text-base text-base-content/60 leading-relaxed max-w-xl">
               {t(
                 'onboarding.welcomeBody',
-                'Vaš vodič uživo za zagrebački javni prijevoz, biciklizam i gradske usluge.'
+                "Zagreb's trams and buses, live on the map. Plus cycling, driving, and city services."
               )}
             </p>
 
@@ -285,7 +295,7 @@ export function GlobalWelcomeWizard() {
               ))}
             </ul>
 
-            {/* CTAs — no Personalize button here; that panel lives in the sidebar */}
+            {/* CTAs */}
             <div className="mt-6 flex flex-wrap gap-2.5">
               <button
                 className="btn btn-info min-h-11 px-5 font-semibold shadow-lg shadow-info/20 hover:shadow-xl hover:shadow-info/25 transition-shadow"
@@ -295,14 +305,25 @@ export function GlobalWelcomeWizard() {
                 {t('common.enterApp', 'Kreni')}
                 <ArrowRight className="h-4 w-4" />
               </button>
+            </div>
 
+            {/* No sign-in note */}
+            <p className="mt-2 text-xs text-base-content/40">
+              ✓ {t('onboarding.welcomeFooterNote', 'No sign-in required')}
+            </p>
+
+            {/* OSS badge + GitHub — secondary, below the fold */}
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <div className="inline-flex w-fit items-center rounded-full border border-base-content/12 bg-base-200/40 px-3 py-1 text-xs font-medium text-base-content/50 tracking-wide">
+                {t('onboarding.heroBadge', 'Free and open source')}
+              </div>
               <a
-                className="btn btn-ghost min-h-11 border border-base-content/10 hover:border-base-content/20 transition-colors"
+                className="btn btn-ghost btn-xs border border-base-content/10 hover:border-base-content/20 transition-colors"
                 href="https://github.com/aeoden96/kreni-app"
                 rel="noreferrer"
                 target="_blank"
               >
-                <Github className="h-4 w-4" />
+                <Github className="h-3.5 w-3.5" />
                 {t('onboarding.githubCta', 'GitHub')}
               </a>
             </div>
@@ -330,9 +351,34 @@ export function GlobalWelcomeWizard() {
                 </p>
               </div>
 
-              {/* Bento mode cards */}
+              {/* Featured transit card */}
+              {MODES.slice(0, 1).map(({ bodyKey, icon: Icon, key, path, titleKey }) => (
+                <button
+                  className="group w-full text-left rounded-2xl border border-info/25 bg-info/[0.06] p-4
+                             hover:bg-info/10 hover:border-info/35 hover:shadow-sm
+                             transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-info/50"
+                  key={key}
+                  onClick={() => handleQuickStart(path)}
+                  type="button"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-xl bg-info/15 flex items-center justify-center shrink-0 group-hover:bg-info/25 transition-colors">
+                      <Icon className="h-5 w-5 text-info" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-bold text-base-content">{t(titleKey)}</div>
+                      <p className="mt-0.5 text-[11px] text-base-content/55 leading-relaxed line-clamp-2">
+                        {t(bodyKey)}
+                      </p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-info/50 group-hover:text-info transition-colors shrink-0" />
+                  </div>
+                </button>
+              ))}
+
+              {/* Secondary mode cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {MODES.map(({ bodyKey, icon: Icon, key, path, titleKey }) => (
+                {MODES.slice(1).map(({ bodyKey, icon: Icon, key, path, titleKey }) => (
                   <button
                     className="group text-left rounded-2xl border border-base-content/8 bg-base-200/25 p-4
                                hover:bg-info/5 hover:border-info/25 hover:shadow-sm
@@ -386,16 +432,24 @@ function FeatureShowcase({ prefersReducedMotion }: { prefersReducedMotion: boole
   const { t } = useTranslation();
   const [active, setActive] = useState(0);
   const [hasError, setHasError] = useState<Record<number, boolean>>({});
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const [progress, setProgress] = useState(0);
 
   const feature = FEATURE_VIDEOS[active];
 
-  // Restart video when tab changes.
   useEffect(() => {
-    videoRef.current?.load();
+    setProgress(0);
   }, [active]);
 
   const showVideo = feature.src && !prefersReducedMotion && !hasError[active];
+
+  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const v = e.currentTarget;
+    if (v.duration) setProgress(v.currentTime / v.duration);
+  };
+
+  const handleEnded = () => {
+    setActive((a) => (a + 1) % FEATURE_VIDEOS.length);
+  };
 
   return (
     <div className="rounded-2xl border border-base-content/8 bg-base-200/25 overflow-hidden">
@@ -404,7 +458,7 @@ function FeatureShowcase({ prefersReducedMotion }: { prefersReducedMotion: boole
         {FEATURE_VIDEOS.map((f, i) => (
           <button
             className={[
-              'shrink-0 rounded-t-xl px-3 py-2 text-xs font-medium transition-colors whitespace-nowrap',
+              'relative shrink-0 rounded-t-xl px-3 py-2 text-xs font-medium transition-colors whitespace-nowrap',
               i === active
                 ? 'bg-base-100 border border-b-base-100 border-base-content/8 text-base-content -mb-px'
                 : 'text-base-content/50 hover:text-base-content/80 hover:bg-base-200/50',
@@ -414,6 +468,13 @@ function FeatureShowcase({ prefersReducedMotion }: { prefersReducedMotion: boole
             type="button"
           >
             {t(f.titleKey)}
+            {i === active && showVideo && (
+              <span
+                aria-hidden
+                className="absolute bottom-0 left-0 h-0.5 bg-info/70 rounded-full transition-none"
+                style={{ width: `${progress * 100}%` }}
+              />
+            )}
           </button>
         ))}
       </div>
@@ -424,13 +485,13 @@ function FeatureShowcase({ prefersReducedMotion }: { prefersReducedMotion: boole
           <video
             autoPlay
             className="w-full h-auto max-h-[340px] object-contain"
-            key={feature.src} /* force remount on src change */
-            loop
+            key={feature.src}
             muted
+            onEnded={handleEnded}
             onError={() => setHasError((e) => ({ ...e, [active]: true }))}
+            onTimeUpdate={handleTimeUpdate}
             playsInline
             preload="metadata"
-            ref={videoRef}
             src={import.meta.env.BASE_URL + feature.src}
           />
         ) : (

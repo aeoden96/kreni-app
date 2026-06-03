@@ -298,7 +298,7 @@ const hr = {
       featureTransitTitle: 'Javni prijevoz',
       githubCta: 'GitHub',
       heroBadge: 'Besplatno i bez prijave',
-      heroBullet0: 'Prati javni prijevoz uživo — brzo i jednostavno.',
+      heroBullet0: 'Nikad ne propusti tramvaj — vidi vozila kako se kreću prema tvojoj stanici.',
       heroBullet1: 'Prebaci se između načina: prijevoz, biciklizam, auto, gradski sadržaj.',
       heroBullet2: 'Spremi favorite i imaj nedavne stanice/linije pri ruci.',
       listBody0:
@@ -334,7 +334,8 @@ const hr = {
       transitTitle0: 'Javni prijevoz',
       transitTitle1: 'Pregled stanice',
       transitTitle2: 'Precizan odabir',
-      welcomeBody: 'Vaš vodič uživo za zagrebački javni prijevoz, biciklizam i gradske usluge.',
+      welcomeBody:
+        'Tramvaji i autobusi Zagreba, uživo na karti. Plus biciklizam, vožnja auta i gradski sadržaj.',
       welcomeFooterNote: 'Bez prijave',
       welcomeTitle: 'Dobrodošli u Kreni',
     },
