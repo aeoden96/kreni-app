@@ -34,6 +34,8 @@ const TRAM_COLOR = '#2563eb'; // blue-600
 const BUS_COLOR = '#d97706'; // amber-600
 
 interface RouteLineDiagramProps {
+  /** Journey segment to highlight — stops outside are dimmed. */
+  journeySegment?: null | { fromIdx: number; toIdx: number };
   /** Ordered stop IDs for the selected direction. */
   orderedStopIds: string[];
   /** 0 = Tram, 3 = Bus */
@@ -50,6 +52,7 @@ interface VehicleMarker {
 }
 
 export function RouteLineDiagram({
+  journeySegment,
   orderedStopIds,
   routeType,
   stopsById,
@@ -86,30 +89,92 @@ export function RouteLineDiagram({
   const lastDotTop =
     STOP_LIST_PADDING_TOP + (stopCount - 1) * STOP_ROW_HEIGHT + STOP_ROW_HEIGHT / 2;
 
+  // Journey segment track boundaries (in px from top)
+  const segmentFromTop = journeySegment
+    ? STOP_LIST_PADDING_TOP + journeySegment.fromIdx * STOP_ROW_HEIGHT + STOP_ROW_HEIGHT / 2
+    : null;
+  const segmentToTop = journeySegment
+    ? STOP_LIST_PADDING_TOP + journeySegment.toIdx * STOP_ROW_HEIGHT + STOP_ROW_HEIGHT / 2
+    : null;
+
   return (
     <div
       aria-hidden="true"
       className="relative flex-shrink-0"
       style={{ height: totalHeight, width: DIAGRAM_WIDTH }}
     >
-      {/* Vertical track line */}
-      <div
-        className="absolute"
-        style={{
-          backgroundColor: color,
-          borderRadius: 2,
-          height: lastDotTop - firstDotTop,
-          left: '50%',
-          opacity: 0.75,
-          top: firstDotTop,
-          transform: 'translateX(-50%)',
-          width: 3,
-        }}
-      />
+      {/* Vertical track line — split into 3 segments when journey context is active */}
+      {journeySegment && segmentFromTop !== null && segmentToTop !== null ? (
+        <>
+          {/* Before segment: dimmed */}
+          {segmentFromTop > firstDotTop && (
+            <div
+              className="absolute"
+              style={{
+                backgroundColor: color,
+                borderRadius: 2,
+                height: segmentFromTop - firstDotTop,
+                left: '50%',
+                opacity: 0.2,
+                top: firstDotTop,
+                transform: 'translateX(-50%)',
+                width: 3,
+              }}
+            />
+          )}
+          {/* Active segment: full opacity, slightly wider */}
+          <div
+            className="absolute"
+            style={{
+              backgroundColor: color,
+              borderRadius: 2,
+              height: segmentToTop - segmentFromTop,
+              left: '50%',
+              opacity: 1,
+              top: segmentFromTop,
+              transform: 'translateX(-50%)',
+              width: 4,
+            }}
+          />
+          {/* After segment: dimmed */}
+          {segmentToTop < lastDotTop && (
+            <div
+              className="absolute"
+              style={{
+                backgroundColor: color,
+                borderRadius: 2,
+                height: lastDotTop - segmentToTop,
+                left: '50%',
+                opacity: 0.2,
+                top: segmentToTop,
+                transform: 'translateX(-50%)',
+                width: 3,
+              }}
+            />
+          )}
+        </>
+      ) : (
+        /* Single full-height track line */
+        <div
+          className="absolute"
+          style={{
+            backgroundColor: color,
+            borderRadius: 2,
+            height: lastDotTop - firstDotTop,
+            left: '50%',
+            opacity: 0.75,
+            top: firstDotTop,
+            transform: 'translateX(-50%)',
+            width: 3,
+          }}
+        />
+      )}
 
       {/* Stop dots */}
       {orderedStopIds.map((_, idx) => {
         const isEndpoint = idx === 0 || idx === stopCount - 1;
+        const isOutsideSegment =
+          journeySegment && (idx < journeySegment.fromIdx || idx > journeySegment.toIdx);
         const dotSize = isEndpoint ? 12 : 7;
         const top = STOP_LIST_PADDING_TOP + idx * STOP_ROW_HEIGHT + STOP_ROW_HEIGHT / 2;
 
@@ -124,6 +189,7 @@ export function RouteLineDiagram({
               boxShadow: isEndpoint ? `0 0 0 2px ${color}33` : undefined,
               height: dotSize,
               left: '50%',
+              opacity: isOutsideSegment ? 0.2 : 1,
               top,
               transform: 'translate(-50%, -50%)',
               width: dotSize,
@@ -157,27 +223,47 @@ export function RouteLineDiagram({
 
         return (
           <div
-            className="absolute flex items-center justify-center"
+            className="absolute"
             key={`v-${idx}`}
             style={{
-              backgroundColor: color,
-              border: '2.5px solid white',
-              borderRadius: '50%',
-              boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
-              cursor: 'default',
-              height: 20,
               left: '50%',
               top,
               transform: 'translate(-50%, -50%)',
-              width: 20,
               zIndex: 2,
             }}
-            title={tooltip}
           >
-            {/* Small direction triangle — pointing down (direction of travel) */}
-            <svg fill="none" height="8" viewBox="0 0 8 8" width="8">
-              <polygon fill="white" points="4,7 7,1 1,1" />
-            </svg>
+            {/* Pulsing halo ring — offset by -2px each side so it stays centred without
+                relying on transform (animate-ping's keyframe overwrites transform) */}
+            <div
+              className="absolute rounded-full animate-ping"
+              style={{
+                backgroundColor: color,
+                height: 28,
+                left: -2,
+                opacity: 0.35,
+                top: -2,
+                width: 28,
+              }}
+            />
+            {/* Vehicle circle */}
+            <div
+              className="relative flex items-center justify-center"
+              style={{
+                backgroundColor: color,
+                border: '2.5px solid white',
+                borderRadius: '50%',
+                boxShadow: '0 1px 5px rgba(0,0,0,0.45)',
+                cursor: 'default',
+                height: 24,
+                width: 24,
+              }}
+              title={tooltip}
+            >
+              {/* Small direction triangle — pointing down (direction of travel) */}
+              <svg fill="none" height="10" viewBox="0 0 8 8" width="10">
+                <polygon fill="white" points="4,7 7,1 1,1" />
+              </svg>
+            </div>
           </div>
         );
       })}

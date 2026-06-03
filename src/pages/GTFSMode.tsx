@@ -61,6 +61,10 @@ export function GTFSMode({ config }: GTFSModeProps) {
   const [stopModalOpen, setStopModalOpen] = useState(false);
   const [nearbyOpen, setNearbyOpen] = useState(false);
   const [nearbyStopsListExpanded, setNearbyStopsListExpanded] = useState(false);
+  const [journeyContext, setJourneyContext] = useState<null | {
+    fromParentId: string;
+    toParentId: string;
+  }>(null);
 
   const transitBottomToolsOpen = useSettingsStore((s) => s.transitBottomToolsOpen);
   const setTransitBottomToolsOpen = useSettingsStore((s) => s.setTransitBottomToolsOpen);
@@ -258,7 +262,9 @@ export function GTFSMode({ config }: GTFSModeProps) {
     routeId: string,
     _routeType: number,
     df?: 'all' | DirectionFilter,
-    tripId?: string
+    tripId?: null | string,
+    fromParentId?: null | string,
+    toParentId?: null | string
   ) => {
     const dir: DirectionFilter = df === 'A' || df === 'B' ? df : 'A';
     if (tripId) {
@@ -271,6 +277,11 @@ export function GTFSMode({ config }: GTFSModeProps) {
     if (tripId) setLastClickedVehicle({ routeId, tripId });
     setRouteModalOpen(false);
     setStopModalOpen(false);
+    if (fromParentId && toParentId) {
+      setJourneyContext({ fromParentId, toParentId });
+    } else {
+      setJourneyContext(null);
+    }
   };
 
   const handleExpandStop = (stopId: string) => {
@@ -520,6 +531,11 @@ export function GTFSMode({ config }: GTFSModeProps) {
               : clickedTripId
                 ? (tripUpdates.get(clickedTripId) ?? null)
                 : null;
+            const journeyDirectionKey = journeyContext
+              ? directionFilter === 'B'
+                ? '1'
+                : '0'
+              : null;
             return (
               <RouteInfoBar
                 clickedTripUpdate={activeTripUpdate}
@@ -528,6 +544,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
                 followCandidateTripId={isFollowing ? null : clickedTripId}
                 followedVehiclePos={followedVehicleParsedPos}
                 isFollowing={isFollowing}
+                journeyDirectionKey={journeyDirectionKey}
                 onBackToRouteOverview={handleBackToRouteOverview}
                 onClose={handleClearRoute}
                 onExpand={handleExpandRoute}
@@ -669,6 +686,8 @@ export function GTFSMode({ config }: GTFSModeProps) {
           <RouteModal
             initialDirectionFilter={directionFilter}
             isOpen={routeModalOpen}
+            journeyFromParentId={journeyContext?.fromParentId ?? null}
+            journeyToParentId={journeyContext?.toParentId ?? null}
             onClose={handleCloseRoute}
             onStopClick={handleStopClickFromRoute}
             orderedStops={orderedStops}

@@ -434,6 +434,7 @@ const en = {
       waitingGpsSignal: 'Waiting for GPS…',
     },
     routeModal: {
+      journeyDirection: 'Direction',
       noStops: 'No stops available',
     },
     search: {

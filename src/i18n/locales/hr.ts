@@ -444,6 +444,7 @@ const hr = {
       waitingGpsSignal: 'Čeka se GPS signal…',
     },
     routeModal: {
+      journeyDirection: 'Smjer',
       noStops: 'Nema dostupnih stajališta',
     },
     search: {

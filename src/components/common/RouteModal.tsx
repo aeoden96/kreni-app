@@ -10,7 +10,7 @@
  */
 
 import { ArrowLeft, Bus, Train, X } from 'lucide-react';
-import { memo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { Route, Stop } from '../../utils/gtfs';
@@ -25,6 +25,10 @@ interface RouteModalProps {
   /** Default direction — 'A' or 'B'. */
   initialDirectionFilter?: DirectionFilter;
   isOpen: boolean;
+  /** Parent station ID of the journey destination stop (from Plan Journey). */
+  journeyFromParentId?: null | string;
+  /** Parent station ID of the journey origin stop (from Plan Journey). */
+  journeyToParentId?: null | string;
   onClose: () => void;
   onStopClick: (stopId: string) => void;
   orderedStops?: Record<string, string[]>;
@@ -38,8 +42,10 @@ const TRAM_COLOR = '#2563eb'; // blue-600
 const BUS_COLOR = '#d97706'; // amber-600
 
 export const RouteModal = memo(function RouteModal({
+  initialDirectionFilter = 'A',
   isOpen,
-  // initialDirectionFilter = 'A', // unused
+  journeyFromParentId,
+  journeyToParentId,
   onClose,
   onStopClick,
   orderedStops,
@@ -67,8 +73,12 @@ export const RouteModal = memo(function RouteModal({
     };
   });
 
-  // Track selected direction by key (default to first key)
-  const [directionKey, setDirectionKey] = useState<string>(directionLabels[0]?.key || '0');
+  // Map 'A'→directionKeys[0], 'B'→directionKeys[1]
+  const initialKey =
+    initialDirectionFilter === 'B' ? (directionKeys[1] ?? '1') : (directionKeys[0] ?? '0');
+
+  // Track selected direction by key (default based on initialDirectionFilter)
+  const [directionKey, setDirectionKey] = useState<string>(initialKey);
 
   // Ordered stop IDs for the active direction
   const orderedStopIds: string[] = orderedStops?.[directionKey]?.length
@@ -82,6 +92,24 @@ export const RouteModal = memo(function RouteModal({
 
   const color =
     directionLabels[directionIndex]?.color || (route.type === 0 ? TRAM_COLOR : BUS_COLOR);
+
+  // Compute journey segment indices from parent station IDs
+  const journeySegment = useMemo(() => {
+    if (!journeyFromParentId || !journeyToParentId) return null;
+    const fromIdx = orderedStopIds.findIndex(
+      (id) => stopsById.get(id)?.parentStation === journeyFromParentId
+    );
+    // Find last occurrence of the toParentId (in case there are multiple platforms)
+    let toIdx = -1;
+    for (let i = orderedStopIds.length - 1; i >= 0; i--) {
+      if (stopsById.get(orderedStopIds[i])?.parentStation === journeyToParentId) {
+        toIdx = i;
+        break;
+      }
+    }
+    if (fromIdx === -1 || toIdx === -1 || toIdx <= fromIdx) return null;
+    return { fromIdx, toIdx };
+  }, [journeyFromParentId, journeyToParentId, orderedStopIds, stopsById]);
 
   if (!isOpen) return null;
 
@@ -143,44 +171,57 @@ export const RouteModal = memo(function RouteModal({
             </button>
           </div>
 
-          {/* Row 2: full-width direction toggle with live vehicle counts */}
-          <div className="flex rounded-lg overflow-hidden border border-base-300 w-full">
-            {directionLabels.map((dir, idx) => {
-              const dirCount = vehicles.filter((v) => v.direction === idx).length;
-              const isActive = directionKey === dir.key;
-              const VehicleIcon = route.type === 0 ? Train : Bus;
-              return (
-                <button
-                  className={[
-                    'flex-1 flex items-center justify-between gap-2 px-3 py-1.5 text-sm font-semibold transition-colors min-w-0',
-                    isActive ? 'text-white' : 'bg-base-100 text-base-content/60 hover:bg-base-200',
-                  ].join(' ')}
-                  key={dir.key}
-                  onClick={() => setDirectionKey(dir.key)}
-                  style={isActive ? { backgroundColor: dir.color } : undefined}
-                >
-                  <span className="truncate">{dir.label}</span>
-                  <span
+          {/* Row 2: direction toggle OR static journey direction label */}
+          {journeySegment ? (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-base-200 border border-base-300">
+              <span className="text-xs text-base-content/50 shrink-0">
+                {t('routeModal.journeyDirection')}
+              </span>
+              <span className="font-semibold text-sm flex-1 truncate">
+                {directionLabels[directionIndex]?.label}
+              </span>
+            </div>
+          ) : (
+            <div className="flex rounded-lg overflow-hidden border border-base-300 w-full">
+              {directionLabels.map((dir, idx) => {
+                const dirCount = vehicles.filter((v) => v.direction === idx).length;
+                const isActive = directionKey === dir.key;
+                const VehicleIcon = route.type === 0 ? Train : Bus;
+                return (
+                  <button
                     className={[
-                      'flex items-center gap-1 shrink-0 text-xs font-bold tabular-nums',
-                      isActive ? 'text-white/90' : dirCount > 0 ? 'text-success' : 'opacity-30',
+                      'flex-1 flex items-center justify-between gap-2 px-3 py-1.5 text-sm font-semibold transition-colors min-w-0',
+                      isActive
+                        ? 'text-white'
+                        : 'bg-base-100 text-base-content/60 hover:bg-base-200',
                     ].join(' ')}
+                    key={dir.key}
+                    onClick={() => setDirectionKey(dir.key)}
+                    style={isActive ? { backgroundColor: dir.color } : undefined}
                   >
-                    {dirCount > 0 && (
-                      <span
-                        className={[
-                          'w-1.5 h-1.5 rounded-full animate-pulse',
-                          isActive ? 'bg-white/80' : 'bg-success',
-                        ].join(' ')}
-                      />
-                    )}
-                    <VehicleIcon className="w-3 h-3" />
-                    {dirCount}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                    <span className="truncate">{dir.label}</span>
+                    <span
+                      className={[
+                        'flex items-center gap-1 shrink-0 text-xs font-bold tabular-nums',
+                        isActive ? 'text-white/90' : dirCount > 0 ? 'text-success' : 'opacity-30',
+                      ].join(' ')}
+                    >
+                      {dirCount > 0 && (
+                        <span
+                          className={[
+                            'w-1.5 h-1.5 rounded-full animate-pulse',
+                            isActive ? 'bg-white/80' : 'bg-success',
+                          ].join(' ')}
+                        />
+                      )}
+                      <VehicleIcon className="w-3 h-3" />
+                      {dirCount}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Scrollable body: metro diagram + stop list side-by-side */}
@@ -188,6 +229,7 @@ export const RouteModal = memo(function RouteModal({
           <div className="flex" style={{ paddingTop: STOP_LIST_PADDING_TOP }}>
             {/* Metro line diagram column */}
             <RouteLineDiagram
+              journeySegment={journeySegment}
               orderedStopIds={orderedStopIds}
               routeType={route.type}
               stopsById={stopsById}
@@ -196,22 +238,35 @@ export const RouteModal = memo(function RouteModal({
 
             {/* Stop name list */}
             <div className="flex-1 min-w-0">
-              {stopRows.map(({ stop, stopId }) => {
+              {stopRows.map(({ idx, stop, stopId }) => {
                 const isEndpoint =
                   stopRows[0]?.stopId === stopId ||
                   stopRows[stopRows.length - 1]?.stopId === stopId;
+                const isInSegment = journeySegment
+                  ? idx >= journeySegment.fromIdx && idx <= journeySegment.toIdx
+                  : true;
+                const isJourneyEndpoint = journeySegment
+                  ? idx === journeySegment.fromIdx || idx === journeySegment.toIdx
+                  : false;
                 const name = stop?.name ?? stopId;
                 return (
                   <button
                     className={[
-                      'w-full text-left px-3 flex items-center',
+                      'w-full text-left px-3 flex items-center gap-2',
                       'transition-colors hover:bg-base-200 active:bg-base-300',
                       isEndpoint ? 'font-semibold' : '',
+                      !isInSegment ? 'opacity-25' : '',
                     ].join(' ')}
                     key={stopId}
                     onClick={() => onStopClick(stopId)}
                     style={{ height: STOP_ROW_HEIGHT }}
                   >
+                    {isJourneyEndpoint && (
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: color }}
+                      />
+                    )}
                     <span className="text-sm leading-tight line-clamp-1">{name}</span>
                   </button>
                 );

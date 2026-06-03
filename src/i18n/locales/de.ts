@@ -434,6 +434,7 @@ const de = {
       waitingGpsSignal: 'Warte auf GPS…',
     },
     routeModal: {
+      journeyDirection: 'Richtung',
       noStops: 'Keine Haltestellen verfügbar',
     },
     search: {

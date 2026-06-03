@@ -12,7 +12,14 @@ import { useDirections } from './useDirections';
 interface DirectionsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectRoute: (routeId: string, routeType: number, directionFilter?: 'A' | 'B') => void;
+  onSelectRoute: (
+    routeId: string,
+    routeType: number,
+    directionFilter?: 'A' | 'B',
+    tripId?: null | string,
+    fromParentId?: null | string,
+    toParentId?: null | string
+  ) => void;
   routes: Route[];
   stops: Stop[];
   stopsById: Map<string, Stop>;
@@ -122,7 +129,14 @@ export function useDirectionsModal({
     direction: 'A' | 'B'
   ) => {
     trackEvent('directions_route_selected', { direction, route_id: routeId });
-    onSelectRoute(routeId, routeType, direction);
+    onSelectRoute(
+      routeId,
+      routeType,
+      direction,
+      null,
+      dirFromStop?.id ?? null,
+      dirToStop?.id ?? null
+    );
     onClose();
   };
 

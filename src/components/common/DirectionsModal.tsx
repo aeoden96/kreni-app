@@ -11,7 +11,14 @@ import { StopDropdown } from './search/StopDropdown';
 interface DirectionsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectRoute: (routeId: string, routeType: number, directionFilter?: 'A' | 'B') => void;
+  onSelectRoute: (
+    routeId: string,
+    routeType: number,
+    directionFilter?: 'A' | 'B',
+    tripId?: null | string,
+    fromParentId?: null | string,
+    toParentId?: null | string
+  ) => void;
   routes: Route[];
   stops: Stop[];
   stopsById: Map<string, Stop>;

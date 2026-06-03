@@ -37,6 +37,8 @@ interface RouteInfoBarProps {
   followedVehiclePos?: null | ParsedVehiclePosition;
   /** When true the user is actively following — shows border + distance + pulse icon */
   isFollowing?: boolean;
+  /** Direction key ('0' or '1') to pre-select and lock when coming from Plan Journey. */
+  journeyDirectionKey?: null | string;
   onBackToRouteOverview?: () => void;
   onClose: () => void;
   onExpand: () => void;
@@ -66,6 +68,7 @@ export function RouteInfoBar({
   followCandidateTripId,
   followedVehiclePos,
   isFollowing = false,
+  journeyDirectionKey,
   onBackToRouteOverview,
   onClose,
   onExpand,
@@ -117,10 +120,13 @@ export function RouteInfoBar({
 
   useEffect(() => {
     if (directionKeysSorted.length === 0) return;
-    setCompactListDirectionKey((prev) =>
-      prev && directionKeysSorted.includes(prev) ? prev : directionKeysSorted[0]
-    );
-  }, [directionKeysSorted, route.id]);
+    setCompactListDirectionKey(() => {
+      if (journeyDirectionKey && directionKeysSorted.includes(journeyDirectionKey)) {
+        return journeyDirectionKey;
+      }
+      return directionKeysSorted[0];
+    });
+  }, [directionKeysSorted, journeyDirectionKey, route.id]);
 
   /** Same rule as RouteModal: filter by direction index; if none match, show all. */
   const vehiclesForCompactList = useMemo(() => {
@@ -461,7 +467,7 @@ export function RouteInfoBar({
             <h4 className="text-xs font-semibold text-base-content/70 tracking-wide">
               {t('routeBar.liveVehiclesOnRoute')}
             </h4>
-            {directionLabels.length > 0 ? (
+            {directionLabels.length > 0 && !journeyDirectionKey ? (
               <div className="flex rounded-lg overflow-hidden border border-base-300 w-full">
                 {directionLabels.map((dir, idx) => {
                   const dirCount = vehicles.filter((v) => v.direction === idx).length;
