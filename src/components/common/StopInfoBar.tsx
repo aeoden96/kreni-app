@@ -39,7 +39,7 @@ interface StopInfoBarProps {
   onRouteClick?: (routeId: string, routeType: number) => void;
   onStopSelect?: (stopId: string) => void;
   routesById: Map<string, Route>;
-  /** When true, shifts the bar down so it sits below the RouteInfoBar */
+  /** When true, shifts the bar down so it sits below the RouteViewSmall */
   stackBelow?: boolean;
   stop: Stop;
   stopsById: Map<string, Stop>;

@@ -19,8 +19,8 @@ import { DirectionsModal } from '../components/common/DirectionsModal';
 import { NearbyStopsModal } from '../components/common/NearbyStopsModal';
 import { OnboardingWizard } from '../components/common/OnboardingWizard';
 import { RealtimeStatusPanel } from '../components/common/RealtimeStatusPanel';
-import { RouteInfoBar } from '../components/common/RouteInfoBar';
-import { RouteModal } from '../components/common/RouteModal';
+import { RouteViewLarge } from '../components/common/RouteViewLarge';
+import { RouteViewSmall } from '../components/common/RouteViewSmall';
 import { SearchModal } from '../components/common/SearchModal';
 import { StopInfoBar } from '../components/common/StopInfoBar';
 import { StopModal } from '../components/common/StopModal';
@@ -57,7 +57,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
   // Modal states
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [directionsModalOpen, setDirectionsModalOpen] = useState(false);
-  const [routeModalOpen, setRouteModalOpen] = useState(false);
+  const [routeViewLargeOpen, setRouteViewLargeOpen] = useState(false);
   const [stopModalOpen, setStopModalOpen] = useState(false);
   const [nearbyOpen, setNearbyOpen] = useState(false);
   const [nearbyStopsListExpanded, setNearbyStopsListExpanded] = useState(false);
@@ -275,7 +275,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
     closeLegendAndDetails();
     addRecentRoute(routeId);
     if (tripId) setLastClickedVehicle({ routeId, tripId });
-    setRouteModalOpen(false);
+    setRouteViewLargeOpen(false);
     setStopModalOpen(false);
     if (fromParentId && toParentId) {
       setJourneyContext({ fromParentId, toParentId });
@@ -300,17 +300,17 @@ export function GTFSMode({ config }: GTFSModeProps) {
   const handleStopClickFromRoute = (stopId: string) => {
     closeLegendAndDetails();
     selectStop(stopId);
-    setRouteModalOpen(false);
+    setRouteViewLargeOpen(false);
   };
 
   const handleRouteClickFromStop = (routeId: string, _routeType: number) => {
     selectRoute(routeId);
     setStopModalOpen(false);
-    setRouteModalOpen(false);
+    setRouteViewLargeOpen(false);
   };
 
-  const handleExpandRoute = () => setRouteModalOpen(true);
-  const handleCloseRoute = () => setRouteModalOpen(false);
+  const handleExpandRoute = () => setRouteViewLargeOpen(true);
+  const handleCloseRoute = () => setRouteViewLargeOpen(false);
   const handleClearRoute = () => clearRoute();
 
   const handleCloseStop = () => {
@@ -413,15 +413,16 @@ export function GTFSMode({ config }: GTFSModeProps) {
           vehicles={vehicles}
         />
 
-        {/* Route loading indicator */}
-        {routeLoading && (
-          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[1000]">
-            <div className="alert alert-info py-2 px-4 shadow-lg">
-              <span className="loading loading-spinner loading-sm" />
-              <span>{t('gtfs.loadingRoute')}</span>
+        {/* Route loading indicator — only when the small route bar isn't already visible */}
+        {routeLoading &&
+          (!selectedRoute || routeViewLargeOpen || stopModalOpen || !!selectedStopId) && (
+            <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[1000]">
+              <div className="alert alert-info py-2 px-4 shadow-lg">
+                <span className="loading loading-spinner loading-sm" />
+                <span>{t('gtfs.loadingRoute')}</span>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Realtime status badges + ZET app link (transit only); z above Leaflet bottom chrome */}
         {config.id === 'transit' && (
@@ -509,7 +510,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
 
         {/* Route Info Bar */}
         {selectedRoute &&
-          !routeModalOpen &&
+          !routeViewLargeOpen &&
           !stopModalOpen &&
           !selectedStopId &&
           (() => {
@@ -537,7 +538,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
                 : '0'
               : null;
             return (
-              <RouteInfoBar
+              <RouteViewSmall
                 clickedTripUpdate={activeTripUpdate}
                 clickedVehicle={activeVehicle}
                 clickedVehiclePos={activeVehiclePos}
@@ -545,6 +546,9 @@ export function GTFSMode({ config }: GTFSModeProps) {
                 followedVehiclePos={followedVehicleParsedPos}
                 isFollowing={isFollowing}
                 journeyDirectionKey={journeyDirectionKey}
+                journeyFromParentId={journeyContext?.fromParentId ?? null}
+                journeyToParentId={journeyContext?.toParentId ?? null}
+                loading={routeLoading}
                 onBackToRouteOverview={handleBackToRouteOverview}
                 onClose={handleClearRoute}
                 onExpand={handleExpandRoute}
@@ -578,7 +582,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
 
         {/* Floating search: circular icon (same footprint as locate) until route is shown in-bar */}
         <div className="absolute top-2 left-2 right-32 sm:left-4 sm:right-auto sm:top-4 z-[1000]">
-          {selectedRoute && routeModalOpen ? (
+          {selectedRoute && routeViewLargeOpen ? (
             <div className="w-full sm:w-80 flex items-center gap-2 bg-base-100 rounded-xl px-4 py-3 shadow-lg">
               <button
                 className="flex-1 flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
@@ -683,9 +687,9 @@ export function GTFSMode({ config }: GTFSModeProps) {
 
         {/* Route Modal */}
         {selectedRoute && (
-          <RouteModal
+          <RouteViewLarge
             initialDirectionFilter={directionFilter}
-            isOpen={routeModalOpen}
+            isOpen={routeViewLargeOpen}
             journeyFromParentId={journeyContext?.fromParentId ?? null}
             journeyToParentId={journeyContext?.toParentId ?? null}
             onClose={handleCloseRoute}

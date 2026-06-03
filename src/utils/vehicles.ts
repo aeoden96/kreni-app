@@ -101,7 +101,7 @@ export function computeVehicleStopProgress(
 }
 
 /**
- * GPS-first next-stop resolution for a single trip (same rules as RouteInfoBar).
+ * GPS-first next-stop resolution for a single trip (same rules as RouteViewSmall).
  * Optionally computes `directionSortProgress` when `orderedStopIdsForSort` is provided.
  */
 export function getRouteVehicleStopPreview(args: {
@@ -157,6 +157,22 @@ export function getRouteVehicleStopPreview(args: {
         coords
       );
       gpsPrimaryIdx = Math.min(Math.ceil(progress), tripStops.length - 1);
+    }
+  }
+
+  // GPS projection can misidentify the vehicle's position on looping routes where the
+  // same geographic location appears at multiple points in the trip (e.g. routes that
+  // start and end at the same terminal). The nearest-segment algorithm picks the wrong
+  // segment when an early stop is geometrically closer to a late segment than to its own.
+  // When GPS and the GTFS-RT currentStopId disagree by more than 3 stops, trust the
+  // GTFS-RT value — it is the authoritative ground truth from the vehicle's transponder.
+  if (gpsPrimaryIdx !== -1 && currentStopId && tripStops) {
+    const currentIdx = tripStops.findIndex(([id]) => id === currentStopId);
+    if (currentIdx !== -1 && Math.abs(gpsPrimaryIdx - currentIdx) > 3) {
+      gpsPrimaryIdx =
+        stopStatus === VehicleStopStatus.STOPPED_AT
+          ? Math.min(currentIdx + 1, tripStops.length - 1)
+          : currentIdx;
     }
   }
 

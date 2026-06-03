@@ -21,7 +21,7 @@ import { RouteLineDiagram, STOP_LIST_PADDING_TOP, STOP_ROW_HEIGHT } from './Rout
 
 type DirectionFilter = 'A' | 'B';
 
-interface RouteModalProps {
+interface RouteViewLargeProps {
   /** Default direction — 'A' or 'B'. */
   initialDirectionFilter?: DirectionFilter;
   isOpen: boolean;
@@ -41,7 +41,7 @@ interface RouteModalProps {
 const TRAM_COLOR = '#2563eb'; // blue-600
 const BUS_COLOR = '#d97706'; // amber-600
 
-export const RouteModal = memo(function RouteModal({
+export const RouteViewLarge = memo(function RouteViewLarge({
   initialDirectionFilter = 'A',
   isOpen,
   journeyFromParentId,
@@ -53,7 +53,7 @@ export const RouteModal = memo(function RouteModal({
   routeStops,
   stopsById,
   vehicles,
-}: RouteModalProps) {
+}: RouteViewLargeProps) {
   const { t } = useTranslation();
 
   // Compute direction keys and labels from orderedStops
