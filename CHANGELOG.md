@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.3.0](https://github.com/aeoden96/kreni-app/compare/v3.2.0...v3.3.0) (2026-06-04)
+
+
+### Features
+
+* enhance route click handling with additional latitude and longitude parameters ([77c7d18](https://github.com/aeoden96/kreni-app/commit/77c7d186584a58c14e3208f048342aa707f9e08e))
+
 ## [3.2.0](https://github.com/aeoden96/kreni-app/compare/v3.1.0...v3.2.0) (2026-06-04)
 
 
