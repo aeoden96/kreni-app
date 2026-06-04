@@ -3,6 +3,7 @@ import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { Route, Stop } from '../../utils/gtfs';
+import type { AllVehiclePosition } from '../../utils/vehicles';
 
 import { useDirectionsModal } from '../../hooks/useDirectionsModal';
 import { DirectionsContent } from './search/DirectionsContent';
@@ -22,6 +23,7 @@ interface DirectionsModalProps {
   routes: Route[];
   stops: Stop[];
   stopsById: Map<string, Stop>;
+  vehicles: AllVehiclePosition[];
 }
 
 export const DirectionsModal = memo(function DirectionsModal(props: DirectionsModalProps) {
@@ -47,6 +49,7 @@ export const DirectionsModal = memo(function DirectionsModal(props: DirectionsMo
     setDirToStop,
     setFromQuery,
     toInputRef,
+    vehicles,
   } = useDirectionsModal(props);
 
   const [fromFocused, setFromFocused] = useState(false);
@@ -246,6 +249,8 @@ export const DirectionsModal = memo(function DirectionsModal(props: DirectionsMo
               dirResults={dirResults}
               dirToStop={dirToStop}
               onSelectDirectionsRoute={handleSelectDirectionsRoute}
+              stopsById={props.stopsById}
+              vehicles={vehicles}
             />
           </div>
         )}

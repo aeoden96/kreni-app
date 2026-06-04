@@ -1,13 +1,19 @@
-import { Bus, Loader2, TrainFront } from 'lucide-react';
+import { ChevronRight, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import type { Route, Stop } from '../../../utils/gtfs';
+import type { AllVehiclePosition } from '../../../utils/vehicles';
+
+import { RouteMiniTrack } from '../RouteMiniTrack';
 
 interface DirectionResult {
   directionFilter: 'A' | 'B';
   directionKey: string;
+  fromIndex: number;
+  parentStopIds: string[];
   route: Route;
   stopsBetween: number;
+  toIndex: number;
 }
 
 interface DirectionsContentProps {
@@ -16,7 +22,14 @@ interface DirectionsContentProps {
   dirResultLabel: string;
   dirResults: DirectionResult[];
   dirToStop: null | Stop;
-  onSelectDirectionsRoute: (routeId: string, routeType: number, direction: 'A' | 'B') => void;
+  onSelectDirectionsRoute: (
+    routeId: string,
+    routeType: number,
+    direction: 'A' | 'B',
+    tripId?: null | string
+  ) => void;
+  stopsById: Map<string, Stop>;
+  vehicles: AllVehiclePosition[];
 }
 
 export function DirectionsContent({
@@ -26,6 +39,8 @@ export function DirectionsContent({
   dirResults,
   dirToStop,
   onSelectDirectionsRoute,
+  stopsById,
+  vehicles,
 }: DirectionsContentProps) {
   const { t } = useTranslation();
 
@@ -51,35 +66,64 @@ export function DirectionsContent({
             {dirResults.map((item) => {
               const color =
                 item.route.type === 0 ? '#2563eb' : item.route.type === 3 ? '#d97706' : '#64748b';
-              const VehicleIcon = item.route.type === 0 ? TrainFront : Bus;
+              const directionIndex = item.directionFilter === 'A' ? 0 : 1;
+              const routeVehicles = vehicles.filter(
+                (v) => v.routeId === item.route.id && v.direction === directionIndex
+              );
+              const journeySegment = { fromIdx: item.fromIndex, toIdx: item.toIndex };
+
               return (
-                <button
-                  className="w-full px-3 py-3 text-left hover:bg-base-200 transition-colors"
-                  key={`${item.route.id}-${item.directionKey}`}
-                  onClick={() =>
-                    onSelectDirectionsRoute(item.route.id, item.route.type, item.directionFilter)
-                  }
-                  type="button"
-                >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="badge font-bold text-white min-w-[3rem] justify-center"
-                      style={{ backgroundColor: color }}
-                    >
-                      {item.route.shortName}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm line-clamp-1">{item.route.longName}</div>
-                      <div className="text-xs text-base-content/60">
-                        {t('search.routeDirectionMeta', {
-                          count: item.stopsBetween + 1,
-                          direction: item.directionFilter,
-                        })}
+                <div key={`${item.route.id}-${item.directionKey}`}>
+                  {/* Route info row — clickable header */}
+                  <button
+                    className="w-full px-3 pt-3 pb-2 text-left hover:bg-base-200 transition-colors"
+                    onClick={() =>
+                      onSelectDirectionsRoute(item.route.id, item.route.type, item.directionFilter)
+                    }
+                    type="button"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="badge font-bold text-white min-w-[3rem] justify-center"
+                        style={{ backgroundColor: color }}
+                      >
+                        {item.route.shortName}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm line-clamp-1">{item.route.longName}</div>
+                        <div className="text-xs text-base-content/60">
+                          {t('search.routeDirectionMeta', {
+                            count: item.stopsBetween + 1,
+                            direction: item.directionFilter,
+                          })}
+                        </div>
                       </div>
+                      <ChevronRight className="w-4 h-4 text-base-content/30 shrink-0" />
                     </div>
-                    <VehicleIcon className="w-4 h-4 text-base-content/50 shrink-0" />
-                  </div>
-                </button>
+                  </button>
+
+                  {/* Mini track — vehicles are separately clickable */}
+                  {item.parentStopIds.length >= 2 && (
+                    <div className="px-3 pb-3">
+                      <RouteMiniTrack
+                        expanded={false}
+                        journeySegment={journeySegment}
+                        onVehicleClick={(tripId) =>
+                          onSelectDirectionsRoute(
+                            item.route.id,
+                            item.route.type,
+                            item.directionFilter,
+                            tripId
+                          )
+                        }
+                        orderedStopIds={item.parentStopIds}
+                        routeType={item.route.type}
+                        stopsById={stopsById}
+                        vehicles={routeVehicles}
+                      />
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>

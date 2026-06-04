@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { Route, Stop } from '../utils/gtfs';
+import type { AllVehiclePosition } from '../utils/vehicles';
 
 import { useGTFSMode } from '../contexts/GTFSModeContext';
 import { useSettingsStore } from '../stores/settingsStore';
@@ -23,6 +24,7 @@ interface DirectionsModalProps {
   routes: Route[];
   stops: Stop[];
   stopsById: Map<string, Stop>;
+  vehicles: AllVehiclePosition[];
 }
 
 export function useDirectionsModal({
@@ -32,6 +34,7 @@ export function useDirectionsModal({
   routes,
   stops,
   stopsById,
+  vehicles,
 }: DirectionsModalProps) {
   const { t } = useTranslation();
   const config = useGTFSMode();
@@ -126,14 +129,15 @@ export function useDirectionsModal({
   const handleSelectDirectionsRoute = (
     routeId: string,
     routeType: number,
-    direction: 'A' | 'B'
+    direction: 'A' | 'B',
+    tripId?: null | string
   ) => {
     trackEvent('directions_route_selected', { direction, route_id: routeId });
     onSelectRoute(
       routeId,
       routeType,
       direction,
-      null,
+      tripId ?? null,
       dirFromStop?.id ?? null,
       dirToStop?.id ?? null
     );
@@ -161,5 +165,6 @@ export function useDirectionsModal({
     setDirToStop,
     setFromQuery,
     toInputRef,
+    vehicles,
   };
 }

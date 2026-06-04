@@ -64,9 +64,12 @@ export function RouteMiniTrack({
     (Math.max(0, Math.min(stopCount - 1, p)) / (stopCount - 1)) * 100;
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const prevExpandedRef = useRef(false);
 
   useEffect(() => {
-    if (!expanded) return;
+    const justExpanded = expanded && !prevExpandedRef.current;
+    prevExpandedRef.current = expanded;
+    if (!justExpanded) return;
     const el = scrollRef.current;
     if (!el) return;
     let targetPx: number | undefined;

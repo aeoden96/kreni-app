@@ -303,13 +303,28 @@ export function GTFSMode({ config }: GTFSModeProps) {
     setRouteViewLargeOpen(false);
   };
 
-  const handleRouteClickFromStop = (routeId: string, routeType: number, tripId?: string) => {
+  const handleRouteClickFromStop = (
+    routeId: string,
+    routeType: number,
+    tripId?: string,
+    lat?: null | number,
+    lon?: null | number
+  ) => {
     if (tripId) {
       handleSelectRoute(routeId, routeType, undefined, tripId);
     } else {
       selectRoute(routeId);
       setStopModalOpen(false);
       setRouteViewLargeOpen(false);
+    }
+    if (lat != null && lon != null) {
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+      setParentStationZoomTarget({
+        lat,
+        lon,
+        panOffsetY: isMobile ? -Math.round(window.innerHeight / 4) : 0,
+        zoom: 16,
+      });
     }
   };
 
@@ -681,6 +696,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
           routes={routes}
           stops={stops}
           stopsById={stopsById}
+          vehicles={allVehicles}
         />
 
         {/* Search Modal */}

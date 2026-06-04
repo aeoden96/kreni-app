@@ -8,6 +8,7 @@ interface DirectionResult {
   directionFilter: 'A' | 'B';
   directionKey: string;
   fromIndex: number;
+  parentStopIds: string[];
   route: Route;
   stopsBetween: number;
   toIndex: number;
@@ -65,6 +66,7 @@ export function useDirections(
           directionFilter: directionIndex <= 0 ? 'A' : 'B',
           directionKey,
           fromIndex,
+          parentStopIds: parentStops,
           route,
           stopsBetween: toIndex - fromIndex - 1,
           toIndex,

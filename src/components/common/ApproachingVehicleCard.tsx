@@ -15,7 +15,13 @@ import type { ApproachingVehicle } from '../../hooks/useApproachingVehicles';
 import { minutesToTime } from '../../utils/gtfs';
 
 interface ApproachingVehicleCardProps {
-  onRouteClick?: (routeId: string, routeType: number, tripId: string) => void;
+  onRouteClick?: (
+    routeId: string,
+    routeType: number,
+    tripId: string,
+    lat: null | number,
+    lon: null | number
+  ) => void;
   vehicle: ApproachingVehicle;
 }
 
@@ -131,7 +137,15 @@ export function ApproachingVehicleCard({ onRouteClick, vehicle }: ApproachingVeh
             {onRouteClick ? (
               <button
                 className="text-sm font-medium truncate leading-tight text-left hover:opacity-70 transition-opacity w-full block"
-                onClick={() => onRouteClick(vehicle.routeId, vehicle.routeType, vehicle.tripId)}
+                onClick={() =>
+                  onRouteClick(
+                    vehicle.routeId,
+                    vehicle.routeType,
+                    vehicle.tripId,
+                    vehicle.lat,
+                    vehicle.lon
+                  )
+                }
               >
                 {vehicle.tripDestinationName}
               </button>
