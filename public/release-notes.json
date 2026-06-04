@@ -1,6 +1,37 @@
 [
   {
     "de": {
+      "title": "Zagreb Transit Updates",
+      "changes": [
+        "Kompakte Routeninformationen hinzugefügt",
+        "Verbesserte Routen- und Reiseverarbeitung",
+        "Verbesserte Routenverfolgung und Routeninteraktionen",
+        "Verbesserte Begrüßungsnachrichten",
+        "Verbesserungen bei der Reiseabspielung"
+      ]
+    },
+    "en": {
+      "title": "Zagreb Transit Updates",
+      "changes": [
+        "Route information is now more compact.",
+        "Improved route and journey functionality.",
+        "Vehicle tracking and route clicks now use trip IDs.",
+        "Welcome messages are better.",
+        "Journey playback has been improved."
+      ]
+    },
+    "force": false,
+    "hr": {
+      "title": "Ažuriranja aplikacije",
+      "changes": [
+        "Prikaz ruta sada je kompaktniji.",
+        "Dodana funkcionalnost planiranja puta."
+      ]
+    },
+    "version": "3.2.0"
+  },
+  {
+    "de": {
       "title": "Updates",
       "changes": [
         "Dialogfenster: Verbesserte Benutzeroberfläche und Funktionen",
@@ -28,8 +59,8 @@
     "de": {
       "title": "Updates",
       "changes": [
-        "Karten zeigen jetzt verschiedene Transportmittel.",
-        "Lokalisierte Versionshinweise verfügbar.",
+        "Karten zeigen jetzt verschiedene Verkehrsmittel.",
+        "Lokale Versionshinweise sind verfügbar.",
         "Debug-Modus ist jetzt eingeschränkt."
       ]
     },
@@ -46,7 +77,7 @@
     "hr": {
       "title": "Ažuriranja aplikacije",
       "changes": [
-        "Prikaz mapa po vrsti prijevoza i spremljenim mjestima.",
+        "Prikaz karata po vrsti prijevoza i spremljenim mjestima.",
         "Automatski prikaz lokaliziranih obavijesti.",
         "Debug panel vidljiv samo u testnom načinu."
       ]
@@ -57,7 +88,7 @@
     "de": {
       "title": "Aktualisierungen",
       "changes": [
-        "Debug-Anzeige funktioniert jetzt richtig!"
+        "Debug-Anzeige jetzt korrekt sichtbar!"
       ]
     },
     "en": {
@@ -80,7 +111,7 @@
       "title": "Updates",
       "changes": [
         "Fahrzeugpositionen werden jetzt genauer angezeigt.",
-        "Updates werden häufiger heruntergeladen."
+        "App-Updates werden häufiger durchgeführt."
       ]
     },
     "en": {
@@ -110,7 +141,7 @@
     "en": {
       "title": "App Updates",
       "changes": [
-        "Improved how the app appears in searches!"
+        "Improved how the app appears in search results."
       ]
     },
     "force": true,
@@ -126,7 +157,7 @@
     "de": {
       "title": "Updates",
       "changes": [
-        "Naheliegende Fahrzeuge werden jetzt korrekt angezeigt!"
+        "Nahe Fahrzeuge werden jetzt korrekt angezeigt!"
       ]
     },
     "en": {
@@ -172,7 +203,7 @@
       "title": "Ažuriranja aplikacije",
       "changes": [
         "Poboljšani prikaz biciklističkih ruta!",
-        "Poboljšano učitavanje podataka o prijevozu.",
+        "Poboljšano preuzimanje podataka o prijevozu.",
         "Novi uvodni zaslon.",
         "Redizajn izbornika.",
         "Poboljšano upravljanje podacima o bicikličkim stanicama.",
@@ -185,8 +216,8 @@
     "de": {
       "title": "Zagreb Transit Updates",
       "changes": [
-        "Echtzeit-Fahrzeuganzeige funktioniert wieder!",
-        "Fahrplan-Updates werden jetzt besser gesteuert."
+        "Echtzeitfahrpläne funktionieren jetzt zuverlässiger.",
+        "Fahrplan-Updates werden besser gesteuert!"
       ]
     },
     "en": {
@@ -201,7 +232,7 @@
       "title": "Ažuriranja aplikacije",
       "changes": [
         "Poboljšano prikazivanje vozila u stvarnom vremenu.",
-        "Ručno ažuriranje podataka o linijama je sada moguće."
+        "Omogućeno ručno ažuriranje podataka o linijama."
       ]
     },
     "version": "2.2.1"
@@ -211,7 +242,7 @@
       "title": "Updates",
       "changes": [
         "Routenansicht: Fahrzeuge und Haltestellen besser dargestellt.",
-        "Karteninteraktion und Haltestellen sind jetzt klarer."
+        "Kartenbedienung und Haltestellen sind jetzt klarer."
       ]
     },
     "en": {
@@ -225,8 +256,8 @@
     "hr": {
       "title": "Ažuriranja aplikacije",
       "changes": [
-        "Poboljšan prikaz linija i vozila.",
-        "Poboljšana interakcija s kartom i vidljivost stanica."
+        "Poboljšan prikaz linija i vozila!",
+        "Bolja interakcija s kartom i vidljivost stanica."
       ]
     },
     "version": "2.2.0"
@@ -248,9 +279,9 @@
     },
     "force": false,
     "hr": {
-      "title": "Ažuriranja aplikacije",
+      "title": "Ažuriranja",
       "changes": [
-        "Dodana opcija za naručivanje taksija.",
+        "Dodano naručivanje taksija!",
         "Popravci izgleda aplikacije."
       ]
     },
@@ -288,9 +319,9 @@
     "de": {
       "title": "Updates",
       "changes": [
-        "Dunkler Modus hinzugefügt!",
+        "Dunkler Modus hinzugefügt",
         "Neue Kartenansichten verfügbar",
-        "Absturz beim Start behoben"
+        "Abstürze beim Starten behoben"
       ]
     },
     "en": {
@@ -306,7 +337,7 @@
       "title": "Ažuriranje aplikacije",
       "changes": [
         "Dodat tamni način rada",
-        "Nove kartografske podloge",
+        "Nove mape",
         "Popravljen pad pri pokretanju"
       ]
     },
