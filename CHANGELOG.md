@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.2.0](https://github.com/aeoden96/kreni-app/compare/v3.1.0...v3.2.0) (2026-06-04)
+
+
+### Features
+
+* add compact route info display ([c2c3c36](https://github.com/aeoden96/kreni-app/commit/c2c3c36fb51dd59520df48411e76548d83c92d06))
+* enhance route and journey handling in components and hooks ([1ce7572](https://github.com/aeoden96/kreni-app/commit/1ce75727056dd081e82f848dca32f2392cc5bf87))
+* enhance vehicle following and route click handling with trip ID support ([4b33966](https://github.com/aeoden96/kreni-app/commit/4b339663d8cf2f7043c6ef3bd1401c0967462890))
+* enhance welcome messages ([56a31d3](https://github.com/aeoden96/kreni-app/commit/56a31d324c643bba22824c9d2f27c867a5c484a8))
+* play journey feature improvements ([f20dec8](https://github.com/aeoden96/kreni-app/commit/f20dec8f6f375deb2ede8275956ef6015340bd4d))
+
 ## [3.1.0](https://github.com/aeoden96/kreni-app/compare/v3.0.0...v3.1.0) (2026-05-29)
 
 
