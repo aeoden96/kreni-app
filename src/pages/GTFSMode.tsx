@@ -303,10 +303,14 @@ export function GTFSMode({ config }: GTFSModeProps) {
     setRouteViewLargeOpen(false);
   };
 
-  const handleRouteClickFromStop = (routeId: string, _routeType: number) => {
-    selectRoute(routeId);
-    setStopModalOpen(false);
-    setRouteViewLargeOpen(false);
+  const handleRouteClickFromStop = (routeId: string, routeType: number, tripId?: string) => {
+    if (tripId) {
+      handleSelectRoute(routeId, routeType, undefined, tripId);
+    } else {
+      selectRoute(routeId);
+      setStopModalOpen(false);
+      setRouteViewLargeOpen(false);
+    }
   };
 
   const handleExpandRoute = () => setRouteViewLargeOpen(true);
@@ -410,6 +414,11 @@ export function GTFSMode({ config }: GTFSModeProps) {
           serviceId={serviceId}
           showCongestionHeatmap={config.hasRealtime && showCongestionHeatmap}
           userLocation={userLocation}
+          vehicleFollowOffsetY={
+            !!followedVehicleTripId && typeof window !== 'undefined' && window.innerWidth < 640
+              ? -Math.round(window.innerHeight / 4)
+              : 0
+          }
           vehicles={vehicles}
         />
 

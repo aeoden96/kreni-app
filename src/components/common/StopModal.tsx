@@ -27,7 +27,7 @@ import { TimetableDepartureCard } from './TimetableDepartureCard';
 interface StopModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onRouteClick: (routeId: string, routeType: number) => void;
+  onRouteClick: (routeId: string, routeType: number, tripId?: string) => void;
   onStopSelect?: (stopId: string) => void;
   routesById: Map<string, Route>;
   stop: Stop;
@@ -406,8 +406,8 @@ export const StopModal = memo(function StopModal({
                 {liveVehicles.map((vehicle) => (
                   <ApproachingVehicleCard
                     key={vehicle.tripId}
-                    onRouteClick={(routeId, routeType) => {
-                      onRouteClick(routeId, routeType);
+                    onRouteClick={(routeId, routeType, tripId) => {
+                      onRouteClick(routeId, routeType, tripId);
                       onClose();
                     }}
                     vehicle={vehicle}

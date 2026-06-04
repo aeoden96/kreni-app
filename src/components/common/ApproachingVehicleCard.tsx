@@ -15,12 +15,9 @@ import type { ApproachingVehicle } from '../../hooks/useApproachingVehicles';
 import { minutesToTime } from '../../utils/gtfs';
 
 interface ApproachingVehicleCardProps {
-  onRouteClick?: (routeId: string, routeType: number) => void;
+  onRouteClick?: (routeId: string, routeType: number, tripId: string) => void;
   vehicle: ApproachingVehicle;
 }
-
-/** Reference window used for proportional bar width (30 min) */
-const WINDOW_SECONDS = 30 * 60;
 
 export function ApproachingVehicleCard({ onRouteClick, vehicle }: ApproachingVehicleCardProps) {
   const { t } = useTranslation();
@@ -39,10 +36,6 @@ export function ApproachingVehicleCard({ onRouteClick, vehicle }: ApproachingVeh
       setLeaving(true);
     }
   }, [vehicle.arrivingInSeconds, vehicle.passedStop]);
-
-  // Progress bar: proportional to remaining time (wide = far, narrow = close / arrived)
-  const remaining = Math.max(0, vehicle.arrivingInSeconds);
-  const barPercent = Math.min(100, (remaining / WINDOW_SECONDS) * 100);
 
   // Delay info
   const delaySec = vehicle.delaySeconds ?? 0;
@@ -122,7 +115,7 @@ export function ApproachingVehicleCard({ onRouteClick, vehicle }: ApproachingVeh
         leaving ? 'opacity-0 max-h-0 !py-0 !my-0' : 'max-h-44 opacity-100'
       }`}
     >
-      <div className="card-body p-3 pb-2 gap-0">
+      <div className="card-body p-3 gap-0">
         {/* Top row: badge + name + distance + time */}
         <div className={`flex items-center gap-2 mb-1.5 ${dimClass}`}>
           {/* Route badge */}
@@ -138,7 +131,7 @@ export function ApproachingVehicleCard({ onRouteClick, vehicle }: ApproachingVeh
             {onRouteClick ? (
               <button
                 className="text-sm font-medium truncate leading-tight text-left hover:opacity-70 transition-opacity w-full block"
-                onClick={() => onRouteClick(vehicle.routeId, vehicle.routeType)}
+                onClick={() => onRouteClick(vehicle.routeId, vehicle.routeType, vehicle.tripId)}
               >
                 {vehicle.tripDestinationName}
               </button>
@@ -203,24 +196,6 @@ export function ApproachingVehicleCard({ onRouteClick, vehicle }: ApproachingVeh
               )}
           </div>
         </div>
-
-        {/* Reverse progress bar (hidden for passed-stop vehicles) */}
-        {!vehicle.passedStop && (
-          <div className="w-full h-1 bg-base-300 rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-[width] duration-[4s] ease-linear ${
-                isScheduled
-                  ? 'bg-base-content/25'
-                  : isArriving
-                    ? 'bg-success'
-                    : vehicle.routeType === 0
-                      ? 'bg-blue-600'
-                      : 'bg-amber-600'
-              }`}
-              style={{ width: `${barPercent}%` }}
-            />
-          </div>
-        )}
       </div>
     </div>
   );

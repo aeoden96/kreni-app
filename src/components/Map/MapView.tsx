@@ -53,6 +53,8 @@ interface MapViewProps {
   /** Whether to show the congestion heatmap overlay */
   showCongestionHeatmap?: boolean;
   userLocation?: null | { lat: number; lon: number };
+  /** Pixel offset for vehicle follow pan — negative shifts vehicle lower on screen (mobile) */
+  vehicleFollowOffsetY?: number;
   vehicles: VehiclePosition[];
 }
 
@@ -85,6 +87,7 @@ export function MapView({
   selectedStopId,
   showCongestionHeatmap = false,
   userLocation,
+  vehicleFollowOffsetY = 0,
   vehicles,
 }: MapViewProps) {
   const { initialZoom, minZoom } = useGTFSMode();
@@ -137,7 +140,11 @@ export function MapView({
         )}
 
         {followedVehiclePos && onFollowDisengage && (
-          <VehicleFollower onDisengage={onFollowDisengage} position={followedVehiclePos} />
+          <VehicleFollower
+            onDisengage={onFollowDisengage}
+            panOffsetY={vehicleFollowOffsetY}
+            position={followedVehiclePos}
+          />
         )}
       </BaseMap>
     </SpiderfierProvider>

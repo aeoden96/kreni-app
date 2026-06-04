@@ -12,6 +12,7 @@
 import type { TFunction } from 'i18next';
 
 import {
+  ArrowLeft,
   ArrowRight,
   Bus,
   ChevronDown,
@@ -341,10 +342,11 @@ export function RouteViewSmall({
 
         {hasVehiclePreview && onBackToRouteOverview ? (
           <button
-            className="btn btn-outline btn-xs w-full min-h-8 h-8 px-3 mb-2 text-xs font-normal border-base-300/70"
+            className="btn btn-sm w-full mb-2 gap-1.5 bg-base-200 hover:bg-base-300 border-0 text-base-content/70 font-medium"
             onClick={onBackToRouteOverview}
             type="button"
           >
+            <ArrowLeft className="w-3.5 h-3.5" />
             {t('routeBar.backToRouteOverview')}
           </button>
         ) : null}
@@ -354,61 +356,59 @@ export function RouteViewSmall({
           <>
             {stopDetail ? (
               <div className="space-y-1 mb-3">
-                {/* Current / approaching stop: title row (label + delay/time), then stop name */}
-                <div className="flex gap-2 text-sm">
-                  <MapPin className="w-3.5 h-3.5 shrink-0 text-base-content/50 mt-0.5" />
-                  <div className="min-w-0 flex-1 space-y-1.5">
-                    {(stopLabel || delayInfo || primaryStopTime) && (
-                      <div className="flex min-w-0 items-baseline justify-between gap-2">
-                        {stopLabel ? (
-                          <span className="min-w-0 flex-1 truncate text-xs leading-snug text-base-content/60">
-                            {stopLabel}:
-                          </span>
-                        ) : (
-                          <span className="min-w-0 flex-1" />
-                        )}
-                        {(delayInfo || primaryStopTime) && (
-                          <span className="flex shrink-0 items-center gap-2">
-                            {delayInfo && (
-                              <span
-                                className={`text-xs font-medium ${delayInfo.positive ? 'text-success' : 'text-error'}`}
-                              >
-                                {delayInfo.text}
-                              </span>
-                            )}
-                            {primaryStopTime && (
-                              <span className="text-xs font-medium tabular-nums text-base-content/70">
-                                {primaryStopTime}
-                              </span>
-                            )}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    <div className="font-semibold leading-snug break-words text-base-content">
-                      {stopDetail}
+                {/* Current stop: name + time on one row, metadata below */}
+                <div className="flex gap-2">
+                  <MapPin className="w-3.5 h-3.5 shrink-0 text-base-content/50 mt-1" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline justify-between gap-2 min-w-0">
+                      <span className="font-semibold text-sm leading-snug text-base-content truncate">
+                        {stopDetail}
+                      </span>
+                      {primaryStopTime && (
+                        <span className="text-xs font-medium tabular-nums text-base-content/70 shrink-0">
+                          {primaryStopTime}
+                        </span>
+                      )}
                     </div>
-                    {distanceMeters !== null && (
-                      <div className="text-xs tabular-nums text-base-content/50">
-                        {formatDistance(distanceMeters)}
+                    {(stopLabel || delayInfo || distanceMeters !== null) && (
+                      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-0.5 text-xs text-base-content/50">
+                        {stopLabel && <span>{stopLabel}</span>}
+                        {stopLabel && (delayInfo || distanceMeters !== null) && (
+                          <span aria-hidden>·</span>
+                        )}
+                        {delayInfo && (
+                          <span
+                            className={`font-medium ${delayInfo.positive ? 'text-success' : 'text-error'}`}
+                          >
+                            {delayInfo.text}
+                          </span>
+                        )}
+                        {delayInfo && distanceMeters !== null && <span aria-hidden>·</span>}
+                        {distanceMeters !== null && (
+                          <span className="tabular-nums">{formatDistance(distanceMeters)}</span>
+                        )}
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Upcoming stops from static timetable */}
-                {upcomingStops.map((s, i) => (
-                  <div
-                    className="flex items-center gap-2 text-xs text-base-content/60 pl-5"
-                    key={i}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-base-content/30 shrink-0" />
-                    <span className="truncate">{s.name}</span>
-                    <span className="ml-auto shrink-0 tabular-nums text-base-content/50">
-                      {s.time}
-                    </span>
+                {/* Upcoming stops */}
+                {upcomingStops.length > 0 && (
+                  <div className="border-t border-base-200 mt-1.5 pt-1.5 space-y-1">
+                    {upcomingStops.map((s, i) => (
+                      <div
+                        className="flex items-center gap-2 text-xs text-base-content/60 pl-5"
+                        key={i}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-base-content/30 shrink-0" />
+                        <span className="truncate">{s.name}</span>
+                        <span className="ml-auto shrink-0 tabular-nums text-base-content/50">
+                          {s.time}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
             ) : (
               /* Fallback when no stop data is available yet */

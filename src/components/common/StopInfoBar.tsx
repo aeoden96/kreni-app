@@ -9,7 +9,6 @@ import {
   CarTaxiFront,
   ChevronDown,
   ChevronUp,
-  Info,
   Maximize2,
   Navigation2,
   Star,
@@ -36,7 +35,7 @@ import { TimetableDepartureCard } from './TimetableDepartureCard';
 interface StopInfoBarProps {
   onClose: () => void;
   onExpand: (stopId: string) => void;
-  onRouteClick?: (routeId: string, routeType: number) => void;
+  onRouteClick?: (routeId: string, routeType: number, tripId?: string) => void;
   onStopSelect?: (stopId: string) => void;
   routesById: Map<string, Route>;
   /** When true, shifts the bar down so it sits below the RouteViewSmall */
@@ -57,8 +56,7 @@ export function StopInfoBar({
 }: StopInfoBarProps) {
   const { t } = useTranslation();
   const { dataDir, hasRealtime, timetableLookaheadMinutes } = useGTFSMode();
-  const { dismissedGpsTip, favouriteStopIds, setDismissedGpsTip, toggleFavouriteStop } =
-    useSettingsStore();
+  const { favouriteStopIds, toggleFavouriteStop } = useSettingsStore();
   const isFav = favouriteStopIds.includes(stop.id);
   const [rideHailingModalOpen, setRideHailingModalOpen] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -382,31 +380,6 @@ export function StopInfoBar({
           />
         </div>
 
-        {/* GPS tip banner */}
-        {activeTab === 'vehicles' && !vehiclesLoading && !dismissedGpsTip && (
-          <div className="mt-2 mb-3 p-4 rounded-xl bg-info/10 border border-info/30 flex gap-3 items-start">
-            <Info className="w-5 h-5 text-info shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-base-content/90 mb-1">
-                {t('stopView.gpsTipTitle')}
-              </p>
-              <p className="text-sm text-base-content/70 leading-snug mb-1.5">
-                {t('stopView.gpsTipBodyBar')}
-              </p>
-              <p className="text-sm text-base-content/50 leading-snug">
-                {t('stopView.gpsTipFootnoteBar')}
-              </p>
-            </div>
-            <button
-              className="btn btn-ghost btn-circle btn-sm shrink-0"
-              onClick={() => setDismissedGpsTip(true)}
-              title={t('stopView.gpsTipDismiss')}
-              type="button"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
         {/* Vehicles tab */}
         {activeTab === 'vehicles' &&
           (vehiclesLoading ? (
@@ -485,7 +458,7 @@ export function StopInfoBar({
                     key={vehicle.tripId}
                     onClick={
                       onRouteClick
-                        ? () => onRouteClick(vehicle.routeId, vehicle.routeType)
+                        ? () => onRouteClick(vehicle.routeId, vehicle.routeType, vehicle.tripId)
                         : undefined
                     }
                     type="button"
