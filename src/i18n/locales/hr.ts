@@ -449,6 +449,7 @@ const hr = {
       waitingGpsSignal: 'Čeka se GPS signal…',
     },
     routeModal: {
+      departures: 'Polasci',
       journeyDirection: 'Smjer',
       noStops: 'Nema dostupnih stajališta',
     },
@@ -487,6 +488,7 @@ const hr = {
       listNoResultsForQuery: 'Nema rezultata za „{{query}}”',
       loading: 'Učitavanje...',
       noDirectRoutes: 'Nema izravne linije za odabrane stanice',
+      noDirectTrains: 'Danas nema izravnih vlakova za ove stanice',
       noLinesForStop: 'Nema linija za prikaz',
       placeholder: {
         fromWhere: 'Odakle?',
@@ -518,6 +520,9 @@ const hr = {
       terminalsCount_one: '{{count}} terminal',
       terminalsCount_other: '{{count}} terminala',
       title: 'Pretraži',
+      trainsFound_few: '{{count}} izravna vlaka danas',
+      trainsFound_one: '{{count}} izravan vlak danas',
+      trainsFound_other: '{{count}} izravnih vlakova danas',
     },
     serviceAlert: {
       effects: {

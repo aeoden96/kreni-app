@@ -113,7 +113,9 @@ jobs:
         uses: actions/cache@v5
         with:
           path: public/data-train
-          key: gtfs-train-processed-${{ steps.gtfs-train-hash.outputs.hash }}
+          # Bust the cache when either the feed OR the processing logic changes,
+          # so a script change re-runs even on an unchanged zip.
+          key: gtfs-train-processed-${{ steps.gtfs-train-hash.outputs.hash }}-${{ hashFiles('scripts/process_gtfs_train.py', 'scripts/core/gtfs_base.py') }}
 
       - name: Extract train GTFS data
         if: steps.gtfs-train-cache.outputs.cache-hit != 'true'

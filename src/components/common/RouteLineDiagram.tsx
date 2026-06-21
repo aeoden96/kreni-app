@@ -17,6 +17,7 @@ import { useMemo } from 'react';
 import type { Stop } from '../../utils/gtfs';
 import type { VehiclePosition } from '../../utils/vehicles';
 
+import { routeTypeColor } from '../../utils/routeStyle';
 import { computeVehicleStopProgress } from '../../utils/vehicles';
 
 // ── Layout constants ────────────────────────────────────────────────────────
@@ -29,16 +30,12 @@ export const STOP_LIST_PADDING_TOP = 8;
 /** Width of the diagram column (in px). */
 const DIAGRAM_WIDTH = 44;
 
-// ── Colors ──────────────────────────────────────────────────────────────────
-const TRAM_COLOR = '#2563eb'; // blue-600
-const BUS_COLOR = '#d97706'; // amber-600
-
 interface RouteLineDiagramProps {
   /** Journey segment to highlight — stops outside are dimmed. */
   journeySegment?: null | { fromIdx: number; toIdx: number };
   /** Ordered stop IDs for the selected direction. */
   orderedStopIds: string[];
-  /** 0 = Tram, 3 = Bus */
+  /** GTFS route_type: 0 = tram, 2 = rail, 3 = bus. */
   routeType: number;
   /** Stop lookup map for lat/lon access. */
   stopsById: Map<string, Stop>;
@@ -58,7 +55,7 @@ export function RouteLineDiagram({
   stopsById,
   vehicles,
 }: RouteLineDiagramProps) {
-  const color = routeType === 0 ? TRAM_COLOR : BUS_COLOR;
+  const color = routeTypeColor(routeType);
   const stopCount = orderedStopIds.length;
 
   // Build a resolved (lat, lon) array aligned with orderedStopIds

@@ -28,6 +28,7 @@ import { useTimetableDepartures } from '../../hooks/useTimetableDepartures';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { bearingToCompassKey } from '../../utils/gtfs';
 import { compassLabelForBearing } from '../../utils/localizedCompass';
+import { routeTypeColor } from '../../utils/routeStyle';
 import { RideHailingModal } from './RideHailingModal';
 import { type StopTab, StopTabSelector } from './StopTabSelector';
 import { TimetableDepartureCard } from './TimetableDepartureCard';
@@ -209,7 +210,7 @@ export function StopInfoBar({
                           className="badge badge-sm font-bold text-white cursor-pointer hover:opacity-75 transition-opacity"
                           key={route.id}
                           onClick={() => onRouteClick(route.id, route.type)}
-                          style={{ backgroundColor: route.type === 0 ? '#2563eb' : '#d97706' }}
+                          style={{ backgroundColor: routeTypeColor(route.type) }}
                           type="button"
                         >
                           {route.shortName}
@@ -218,7 +219,7 @@ export function StopInfoBar({
                         <span
                           className="badge badge-sm font-bold text-white"
                           key={route.id}
-                          style={{ backgroundColor: route.type === 0 ? '#2563eb' : '#d97706' }}
+                          style={{ backgroundColor: routeTypeColor(route.type) }}
                         >
                           {route.shortName}
                         </span>
@@ -350,7 +351,7 @@ export function StopInfoBar({
                               <span
                                 className="badge badge-xs font-bold text-white"
                                 key={r.id}
-                                style={{ backgroundColor: r.type === 0 ? '#2563eb' : '#d97706' }}
+                                style={{ backgroundColor: routeTypeColor(r.type) }}
                               >
                                 {r.shortName}
                               </span>

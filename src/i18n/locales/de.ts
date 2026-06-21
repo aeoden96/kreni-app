@@ -439,6 +439,7 @@ const de = {
       waitingGpsSignal: 'Warte auf GPS…',
     },
     routeModal: {
+      departures: 'Abfahrten',
       journeyDirection: 'Richtung',
       noStops: 'Keine Haltestellen verfügbar',
     },
@@ -474,6 +475,7 @@ const de = {
       listNoResultsForQuery: 'Keine Treffer für „{{query}}“',
       loading: 'Laden…',
       noDirectRoutes: 'Keine Direktverbindung für diese Haltestellen',
+      noDirectTrains: 'Heute keine direkten Züge für diese Bahnhöfe',
       noLinesForStop: 'Keine Linien',
       placeholder: {
         fromWhere: 'Von wo?',
@@ -503,6 +505,8 @@ const de = {
       terminalsCount_one: '{{count}} Bahnsteig',
       terminalsCount_other: '{{count}} Bahnsteige',
       title: 'Suche',
+      trainsFound_one: '{{count}} direkter Zug heute',
+      trainsFound_other: '{{count}} direkte Züge heute',
     },
     serviceAlert: {
       effects: {

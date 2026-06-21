@@ -6,7 +6,8 @@
     "src/components/common/DirectionsPanel.tsx",
     "src/components/common/ParentStopInput.tsx",
     "src/hooks/useParentStopSearch.ts",
-    "vitest.shims.d.ts"
+    "vitest.shims.d.ts",
+    "android/**"
   ],
   "ignoreDependencies": ["@vitest/coverage-v8", "@secretlint/secretlint-rule-preset-recommend"],
   "ignoreBinaries": []

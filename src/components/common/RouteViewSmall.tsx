@@ -33,6 +33,7 @@ import type { VehiclePosition } from '../../utils/vehicles';
 
 import { useSettingsStore } from '../../stores/settingsStore';
 import { VehicleStopStatus } from '../../utils/realtime';
+import { routeTypeColor } from '../../utils/routeStyle';
 import { getRouteVehicleStopPreview } from '../../utils/vehicles';
 import { getDirectionColor } from '../Map/directionColors';
 import { RouteMiniTrack } from './RouteMiniTrack';
@@ -77,9 +78,6 @@ interface RouteViewSmallProps {
   vehicles: VehiclePosition[];
 }
 
-const TRAM_COLOR = '#2563eb'; // blue-600
-const BUS_COLOR = '#d97706'; // amber-600
-
 export function RouteViewSmall({
   clickedTripUpdate,
   clickedVehicle,
@@ -104,8 +102,8 @@ export function RouteViewSmall({
   vehicles,
 }: RouteViewSmallProps) {
   const { t } = useTranslation();
-  const color = route.type === 0 ? TRAM_COLOR : BUS_COLOR;
-  const isTram = route.type === 0;
+  const color = routeTypeColor(route.type);
+  const RouteIcon = route.type === 3 ? Bus : Train;
   const { favouriteRouteIds, toggleFavouriteRoute } = useSettingsStore();
   const isFav = favouriteRouteIds.includes(route.id);
 
@@ -438,7 +436,7 @@ export function RouteViewSmall({
                 {directionLabels.map((dir, idx) => {
                   const dirCount = vehicles.filter((v) => v.direction === idx).length;
                   const isActive = compactListDirectionKey === dir.key;
-                  const ToggleVehicleIcon = isTram ? Train : Bus;
+                  const ToggleVehicleIcon = RouteIcon;
                   return (
                     <button
                       className={[
@@ -530,11 +528,7 @@ export function RouteViewSmall({
                   )}
                   {vehiclesForCompactList.length === 0 && (
                     <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-warning/30 bg-warning/10">
-                      {isTram ? (
-                        <Train className="w-4 h-4 shrink-0 text-warning" />
-                      ) : (
-                        <Bus className="w-4 h-4 shrink-0 text-warning" />
-                      )}
+                      <RouteIcon className="w-4 h-4 shrink-0 text-warning" />
                       <span className="text-xs font-medium text-base-content/70">
                         {t('routeBar.noActiveVehiclesBanner')}
                       </span>
@@ -546,11 +540,7 @@ export function RouteViewSmall({
           </div>
         ) : !hasVehiclePreview && orderedStops && stopsById ? (
           <div className="flex items-center gap-3 text-xs flex-wrap">
-            {isTram ? (
-              <Train className="w-3.5 h-3.5 shrink-0 text-base-content/50" />
-            ) : (
-              <Bus className="w-3.5 h-3.5 shrink-0 text-base-content/50" />
-            )}
+            <RouteIcon className="w-3.5 h-3.5 shrink-0 text-base-content/50" />
             {directionKeysSorted.map((dir, idx) => {
               const count = vehiclesByDirection[dir]?.length || 0;
               const ids = orderedStops[dir] || [];
@@ -585,11 +575,7 @@ export function RouteViewSmall({
           </div>
         ) : !hasVehiclePreview ? (
           <div className="flex items-center gap-1.5 text-xs text-base-content/60">
-            {isTram ? (
-              <Train className="w-3.5 h-3.5 shrink-0" />
-            ) : (
-              <Bus className="w-3.5 h-3.5 shrink-0" />
-            )}
+            <RouteIcon className="w-3.5 h-3.5 shrink-0" />
             <span>{t('routeBar.noActiveVehicles')}</span>
           </div>
         ) : null}

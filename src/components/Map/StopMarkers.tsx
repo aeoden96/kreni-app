@@ -236,9 +236,12 @@ function PlatformStopMarker({
   // Standard is 32/6, so selected is doubled to 64/12.
   const size = isSelected ? 64 : isHighlighted ? 38 : 32;
   const r = isSelected ? 12 : isHighlighted ? 7.5 : 6;
+  // Rail stations render as plain dots — the directional bearing pin looks off
+  // for the sparse, non-platform HŽ network, so drop the bearing for rail.
+  const bearing = stop.routeType === 2 ? undefined : stop.bearing;
   const icon = useMemo(
-    () => makeStopIcon(color, stop.bearing, size, r, effectiveFactor, undefined),
-    [color, stop.bearing, size, r, effectiveFactor]
+    () => makeStopIcon(color, bearing, size, r, effectiveFactor, undefined),
+    [color, bearing, size, r, effectiveFactor]
   );
   const iconRef = useRef(icon);
   useLayoutEffect(() => {

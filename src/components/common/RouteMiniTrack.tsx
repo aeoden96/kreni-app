@@ -4,10 +4,9 @@ import { useEffect, useMemo, useRef } from 'react';
 import type { Stop } from '../../utils/gtfs';
 import type { VehiclePosition } from '../../utils/vehicles';
 
+import { routeTypeColor } from '../../utils/routeStyle';
 import { computeVehicleStopProgress } from '../../utils/vehicles';
 
-const TRAM_COLOR = '#2563eb';
-const BUS_COLOR = '#d97706';
 const STOP_PITCH = 56;
 const EDGE_PAD = 20;
 const TRACK_ROW_H = 28;
@@ -33,7 +32,7 @@ export function RouteMiniTrack({
   stopsById,
   vehicles,
 }: RouteMiniTrackProps) {
-  const color = routeType === 0 ? TRAM_COLOR : BUS_COLOR;
+  const color = routeTypeColor(routeType);
   const stopCount = orderedStopIds.length;
 
   const resolvedStops = useMemo(
@@ -99,7 +98,7 @@ export function RouteMiniTrack({
     opacity: number
   ) => {
     const label = vehicle.headsign || (vehicle.direction === 0 ? 'A' : 'B');
-    const VehicleIcon = routeType === 0 ? Train : Bus;
+    const VehicleIcon = routeType === 3 ? Bus : Train;
     const offsetTop = TRACK_ROW_H / 2 - 12;
 
     return (

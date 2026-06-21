@@ -2,7 +2,8 @@
 """
 GTFS Data Processor for HZPP (Croatian Railways)
 Converts raw GTFS CSV data into optimized, chunked JSON files for frontend consumption.
-Filters to stops/routes within 20 km of Zagreb city centre.
+Ships the entire national HŽPP network by default. Set TRAIN_REGION=zagreb to
+restore the legacy 20 km Zagreb suburban slice.
 
 Input:  ./data-train/*.txt  (GTFS CSV files from https://www.hzpp.hr/GTFS_files.zip)
 Output: ./public/data-train/ (chunked JSON files)
@@ -35,7 +36,17 @@ DATA_DIR   = Path("data-train")
 OUTPUT_DIR = Path("public/data-train")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-# Zagreb city centre (used for the 20 km geographic filter)
+# Geographic scope.
+#
+# Historically the feed was sliced to a 20 km radius around Zagreb so the Train
+# view only showed the suburban network. We now ship the whole national HŽPP
+# network by default (≈460 stops / 141 lines — smaller than the ZET feed).
+#
+# Set the env var TRAIN_REGION=zagreb to restore the old 20 km Zagreb slice.
+SCOPE = os.environ.get("TRAIN_REGION", "national").strip().lower()
+FILTER_TO_ZAGREB = SCOPE == "zagreb"
+
+# Zagreb city centre (used only when FILTER_TO_ZAGREB is True)
 ZAGREB_LAT = 45.789418
 ZAGREB_LON = 15.977912
 ZAGREB_RADIUS_M = 20_000   # 20 km
@@ -68,23 +79,37 @@ def _short_name_from_route_id(route_id: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Pre-filtering: identify Zagreb stops/trips/routes in one pass
+# Pre-filtering: identify the in-scope stops/trips/routes in one pass
 # ---------------------------------------------------------------------------
 
-def compute_zagreb_filter():
-    """Stream stop_times once to find which trips/routes serve Zagreb stops.
+def compute_geo_filter():
+    """Determine which stops/trips/routes are in scope.
+
+    National scope (default) keeps the whole HŽPP feed. Zagreb scope
+    (TRAIN_REGION=zagreb) keeps only stops within 20 km of Zagreb plus any
+    trip/route that serves one of them — the legacy suburban slice.
 
     Returns
     -------
-    zagreb_stop_ids  : set of stop_id strings within 20 km of Zagreb
-    zagreb_route_ids : set of route_id strings that have ≥1 stop in Zagreb
-    zagreb_trip_ids  : set of trip_id strings that stop in Zagreb
+    stop_ids  : set of in-scope stop_id strings
+    route_ids : set of in-scope route_id strings
+    trip_ids  : set of in-scope trip_id strings
     """
+    stops_raw = read_csv("stops.txt")
+
+    if not FILTER_TO_ZAGREB:
+        print("🌍 National scope — keeping the entire HŽPP network...")
+        stop_ids  = {s['stop_id'] for s in stops_raw}
+        trips_raw = read_csv("trips.txt")
+        trip_ids  = {t['trip_id'] for t in trips_raw}
+        route_ids = {t['route_id'] for t in trips_raw}
+        print(f"  ✓ {len(stop_ids)} stops, {len(route_ids)} routes, {len(trip_ids)} trips")
+        return stop_ids, route_ids, trip_ids
+
     print("🔍 Computing Zagreb geographic filter (20 km radius)...")
 
     # 1. Geographic stop filter
-    stops_raw = read_csv("stops.txt")
-    zagreb_stop_ids = set()
+    stop_ids = set()
     for s in stops_raw:
         try:
             lat = float(s['stop_lat'])
@@ -92,77 +117,96 @@ def compute_zagreb_filter():
         except (ValueError, KeyError):
             continue
         if is_within_zagreb(lat, lon):
-            zagreb_stop_ids.add(s['stop_id'])
+            stop_ids.add(s['stop_id'])
 
-    print(f"  ✓ {len(zagreb_stop_ids)} stops within 20 km of Zagreb")
+    print(f"  ✓ {len(stop_ids)} stops within 20 km of Zagreb")
 
     # 2. Stream stop_times to collect trips that serve those stops
-    zagreb_trip_ids = set()
+    trip_ids = set()
     filepath = DATA_DIR / "stop_times.txt"
     with open(filepath, 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
-            if row['stop_id'] in zagreb_stop_ids:
-                zagreb_trip_ids.add(row['trip_id'])
+            if row['stop_id'] in stop_ids:
+                trip_ids.add(row['trip_id'])
 
-    print(f"  ✓ {len(zagreb_trip_ids)} trips serve Zagreb stops")
+    print(f"  ✓ {len(trip_ids)} trips serve Zagreb stops")
 
     # 3. Find routes for those trips
     trips_raw = read_csv("trips.txt")
-    zagreb_route_ids = {t['route_id'] for t in trips_raw if t['trip_id'] in zagreb_trip_ids}
-    print(f"  ✓ {len(zagreb_route_ids)} routes pass through Zagreb")
+    route_ids = {t['route_id'] for t in trips_raw if t['trip_id'] in trip_ids}
+    print(f"  ✓ {len(route_ids)} routes pass through Zagreb")
 
-    return zagreb_stop_ids, zagreb_route_ids, zagreb_trip_ids
+    return stop_ids, route_ids, trip_ids
 
 
 # ---------------------------------------------------------------------------
-# Calendar: expand weekly-schedule calendar.txt into canonical service types
+# Calendar: collapse HŽPP weekly services into day-type buckets
 # ---------------------------------------------------------------------------
+#
+# HŽPP models ~46k weekly service_ids (one per train per week-window), 92 % of
+# which run on several weekdays. The frontend — like the ZET feed — expects ONE
+# service key per calendar day. We therefore collapse every service into the
+# day-type buckets it operates in ('wd' = Mon–Fri, 'sat', 'sun') and key trips
+# by bucket. The calendar maps each date to its weekday bucket, so the existing
+# `tripId.startsWith(calendar[today] + '_')` filter selects exactly the runs
+# that operate on today's day-type.
+#
+# Trade-off (accepted): a public holiday is treated as its weekday, not as a
+# Sunday schedule — the feed ships no calendar_dates.txt exceptions to model it.
 
-def build_service_date_map():
-    """Map each service_id → list of date strings (YYYYMMDD) it actually runs.
+DAY_KEYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday',
+            'saturday', 'sunday']
 
-    HZPP uses weekly service windows; most service_ids map to exactly 1 date.
-    We expand every calendar.txt entry to individual dates so that stop
-    timetable keys become '{date}_{trip_id}', giving the frontend a
-    date-exact filter without any cross-week duplicates.
+
+def _bucket_for_weekday(weekday: int) -> str:
+    """0=Mon … 6=Sun → 'wd' | 'sat' | 'sun'."""
+    if weekday <= 4:
+        return 'wd'
+    return 'sat' if weekday == 5 else 'sun'
+
+
+def build_service_buckets():
+    """Map service_id → set of day-type buckets it runs on, plus the feed span.
+
+    Returns (service_buckets, span_start, span_end).
     """
-    calendar_rows = read_csv("calendar.txt")
-    day_keys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday',
-                'saturday', 'sunday']
-    service_dates: dict[str, list[str]] = {}
+    span_start = None
+    span_end = None
+    service_buckets: dict[str, set[str]] = {}
 
-    for row in calendar_rows:
-        svc = row['service_id']
-        dates: list[str] = []
+    for row in read_csv("calendar.txt"):
+        buckets = set()
+        for idx, key in enumerate(DAY_KEYS):
+            if row.get(key, '0') == '1':
+                buckets.add(_bucket_for_weekday(idx))
+        service_buckets[row['service_id']] = buckets
         try:
             start = datetime.strptime(row['start_date'], '%Y%m%d')
             end   = datetime.strptime(row['end_date'],   '%Y%m%d')
         except ValueError:
-            service_dates[svc] = dates
             continue
-        current = start
-        while current <= end:
-            day_idx = current.weekday()  # 0=Mon … 6=Sun
-            if row.get(day_keys[day_idx], '0') == '1':
-                dates.append(current.strftime('%Y%m%d'))
-            current += timedelta(days=1)
-        service_dates[svc] = dates
+        if span_start is None or start < span_start:
+            span_start = start
+        if span_end is None or end > span_end:
+            span_end = end
 
-    return service_dates
+    return service_buckets, span_start, span_end
 
 
-def build_calendar_date_dict(service_date_map: dict[str, list[str]]):
-    """Build {YYYYMMDD: YYYYMMDD} identity mapping.
+def build_calendar_buckets(span_start, span_end):
+    """Map every date in the feed span (YYYYMMDD) → its weekday bucket.
 
-    The frontend calls calendar[today] to get the active service key.
-    With date-based service keys the result is just today's date string,
-    which matches the trip ID prefix '{date}_{trip_id}' exactly.
+    The frontend calls calendar[today]; the result ('wd' / 'sat' / 'sun') is the
+    prefix shared by all trip instances that run on that day-type.
     """
     calendar_out: dict[str, str] = {}
-    for dates in service_date_map.values():
-        for d in dates:
-            calendar_out[d] = d   # identity — each date maps to itself
+    if span_start is None or span_end is None:
+        return calendar_out
+    current = span_start
+    while current <= span_end:
+        calendar_out[current.strftime('%Y%m%d')] = _bucket_for_weekday(current.weekday())
+        current += timedelta(days=1)
     return calendar_out
 
 
@@ -170,7 +214,7 @@ def build_calendar_date_dict(service_date_map: dict[str, list[str]]):
 # Processing pipeline
 # ---------------------------------------------------------------------------
 
-def process_initial_bundle(zagreb_stop_ids, zagreb_route_ids, service_date_map):
+def process_initial_bundle(zagreb_stop_ids, zagreb_route_ids, calendar):
     """Generate initial.json with stops, routes, and calendar data."""
     print("📦 Processing initial bundle...")
 
@@ -203,9 +247,7 @@ def process_initial_bundle(zagreb_stop_ids, zagreb_route_ids, service_date_map):
             'type':      int(r.get('route_type', 2)),
         })
 
-    # Calendar — flat date → date identity mapping (date-exact service keys)
-    calendar = build_calendar_date_dict(service_date_map)
-
+    # Calendar — date → day-type bucket ('wd' / 'sat' / 'sun')
     initial_data = {
         'stops':               stops,
         'routes':              routes,
@@ -219,57 +261,74 @@ def process_initial_bundle(zagreb_stop_ids, zagreb_route_ids, service_date_map):
     print(f"  ✓ Wrote initial.json ({len(stops)} stops, {len(routes)} routes, {len(calendar)} calendar entries)")
 
 
-def process_trips(zagreb_route_ids, service_date_map):
-    """Chunk trips by route; return trip_lookup keyed by date prefix."""
-    print("🚂 Processing trips...")
+def compute_trip_instances(zagreb_route_ids, service_buckets):
+    """Collapse raw weekly trips into deduped day-type bucket *instances*.
+
+    A train that runs Mon–Sat becomes (at most) one 'wd' instance and one 'sat'
+    instance; the ~52 weekly copies of the same logical run collapse into one per
+    bucket, keyed by `{bucket}_{route}_{trainNumber}_{direction}`.
+
+    Returns
+    -------
+    instance_lookup  : dict[instance_id, (route_id, bucket, bucket, headsign, direction, shape_id)]
+                       (tuple layout matches the old trip_lookup so downstream
+                        helpers read direction/shape at indices 4/5 unchanged)
+    raw_to_instances : dict[raw_trip_id, list[instance_id]]  — representatives only
+    """
+    print("🚂 Collapsing trips into day-type buckets...")
 
     trips_raw = read_csv("trips.txt")
-    trip_lookup = {}
-    trips_by_route = defaultdict(list)
+    instance_lookup: dict[str, tuple] = {}
+    raw_to_instances: dict[str, list[str]] = defaultdict(list)
+    instances_by_route = defaultdict(list)
+    seen_keys: set[tuple] = set()   # (route_id, direction, ident, bucket)
 
     for trip in trips_raw:
-        route_id   = trip['route_id']
+        route_id = trip['route_id']
         if route_id not in zagreb_route_ids:
             continue
-        trip_id    = trip['trip_id']
-        service_id = trip['service_id']
-        headsign   = trip.get('trip_headsign', '') or trip.get('trip_short_name', '') or ''
-        direction  = int(trip['direction_id']) if trip.get('direction_id') else 0
-        shape_id   = trip.get('shape_id') or None  # HZPP has no shapes
+        raw_trip_id = trip['trip_id']
+        service_id  = trip['service_id']
+        short_name  = (trip.get('trip_short_name') or '').strip()
+        headsign    = trip.get('trip_headsign', '') or short_name or ''
+        direction   = int(trip['direction_id']) if trip.get('direction_id') else 0
+        shape_id    = trip.get('shape_id') or None  # HZPP has no shapes
 
-        # Each service_id maps to exactly one date for HZPP weekly schedules;
-        # use that date as the service key for date-exact trip filtering.
-        dates = service_date_map.get(service_id, [])
-        first_date = dates[0] if dates else 'unknown'
+        # Identity collapsing the same logical run across weeks. Train numbers
+        # are unique per run; fall back to the raw id when none is published.
+        ident = short_name or raw_trip_id
 
-        # (route_id, service_id, first_date, headsign, direction, shape_id)
-        trip_lookup[trip_id] = (route_id, service_id, first_date, headsign, direction, shape_id)
-
-        # Prefix the trip ID with the first run date: '{date}_{trip_id}'
-        # The frontend's startsWith(activeServiceId + '_') where
-        # activeServiceId = calendar[today] = today then shows only today's trips.
-        prefixed_id = f"{first_date}_{trip_id}"
-
-        trips_by_route[route_id].append({
-            'id':        prefixed_id,
-            'serviceId': service_id,
-            'headsign':  headsign,
-            'direction': direction,
-            'shapeId':   shape_id,
-        })
+        for bucket in service_buckets.get(service_id, set()):
+            key = (route_id, direction, ident, bucket)
+            if key in seen_keys:
+                continue  # representative for this run + bucket already chosen
+            seen_keys.add(key)
+            instance_id = f"{bucket}_{route_id}_{ident}_{direction}"
+            instance_lookup[instance_id] = (
+                route_id, bucket, bucket, headsign, direction, shape_id
+            )
+            raw_to_instances[raw_trip_id].append(instance_id)
+            instances_by_route[route_id].append({
+                'id':        instance_id,
+                'serviceId': bucket,
+                'headsign':  headsign,
+                'direction': direction,
+                'shapeId':   shape_id,
+            })
 
     # Write per-route trip files
     routes_dir = OUTPUT_DIR / 'routes'
     routes_dir.mkdir(exist_ok=True)
-    for route_id, trips in trips_by_route.items():
+    for route_id, trips in instances_by_route.items():
         write_json(routes_dir / f'{route_id}.json', {'trips': trips})
 
-    print(f"  ✓ Wrote {len(trips_by_route)} route files ({len(trip_lookup)} trips)")
-    return trip_lookup
+    print(f"  ✓ {len(instance_lookup)} instances from {len(trips_raw)} raw trips "
+          f"across {len(instances_by_route)} routes")
+    return instance_lookup, raw_to_instances
 
 
-def process_stop_times(trip_lookup, zagreb_stop_ids, zagreb_trip_ids):
-    """Stream stop_times, building timetable and departure indexes."""
+def process_stop_times(instance_lookup, raw_to_instances, zagreb_stop_ids):
+    """Stream stop_times, building timetable and departure indexes per instance."""
     print("⏰ Processing stop times (streaming)...")
 
     timetables_by_route = defaultdict(lambda: defaultdict(list))
@@ -286,26 +345,29 @@ def process_stop_times(trip_lookup, zagreb_stop_ids, zagreb_trip_ids):
             if line_count % 100_000 == 0:
                 print(f"  ... processed {line_count:,} rows")
 
-            trip_id = row['trip_id']
+            raw_trip_id = row['trip_id']
             stop_id = row['stop_id']
 
-            # Only keep trips that serve Zagreb AND stops within Zagreb
-            if trip_id not in zagreb_trip_ids:
+            # Only representative trips (one per logical run + bucket) and
+            # in-scope stops contribute rows.
+            instances = raw_to_instances.get(raw_trip_id)
+            if not instances:
                 continue
             if stop_id not in zagreb_stop_ids:
-                continue
-            if trip_id not in trip_lookup:
                 continue
 
             stop_sequence    = int(row['stop_sequence'])
             time_str         = row.get('departure_time') or row.get('arrival_time', '0:00:00')
-            route_id, _, first_date, _, _, _ = trip_lookup[trip_id]
-            time_minutes = time_to_minutes(time_str)
+            time_minutes     = time_to_minutes(time_str)
 
-            timetables_by_route[route_id][trip_id].append([stop_id, stop_sequence, time_minutes])
-            # Key departures by the exact run date for date-exact filtering
-            departures_by_stop[stop_id][first_date][route_id].append(time_minutes)
-            route_set_by_stop[stop_id].add(route_id)
+            for instance_id in instances:
+                route_id, bucket, _, _, _, _ = instance_lookup[instance_id]
+                timetables_by_route[route_id][instance_id].append(
+                    [stop_id, stop_sequence, time_minutes]
+                )
+                # Departures keyed by day-type bucket for the frontend filter
+                departures_by_stop[stop_id][bucket][route_id].append(time_minutes)
+                route_set_by_stop[stop_id].add(route_id)
 
     print(f"  ✓ Processed {line_count:,} stop time rows")
 
@@ -344,6 +406,11 @@ def generate_route_stops_index(timetables_by_route, trip_lookup):
 
     route_stops_dir = OUTPUT_DIR / 'route_stops'
     route_stops_dir.mkdir(exist_ok=True)
+
+    # Aggregate ordered stops per route → route_parent_stops.json, which powers
+    # the A→B journey planner (useDirections). HŽPP stops have no parent
+    # stations, so the "parent stop" of a station is the station itself.
+    parent_stops_index: dict[str, dict] = {}
 
     for route_id, trips_data in timetables_by_route.items():
         shape_counts = defaultdict(int)
@@ -391,7 +458,13 @@ def generate_route_stops_index(timetables_by_route, trip_lookup):
             'orderedStops':   ordered_stops,
         })
 
-    print(f"  ✓ Wrote {len(timetables_by_route)} route stops files")
+        if ordered_stops:
+            parent_stops_index[route_id] = ordered_stops
+
+    write_json(OUTPUT_DIR / 'route_parent_stops.json', parent_stops_index)
+
+    print(f"  ✓ Wrote {len(timetables_by_route)} route stops files "
+          f"+ route_parent_stops.json ({len(parent_stops_index)} routes)")
 
 
 def generate_route_shapes_index():
@@ -461,19 +534,10 @@ def generate_stop_timetables_index(timetables_by_route, trip_lookup):
                     'sequence': sequence,
                 }
     for stop_id, routes_data in stop_timetables.items():
-        # Prefix each trip_id with the first run date: '{date}_{trip_id}'
-        # The frontend filter `tripId.startsWith(activeServiceId + '_')` with
-        # activeServiceId = calendar[today] = today's date string will then
-        # match only trips that ran on exactly today.
-        out: dict = {}
-        for rid, trips in routes_data.items():
-            out[rid] = {}
-            for t_id, entry in trips.items():
-                if t_id not in trip_lookup:
-                    continue
-                _, _, first_date, _, _, _ = trip_lookup[t_id]
-                prefixed = f"{first_date}_{t_id}"
-                out[rid][prefixed] = entry
+        # Trip ids are already bucket-prefixed instance ids
+        # ('{bucket}_{route}_{trainNumber}_{direction}'), which the frontend
+        # filters via `tripId.startsWith(calendar[today] + '_')`.
+        out: dict = {rid: dict(trips) for rid, trips in routes_data.items()}
         write_json(
             stop_timetables_dir / f'{stop_id}.json',
             out
@@ -568,7 +632,7 @@ def generate_route_active_trips_index(timetables_by_route, trip_lookup):
             if not trip_stops:
                 continue
 
-            _, service_id, first_date, headsign, direction, shape_id = trip_lookup[trip_id]
+            _, _, _, headsign, direction, shape_id = trip_lookup[trip_id]
             first_stop = trip_stops[0]
             last_stop  = trip_stops[-1]
 
@@ -593,11 +657,9 @@ def generate_route_active_trips_index(timetables_by_route, trip_lookup):
                     for i in range(min(len(trip_stops), len(progress_values)))
                 ]
 
-            # Prefix the trip id with the first run date (same as process_trips)
-            prefixed_id = f"{first_date}_{trip_id}"
-
+            # trip_id is already the bucket-prefixed instance id
             trip_data: dict = {
-                'id':       prefixed_id,
+                'id':       trip_id,
                 'headsign': headsign,
                 'direction': direction,
                 'shapeId':  shape_id,
@@ -671,35 +733,36 @@ def calculate_stats():
 def main():
     print("🚀 GTFS Data Processor for HZPP Croatian Railways\n")
 
-    # Step 0: Pre-filter to Zagreb region
-    zagreb_stop_ids, zagreb_route_ids, zagreb_trip_ids = compute_zagreb_filter()
+    # Step 0: Determine geographic scope (national by default)
+    zagreb_stop_ids, zagreb_route_ids, _zagreb_trip_ids = compute_geo_filter()
 
-    # Step 1: Build service → dates map
-    service_date_map = build_service_date_map()
+    # Step 1: Collapse weekly services into day-type buckets + build calendar
+    service_buckets, span_start, span_end = build_service_buckets()
+    calendar = build_calendar_buckets(span_start, span_end)
 
     # Step 2: Initial bundle
-    process_initial_bundle(zagreb_stop_ids, zagreb_route_ids, service_date_map)
+    process_initial_bundle(zagreb_stop_ids, zagreb_route_ids, calendar)
 
-    # Step 3: Trips
-    trip_lookup = process_trips(zagreb_route_ids, service_date_map)
+    # Step 3: Trip instances (deduped per logical run + bucket)
+    instance_lookup, raw_to_instances = compute_trip_instances(zagreb_route_ids, service_buckets)
 
     # Step 4: Stop times (streaming)
-    timetables_by_route = process_stop_times(trip_lookup, zagreb_stop_ids, zagreb_trip_ids)
+    timetables_by_route = process_stop_times(instance_lookup, raw_to_instances, zagreb_stop_ids)
 
     # Step 5: Enrich stops
-    enrich_stops_with_metadata(timetables_by_route, trip_lookup)
+    enrich_stops_with_metadata(timetables_by_route, instance_lookup)
 
     # Step 6: Route stops index
-    generate_route_stops_index(timetables_by_route, trip_lookup)
+    generate_route_stops_index(timetables_by_route, instance_lookup)
 
     # Step 6b: Synthetic route shapes (HZPP has no shapes.txt)
     generate_route_shapes_index()
 
     # Step 7: Stop timetables index
-    generate_stop_timetables_index(timetables_by_route, trip_lookup)
+    generate_stop_timetables_index(timetables_by_route, instance_lookup)
 
     # Step 8: Route active trips index (synthetic shapes)
-    generate_route_active_trips_index(timetables_by_route, trip_lookup)
+    generate_route_active_trips_index(timetables_by_route, instance_lookup)
 
     # Step 9: Manifest
     generate_manifest()

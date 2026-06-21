@@ -19,6 +19,7 @@ import { useTimetableDepartures } from '../../hooks/useTimetableDepartures';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { bearingToCompassKey, minutesToTime } from '../../utils/gtfs';
 import { compassLabelForBearing } from '../../utils/localizedCompass';
+import { routeTypeColor } from '../../utils/routeStyle';
 import { ApproachingVehicleCard } from './ApproachingVehicleCard';
 import { RideHailingModal } from './RideHailingModal';
 import { type StopTab, StopTabSelector } from './StopTabSelector';
@@ -256,7 +257,7 @@ export const StopModal = memo(function StopModal({
                       onRouteClick(route.id, route.type);
                       onClose();
                     }}
-                    style={{ backgroundColor: route.type === 0 ? '#2563eb' : '#d97706' }}
+                    style={{ backgroundColor: routeTypeColor(route.type) }}
                     type="button"
                   >
                     {route.shortName}
@@ -328,7 +329,7 @@ export const StopModal = memo(function StopModal({
                             <span
                               className="badge badge-xs font-bold text-white"
                               key={r.id}
-                              style={{ backgroundColor: r.type === 0 ? '#2563eb' : '#d97706' }}
+                              style={{ backgroundColor: routeTypeColor(r.type) }}
                             >
                               {r.shortName}
                             </span>

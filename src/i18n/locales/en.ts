@@ -439,6 +439,7 @@ const en = {
       waitingGpsSignal: 'Waiting for GPS…',
     },
     routeModal: {
+      departures: 'Departures',
       journeyDirection: 'Direction',
       noStops: 'No stops available',
     },
@@ -477,6 +478,7 @@ const en = {
       listNoResultsForQuery: 'No results for "{{query}}"',
       loading: 'Loading…',
       noDirectRoutes: 'No direct route for these stops',
+      noDirectTrains: 'No direct trains today for these stations',
       noLinesForStop: 'No lines to show',
       placeholder: {
         fromWhere: 'From where?',
@@ -507,6 +509,8 @@ const en = {
       terminalsCount_one: '{{count}} platform',
       terminalsCount_other: '{{count}} platforms',
       title: 'Search',
+      trainsFound_one: '{{count}} direct train today',
+      trainsFound_other: '{{count}} direct trains today',
     },
     serviceAlert: {
       effects: {

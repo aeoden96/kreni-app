@@ -95,6 +95,18 @@ At build time, the CI downloads 114+ MB of raw GTFS archives and city-level GeoJ
 
 A cron job fetches unstructured official announcements. An **AI agent (Ollama)** parses them into structured JSON, which is then pushed to Cloudflare KV for the frontend to consume.
 
+### 3. Mobile & Platform Strategy
+
+Kreni is **web-first**. The native target is built with **Capacitor**, which
+wraps the existing React/Leaflet web app unchanged and exposes native APIs
+through plugins — chosen over React Native or fully native (no rewrite), and over
+a TWA (Android-only, no iOS, limited in-app payments/ads). The Android project
+lives in `android/` (`yarn cap:sync`); iOS is a later `npx cap add ios`. Maps stay
+on **Leaflet** until marker performance forces a move to **MapLibre GL JS**.
+
+See **[docs/PLATFORM_STRATEGY.md](docs/PLATFORM_STRATEGY.md)** for the full
+decision record, capability matrix, monetization notes, and sequencing.
+
 ---
 
 ## Quick Start

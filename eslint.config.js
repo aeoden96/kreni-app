@@ -9,7 +9,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig([
-  globalIgnores(['dist', 'dev-dist']),
+  globalIgnores(['dist', 'dev-dist', 'android', 'ios']),
   perfectionist.configs['recommended-natural'],
   {
     // Ensure core sorting rules are disabled globally to avoid conflicts with perfectionist

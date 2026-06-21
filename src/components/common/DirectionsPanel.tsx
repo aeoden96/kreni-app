@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import type { Route, Stop } from '../../utils/gtfs';
 
 import { useDirections } from '../../hooks/useDirections';
+import { routeTypeColor } from '../../utils/routeStyle';
 import { ParentStopInput } from './ParentStopInput';
 
 interface DirectionsPanelProps {
@@ -81,9 +82,8 @@ export function DirectionsPanel({
       {hasSelection && !loading && results.length > 0 && (
         <div className="divide-y divide-base-300 border border-base-300 rounded-xl overflow-hidden">
           {results.map((item) => {
-            const color =
-              item.route.type === 0 ? '#2563eb' : item.route.type === 3 ? '#d97706' : '#64748b';
-            const VehicleIcon = item.route.type === 0 ? TrainFront : Bus;
+            const color = routeTypeColor(item.route.type);
+            const VehicleIcon = item.route.type === 3 ? Bus : TrainFront;
             return (
               <button
                 className="w-full px-3 py-3 text-left hover:bg-base-200 transition-colors"

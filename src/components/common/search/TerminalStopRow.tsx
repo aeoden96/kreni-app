@@ -6,6 +6,7 @@ import type { Route, Stop } from '../../../utils/gtfs';
 import { useStopRoutes } from '../../../hooks/useStopRoutes';
 import { useStopTermini } from '../../../hooks/useStopTermini';
 import { compassLabelForBearing } from '../../../utils/localizedCompass';
+import { routeTypeColor } from '../../../utils/routeStyle';
 import { getStopTypeIcons } from '../../../utils/searchUtils';
 
 interface TerminalStopRowProps {
@@ -65,8 +66,7 @@ export const TerminalStopRow = memo(function TerminalStopRow({
                   className="badge badge-xs font-bold text-white"
                   key={route.id}
                   style={{
-                    backgroundColor:
-                      route.type === 0 ? '#2563eb' : route.type === 2 ? '#64748b' : '#d97706',
+                    backgroundColor: routeTypeColor(route.type),
                   }}
                 >
                   {route.shortName}

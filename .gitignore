@@ -50,13 +50,10 @@ test-results/
 *storybook.log
 storybook-static
 
-# Bubblewrap (TWA CLI) — local / regenerated
-.gradle/
-build/
-*.jks
-*.keystore
-android.keystore*
+# Capacitor — native build artifacts & signing secrets (android/ itself is committed)
 *.apk
 *.aab
 *.idsig
+*.keystore
+*.jks
 keystore.properties

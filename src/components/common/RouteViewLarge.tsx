@@ -10,14 +10,26 @@
  */
 
 import { ArrowLeft, Bus, Train, X } from 'lucide-react';
-import { memo, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { Route, Stop } from '../../utils/gtfs';
+import type { Route, RouteTimetable, Stop } from '../../utils/gtfs';
 import type { VehiclePosition } from '../../utils/vehicles';
 
+import { useGTFSMode } from '../../contexts/GTFSModeContext';
+import { useCurrentTime } from '../../hooks/useCurrentTime';
+import { routeTypeColor } from '../../utils/routeStyle';
 import { getDirectionColor } from '../Map/directionColors';
 import { RouteLineDiagram, STOP_LIST_PADDING_TOP, STOP_ROW_HEIGHT } from './RouteLineDiagram';
+
+/** A single scheduled run of the line in the active direction. */
+interface Departure {
+  /** Time (minutes from midnight) at the first served stop in display order. */
+  departureMin: number;
+  /** stopId → scheduled time (minutes from midnight) for this run. */
+  stopTimes: Map<string, number>;
+  tripId: string;
+}
 
 type DirectionFilter = 'A' | 'B';
 
@@ -34,12 +46,21 @@ interface RouteViewLargeProps {
   orderedStops?: Record<string, string[]>;
   route: Route;
   routeStops: string[];
+  /** Per-trip timed stop sequence for the line; drives the timetable strip. */
+  routeTimetable?: null | RouteTimetable;
+  /** Active service key (calendar[today]); trip ids are prefixed `{service}_`. */
+  serviceId?: null | string;
   stopsById: Map<string, Stop>;
   vehicles: VehiclePosition[];
 }
 
-const TRAM_COLOR = '#2563eb'; // blue-600
-const BUS_COLOR = '#d97706'; // amber-600
+/** Format minutes-from-midnight as HH:MM, wrapping past-midnight times (>24:00). */
+function formatTime(minutesFromMidnight: number): string {
+  const wrapped = ((minutesFromMidnight % 1440) + 1440) % 1440;
+  const h = Math.floor(wrapped / 60);
+  const m = wrapped % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
 
 export const RouteViewLarge = memo(function RouteViewLarge({
   initialDirectionFilter = 'A',
@@ -51,10 +72,14 @@ export const RouteViewLarge = memo(function RouteViewLarge({
   orderedStops,
   route,
   routeStops,
+  routeTimetable,
+  serviceId,
   stopsById,
   vehicles,
 }: RouteViewLargeProps) {
   const { t } = useTranslation();
+  const { hasRealtime } = useGTFSMode();
+  const nowMinutes = useCurrentTime();
 
   // Compute direction keys and labels from orderedStops
   const directionKeys = orderedStops
@@ -90,8 +115,8 @@ export const RouteViewLarge = memo(function RouteViewLarge({
   const dirVehicles = vehicles.filter((v) => v.direction === directionIndex);
   const filteredVehicles: VehiclePosition[] = dirVehicles.length > 0 ? dirVehicles : vehicles;
 
-  const color =
-    directionLabels[directionIndex]?.color || (route.type === 0 ? TRAM_COLOR : BUS_COLOR);
+  const color = directionLabels[directionIndex]?.color || routeTypeColor(route.type);
+  const RouteIcon = route.type === 3 ? Bus : Train;
 
   // Compute journey segment indices from parent station IDs
   const journeySegment = useMemo(() => {
@@ -110,6 +135,78 @@ export const RouteViewLarge = memo(function RouteViewLarge({
     if (fromIdx === -1 || toIdx === -1 || toIdx <= fromIdx) return null;
     return { fromIdx, toIdx };
   }, [journeyFromParentId, journeyToParentId, orderedStopIds, stopsById]);
+
+  // Timetable strip — scheduled departures for the active direction (train mode).
+  // Each route in the HŽPP feed is single-direction, so we keep only runs whose
+  // calling times are non-decreasing along the displayed stop order; for ZET
+  // this naturally filters out the opposite-direction trips of a two-way line.
+  const showTimetable = !hasRealtime && !!routeTimetable;
+
+  const departures = useMemo<Departure[]>(() => {
+    if (!showTimetable || !routeTimetable) return [];
+    const orderIndex = new Map(orderedStopIds.map((id, i) => [id, i]));
+    const result: Departure[] = [];
+
+    for (const [tripId, stops] of Object.entries(routeTimetable)) {
+      if (serviceId && !tripId.startsWith(`${serviceId}_`)) continue;
+
+      // Times at the displayed stops, sorted by display order.
+      const onRoute = stops
+        .map(([stopId, , timeMin]) => ({ orderIdx: orderIndex.get(stopId), stopId, timeMin }))
+        .filter(
+          (s): s is { orderIdx: number; stopId: string; timeMin: number } =>
+            s.orderIdx !== undefined
+        )
+        .sort((a, b) => a.orderIdx - b.orderIdx);
+      if (onRoute.length < 2) continue;
+
+      // Drop runs that go the other way along the displayed order.
+      let monotonic = true;
+      for (let i = 1; i < onRoute.length; i++) {
+        if (onRoute[i].timeMin < onRoute[i - 1].timeMin) {
+          monotonic = false;
+          break;
+        }
+      }
+      if (!monotonic) continue;
+
+      result.push({
+        departureMin: onRoute[0].timeMin,
+        stopTimes: new Map(onRoute.map((s) => [s.stopId, s.timeMin])),
+        tripId,
+      });
+    }
+
+    result.sort((a, b) => a.departureMin - b.departureMin);
+    return result;
+  }, [showTimetable, routeTimetable, serviceId, orderedStopIds]);
+
+  // Default-select the next upcoming departure whenever the run set changes
+  // (route or direction switch). Read "now" via a ref so the 1-minute tick of
+  // useCurrentTime() doesn't clobber a manual selection.
+  const [selectedTripId, setSelectedTripId] = useState<null | string>(null);
+  const nowRef = useRef(nowMinutes);
+  nowRef.current = nowMinutes;
+  useEffect(() => {
+    if (departures.length === 0) {
+      setSelectedTripId(null);
+      return;
+    }
+    const now = nowRef.current;
+    const next = departures.find((d) => d.departureMin >= now) ?? departures[departures.length - 1];
+    setSelectedTripId(next.tripId);
+  }, [departures]);
+
+  const selectedStopTimes = useMemo(
+    () => departures.find((d) => d.tripId === selectedTripId)?.stopTimes ?? null,
+    [departures, selectedTripId]
+  );
+
+  // Scroll the active departure chip into view when it changes.
+  const selectedChipRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    selectedChipRef.current?.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }, [selectedTripId]);
 
   if (!isOpen) return null;
 
@@ -152,11 +249,7 @@ export const RouteViewLarge = memo(function RouteViewLarge({
               {route.shortName}
             </span>
 
-            {route.type === 0 ? (
-              <Train className="w-3.5 h-3.5 opacity-40 shrink-0" />
-            ) : (
-              <Bus className="w-3.5 h-3.5 opacity-40 shrink-0" />
-            )}
+            <RouteIcon className="w-3.5 h-3.5 opacity-40 shrink-0" />
 
             <h2 className="font-bold text-sm leading-snug flex-1 min-w-0 line-clamp-2">
               {route.longName}
@@ -186,7 +279,7 @@ export const RouteViewLarge = memo(function RouteViewLarge({
               {directionLabels.map((dir, idx) => {
                 const dirCount = vehicles.filter((v) => v.direction === idx).length;
                 const isActive = directionKey === dir.key;
-                const VehicleIcon = route.type === 0 ? Train : Bus;
+                const VehicleIcon = RouteIcon;
                 return (
                   <button
                     className={[
@@ -222,6 +315,38 @@ export const RouteViewLarge = memo(function RouteViewLarge({
               })}
             </div>
           )}
+
+          {/* Departures strip (train mode) — pick a run to see its calling times */}
+          {showTimetable && departures.length > 0 && (
+            <div className="mt-2 flex items-center gap-1.5 overflow-x-auto pb-1 -mx-0.5 px-0.5">
+              <span className="text-[11px] font-semibold text-base-content/40 shrink-0 pr-0.5">
+                {t('routeModal.departures')}
+              </span>
+              {departures.map((d) => {
+                const isActive = d.tripId === selectedTripId;
+                const passed = d.departureMin < nowMinutes;
+                return (
+                  <button
+                    className={[
+                      'shrink-0 rounded-md px-2 py-1 text-xs font-bold tabular-nums transition-colors',
+                      isActive
+                        ? 'text-white'
+                        : passed
+                          ? 'bg-base-200 text-base-content/35 hover:bg-base-300'
+                          : 'bg-base-200 text-base-content/70 hover:bg-base-300',
+                    ].join(' ')}
+                    key={d.tripId}
+                    onClick={() => setSelectedTripId(d.tripId)}
+                    ref={isActive ? selectedChipRef : undefined}
+                    style={isActive ? { backgroundColor: color } : undefined}
+                    type="button"
+                  >
+                    {formatTime(d.departureMin)}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Scrollable body: metro diagram + stop list side-by-side */}
@@ -249,6 +374,7 @@ export const RouteViewLarge = memo(function RouteViewLarge({
                   ? idx === journeySegment.fromIdx || idx === journeySegment.toIdx
                   : false;
                 const name = stop?.name ?? stopId;
+                const stopTime = selectedStopTimes?.get(stopId);
                 return (
                   <button
                     className={[
@@ -267,7 +393,14 @@ export const RouteViewLarge = memo(function RouteViewLarge({
                         style={{ backgroundColor: color }}
                       />
                     )}
-                    <span className="text-sm leading-tight line-clamp-1">{name}</span>
+                    <span className="text-sm leading-tight line-clamp-1 flex-1 min-w-0">
+                      {name}
+                    </span>
+                    {showTimetable && stopTime !== undefined && (
+                      <span className="text-xs font-semibold tabular-nums text-base-content/60 shrink-0">
+                        {formatTime(stopTime)}
+                      </span>
+                    )}
                   </button>
                 );
               })}

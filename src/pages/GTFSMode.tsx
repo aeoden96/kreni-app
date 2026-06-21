@@ -47,6 +47,7 @@ import { useNavigationStore } from '../stores/navigationStore';
 import { useRealtimeStore } from '../stores/realtimeStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { trackEvent } from '../utils/analytics';
+import { routeTypeColor } from '../utils/routeStyle';
 
 interface GTFSModeProps {
   config: GTFSModeConfig;
@@ -620,7 +621,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
                 <span className="text-sm flex-1">
                   <span
                     className="badge font-bold mr-2 text-white"
-                    style={{ backgroundColor: selectedRoute.type === 0 ? '#2563eb' : '#d97706' }}
+                    style={{ backgroundColor: routeTypeColor(selectedRoute.type) }}
                   >
                     {selectedRoute.shortName}
                   </span>
@@ -722,6 +723,8 @@ export function GTFSMode({ config }: GTFSModeProps) {
             orderedStops={orderedStops}
             route={selectedRoute}
             routeStops={routeStops}
+            routeTimetable={routeTimetable}
+            serviceId={serviceId}
             stopsById={stopsById}
             vehicles={vehicles}
           />
