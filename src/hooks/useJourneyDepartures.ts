@@ -16,7 +16,7 @@ import type { Route, RouteTimetable } from '../utils/gtfs';
 import { fetchRouteTimetable } from '../utils/gtfs';
 import { useInitialData } from './useInitialData';
 
-export interface JourneyDeparture {
+interface JourneyDeparture {
   /** Scheduled arrival at the destination (minutes from midnight). */
   arrMin: number;
   /** Scheduled departure from the origin (minutes from midnight). */

@@ -9,6 +9,6 @@
     "vitest.shims.d.ts",
     "android/**"
   ],
-  "ignoreDependencies": ["@vitest/coverage-v8", "@secretlint/secretlint-rule-preset-recommend"],
+  "ignoreDependencies": ["@secretlint/secretlint-rule-preset-recommend"],
   "ignoreBinaries": []
 }
