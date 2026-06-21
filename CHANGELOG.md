@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.0](https://github.com/aeoden96/kreni-app/compare/v3.3.0...v3.4.0) (2026-06-21)
+
+
+### Features
+
+* train view improvements ([1601a0c](https://github.com/aeoden96/kreni-app/commit/1601a0c5de53167467209798c7fc8e62121a2b6a))
+
 ## [3.3.0](https://github.com/aeoden96/kreni-app/compare/v3.2.0...v3.3.0) (2026-06-04)
 
 
