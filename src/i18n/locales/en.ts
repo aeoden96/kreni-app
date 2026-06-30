@@ -245,15 +245,11 @@ const en = {
       unconfigured: 'The feedback form is not set up yet.',
     },
     gtfs: {
-      bottomToolsCollapseAria: 'Hide map tools',
-      bottomToolsExpandAria: 'Show map tools (alerts, legend, live feed, ZET app)',
       initialError: 'Error loading data: {{message}}',
       loadingRoute: 'Loading route…',
       loadingTrain: 'Loading train data…',
       loadingTransit: 'Loading data…',
       trainNoLiveTracking: 'Live train tracking is not available',
-      zetOpenApp: 'Open ZET app',
-      zetOpenAppAria: 'Open the ZET app',
       zoomForStopsAndVehicles: 'Zoom in to show stops and vehicles',
     },
     map: {
@@ -350,17 +346,7 @@ const en = {
     realtimePanel: {
       detailsHeading: 'Technical details',
       detailsTitle: 'ZET data refreshed {{timeAgo}} ago (every {{pollSec}} s)',
-      legend: {
-        busGpsKnown: 'Bus (GPS, direction known)',
-        busStopped: 'Bus (stopped)',
-        stopBus: 'Bus stop',
-        stopTram: 'Tram stop',
-        tramGpsKnown: 'Tram (GPS, direction known)',
-        tramStopped: 'Tram (stopped)',
-      },
-      legendTitle: 'Legend',
       showDetailsAria: 'Show technical data details',
-      showLegendAria: 'Show legend',
       tech: {
         cacheAge: 'Cache age',
         cacheLegend: 'HIT = served from cache, MISS = fetched from the source feed.',
@@ -631,6 +617,7 @@ const en = {
     },
     stopView: {
       bearingInTitle: ' ({{direction}})',
+      departuresHeading: 'Departures',
       gpsLiveShort: 'GPS live',
       gpsTipBodyBar: 'Vehicles approaching this stop in real time.',
       gpsTipBodyModal:

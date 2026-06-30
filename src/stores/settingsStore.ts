@@ -107,7 +107,6 @@ interface SettingsState {
   setShowSurveillanceCameras: (show: boolean) => void;
   setShowTaxiStands: (show: boolean) => void;
   setTheme: (theme: Theme) => void;
-  setTransitBottomToolsOpen: (open: boolean) => void;
   showBikeParkings: boolean;
   showBikePaths: boolean;
   showBikeStations: boolean;
@@ -176,8 +175,6 @@ interface SettingsState {
     sourceId?: string;
     title: string;
   }) => MapPlaceFavouriteToggleResult;
-  /** Expanded state of transit map bottom tools FAB (realtime / ZET link strip) */
-  transitBottomToolsOpen: boolean;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -328,7 +325,6 @@ export const useSettingsStore = create<SettingsState>()(
           }
           localStorage.setItem('theme', theme);
         },
-        setTransitBottomToolsOpen: (open) => set({ transitBottomToolsOpen: open }),
         showBikeParkings: false,
         showBikePaths: false,
         showBikeStations: true,
@@ -443,7 +439,6 @@ export const useSettingsStore = create<SettingsState>()(
           }
           return 'added';
         },
-        transitBottomToolsOpen: false,
       };
     },
     {
@@ -498,13 +493,17 @@ export const useSettingsStore = create<SettingsState>()(
           if (!next.showParkingZones) next.showParkingZones = true;
           if (!next.showRoadClosures) next.showRoadClosures = true;
         }
+        if (fromVersion < 9) {
+          // Removed the transit bottom-tools FAB (menu); drop its persisted state.
+          delete next.transitBottomToolsOpen;
+        }
         return next as Partial<SettingsState>;
       },
       name: 'kreni-settings',
       // Bump version here whenever a default value changes and you want
       // existing users' stored value to be overridden with the new default.
       // migrate() receives the persisted state and should return the corrected state.
-      version: 8,
+      version: 9,
     }
   )
 );

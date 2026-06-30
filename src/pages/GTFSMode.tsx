@@ -22,10 +22,9 @@ import { RealtimeStatusPanel } from '../components/common/RealtimeStatusPanel';
 import { RouteViewLarge } from '../components/common/RouteViewLarge';
 import { RouteViewSmall } from '../components/common/RouteViewSmall';
 import { SearchModal } from '../components/common/SearchModal';
+import { ServiceAlerts } from '../components/common/ServiceAlerts';
 import { StopInfoBar } from '../components/common/StopInfoBar';
 import { StopModal } from '../components/common/StopModal';
-import { TransitBottomToolsFab } from '../components/common/TransitBottomToolsFab';
-import { ZetAppLogoLink } from '../components/common/ZetAppLogoLink';
 import { MapView } from '../components/Map/MapView';
 import { MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD } from '../components/Map/mapZoomConstants';
 import { GTFSModeProvider } from '../contexts/GTFSModeContext';
@@ -67,9 +66,6 @@ export function GTFSMode({ config }: GTFSModeProps) {
     toParentId: string;
   }>(null);
 
-  const transitBottomToolsOpen = useSettingsStore((s) => s.transitBottomToolsOpen);
-  const setTransitBottomToolsOpen = useSettingsStore((s) => s.setTransitBottomToolsOpen);
-
   const setNearbyPanelOpen = useCallback((open: boolean) => {
     setNearbyOpen(open);
     if (!open) {
@@ -79,18 +75,10 @@ export function GTFSMode({ config }: GTFSModeProps) {
 
   const realtimePanelRef = useRef<RealtimeStatusPanelHandle>(null);
 
-  const setTransitBottomToolsOpenWithPanels = useCallback(
-    (next: boolean) => {
-      if (!next) realtimePanelRef.current?.closeLegends();
-      setTransitBottomToolsOpen(next);
-    },
-    [setTransitBottomToolsOpen]
-  );
-
-  /** Close Legend and "tehnički detalji" when user performs other actions (stop click, location, etc.) */
+  /** Close the "tehnički detalji" popover when user performs other actions (stop click, location, etc.) */
   const closeLegendAndDetails = useCallback(() => {
-    setTransitBottomToolsOpenWithPanels(false);
-  }, [setTransitBottomToolsOpenWithPanels]);
+    realtimePanelRef.current?.closeLegends();
+  }, []);
 
   // URL-backed selection state (route, stop, direction)
   const {
@@ -449,40 +437,28 @@ export function GTFSMode({ config }: GTFSModeProps) {
             </div>
           )}
 
-        {/* Realtime status badges + ZET app link (transit only); z above Leaflet bottom chrome */}
+        {/* Service alerts (always visible) + realtime technical details (debug only); z above Leaflet bottom chrome */}
         {config.id === 'transit' && (
-          <div className="absolute bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-[1100] flex items-center justify-end">
-            {config.hasRealtime && realtimeStats ? (
-              <TransitBottomToolsFab
-                onOpenChange={setTransitBottomToolsOpenWithPanels}
-                open={transitBottomToolsOpen}
-              >
-                <ZetAppLogoLink
-                  className="btn btn-circle btn-sm min-h-8 min-w-8 size-8 shrink-0 border-none bg-base-100 p-0 shadow transition-[box-shadow,transform,filter] duration-200 ring-1 ring-base-300/60 hover:ring-primary/55 hover:brightness-110 active:scale-95"
-                  imgClassName="size-full rounded-full object-cover"
-                />
-                <RealtimeStatusPanel
-                  alerts={serviceAlerts}
-                  cacheAgeSeconds={cacheAgeSeconds}
-                  cacheStatus={cacheStatus}
-                  feedAgeStr={feedAgeStr}
-                  fetchLatencyMs={fetchLatencyMs}
-                  lastUpdate={lastUpdate}
-                  nextPollAtMs={nextPollAtMs}
-                  onRouteClick={(routeId, routeType) => handleSelectRoute(routeId, routeType)}
-                  realtimeLoading={realtimeLoading}
-                  realtimeStats={realtimeStats}
-                  ref={realtimePanelRef}
-                  routesById={routesById}
-                  selectedRouteId={selectedRouteId}
-                  timeAgoStr={timeAgoStr}
-                  workerTimestamp={workerTimestamp}
-                />
-              </TransitBottomToolsFab>
-            ) : (
-              <ZetAppLogoLink
-                className="btn btn-circle btn-sm min-h-8 min-w-8 size-8 shrink-0 border-none bg-base-100 p-0 shadow transition-[box-shadow,transform,filter] duration-200 ring-1 ring-base-300/60 hover:ring-primary/55 hover:brightness-110 active:scale-95"
-                imgClassName="size-full rounded-full object-cover"
+          <div className="absolute bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-[1100] flex items-center justify-end gap-2">
+            <ServiceAlerts
+              alerts={serviceAlerts}
+              onRouteClick={(routeId, routeType) => handleSelectRoute(routeId, routeType)}
+              routesById={routesById}
+              selectedRouteId={selectedRouteId}
+            />
+            {config.hasRealtime && realtimeStats && sandboxVisible && (
+              <RealtimeStatusPanel
+                cacheAgeSeconds={cacheAgeSeconds}
+                cacheStatus={cacheStatus}
+                feedAgeStr={feedAgeStr}
+                fetchLatencyMs={fetchLatencyMs}
+                lastUpdate={lastUpdate}
+                nextPollAtMs={nextPollAtMs}
+                realtimeLoading={realtimeLoading}
+                realtimeStats={realtimeStats}
+                ref={realtimePanelRef}
+                timeAgoStr={timeAgoStr}
+                workerTimestamp={workerTimestamp}
               />
             )}
           </div>

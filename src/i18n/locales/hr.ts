@@ -248,15 +248,11 @@ const hr = {
       unconfigured: 'Obrazac za povratnu informacije još nije postavljen.',
     },
     gtfs: {
-      bottomToolsCollapseAria: 'Sakrij alate karte',
-      bottomToolsExpandAria: 'Prikaži alate karte (obavijesti, legenda, live feed, ZET aplikacija)',
       initialError: 'Greška pri učitavanju podataka: {{message}}',
       loadingRoute: 'Učitavanje rute...',
       loadingTrain: 'Učitavanje podataka o vlakovima...',
       loadingTransit: 'Učitavanje podataka...',
       trainNoLiveTracking: 'Live praćenje vlakova nije dostupno',
-      zetOpenApp: 'Otvori ZET aplikaciju',
-      zetOpenAppAria: 'Otvori aplikaciju ZET',
       zoomForStopsAndVehicles: 'Zumiraj za prikaz stanica i vozila',
     },
     map: {
@@ -357,17 +353,7 @@ const hr = {
     realtimePanel: {
       detailsHeading: 'Tehnički detalji',
       detailsTitle: 'ZET podaci osvježeni prije {{timeAgo}} (osvježavanje svakih {{pollSec}} s)',
-      legend: {
-        busGpsKnown: 'Autobus (GPS, smjer poznat)',
-        busStopped: 'Autobus (u mirovanju)',
-        stopBus: 'Autobusna stanica',
-        stopTram: 'Tramvajska stanica',
-        tramGpsKnown: 'Tramvaj (GPS, smjer poznat)',
-        tramStopped: 'Tramvaj (u mirovanju)',
-      },
-      legendTitle: 'Legenda',
       showDetailsAria: 'Prikaži tehničke detalje podataka',
-      showLegendAria: 'Prikaži legendu',
       tech: {
         cacheAge: 'Cache age',
         cacheLegend: 'HIT = posluženo iz predmemorije, MISS = dohvaćeno iz izvornog feeda.',
@@ -644,6 +630,7 @@ const hr = {
     },
     stopView: {
       bearingInTitle: ' ({{direction}})',
+      departuresHeading: 'Polasci',
       gpsLiveShort: 'GPS uživo',
       gpsTipBodyBar: 'Prikazuju se vozila koja se približavaju ovom stajalištu u stvarnom vremenu.',
       gpsTipBodyModal:
