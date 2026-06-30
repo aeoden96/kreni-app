@@ -63,19 +63,6 @@ test.describe('mobile stop info', () => {
     await expect(page.getByText(/Smjer prema/)).toBeVisible();
   });
 
-  test('stop panel has Vozila u blizini and Red vo\u017enje tabs', async ({ page }) => {
-    await page.goto('/?route=1&dir=A&stop=106_1');
-    await expect(page.getByRole('tab', { name: 'Vozila u blizini' })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Red vožnje' })).toBeVisible();
-  });
-
-  test('tapping Red vožnje tab activates it', async ({ page }) => {
-    await page.goto('/?route=1&dir=A&stop=106_1');
-    await page.getByRole('tab', { name: 'Red vožnje' }).click();
-    // DaisyUI uses .tab-active rather than aria-selected.
-    await expect(page.getByRole('tab', { name: 'Red vožnje' })).toHaveClass(/tab-active/);
-  });
-
   test('stop panel has Prikaži detalje and Zatvori icon buttons', async ({ page }) => {
     await page.goto('/?route=1&dir=A&stop=106_1');
     await expect(page.locator('[title="Prikaži detalje"]')).toBeVisible();

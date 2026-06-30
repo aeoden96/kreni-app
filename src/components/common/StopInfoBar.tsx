@@ -2,8 +2,6 @@
  * Fixed stop info bar at the top — tabbed view with "Vozila" (live GPS) and "Red vožnje" (timetable).
  */
 
-import type { TFunction } from 'i18next';
-
 import {
   ArrowRight,
   CarTaxiFront,
@@ -20,23 +18,27 @@ import { useTranslation } from 'react-i18next';
 import type { Route, Stop } from '../../utils/gtfs';
 
 import { useGTFSMode } from '../../contexts/GTFSModeContext';
-import { useApproachingVehicles } from '../../hooks/useApproachingVehicles';
 import { useSiblingPlatformRoutes } from '../../hooks/useSiblingPlatformRoutes';
+import { useStopDepartures } from '../../hooks/useStopDepartures';
 import { useStopRoutes } from '../../hooks/useStopRoutes';
 import { useStopTermini } from '../../hooks/useStopTermini';
-import { useTimetableDepartures } from '../../hooks/useTimetableDepartures';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { bearingToCompassKey } from '../../utils/gtfs';
 import { compassLabelForBearing } from '../../utils/localizedCompass';
 import { routeTypeColor } from '../../utils/routeStyle';
+import { DepartureCard } from './DepartureCard';
 import { RideHailingModal } from './RideHailingModal';
-import { type StopTab, StopTabSelector } from './StopTabSelector';
-import { TimetableDepartureCard } from './TimetableDepartureCard';
 
 interface StopInfoBarProps {
   onClose: () => void;
   onExpand: (stopId: string) => void;
-  onRouteClick?: (routeId: string, routeType: number, tripId?: string) => void;
+  onRouteClick?: (
+    routeId: string,
+    routeType: number,
+    tripId?: string,
+    lat?: null | number,
+    lon?: null | number
+  ) => void;
   onStopSelect?: (stopId: string) => void;
   routesById: Map<string, Route>;
   /** When true, shifts the bar down so it sits below the RouteViewSmall */
@@ -56,12 +58,11 @@ export function StopInfoBar({
   stopsById,
 }: StopInfoBarProps) {
   const { t } = useTranslation();
-  const { dataDir, hasRealtime, timetableLookaheadMinutes } = useGTFSMode();
+  const { dataDir, timetableLookaheadMinutes } = useGTFSMode();
   const { favouriteStopIds, toggleFavouriteStop } = useSettingsStore();
   const isFav = favouriteStopIds.includes(stop.id);
   const [rideHailingModalOpen, setRideHailingModalOpen] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
-  const [activeTab, setActiveTab] = useState<StopTab>(hasRealtime ? 'vehicles' : 'timetable');
   const [routesExpanded, setRoutesExpanded] = useState(false);
   const [platformsExpanded, setPlatformsExpanded] = useState(false);
 
@@ -74,10 +75,13 @@ export function StopInfoBar({
   }, []);
 
   const {
+    departures,
     isAllTerminus,
-    loading: vehiclesLoading,
-    vehicles: allVehicles,
-  } = useApproachingVehicles(stop.id, stopsById, routesById, nowMs, { dataDir });
+    loading: departuresLoading,
+  } = useStopDepartures(stop.id, routesById, stopsById, nowMs, {
+    dataDir,
+    lookaheadMinutes: timetableLookaheadMinutes,
+  });
 
   // Sibling platforms — stops at the same parent station, or (fallback) same-named stops
   // when no parent station is set (common for bus stop pairs without GTFS grouping).
@@ -163,24 +167,7 @@ export function StopInfoBar({
       })}
     </div>
   ) : null;
-  const liveVehicles = allVehicles
-    .filter((v) => v.confidence === 'realtime')
-    .sort((a, b) => {
-      if (a.passedStop !== b.passedStop) return a.passedStop ? -1 : 1;
-      if (a.passedStop && b.passedStop) return (b.distanceMeters ?? 0) - (a.distanceMeters ?? 0);
-      return (a.distanceMeters ?? Infinity) - (b.distanceMeters ?? Infinity);
-    });
-  const topVehicles = liveVehicles.slice(0, 4);
-  const liveCount = liveVehicles.filter((v) => !v.passedStop).length;
-
-  const { departures: timetableDepartures, loading: timetableLoading } = useTimetableDepartures(
-    stop.id,
-    routesById,
-    stopsById,
-    nowMs,
-    { dataDir, lookaheadMinutes: timetableLookaheadMinutes }
-  );
-  const topDepartures = timetableDepartures.slice(0, 4);
+  const topDepartures = departures.slice(0, 4);
 
   const { routes: stopRoutes } = useStopRoutes(stop.id, routesById, { dataDir });
   const { termini } = useStopTermini(stop.id, stopsById, routesById, { dataDir });
@@ -370,186 +357,34 @@ export function StopInfoBar({
           )}
         </div>
 
-        {/* Tab selector */}
-        <div className="mb-2">
-          <StopTabSelector
-            activeTab={activeTab}
-            compact
-            hideVehicles={!hasRealtime}
-            liveVehicleCount={liveCount}
-            onTabChange={setActiveTab}
-          />
-        </div>
-
-        {/* Vehicles tab */}
-        {activeTab === 'vehicles' &&
-          (vehiclesLoading ? (
-            <div className="flex items-center gap-2 py-2">
-              <span className="loading loading-spinner loading-sm" />
-              <span className="text-sm text-base-content/60">
-                {t('stopView.searchingVehicles')}
-              </span>
+        {/* Unified departure board */}
+        {departuresLoading ? (
+          <div className="flex items-center gap-2 py-2">
+            <span className="loading loading-spinner loading-sm" />
+            <span className="text-sm text-base-content/60">{t('stopView.loadingTimetable')}</span>
+          </div>
+        ) : topDepartures.length === 0 ? (
+          (terminusBanner ?? (
+            <div className="text-sm text-base-content/50 py-2 text-center">
+              {t('stopView.noDeparturesInMins', { minutes: timetableLookaheadMinutes })}
             </div>
-          ) : topVehicles.length === 0 ? (
-            (terminusBanner ?? (
-              <div className="text-sm text-base-content/50 py-2 text-center">
-                {t('stopView.noGpsVehiclesNearby')}
-              </div>
-            ))
-          ) : (
-            <div className="space-y-2">
-              {topVehicles.map((vehicle) => {
-                const d = vehicle.distanceMeters;
-                const isAtStop = d !== null && d < 15;
-
-                // Primary: distance
-                let primaryText: string;
-                let primaryColor: string;
-                if (vehicle.passedStop) {
-                  primaryText = d !== null ? `${formatDist(d, t)} ↑` : t('vehicleCard.passed');
-                  primaryColor = 'text-base-content/40';
-                } else if (isAtStop) {
-                  primaryText = t('vehicleCard.atStop');
-                  primaryColor = 'text-success font-bold';
-                } else if (d !== null) {
-                  primaryText = formatDist(d, t);
-                  primaryColor = d < 100 ? 'text-success' : 'text-base-content';
-                } else {
-                  const secs = Math.round(vehicle.arrivingInSeconds);
-                  primaryText =
-                    secs <= 0
-                      ? t('timetableCard.departsNow')
-                      : secs < 120
-                        ? t('vehicleCard.inSeconds', { secs })
-                        : t('vehicleCard.inMinutes', { mins: Math.round(secs / 60) });
-                  primaryColor = secs <= 0 ? 'text-success' : 'text-base-content';
-                }
-
-                // Secondary: GPS time estimate
-                let secondaryText: null | string = null;
-                if (!vehicle.passedStop && !isAtStop && d !== null) {
-                  const gpsSecs = vehicle.etaFromGpsSeconds;
-                  if (gpsSecs !== null) {
-                    secondaryText =
-                      gpsSecs < 30
-                        ? t('vehicleCard.arriving')
-                        : gpsSecs < 120
-                          ? t('vehicleCard.secondsTilde', { secs: Math.round(gpsSecs) })
-                          : t('vehicleCard.minutesTilde', { mins: Math.round(gpsSecs / 60) });
-                  } else {
-                    const secs = Math.round(vehicle.arrivingInSeconds);
-                    secondaryText =
-                      secs < 120
-                        ? t('vehicleCard.secondsTilde', { secs })
-                        : t('vehicleCard.minutesTilde', { mins: Math.round(secs / 60) });
-                  }
-                }
-
-                return (
-                  <button
-                    className={`w-full flex items-center gap-2 rounded-lg px-1.5 py-1 -mx-1.5 transition-colors text-left ${
-                      vehicle.passedStop
-                        ? 'opacity-50'
-                        : isAtStop
-                          ? 'bg-success/10 ring-1 ring-success/60 hover:bg-success/20'
-                          : d !== null && d < 100
-                            ? 'bg-success/5 ring-1 ring-success/30 hover:bg-success/10'
-                            : 'hover:bg-base-200/70'
-                    } ${onRouteClick ? 'cursor-pointer' : 'cursor-default'}`}
-                    key={vehicle.tripId}
-                    onClick={
-                      onRouteClick
-                        ? () => onRouteClick(vehicle.routeId, vehicle.routeType, vehicle.tripId)
-                        : undefined
-                    }
-                    type="button"
-                  >
-                    <span
-                      className="badge badge-sm font-bold min-w-[2.5rem] justify-center shrink-0 text-white"
-                      style={{
-                        backgroundColor: vehicle.routeType === 0 ? '#2563eb' : '#d97706',
-                        ...(isAtStop
-                          ? { animation: 'pulse 2s cubic-bezier(0.4,0,0.6,1) infinite' }
-                          : {}),
-                      }}
-                    >
-                      {vehicle.routeShortName}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs text-base-content/80 truncate">
-                        {vehicle.tripDestinationName}
-                      </div>
-                      <div className="text-[11px] text-base-content/45 leading-tight flex items-center gap-1">
-                        {vehicle.passedStop ? (
-                          <span className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />
-                        ) : (
-                          <span className="w-1.5 h-1.5 rounded-full bg-success shrink-0 animate-pulse" />
-                        )}
-                        <span>
-                          {vehicle.passedStop
-                            ? t('vehicleCard.passedStop')
-                            : vehicle.stopsAway !== null && vehicle.stopsAway > 1
-                              ? t('vehicleCard.stopsAway', { count: vehicle.stopsAway - 1 })
-                              : t('vehicleCard.nextStop')}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <div
-                        className={`font-bold text-sm tabular-nums whitespace-nowrap ${primaryColor}`}
-                      >
-                        {primaryText}
-                      </div>
-                      {secondaryText && (
-                        <div className="text-xs text-base-content/50 tabular-nums">
-                          {secondaryText}
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-              {liveVehicles.length > topVehicles.length && (
-                <button
-                  className="w-full text-xs text-base-content/50 hover:text-base-content/80 py-1 text-center transition-colors"
-                  onClick={() => onExpand(stop.id)}
-                  type="button"
-                >
-                  {t('stopView.seeAllCount', { count: liveVehicles.length })} →
-                </button>
-              )}
-            </div>
-          ))}
-
-        {/* Timetable tab */}
-        {activeTab === 'timetable' &&
-          (timetableLoading ? (
-            <div className="flex items-center gap-2 py-2">
-              <span className="loading loading-spinner loading-sm" />
-              <span className="text-sm text-base-content/60">{t('stopView.loadingTimetable')}</span>
-            </div>
-          ) : topDepartures.length === 0 ? (
-            (terminusBanner ?? (
-              <div className="text-sm text-base-content/50 py-2 text-center">
-                {t('stopView.noDeparturesInMins', { minutes: timetableLookaheadMinutes })}
-              </div>
-            ))
-          ) : (
-            <div className="space-y-2">
-              {topDepartures.map((dep) => (
-                <TimetableDepartureCard compact departure={dep} key={dep.tripId} />
-              ))}
-              {timetableDepartures.length > topDepartures.length && (
-                <button
-                  className="w-full text-xs text-base-content/50 hover:text-base-content/80 py-1 text-center transition-colors"
-                  onClick={() => onExpand(stop.id)}
-                  type="button"
-                >
-                  {t('stopView.seeAllCount', { count: timetableDepartures.length })} →
-                </button>
-              )}
-            </div>
-          ))}
+          ))
+        ) : (
+          <div className="space-y-2">
+            {topDepartures.map((dep) => (
+              <DepartureCard compact departure={dep} key={dep.tripId} onRouteClick={onRouteClick} />
+            ))}
+            {departures.length > topDepartures.length && (
+              <button
+                className="w-full text-xs text-base-content/50 hover:text-base-content/80 py-1 text-center transition-colors"
+                onClick={() => onExpand(stop.id)}
+                type="button"
+              >
+                {t('stopView.seeAllCount', { count: departures.length })} →
+              </button>
+            )}
+          </div>
+        )}
       </div>
       <RideHailingModal
         isOpen={rideHailingModalOpen}
@@ -558,10 +393,4 @@ export function StopInfoBar({
       />
     </div>
   );
-}
-
-/** Format distance: metres below 1000, km above */
-function formatDist(meters: number, t: TFunction): string {
-  if (meters < 1000) return t('common.metresShort', { metres: meters });
-  return t('common.kilometres', { km: (meters / 1000).toFixed(1) });
 }

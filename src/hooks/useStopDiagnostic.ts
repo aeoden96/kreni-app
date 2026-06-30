@@ -1,7 +1,7 @@
 /**
  * Diagnostic hook for debugging stop → vehicle matching.
  *
- * Runs the same matching logic as useApproachingVehicles but surfaces
+ * Runs the same matching logic as useStopDepartures but surfaces
  * ALL trips (not just the included ones) together with the exact reason
  * each trip was included or dropped.
  *
@@ -18,7 +18,7 @@ import { useRealtimeStore } from '../stores/realtimeStore';
 import { fetchRouteStops, fetchStopTimetable } from '../utils/gtfs';
 import { computeVehicleStopProgress } from '../utils/vehicles';
 
-// ── Mirror of the constants in useApproachingVehicles ──────────────────────
+// ── Mirror of the constants in useStopDepartures ───────────────────────────
 const LOOKAHEAD_MINUTES = 30;
 const ARRIVED_GRACE_SECONDS = 30;
 const PASSED_STOP_DISTANCE_METERS = 400;
@@ -368,7 +368,7 @@ export function useStopDiagnostic(
   };
 }
 
-/** Haversine distance (metres) — mirrors useApproachingVehicles */
+/** Haversine distance (metres) — mirrors useStopDepartures */
 function haversineMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371000;
   const toRad = (d: number) => (d * Math.PI) / 180;

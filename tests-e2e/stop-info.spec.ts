@@ -80,25 +80,6 @@ test.describe('stop info', () => {
     await expect(page.getByText(/Smjer prema/)).toBeVisible();
   });
 
-  test('stop panel has Vozila u blizini and Red vo\u017enje tabs', async ({ page }) => {
-    await page.goto('/?route=1&dir=A&stop=106_1');
-    await page.waitForLoadState('networkidle');
-
-    await expect(page.getByRole('tab', { name: 'Vozila u blizini' })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Red vo\u017enje' })).toBeVisible();
-  });
-
-  test('Red vo\u017enje tab shows timetable content', async ({ page }) => {
-    await page.goto('/?route=1&dir=A&stop=106_1');
-    await page.waitForLoadState('networkidle');
-
-    await page.getByRole('tab', { name: 'Red vo\u017enje' }).click();
-
-    // The StopTabSelector uses CSS class "tab-active" (not aria-selected)
-    // to mark the active tab — check for that class instead.
-    await expect(page.getByRole('tab', { name: 'Red vo\u017enje' })).toHaveClass(/tab-active/);
-  });
-
   test('stop panel has Zatvori and Prika\u017ei detalje buttons', async ({ page }) => {
     await page.goto('/?route=1&dir=A&stop=106_1');
     await page.waitForLoadState('networkidle');

@@ -10,20 +10,17 @@ import { useTranslation } from 'react-i18next';
 import type { Route, Stop } from '../../utils/gtfs';
 
 import { useGTFSMode } from '../../contexts/GTFSModeContext';
-import { useApproachingVehicles } from '../../hooks/useApproachingVehicles';
 import { useCurrentTime } from '../../hooks/useCurrentTime';
 import { useSiblingPlatformRoutes } from '../../hooks/useSiblingPlatformRoutes';
+import { useStopDepartures } from '../../hooks/useStopDepartures';
 import { useStopRoutes } from '../../hooks/useStopRoutes';
 import { useStopTermini } from '../../hooks/useStopTermini';
-import { useTimetableDepartures } from '../../hooks/useTimetableDepartures';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { bearingToCompassKey, minutesToTime } from '../../utils/gtfs';
 import { compassLabelForBearing } from '../../utils/localizedCompass';
 import { routeTypeColor } from '../../utils/routeStyle';
-import { ApproachingVehicleCard } from './ApproachingVehicleCard';
+import { DepartureCard } from './DepartureCard';
 import { RideHailingModal } from './RideHailingModal';
-import { type StopTab, StopTabSelector } from './StopTabSelector';
-import { TimetableDepartureCard } from './TimetableDepartureCard';
 
 interface StopModalProps {
   isOpen: boolean;
@@ -58,7 +55,6 @@ export const StopModal = memo(function StopModal({
   const isFav = favouriteStopIds.includes(stop.id);
   const [rideHailingModalOpen, setRideHailingModalOpen] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
-  const [activeTab, setActiveTab] = useState<StopTab>(hasRealtime ? 'vehicles' : 'timetable');
   const [routesExpanded, setRoutesExpanded] = useState(false);
   const [platformsExpanded, setPlatformsExpanded] = useState(false);
 
@@ -72,12 +68,17 @@ export const StopModal = memo(function StopModal({
     return () => clearInterval(interval);
   }, [isOpen]);
 
-  // Approaching vehicles (GPS) — only active when modal is open
+  // Unified departure board — merges static timetable + live GPS by tripId.
+  // Only active when the modal is open.
   const {
+    departures,
     isAllTerminus,
-    loading: vehiclesLoading,
-    vehicles: allVehicles,
-  } = useApproachingVehicles(isOpen ? stop.id : null, stopsById, routesById, nowMs, { dataDir });
+    liveCount,
+    loading: departuresLoading,
+  } = useStopDepartures(isOpen ? stop.id : null, routesById, stopsById, nowMs, {
+    dataDir,
+    lookaheadMinutes: timetableLookaheadMinutes,
+  });
 
   // Sibling platforms — stops at the same parent station, or (fallback) same-named stops
   // when no parent station is set (common for bus stop pairs without GTFS grouping).
@@ -163,23 +164,6 @@ export const StopModal = memo(function StopModal({
       })}
     </div>
   ) : null;
-  const liveVehicles = allVehicles
-    .filter((v) => v.confidence === 'realtime')
-    .sort((a, b) => {
-      if (a.passedStop !== b.passedStop) return a.passedStop ? -1 : 1;
-      if (a.passedStop && b.passedStop) return (b.distanceMeters ?? 0) - (a.distanceMeters ?? 0);
-      return (a.distanceMeters ?? Infinity) - (b.distanceMeters ?? Infinity);
-    });
-  const liveCount = liveVehicles.filter((v) => !v.passedStop).length;
-
-  // Timetable departures — only active when modal is open
-  const { departures: timetableDepartures, loading: timetableLoading } = useTimetableDepartures(
-    isOpen ? stop.id : null,
-    routesById,
-    stopsById,
-    nowMs,
-    { dataDir, lookaheadMinutes: timetableLookaheadMinutes }
-  );
 
   const { routes: stopRoutes } = useStopRoutes(isOpen ? stop.id : null, routesById, { dataDir });
   const { termini } = useStopTermini(isOpen ? stop.id : null, stopsById, routesById, { dataDir });
@@ -354,20 +338,12 @@ export const StopModal = memo(function StopModal({
               </div>
             </div>
           )}
-          {/* Tab selector */}
-          <StopTabSelector
-            activeTab={activeTab}
-            compact
-            hideVehicles={!hasRealtime}
-            liveVehicleCount={liveCount}
-            onTabChange={setActiveTab}
-          />
         </div>
 
-        {/* Content */}
+        {/* Content — single unified departure board */}
         <div className="flex-1 overflow-y-auto overscroll-contain">
           {/* GPS tip banner */}
-          {activeTab === 'vehicles' && !vehiclesLoading && !dismissedGpsTip && (
+          {hasRealtime && liveCount > 0 && !dismissedGpsTip && (
             <div className="mx-4 mt-4 mb-3 p-4 rounded-xl bg-info/10 border border-info/30 flex gap-3 items-start">
               <Info className="w-5 h-5 text-info shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
@@ -391,71 +367,37 @@ export const StopModal = memo(function StopModal({
               </button>
             </div>
           )}
-          {/* Vehicles tab */}
-          {activeTab === 'vehicles' &&
-            (vehiclesLoading ? (
-              <div className="flex items-center justify-center gap-3 p-8 text-base-content/50">
-                <span className="loading loading-spinner loading-sm" />
-                <span>{t('stopView.searchingVehicles')}</span>
+          {departuresLoading ? (
+            <div className="flex items-center justify-center gap-3 p-8 text-base-content/50">
+              <span className="loading loading-spinner loading-sm" />
+              <span>{t('stopView.loadingTimetable')}</span>
+            </div>
+          ) : departures.length === 0 ? (
+            (terminusBanner ?? (
+              <div className="p-8 text-center text-base-content/50">
+                {t('stopView.noDeparturesInMins', { minutes: timetableLookaheadMinutes })}
               </div>
-            ) : liveVehicles.length === 0 ? (
-              (terminusBanner ?? (
-                <div className="p-8 text-center text-base-content/50">
-                  {t('stopView.noGpsVehiclesNearby')}
-                </div>
-              ))
-            ) : (
-              <div className="px-4 pb-4 space-y-2">
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="font-semibold">{t('stopView.upcomingVehicles')}</h3>
-                  <span className="text-xs text-base-content/40">{t('stopView.gpsLiveShort')}</span>
-                </div>
-                {liveVehicles.map((vehicle) => (
-                  <ApproachingVehicleCard
-                    key={vehicle.tripId}
-                    onRouteClick={(routeId, routeType, tripId, lat, lon) => {
-                      onRouteClick(routeId, routeType, tripId, lat, lon);
-                      onClose();
-                    }}
-                    vehicle={vehicle}
-                  />
-                ))}
+            ))
+          ) : (
+            <div className="p-4 space-y-2">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="font-semibold">{t('stopView.departuresHeading')}</h3>
+                <span className="text-xs text-base-content/40">
+                  {t('stopView.timetableNextMins', { minutes: timetableLookaheadMinutes })}
+                </span>
               </div>
-            ))}
-
-          {/* Timetable tab */}
-          {activeTab === 'timetable' &&
-            (timetableLoading ? (
-              <div className="flex items-center justify-center gap-3 p-8 text-base-content/50">
-                <span className="loading loading-spinner loading-sm" />
-                <span>{t('stopView.loadingTimetable')}</span>
-              </div>
-            ) : timetableDepartures.length === 0 ? (
-              (terminusBanner ?? (
-                <div className="p-8 text-center text-base-content/50">
-                  {t('stopView.noDeparturesInMins', { minutes: timetableLookaheadMinutes })}
-                </div>
-              ))
-            ) : (
-              <div className="p-4 space-y-2">
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="font-semibold">{t('stopView.timetableHeading')}</h3>
-                  <span className="text-xs text-base-content/40">
-                    {t('stopView.timetableNextMins', { minutes: timetableLookaheadMinutes })}
-                  </span>
-                </div>
-                {timetableDepartures.map((dep) => (
-                  <TimetableDepartureCard
-                    departure={dep}
-                    key={dep.tripId}
-                    onRouteClick={(routeId, routeType) => {
-                      onRouteClick(routeId, routeType);
-                      onClose();
-                    }}
-                  />
-                ))}
-              </div>
-            ))}
+              {departures.map((dep) => (
+                <DepartureCard
+                  departure={dep}
+                  key={dep.tripId}
+                  onRouteClick={(routeId, routeType, tripId, lat, lon) => {
+                    onRouteClick(routeId, routeType, tripId, lat, lon);
+                    onClose();
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
       <RideHailingModal
