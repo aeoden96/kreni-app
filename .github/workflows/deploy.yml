@@ -90,7 +90,9 @@ jobs:
         uses: actions/cache@v6
         with:
           path: public/data
-          key: gtfs-processed-${{ steps.gtfs-hash.outputs.hash }}
+          # Bust the cache when either the feed OR the processing logic changes,
+          # so a script change re-runs even on an unchanged zip.
+          key: gtfs-processed-${{ steps.gtfs-hash.outputs.hash }}-${{ hashFiles('scripts/process_gtfs.py', 'scripts/run.sh', 'scripts/core/gtfs_base.py') }}
 
       - name: Extract GTFS data
         if: steps.gtfs-cache.outputs.cache-hit != 'true'

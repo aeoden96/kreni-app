@@ -3,7 +3,7 @@
  * parse-service-alerts.mjs
  *
  * Fetches the ZET RSS feed, diffs against the current Cloudflare KV state,
- * calls Ollama (gemma3:12b) for any new items, and writes the result to KV.
+ * calls Ollama (gemma4:31b-cloud) for any new items, and writes the result to KV.
  *
  * Required env vars:
  *   OLLAMA_API_KEY          – Ollama Cloud API key (https://ollama.com)
@@ -139,11 +139,9 @@ function stripHtml(html) {
 
 // Ollama Cloud endpoint
 const OLLAMA_API_URL = 'https://ollama.com/api/chat';
-// gemma3:12b – strong multilingual (incl. Croatian), reliable JSON output, ~24 GB.
-// Other good options from https://ollama.com/api/tags:
-//   ministral-3:14b  (~16 GB, Mistral multilingual)
-//   gpt-oss:20b      (~14 GB, smaller/faster)
-const OLLAMA_MODEL = 'gemma3:12b';
+// gemma4:31b-cloud – strong multilingual (incl. Croatian), reliable JSON output.
+// gemma3 is being deprecated on Ollama Cloud; gemma4:cloud is the smaller/faster alternative.
+const OLLAMA_MODEL = 'gemma4:31b-cloud';
 
 const SYSTEM_PROMPT = `Ti si parser podataka o prometu za ZET (Zagrebački električni tramvaj).
 Primaš obavijest o prometu na hrvatskom jeziku (naslov + opis u plain-textu).

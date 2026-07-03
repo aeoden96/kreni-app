@@ -3,7 +3,7 @@
  * generate-release-notes.mjs
  *
  * Reads public/changelog.json, fetches the currently deployed release-notes.json
- * from kreni.app to avoid retranslating existing releases, and calls Ollama (gemma3:12b)
+ * from kreni.app to avoid retranslating existing releases, and calls Ollama (gemma4:31b-cloud)
  * to generate user-friendly changelogs for HR, EN, and DE.
  *
  * Required env vars:
@@ -21,7 +21,7 @@ const distPath = path.resolve(rootPath, 'dist');
 
 const OLLAMA_API_KEY = process.env.OLLAMA_API_KEY;
 const OLLAMA_API_URL = 'https://ollama.com/api/chat';
-const OLLAMA_MODEL = 'gemma3:12b';
+const OLLAMA_MODEL = 'gemma4:31b-cloud';
 const LIVE_NOTES_URL = 'https://kreni.app/release-notes.json';
 
 const PROMPT_TEMPLATE = `You rewrite technical changelog lines for a public transit app (Zagreb) into plain language for end users.
