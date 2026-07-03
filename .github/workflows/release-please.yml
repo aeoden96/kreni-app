@@ -9,6 +9,10 @@ permissions:
 
 name: release-please
 
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
 jobs:
   release-please:
     runs-on: ubuntu-latest
