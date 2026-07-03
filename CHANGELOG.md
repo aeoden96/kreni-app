@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.5.0](https://github.com/aeoden96/kreni-app/compare/v3.4.0...v3.5.0) (2026-07-03)
+
+
+### Features
+
+* surface prometne obavijesti directly, remove map tools menu ([05e79c8](https://github.com/aeoden96/kreni-app/commit/05e79c80d8cf427d81a12355bcce3b5e63233184))
+
+
+### Bug Fixes
+
+* fixed gps and timetable consolidation in the stop view ([6147ccb](https://github.com/aeoden96/kreni-app/commit/6147ccbfdedf1b8febc6bf8096ec2dba1aceb1b1))
+
 ## [3.4.0](https://github.com/aeoden96/kreni-app/compare/v3.3.0...v3.4.0) (2026-06-21)
 
 
