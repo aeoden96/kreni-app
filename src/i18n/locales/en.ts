@@ -627,6 +627,8 @@ const en = {
       gpsTipFootnoteModal:
         'Based on the GPS feed, independent of the timetable, so it may differ from the “Timetable” tab.',
       gpsTipTitle: 'GPS vehicle view',
+      liveNowCount_one: '{{count}} live',
+      liveNowCount_other: '{{count}} live',
       loadingTimetable: 'Loading timetable…',
       noDeparturesInMins: 'No departures in the next {{minutes}} min',
       noGpsVehiclesNearby: 'No GPS vehicles nearby',

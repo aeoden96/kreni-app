@@ -623,6 +623,8 @@ const de = {
       gpsTipFootnoteModal:
         'Basierend auf GPS, unabhängig vom Fahrplan — kann vom Tab „Fahrplan“ abweichen.',
       gpsTipTitle: 'GPS-Fahrzeugansicht',
+      liveNowCount_one: '{{count}} live',
+      liveNowCount_other: '{{count}} live',
       loadingTimetable: 'Fahrplan wird geladen…',
       noDeparturesInMins: 'Keine Abfahrten in den nächsten {{minutes}} Min.',
       noGpsVehiclesNearby: 'Keine GPS-Fahrzeuge in der Nähe',

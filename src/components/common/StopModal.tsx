@@ -382,9 +382,17 @@ export const StopModal = memo(function StopModal({
             <div className="p-4 space-y-2">
               <div className="flex items-center justify-between mb-1">
                 <h3 className="font-semibold">{t('stopView.departuresHeading')}</h3>
-                <span className="text-xs text-base-content/40">
-                  {t('stopView.timetableNextMins', { minutes: timetableLookaheadMinutes })}
-                </span>
+                <div className="flex items-center gap-2">
+                  {liveCount > 0 && (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-success">
+                      <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                      {t('stopView.liveNowCount', { count: liveCount })}
+                    </span>
+                  )}
+                  <span className="text-xs text-base-content/40">
+                    {t('stopView.timetableNextMins', { minutes: timetableLookaheadMinutes })}
+                  </span>
+                </div>
               </div>
               {departures.map((dep) => (
                 <DepartureCard

@@ -1,9 +1,12 @@
 /**
  * Diagnostic hook for debugging stop → vehicle matching.
  *
- * Runs the same matching logic as useStopDepartures but surfaces
- * ALL trips (not just the included ones) together with the exact reason
- * each trip was included or dropped.
+ * Runs an *approximation* of the useStopDepartures matching logic but surfaces
+ * ALL trips (not just the included ones) together with the reason each trip was
+ * included or dropped. It intentionally does not replicate the newer refinements
+ * (GPS-primary ETA fusion, service-day/overnight handling, passed-stop distance
+ * classification, passed-trip memory) — it exists to inspect the raw inputs, not
+ * the fused output.
  *
  * Only active when sandboxVisible is true so no extra overhead is incurred
  * in production.

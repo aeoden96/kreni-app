@@ -117,4 +117,18 @@ describe('enrichWithDeadReckoning', () => {
     const out = enrichWithDeadReckoning(cur, prev);
     expect(out.speed).toBe(33);
   });
+
+  it('smooths derived speed against the previous smoothed value (EMA)', () => {
+    // ~111 m over 10 s => raw ~11.1 m/s; with prev smoothed 5 => 0.4*11.1 + 0.6*5 ≈ 7.4
+    const prev: VehicleSnapshot = {
+      latitude: 45,
+      longitude: 16,
+      smoothedSpeed: 5,
+      timestamp: 1_000,
+    };
+    const cur = vehicle(45.001, 16, 1_010);
+    const out = enrichWithDeadReckoning(cur, prev);
+    expect(out.speed).toBeGreaterThan(7);
+    expect(out.speed).toBeLessThan(8);
+  });
 });

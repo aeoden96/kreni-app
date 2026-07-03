@@ -640,6 +640,9 @@ const hr = {
       gpsTipFootnoteModal:
         'Prikaz se temelji na GPS signalu, neovisno o voznom redu, pa može odstupati od taba „Red vožnje”.',
       gpsTipTitle: 'GPS prikaz vozila',
+      liveNowCount_few: '{{count}} uživo',
+      liveNowCount_one: '{{count}} uživo',
+      liveNowCount_other: '{{count}} uživo',
       loadingTimetable: 'Učitavam red vožnje...',
       noDeparturesInMins: 'Nema polazaka u sljedećih {{minutes}} min',
       noGpsVehiclesNearby: 'Nema GPS vozila u blizini',

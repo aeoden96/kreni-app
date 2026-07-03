@@ -271,7 +271,7 @@ export function findNearestStops(
 
 export function formatTime24h(minutes: number): string {
   const hours = Math.floor(minutes / 60) % 24;
-  const mins = minutes % 60;
+  const mins = Math.floor(minutes % 60);
   return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
 }
 

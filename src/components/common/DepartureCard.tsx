@@ -1,10 +1,13 @@
 /**
  * A single row in the unified stop departure board.
  *
- * One row per trip, regardless of whether it is GPS-tracked or schedule-only:
- *   - Primary (right): countdown to arrival from the fused ETA ("Now" / "in 4 min").
- *   - Secondary (right): clock time, with delay strike-through when realtime data is present.
- *   - Subtitle: live indicator + "2 stops away · 350 m" for GPS rows, "per timetable" otherwise.
+ * Trust is encoded in the format of the time itself, not in labels:
+ *   - Live rows (GPS-tracked): green "~N min" countdown with a pulsing dot next to the
+ *     number, expected clock time below. Minutes are the precision floor — the feed pings
+ *     every 10–20 s, so a seconds countdown would claim accuracy we don't have.
+ *   - Scheduled rows: a plain muted clock time is the hero ("a promise from paper"),
+ *     with an "in N min" helper only when imminent. No dot, no subtitle.
+ *   - Passed rows: dimmed "Prošao" — informative "you just missed it".
  */
 
 import type { TFunction } from 'i18next';
@@ -13,7 +16,10 @@ import { useTranslation } from 'react-i18next';
 
 import type { StopDeparture } from '../../hooks/useStopDepartures';
 
-import { minutesToTime } from '../../utils/gtfs';
+import { formatTime24h } from '../../utils/gtfs';
+
+/** Show the "in N min" helper on scheduled rows when departure is within this window */
+const SCHEDULED_IMMINENT_SECONDS = 600;
 
 interface DepartureCardProps {
   /** Compact single-row style for StopInfoBar; default false = full card for StopModal */
@@ -35,6 +41,7 @@ export function DepartureCard({ compact = false, departure, onRouteClick }: Depa
     delaySeconds,
     distanceMeters,
     etaSeconds,
+    gpsStale,
     hasGps,
     passedStop,
     realtimeSource,
@@ -43,55 +50,57 @@ export function DepartureCard({ compact = false, departure, onRouteClick }: Depa
 
   const hasDelay = realtimeSource !== null && delaySeconds !== null;
   const delaySec = delaySeconds ?? 0;
-  const delayMin = Math.round(Math.abs(delaySec) / 60);
-  const isLate = delaySec > 90;
-  const isEarly = delaySec < -90;
-  const isAtStop = hasGps && !passedStop && distanceMeters !== null && distanceMeters < 15;
+  const isLate = hasDelay && delaySec > 90;
+  const isEarly = hasDelay && delaySec < -90;
+  const isLive = hasGps && !passedStop;
+  const isAtStop = isLive && distanceMeters !== null && distanceMeters < 15;
 
   const badgeColor = departure.routeType === 0 ? '#2563eb' : '#d97706';
-  const clockTime = minutesToTime(hasDelay ? adjustedMinutes : scheduledMinutes);
-  const scheduledClockTime = minutesToTime(scheduledMinutes);
+  // Expected clock time (delay-adjusted when realtime data exists); wraps after midnight
+  const clockTime = formatTime24h(hasDelay ? adjustedMinutes : scheduledMinutes);
+  const clockColor = isLate ? 'text-error' : isEarly ? 'text-success' : 'text-base-content/40';
 
-  // Primary countdown
-  const primaryText = passedStop
-    ? t('vehicleCard.passedStop')
-    : isAtStop
-      ? t('vehicleCard.atStop')
-      : formatCountdown(etaSeconds, t);
-  const primaryColor = passedStop
-    ? 'text-base-content/40'
-    : isAtStop || etaSeconds <= 0
-      ? 'text-success'
-      : '';
+  // ── Right-hand block ──
+  let primaryText: string;
+  let primaryColor: string;
+  let secondary: null | string = null;
+  let secondaryColor = 'text-base-content/40';
 
-  // Subtitle: live status + distance, or schedule chip
-  const subtitle = (
+  if (passedStop) {
+    primaryText = t('vehicleCard.passed');
+    primaryColor = 'text-base-content/40';
+    secondary = clockTime;
+  } else if (isLive) {
+    // Ceil, not round: the straight-line ETA already errs early and red lights push
+    // reality later — under-promising trains users to distrust the green numbers.
+    const mins = Math.max(1, Math.ceil(etaSeconds / 60));
+    primaryText = isAtStop ? t('vehicleCard.atStop') : t('vehicleCard.minutesTilde', { mins });
+    primaryColor = 'text-success';
+    secondary = clockTime;
+    secondaryColor = clockColor;
+  } else {
+    // Scheduled-only: the clock time is the hero
+    primaryText = clockTime;
+    primaryColor = isLate ? 'text-error' : isEarly ? 'text-success' : 'text-base-content/80';
+    if (etaSeconds < SCHEDULED_IMMINENT_SECONDS) {
+      secondary =
+        etaSeconds < 60
+          ? t('timetableCard.departsNow')
+          : t('timetableCard.inMinutes', { count: Math.round(etaSeconds / 60) });
+    }
+  }
+
+  // ── Subtitle: proximity fact for tracked rows only; scheduled rows stay clean ──
+  const subtitle = passedStop ? (
     <div className="text-[11px] text-base-content/45 leading-tight flex items-center gap-1">
-      {passedStop ? (
-        <span className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />
-      ) : hasGps ? (
-        <span className="w-1.5 h-1.5 rounded-full bg-success shrink-0 animate-pulse" />
-      ) : (
-        <span className="w-1.5 h-1.5 rounded-full bg-base-content/30 shrink-0" />
-      )}
-      <span className="truncate">{statusLabel(departure, t)}</span>
+      <span className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />
+      <span className="truncate">{t('vehicleCard.passedStop')}</span>
     </div>
-  );
-
-  // Secondary line: clock time + delay indication
-  const secondary =
-    hasDelay && (isLate || isEarly) ? (
-      <div className="flex items-center justify-end gap-1">
-        <span className="text-[11px] text-base-content/40 tabular-nums line-through">
-          {scheduledClockTime}
-        </span>
-        <span className={`text-[11px] font-medium ${isLate ? 'text-error' : 'text-success'}`}>
-          {isLate ? `+${delayMin}` : `-${delayMin}`}m
-        </span>
-      </div>
-    ) : (
-      <span className="text-[11px] text-base-content/40 tabular-nums">{clockTime}</span>
-    );
+  ) : isLive ? (
+    <div className="text-[11px] text-base-content/45 leading-tight">
+      <span className="truncate">{proximityLabel(departure, t)}</span>
+    </div>
+  ) : null;
 
   const badge = (
     <span
@@ -106,6 +115,13 @@ export function DepartureCard({ compact = false, departure, onRouteClick }: Depa
       {departure.routeShortName}
     </span>
   );
+
+  // Pulsing live dot sits next to the countdown — colour + motion mark realtime rows
+  const liveDot = isLive ? (
+    <span
+      className={`w-1.5 h-1.5 rounded-full bg-success shrink-0 ${gpsStale ? '' : 'animate-pulse'}`}
+    />
+  ) : null;
 
   const destination = onRouteClick ? (
     <button
@@ -131,6 +147,20 @@ export function DepartureCard({ compact = false, departure, onRouteClick }: Depa
 
   const dimClass = passedStop ? 'opacity-50' : '';
 
+  const rightBlock = (
+    <div className="text-right shrink-0">
+      <div
+        className={`font-bold text-sm tabular-nums whitespace-nowrap flex items-center justify-end gap-1.5 ${primaryColor}`}
+      >
+        {liveDot}
+        <span>{primaryText}</span>
+      </div>
+      {secondary !== null && (
+        <div className={`mt-0.5 text-[11px] tabular-nums ${secondaryColor}`}>{secondary}</div>
+      )}
+    </div>
+  );
+
   if (compact) {
     return (
       <div className={`flex items-center gap-2 ${dimClass}`}>
@@ -139,48 +169,25 @@ export function DepartureCard({ compact = false, departure, onRouteClick }: Depa
           {destination}
           {subtitle}
         </div>
-        <div className="text-right shrink-0">
-          <div className={`font-bold text-sm tabular-nums whitespace-nowrap ${primaryColor}`}>
-            {primaryText}
-          </div>
-          <div className="flex items-center justify-end gap-1">{secondary}</div>
-        </div>
+        {rightBlock}
       </div>
     );
   }
 
   return (
-    <div className={`card bg-base-200 ${dimClass}`}>
+    <div className={`card ${isAtStop ? 'bg-success/10' : 'bg-base-200'} ${dimClass}`}>
       <div className="card-body p-3 gap-0">
         <div className="flex items-center gap-2">
           {badge}
           <div className="flex-1 min-w-0">
             {destination}
-            <div className="mt-0.5">{subtitle}</div>
+            {subtitle !== null && <div className="mt-0.5">{subtitle}</div>}
           </div>
-          <div className="text-right shrink-0">
-            <div className={`font-bold text-sm tabular-nums whitespace-nowrap ${primaryColor}`}>
-              {primaryText}
-            </div>
-            <div className="mt-0.5 flex items-center justify-end gap-1">{secondary}</div>
-          </div>
+          {rightBlock}
         </div>
       </div>
     </div>
   );
-}
-
-/** Format the fused ETA as a countdown. Seconds under 2 min, minutes otherwise. */
-function formatCountdown(seconds: number, t: TFunction): string {
-  if (seconds <= 0) return t('timetableCard.departsNow');
-  if (seconds < 120) return t('vehicleCard.inSeconds', { secs: Math.round(seconds) });
-  const mins = Math.round(seconds / 60);
-  if (mins < 60) return t('timetableCard.inMinutes', { count: mins });
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  return m === 0
-    ? t('timetableCard.inHours', { hours: h })
-    : t('timetableCard.inHoursMinutes', { hours: h, mins: m });
 }
 
 /** Format distance: metres below 1000, km above */
@@ -189,20 +196,17 @@ function formatDistance(meters: number, t: TFunction): string {
   return t('common.kilometres', { km: (meters / 1000).toFixed(1) });
 }
 
-/** Live status text: stops away + distance for GPS rows, schedule chip otherwise. */
-function statusLabel(d: StopDeparture, t: TFunction): string {
-  if (d.passedStop) return t('vehicleCard.passedStop');
-  if (!d.hasGps) return t('timetableCard.perSchedule');
-
-  const stopsPart =
-    d.stopsAway !== null
-      ? d.stopsAway <= 1
-        ? t('vehicleCard.atPlatform')
-        : t('vehicleCard.stopsAway', { count: d.stopsAway - 1 })
+/**
+ * Proximity fact for live rows. Stops-away is the most ping-robust signal we have —
+ * it stays true while the vehicle idles at a red light, quietly explaining a stalled
+ * minute estimate. Metres appear only when stop topology is unavailable.
+ */
+function proximityLabel(d: StopDeparture, t: TFunction): string {
+  if (d.stopsAway === null) {
+    return d.distanceMeters !== null
+      ? `${t('vehicleCard.gpsLive')} · ${formatDistance(d.distanceMeters, t)}`
       : t('vehicleCard.gpsLive');
-
-  if (d.distanceMeters !== null && d.distanceMeters >= 15) {
-    return `${stopsPart} · ${formatDistance(d.distanceMeters, t)}`;
   }
-  return stopsPart;
+  if (d.stopsAway === 0) return t('vehicleCard.atPlatform');
+  return t('vehicleCard.stopsAway', { count: d.stopsAway });
 }

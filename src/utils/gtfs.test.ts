@@ -55,6 +55,11 @@ describe('formatTime24h', () => {
     expect(formatTime24h(90)).toBe('01:30');
     expect(formatTime24h(1500)).toBe('01:00'); // 25h -> 01:00
   });
+
+  it('floors fractional minutes (delay-adjusted times)', () => {
+    expect(formatTime24h(620.5)).toBe('10:20');
+    expect(formatTime24h(1470.75)).toBe('00:30'); // 24:30.75 -> 00:30
+  });
 });
 
 describe('calculateDistance', () => {

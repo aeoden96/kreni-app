@@ -124,6 +124,12 @@ export interface ParsedVehiclePosition {
   occupancyStatus?: OccupancyStatus;
   routeId: string;
   speed?: number; // m/s
+  /**
+   * App-derived (not from the feed): seconds this vehicle has reported roughly the
+   * same position across polls. Covers both a vehicle stuck in traffic and a frozen
+   * GPS transponder — either way the position can no longer be treated as fresh motion.
+   */
+  stationarySeconds?: number;
   status?: VehicleStopStatus;
   timestamp: number; // POSIX timestamp
   tripId: string;
@@ -322,8 +328,15 @@ const EFFECT_LABELS: Record<number, string> = {
 };
 
 export interface VehicleSnapshot {
+  /** Position of the last time the vehicle moved ≥ STATIONARY_RADIUS_METERS (stationary anchor) */
+  anchorLat?: number;
+  anchorLon?: number;
+  /** Wall-clock ms when the stationary anchor was last reset (vehicle last moved) */
+  anchorWallMs?: number;
   latitude: number;
   longitude: number;
+  /** EMA-smoothed derived speed carried across polls (m/s) */
+  smoothedSpeed?: number;
   /** POSIX seconds */
   timestamp: number;
 }
@@ -353,6 +366,8 @@ export function computeBearing(lat1: number, lng1: number, lat2: number, lng2: n
  * - Movement must be ≥ 5 m (below GPS noise threshold)
  * - Derived speed capped at 33 m/s (~120 km/h)
  * - Derived values only fill in missing fields from the feed
+ * - Speed is EMA-smoothed across polls (instantaneous position deltas jitter too much
+ *   to drive a stable ETA countdown)
  */
 export function enrichWithDeadReckoning(
   current: ParsedVehiclePosition,
@@ -376,7 +391,9 @@ export function enrichWithDeadReckoning(
     current.latitude,
     current.longitude
   );
-  const derivedSpeed = Math.min(dist / dt, 33); // m/s, capped at ~120 km/h
+  const rawSpeed = Math.min(dist / dt, 33); // m/s, capped at ~120 km/h
+  const derivedSpeed =
+    prev.smoothedSpeed !== undefined ? 0.4 * rawSpeed + 0.6 * prev.smoothedSpeed : rawSpeed;
 
   return {
     ...current,

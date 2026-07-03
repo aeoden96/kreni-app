@@ -10,6 +10,7 @@ import {
   type FeedStatistics,
   fetchRealtimeFeed,
   getFeedStatistics,
+  haversineDistance,
   type ParsedServiceAlert,
   type ParsedTripUpdate,
   type ParsedVehiclePosition,
@@ -19,6 +20,9 @@ import {
   REALTIME_COMBINED_FEED_ENDPOINT,
   type VehicleSnapshot,
 } from '../utils/realtime';
+
+/** A vehicle that hasn't moved this far from its anchor is considered stationary */
+const STATIONARY_RADIUS_METERS = 15;
 
 /**
  * Module-level history — survives store updates but is not reactive.
@@ -85,6 +89,7 @@ export const useRealtimeStore = create<RealtimeState>()((set) => ({
       const stats = getFeedStatistics(feed);
 
       const vehiclePositions = new Map<string, ParsedVehiclePosition>();
+      const nowWallMs = Date.now();
       for (const pos of positions) {
         // Enrich with dead-reckoning if we have a previous snapshot
         // Only use history when vehicleId is non-empty (avoids cross-vehicle pollution)
@@ -92,11 +97,33 @@ export const useRealtimeStore = create<RealtimeState>()((set) => ({
         const prev = historyKey ? vehicleHistory.get(historyKey) : undefined;
         const enriched = prev ? enrichWithDeadReckoning(pos, prev) : pos;
 
-        // Update history with the raw (un-enriched) current position
+        // Stationary anchor: wall-clock based so it also catches a frozen transponder
+        // (position AND timestamp stuck) — feed timestamps alone can't be trusted for this.
+        let anchorLat = pos.latitude;
+        let anchorLon = pos.longitude;
+        let anchorWallMs = nowWallMs;
+        if (
+          prev?.anchorLat !== undefined &&
+          prev.anchorLon !== undefined &&
+          prev.anchorWallMs !== undefined &&
+          haversineDistance(prev.anchorLat, prev.anchorLon, pos.latitude, pos.longitude) <
+            STATIONARY_RADIUS_METERS
+        ) {
+          anchorLat = prev.anchorLat;
+          anchorLon = prev.anchorLon;
+          anchorWallMs = prev.anchorWallMs;
+        }
+        enriched.stationarySeconds = Math.round((nowWallMs - anchorWallMs) / 1000);
+
+        // Update history with the raw current position + carried smoothing/anchor state
         if (historyKey) {
           vehicleHistory.set(historyKey, {
+            anchorLat,
+            anchorLon,
+            anchorWallMs,
             latitude: pos.latitude,
             longitude: pos.longitude,
+            smoothedSpeed: enriched.speed ?? prev?.smoothedSpeed,
             timestamp: pos.timestamp,
           });
         }
