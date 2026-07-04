@@ -1,11 +1,17 @@
-# Platform & Mobile Strategy
+---
+tags: [area/decisions, type/decision-record]
+status: accepted
+updated: 2026-06-21
+---
+
+# 0001 — Platform & Mobile Strategy
 
 > **Decision record.** How Kreni ships to mobile and why. Status: **accepted; Android implemented via Capacitor** (app id `app.kreni`).
 
 ## TL;DR
 
 - **Stay web-first.** The PWA already delivers every current feature; the data
-  layer (CF Worker + sharded static JSON) is a platform-agnostic HTTP API that
+  layer (CF Worker + sharded static JSON, see [[cloudflare-topology]] and [[architecture/overview|overview]]) is a platform-agnostic HTTP API that
   ports to any client for free.
 - **Native target: Capacitor.** It wraps the _existing_ React/Leaflet codebase
   unchanged and exposes native APIs via plugins. The **Android** project lives in
@@ -98,7 +104,7 @@ Monetization is the clearest reason to prefer **Capacitor over TWA**:
 - **While web (PWA / Capacitor):** Leaflet and MapLibre GL JS both run in the
   WebView, so it is a free choice.
   - **Keep Leaflet for now.** It is mature and tiny, and our HTML `divIcon`
-    markers (route number, bearing arrow, realtime dot) are trivial in it.
+    markers (route number, bearing arrow, realtime dot) are trivial in it. See [[tech-stack]].
   - **Limit:** Leaflet DOM/SVG markers don't scale — many animated vehicles plus
     dense city-point layers will jank in a mid-range Android WebView. Note
     `preferCanvas` does **not** help here: the canvas renderer only accelerates
@@ -134,11 +140,11 @@ Monetization is the clearest reason to prefer **Capacitor over TWA**:
   shell, and consider disabling it for the native build if it is.
 - **Android App Links:** to make `https://kreni.app/...` open the app, re-add a
   `.well-known/assetlinks.json` with the **new** `app.kreni` signing fingerprint
-  (the old TWA one was deleted).
+  (the old TWA one was deleted). Confirmed still absent from the repo as of this writing.
 - **Feed dependency / legal:** ZET, Nextbike, and Zagreb open-data feeds are
   proxied with no formal agreement. ToS/rate-limit/brand risk rises once the app
-  is a named store listing (Nextbike's live JSON especially).
+  is a named store listing (Nextbike's live JSON especially). See [[city-services]].
 - **Map attribution** (OSM / CARTO / CyclOSM) must survive any wrapper — it is a
   licensing requirement, easy to drop in a rewrite.
 - **Bus factor:** solo hobby project with a sophisticated CI data pipeline —
-  keep the slicing/cron flow documented and reproducible.
+  keep the slicing/cron flow documented and reproducible (see [[data-flow]], [[ci-cd-pipelines]]).

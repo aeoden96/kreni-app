@@ -1,3 +1,9 @@
+---
+tags: [area/features, type/reference]
+status: current
+updated: 2026-07-03
+---
+
 # Stop Departure Board — Architecture & Current State
 
 _Last updated: 2026-07-03. Covers the timetable + GPS fusion overhaul of the stop view._
@@ -11,6 +17,8 @@ merging two projections of the same trip:
 Both sources are keyed by `tripId`, so a scheduled departure and its live vehicle are the
 _same row_. All merge/fusion logic lives in `src/hooks/useStopDepartures.ts`; presentation
 lives in `src/components/common/DepartureCard.tsx`.
+
+See [[gps-realtime-trust-model]] for the trust rules in isolation (also referenced from [[map-and-navigation]] and the realtime hooks).
 
 ## Trust model
 
@@ -88,14 +96,8 @@ Precision rules (feed pings every 10–20 s → minutes are the precision floor)
 | `PASSED_STOP_NEAR_METERS`           | 75     | "projected past" within this = still at the stop        |
 | `PASSED_TRIP_MEMORY_MS`             | 30 min | scheduled-row suppression after a confirmed pass        |
 
-## Known limitations / future ideas
-
-- **Loop-route misprojection** (pre-existing): a vehicle near a start-equals-end terminal
-  can project onto late segments and be hidden as "passed". The proper fix needs
-  shape-aware projection or GTFS-RT `currentStopId`, which this feed audit deemed
-  untrustworthy. Accepted trade: a hidden real vehicle beats a phantom "arriving" one.
-- **`useStopDiagnostic`** (debug sandbox) intentionally approximates the production logic
-  and does not replicate the newer refinements — it inspects raw inputs, not fused output.
-- **Phase-2 UX idea**: replace the "N stajališta" text with small progress pips
-  (`○○●──`, capped at 5) — a good fit for this feed since stops-away is its most
-  ping-robust signal.
+> [!warning] Known limitations / future ideas
+>
+> - **Loop-route misprojection** (pre-existing): a vehicle near a start-equals-end terminal can project onto late segments and be hidden as "passed". The proper fix needs shape-aware projection or GTFS-RT `currentStopId`, which this feed audit deemed untrustworthy. Accepted trade: a hidden real vehicle beats a phantom "arriving" one.
+> - **`useStopDiagnostic`** (debug sandbox) intentionally approximates the production logic and does not replicate the newer refinements — it inspects raw inputs, not fused output.
+> - **Phase-2 UX idea** _(status: roadmap)_: replace the "N stajališta" text with small progress pips (`○○●──`, capped at 5) — a good fit for this feed since stops-away is its most ping-robust signal.

@@ -104,8 +104,8 @@ a TWA (Android-only, no iOS, limited in-app payments/ads). The Android project
 lives in `android/` (`yarn cap:sync`); iOS is a later `npx cap add ios`. Maps stay
 on **Leaflet** until marker performance forces a move to **MapLibre GL JS**.
 
-See **[docs/PLATFORM_STRATEGY.md](docs/PLATFORM_STRATEGY.md)** for the full
-decision record, capability matrix, monetization notes, and sequencing.
+See **[docs/decisions/0001-mobile-platform-strategy.md](docs/decisions/0001-mobile-platform-strategy.md)** for the full
+decision record, capability matrix, monetization notes, and sequencing. The full documentation vault lives in **[docs/Home.md](docs/Home.md)**.
 
 ---
 
