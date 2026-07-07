@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { ParsedTripUpdate, ParsedVehiclePosition } from '../utils/realtime';
 
-export type VehicleFocusState = null | {
+type VehicleFocusState = null | {
   isFollowing: boolean;
   routeId: string;
   tripId: string;
