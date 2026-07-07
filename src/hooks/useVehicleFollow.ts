@@ -1,77 +1,95 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { ParsedTripUpdate, ParsedVehiclePosition } from '../utils/realtime';
 
+export type VehicleFocusState = null | {
+  isFollowing: boolean;
+  routeId: string;
+  tripId: string;
+  viewMode: 'full' | 'preview';
+};
+
 /**
- * Manages vehicle follow state and handlers. When the user selects a vehicle
- * and taps "Follow", the map auto-centers on it. Clears follow mode when the
- * route changes.
+ * Manages vehicle follow state and handlers.
  */
 export function useVehicleFollow(
   selectedRouteId: null | string,
   vehiclePositions: Map<string, ParsedVehiclePosition>,
   tripUpdates: Map<string, ParsedTripUpdate>
 ) {
-  const [lastClickedVehicle, setLastClickedVehicle] = useState<null | {
-    routeId: string;
-    tripId: string;
-  }>(null);
-  const [followedVehicleTripId, setFollowedVehicleTripId] = useState<null | string>(null);
+  const [vehicleFocus, setVehicleFocus] = useState<VehicleFocusState>(null);
+  const [zoomToRouteTrigger, setZoomToRouteTrigger] = useState<number>(0);
 
-  // Clear follow mode when route changes.
-  // lastClickedVehicle is intentionally NOT cleared here — it's already gated
-  // by routeId === selectedRouteId in the render, and clearing it here creates
-  // a race condition that wipes it before the RouteInfoBar can display the follow button.
+  const vehicleFocusRef = useRef(vehicleFocus);
   useEffect(() => {
-    setFollowedVehicleTripId(null);
+    vehicleFocusRef.current = vehicleFocus;
+  }, [vehicleFocus]);
+
+  // Clear follow mode when route changes, UNLESS the route change was triggered
+  // by clicking a vehicle on that specific route.
+  useEffect(() => {
+    if (selectedRouteId && vehicleFocusRef.current?.routeId === selectedRouteId) return;
+    setVehicleFocus(null);
   }, [selectedRouteId]);
 
-  const followedRawPos = followedVehicleTripId
-    ? (vehiclePositions.get(followedVehicleTripId) ?? null)
-    : null;
+  const activeTripId = vehicleFocus?.tripId ?? null;
+
+  const followedRawPos = activeTripId ? (vehiclePositions.get(activeTripId) ?? null) : null;
   const followedVehiclePos = followedRawPos
     ? { lat: followedRawPos.latitude, lon: followedRawPos.longitude }
     : null;
-  const followedTripUpdate = followedVehicleTripId
-    ? (tripUpdates.get(followedVehicleTripId) ?? null)
-    : null;
+  const followedTripUpdate = activeTripId ? (tripUpdates.get(activeTripId) ?? null) : null;
 
   const handleVehicleSelect = useCallback(
-    (tripId: string) => {
-      if (selectedRouteId) setLastClickedVehicle({ routeId: selectedRouteId, tripId });
+    (tripId: string, viewMode: 'full' | 'preview' = 'preview', explicitRouteId?: string) => {
+      const targetRouteId = explicitRouteId || selectedRouteId;
+      if (targetRouteId) {
+        setVehicleFocus({
+          isFollowing: viewMode === 'full',
+          routeId: targetRouteId,
+          tripId,
+          viewMode,
+        });
+      }
     },
     [selectedRouteId]
   );
 
-  const handleFollowStart = useCallback((tripId: string) => {
-    setFollowedVehicleTripId(tripId);
-  }, []);
+  const handleFollowStart = useCallback(
+    (tripId: string) => {
+      if (selectedRouteId) {
+        setVehicleFocus({ isFollowing: true, routeId: selectedRouteId, tripId, viewMode: 'full' });
+      }
+    },
+    [selectedRouteId]
+  );
 
   const handleFollowDisengage = useCallback(() => {
-    setFollowedVehicleTripId(null);
+    setVehicleFocus((prev) => (prev ? { ...prev, isFollowing: false } : null));
   }, []);
 
   const handleUnfollow = useCallback(() => {
-    setFollowedVehicleTripId(null);
+    setVehicleFocus((prev) => (prev ? { ...prev, isFollowing: false } : null));
   }, []);
 
   /** Leave single-vehicle / follow UI and return to the route vehicle list. */
   const handleBackToRouteOverview = useCallback(() => {
-    setLastClickedVehicle(null);
-    setFollowedVehicleTripId(null);
+    setVehicleFocus((prev) => (prev ? { ...prev, isFollowing: false, viewMode: 'preview' } : null));
+    setZoomToRouteTrigger(Date.now());
   }, []);
 
   return {
+    activeTripId,
     followedTripUpdate,
     followedVehicleParsedPos: followedRawPos,
     followedVehiclePos,
-    followedVehicleTripId,
     handleBackToRouteOverview,
     handleFollowDisengage,
     handleFollowStart,
     handleUnfollow,
     handleVehicleSelect,
-    lastClickedVehicle,
-    setLastClickedVehicle,
+    setVehicleFocus,
+    vehicleFocus,
+    zoomToRouteTrigger,
   };
 }

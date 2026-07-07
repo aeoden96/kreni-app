@@ -25,6 +25,7 @@ import { SearchModal } from '../components/common/SearchModal';
 import { ServiceAlerts } from '../components/common/ServiceAlerts';
 import { StopInfoBar } from '../components/common/StopInfoBar';
 import { StopModal } from '../components/common/StopModal';
+import { VehicleViewSmall } from '../components/common/VehicleViewSmall';
 import { MapView } from '../components/Map/MapView';
 import { MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD } from '../components/Map/mapZoomConstants';
 import { GTFSModeProvider } from '../contexts/GTFSModeContext';
@@ -149,7 +150,10 @@ export function GTFSMode({ config }: GTFSModeProps) {
   } = useRouteData(selectedRouteId, { dataDir: config.dataDir });
 
   // Load per-trip stop sequence + times for the "next stops" feature
-  const routeTimetable = useRouteTimetable(selectedRouteId, config.dataDir);
+  const { data: routeTimetable, loading: timetableLoading } = useRouteTimetable(
+    selectedRouteId,
+    config.dataDir
+  );
 
   // Scheduled vehicle positions (transit only; null activeTripsData yields [])
   const vehicles = useVehiclePositions(config.hasRealtime ? activeTripsData : null, serviceId);
@@ -180,14 +184,13 @@ export function GTFSMode({ config }: GTFSModeProps) {
     followedTripUpdate,
     followedVehicleParsedPos,
     followedVehiclePos,
-    followedVehicleTripId,
     handleBackToRouteOverview,
     handleFollowDisengage,
     handleFollowStart,
     handleUnfollow,
     handleVehicleSelect,
-    lastClickedVehicle,
-    setLastClickedVehicle,
+    vehicleFocus,
+    zoomToRouteTrigger,
   } = useVehicleFollow(selectedRouteId, vehiclePositions, tripUpdates);
 
   // RSS-parsed ZET service alerts (polled by GitHub Actions cron every 30 min)
@@ -253,9 +256,19 @@ export function GTFSMode({ config }: GTFSModeProps) {
     df?: 'all' | DirectionFilter,
     tripId?: null | string,
     fromParentId?: null | string,
-    toParentId?: null | string
+    toParentId?: null | string,
+    viewMode: 'full' | 'preview' = 'preview'
   ) => {
-    const dir: DirectionFilter = df === 'A' || df === 'B' ? df : 'A';
+    let dir: DirectionFilter = df === 'A' || df === 'B' ? df : 'A';
+
+    if (!df && tripId) {
+      const vehicle =
+        vehicles.find((v) => v.tripId === tripId) || allVehicles.find((v) => v.tripId === tripId);
+      if (vehicle) {
+        dir = vehicle.direction === 1 ? 'B' : 'A';
+      }
+    }
+
     if (tripId) {
       trackEvent('vehicle_clicked', { route_id: routeId, trip_id: tripId });
     }
@@ -263,7 +276,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
     setSearchModalOpen(false);
     closeLegendAndDetails();
     addRecentRoute(routeId);
-    if (tripId) setLastClickedVehicle({ routeId, tripId });
+    if (tripId) handleVehicleSelect(tripId, viewMode, routeId);
     setRouteViewLargeOpen(false);
     setStopModalOpen(false);
     if (fromParentId && toParentId) {
@@ -367,8 +380,11 @@ export function GTFSMode({ config }: GTFSModeProps) {
       <div className="h-svh w-screen overflow-hidden relative">
         {/* Full-screen map */}
         <MapView
-          allVehicles={
-            selectedRouteId ? allVehicles.filter((v) => v.routeId !== selectedRouteId) : allVehicles
+          allVehicles={selectedRouteId ? [] : allVehicles}
+          autoZoomToRoute={
+            !!selectedRouteId &&
+            !vehicleFocus?.isFollowing &&
+            !(vehicleFocus?.routeId === selectedRouteId && !!vehicleFocus.tripId)
           }
           congestionPoints={congestionPoints}
           followedVehiclePos={followedVehiclePos}
@@ -397,9 +413,9 @@ export function GTFSMode({ config }: GTFSModeProps) {
           }
           onFollowDisengage={handleFollowDisengage}
           onStopClick={handleStopClickFromMap}
-          onVehicleClick={(routeId, routeType, tripId) =>
-            handleSelectRoute(routeId, routeType, undefined, tripId)
-          }
+          onVehicleClick={(routeId, routeType, tripId) => {
+            handleSelectRoute(routeId, routeType, undefined, tripId, undefined, undefined, 'full');
+          }}
           onVehicleSelect={handleVehicleSelect}
           onZoomComplete={handleZoomComplete}
           orderedStops={orderedStops}
@@ -407,6 +423,25 @@ export function GTFSMode({ config }: GTFSModeProps) {
           parentStations={parentStations}
           parentStationZoomTarget={parentStationZoomTarget}
           platformStops={platformStops}
+          previewVehiclePos={
+            vehicleFocus?.routeId === selectedRouteId &&
+            vehicleFocus.viewMode === 'preview' &&
+            !vehicleFocus.isFollowing &&
+            vehicleFocus.tripId &&
+            vehiclePositions.get(vehicleFocus.tripId)
+              ? {
+                  lat: vehiclePositions.get(vehicleFocus.tripId)!.latitude,
+                  lon: vehiclePositions.get(vehicleFocus.tripId)!.longitude,
+                }
+              : null
+          }
+          previewVehicleTripId={
+            vehicleFocus?.routeId === selectedRouteId &&
+            vehicleFocus.viewMode === 'preview' &&
+            !vehicleFocus.isFollowing
+              ? vehicleFocus.tripId
+              : null
+          }
           routesById={routesById}
           routeShapes={shapes}
           routeShortName={selectedRoute?.shortName}
@@ -419,11 +454,12 @@ export function GTFSMode({ config }: GTFSModeProps) {
           showCongestionHeatmap={config.hasRealtime && showCongestionHeatmap}
           userLocation={userLocation}
           vehicleFollowOffsetY={
-            !!followedVehicleTripId && typeof window !== 'undefined' && window.innerWidth < 640
+            !!vehicleFocus?.isFollowing && typeof window !== 'undefined' && window.innerWidth < 640
               ? -Math.round(window.innerHeight / 4)
               : 0
           }
           vehicles={vehicles}
+          zoomTrigger={zoomToRouteTrigger}
         />
 
         {/* Route loading indicator — only when the small route bar isn't already visible */}
@@ -515,53 +551,78 @@ export function GTFSMode({ config }: GTFSModeProps) {
           !stopModalOpen &&
           !selectedStopId &&
           (() => {
-            const isFollowing = !!followedVehicleTripId;
-            const clickedTripId =
-              lastClickedVehicle?.routeId === selectedRouteId ? lastClickedVehicle.tripId : null;
-            // When following, surface the followed vehicle's data; otherwise the clicked vehicle's
-            const activeTripId = isFollowing ? followedVehicleTripId : clickedTripId;
+            const isFollowing = vehicleFocus?.isFollowing ?? false;
+            const activeTripId = vehicleFocus?.tripId ?? null;
             const activeVehicle = activeTripId
               ? (vehicles.find((v) => v.tripId === activeTripId) ?? null)
               : null;
             const activeVehiclePos = isFollowing
               ? followedVehicleParsedPos
-              : clickedTripId
-                ? (vehiclePositions.get(clickedTripId) ?? null)
+              : activeTripId
+                ? (vehiclePositions.get(activeTripId) ?? null)
                 : null;
             const activeTripUpdate = isFollowing
               ? followedTripUpdate
-              : clickedTripId
-                ? (tripUpdates.get(clickedTripId) ?? null)
+              : activeTripId
+                ? (tripUpdates.get(activeTripId) ?? null)
                 : null;
             const journeyDirectionKey = journeyContext
               ? directionFilter === 'B'
                 ? '1'
                 : '0'
               : null;
+            const viewMode =
+              vehicleFocus?.routeId === selectedRouteId ? vehicleFocus.viewMode : undefined;
+            const isFullVehicleView = !!activeTripId && viewMode === 'full';
+
+            if (isFullVehicleView) {
+              return (
+                <VehicleViewSmall
+                  activeTripId={activeTripId!}
+                  clickedTripUpdate={activeTripUpdate}
+                  clickedVehicle={activeVehicle}
+                  clickedVehiclePos={activeVehiclePos}
+                  isFollowing={isFollowing}
+                  onBackToRouteOverview={() => {
+                    if (activeVehicle && selectedRouteId) {
+                      const dir = activeVehicle.direction === 1 ? 'B' : 'A';
+                      if (directionFilter !== dir) {
+                        selectRoute(selectedRouteId, { dir });
+                      }
+                    }
+                    handleBackToRouteOverview();
+                  }}
+                  onClose={handleClearRoute}
+                  onExpand={handleExpandRoute}
+                  onFollowStart={handleFollowStart}
+                  onUnfollow={handleUnfollow}
+                  route={selectedRoute}
+                  routeTimetable={routeTimetable}
+                  stopsById={stopsById}
+                  timetableLoading={timetableLoading}
+                />
+              );
+            }
+
             return (
               <RouteViewSmall
+                activeTripId={activeTripId}
                 clickedTripUpdate={activeTripUpdate}
                 clickedVehicle={activeVehicle}
                 clickedVehiclePos={activeVehiclePos}
-                followCandidateTripId={isFollowing ? null : clickedTripId}
-                followedVehiclePos={followedVehicleParsedPos}
-                isFollowing={isFollowing}
+                followCandidateTripId={isFollowing ? null : activeTripId}
                 journeyDirectionKey={journeyDirectionKey}
                 journeyFromParentId={journeyContext?.fromParentId ?? null}
                 journeyToParentId={journeyContext?.toParentId ?? null}
                 loading={routeLoading}
-                onBackToRouteOverview={handleBackToRouteOverview}
                 onClose={handleClearRoute}
                 onExpand={handleExpandRoute}
                 onFollowStart={handleFollowStart}
-                onUnfollow={handleUnfollow}
                 onVehicleSelect={handleVehicleSelect}
                 orderedStops={orderedStops}
                 route={selectedRoute}
                 routeTimetable={routeTimetable}
                 stopsById={stopsById}
-                tripUpdates={tripUpdates}
-                vehiclePositions={vehiclePositions}
                 vehicles={vehicles}
               />
             );

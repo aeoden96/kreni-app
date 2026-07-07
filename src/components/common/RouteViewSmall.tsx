@@ -12,12 +12,12 @@
 import type { TFunction } from 'i18next';
 
 import {
-  ArrowLeft,
   ArrowRight,
   Bus,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ChevronUp,
-  MapPin,
   Maximize2,
   Navigation,
   Star,
@@ -34,11 +34,13 @@ import type { VehiclePosition } from '../../utils/vehicles';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { VehicleStopStatus } from '../../utils/realtime';
 import { routeTypeColor } from '../../utils/routeStyle';
-import { getRouteVehicleStopPreview } from '../../utils/vehicles';
+import { computeVehicleStopProgress, getRouteVehicleStopPreview } from '../../utils/vehicles';
 import { getDirectionColor } from '../Map/directionColors';
 import { RouteMiniTrack } from './RouteMiniTrack';
 
 interface RouteViewSmallProps {
+  /** The ID of the currently selected/followed trip (even if vehicle object is missing) */
+  activeTripId?: null | string;
   /** Trip update for the clicked/followed vehicle (stop time updates, delay) */
   clickedTripUpdate?: null | ParsedTripUpdate;
   /** Full VehiclePosition of the clicked/followed vehicle (headsign, delay, etc.) */
@@ -47,10 +49,6 @@ interface RouteViewSmallProps {
   clickedVehiclePos?: null | ParsedVehiclePosition;
   /** tripId of the last-clicked vehicle — enables the follow button */
   followCandidateTripId?: null | string;
-  /** Raw realtime position of the followed vehicle — used for distance calculation */
-  followedVehiclePos?: null | ParsedVehiclePosition;
-  /** When true the user is actively following — shows border + distance + pulse icon */
-  isFollowing?: boolean;
   /** Direction key ('0' or '1') to pre-select and lock when coming from Plan Journey. */
   journeyDirectionKey?: null | string;
   /** Parent station ID of the journey origin stop (from Plan Journey). */
@@ -59,13 +57,10 @@ interface RouteViewSmallProps {
   journeyToParentId?: null | string;
   /** Route data is still loading — show a skeleton instead of "no active vehicles" */
   loading?: boolean;
-  onBackToRouteOverview?: () => void;
   onClose: () => void;
   onExpand: () => void;
   /** Called with the tripId to activate follow mode */
   onFollowStart?: (tripId: string) => void;
-  /** Called to exit follow mode */
-  onUnfollow?: () => void;
   /** Select a vehicle from the compact list (same as map marker tap) */
   onVehicleSelect?: (tripId: string) => void;
   orderedStops?: Record<string, string[]>;
@@ -73,27 +68,22 @@ interface RouteViewSmallProps {
   /** Route timetable for showing next N stops from static schedule */
   routeTimetable?: null | RouteTimetable;
   stopsById?: Map<string, Stop>;
-  tripUpdates?: Map<string, ParsedTripUpdate>;
-  vehiclePositions?: Map<string, ParsedVehiclePosition>;
   vehicles: VehiclePosition[];
 }
 
 export function RouteViewSmall({
+  activeTripId,
   clickedTripUpdate,
   clickedVehicle,
   clickedVehiclePos,
   followCandidateTripId,
-  followedVehiclePos,
-  isFollowing = false,
   journeyDirectionKey,
   journeyFromParentId,
   journeyToParentId,
   loading = false,
-  onBackToRouteOverview,
   onClose,
   onExpand,
   onFollowStart,
-  onUnfollow,
   onVehicleSelect,
   orderedStops,
   route,
@@ -147,17 +137,31 @@ export function RouteViewSmall({
     });
   }, [directionKeysSorted, journeyDirectionKey, route.id]);
 
-  /** Same rule as RouteModal: filter by direction index; if none match, show all. */
+  /** Same rule as RouteModal: filter by direction index; if none match, show all. Then sort by route progress. */
   const vehiclesForCompactList = useMemo(() => {
     if (vehicles.length === 0) return [];
-    if (!orderedStops || directionKeysSorted.length === 0) return vehicles;
+    if (!orderedStops || directionKeysSorted.length === 0 || !stopsById) return vehicles;
     const directionIndex =
       compactListDirectionKey && directionKeysSorted.includes(compactListDirectionKey)
         ? directionKeysSorted.indexOf(compactListDirectionKey)
         : 0;
     const dirVehicles = vehicles.filter((v) => v.direction === directionIndex);
-    return dirVehicles.length > 0 ? dirVehicles : vehicles;
-  }, [compactListDirectionKey, directionKeysSorted, orderedStops, vehicles]);
+    const toSort = dirVehicles.length > 0 ? dirVehicles : vehicles;
+
+    // Resolve stops to calculate progress
+    const activeKey = compactListDirectionKey || directionKeysSorted[0] || '';
+    const ids = orderedStops[activeKey] ?? [];
+    const resolvedStops = ids.map((id) => {
+      const s = stopsById.get(id);
+      return s ? { lat: s.lat, lon: s.lon } : { lat: 0, lon: 0 };
+    });
+
+    return [...toSort].sort((a, b) => {
+      const pa = computeVehicleStopProgress(a.lat, a.lon, resolvedStops);
+      const pb = computeVehicleStopProgress(b.lat, b.lon, resolvedStops);
+      return pb - pa;
+    });
+  }, [compactListDirectionKey, directionKeysSorted, orderedStops, vehicles, stopsById]);
 
   const miniTrackSegment = useMemo(() => {
     if (!journeyFromParentId || !journeyToParentId || !stopsById) return null;
@@ -175,17 +179,18 @@ export function RouteViewSmall({
   }, [journeyFromParentId, journeyToParentId, compactListDirectionKey, orderedStops, stopsById]);
 
   // ── Vehicle preview: stop info (shared resolver: vehicles.ts) ──────────────
-  const hasVehiclePreview = !!clickedVehicle;
+  const hasVehiclePreview = !!activeTripId;
 
   const previewLat = clickedVehiclePos?.latitude ?? clickedVehicle?.lat ?? 0;
   const previewLon = clickedVehiclePos?.longitude ?? clickedVehicle?.lon ?? 0;
+  const previewTripId = clickedVehicle?.tripId ?? activeTripId;
 
   const vehiclePreview =
-    hasVehiclePreview && clickedVehicle && stopsById
+    hasVehiclePreview && previewTripId && stopsById
       ? getRouteVehicleStopPreview({
           routeTimetable: routeTimetable ?? undefined,
           stopsById,
-          tripId: clickedVehicle.tripId,
+          tripId: previewTripId,
           tripUpdate: clickedTripUpdate ?? undefined,
           vehicleLat: previewLat,
           vehicleLon: previewLon,
@@ -199,36 +204,51 @@ export function RouteViewSmall({
     vehiclePreview?.labelKind != null ? t(`routeBar.${vehiclePreview.labelKind}`) : '';
   const stopDetail = vehiclePreview?.stopDetail ?? '';
 
-  const { primaryStopTime, upcomingStops } = (() => {
-    if (!vehiclePreview?.tripStops || !stopsById)
-      return { primaryStopTime: null, upcomingStops: [] };
+  const { primaryStopTime } = (() => {
+    if (!stopsById) return { primaryStopTime: null };
 
-    const { primaryIdx, tripStops } = vehiclePreview;
-    if (primaryIdx === -1) return { primaryStopTime: null, upcomingStops: [] };
+    if (vehiclePreview?.tripStops && vehiclePreview.primaryIdx !== -1) {
+      const { primaryIdx, tripStops } = vehiclePreview;
+      const timeStr = formatMinutes(tripStops[primaryIdx][2], delaySeconds ?? 0);
+      return { primaryStopTime: timeStr };
+    }
 
-    const primaryStopTime = formatMinutes(tripStops[primaryIdx][2], delaySeconds ?? 0);
+    if (clickedTripUpdate?.stopTimeUpdates && clickedTripUpdate.stopTimeUpdates.length > 0) {
+      const updates = clickedTripUpdate.stopTimeUpdates;
+      const currentStopId = vehiclePreview?.currentStopId || vehiclePreview?.derivedNextStopId;
+      let startIndex = 0;
+      if (currentStopId) {
+        const idx = updates.findIndex((u) => u.stopId === currentStopId);
+        if (idx !== -1) startIndex = idx;
+      }
 
-    const upcoming = tripStops
-      .slice(primaryIdx + 1, primaryIdx + 5)
-      .map(([stopId, , timeMinutes]) => ({
-        name: stopsById.get(stopId)?.name ?? stopId,
-        time: formatMinutes(timeMinutes, delaySeconds ?? 0),
-      }))
-      .filter((s) => s.name);
+      const formatPosix = (posix?: number) => {
+        if (!posix) return '—';
+        const d = new Date(posix * 1000);
+        return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+      };
 
-    return { primaryStopTime, upcomingStops: upcoming };
+      const primaryUpdate = updates[startIndex];
+      const primaryTime = primaryUpdate
+        ? formatPosix(primaryUpdate.arrivalTime || primaryUpdate.departureTime)
+        : null;
+
+      return { primaryStopTime: primaryTime === '—' ? null : primaryTime };
+    }
+
+    return { primaryStopTime: null };
   })();
 
   // ── Delay ─────────────────────────────────────────────────────────────────
   const delayInfo = delaySeconds !== null ? formatDelay(delaySeconds, t) : null;
 
-  // ── Distance to next stop (follow mode only) ───────────────────────────────
+  // ── Distance to next stop ────────────────────────────────────────────────
   const distanceTargetStop: null | Stop = (() => {
-    if (!isFollowing || !stopsById || !vehiclePreview) return null;
+    if (!stopsById || !vehiclePreview) return null;
     const { currentStop, currentStopId, derivedNextStop, gpsNextStop, stopStatus, tripStops } =
       vehiclePreview;
     if (gpsNextStop) return gpsNextStop;
-    if (stopStatus === VehicleStopStatus.STOPPED_AT && upcomingStops.length > 0) {
+    if (stopStatus === VehicleStopStatus.STOPPED_AT) {
       if (tripStops && currentStopId) {
         const idx = tripStops.findIndex(([id]) => id === currentStopId);
         if (idx !== -1 && idx + 1 < tripStops.length) {
@@ -240,37 +260,45 @@ export function RouteViewSmall({
   })();
 
   const distanceMeters =
-    isFollowing && followedVehiclePos && distanceTargetStop
+    distanceTargetStop && previewLat && previewLon
       ? Math.round(
-          haversineMeters(
-            followedVehiclePos.latitude,
-            followedVehiclePos.longitude,
-            distanceTargetStop.lat,
-            distanceTargetStop.lon
-          )
+          haversineMeters(previewLat, previewLon, distanceTargetStop.lat, distanceTargetStop.lon)
         )
       : null;
 
   // ── Header: route name, or vehicle headsign with a vector arrow (avoid U+2192 — poor mobile font alignment)
   const showHeadsignInsteadOfRouteName =
-    hasVehiclePreview && !!clickedVehicle!.headsign && clickedVehicle!.headsign !== route.longName;
+    !!activeTripId && !!clickedVehicle?.headsign && clickedVehicle.headsign !== route.longName;
+
+  const handlePrevVehicle = () => {
+    if (!activeTripId || !onVehicleSelect) return;
+    const idx = vehiclesForCompactList.findIndex((v) => v.tripId === activeTripId);
+    if (idx !== -1) {
+      const nextIdx = (idx + 1) % vehiclesForCompactList.length;
+      onVehicleSelect(vehiclesForCompactList[nextIdx].tripId);
+    }
+  };
+
+  const handleNextVehicle = () => {
+    if (!activeTripId || !onVehicleSelect) return;
+    const idx = vehiclesForCompactList.findIndex((v) => v.tripId === activeTripId);
+    if (idx !== -1) {
+      const prevIdx = (idx - 1 + vehiclesForCompactList.length) % vehiclesForCompactList.length;
+      onVehicleSelect(vehiclesForCompactList[prevIdx].tripId);
+    }
+  };
 
   return (
     <div
-      className={`fixed top-16 sm:top-20 left-2 right-2 sm:left-4 sm:right-auto sm:max-w-md z-[1050] bg-base-100 rounded-xl shadow-2xl${isFollowing ? ' border-2' : ''}`}
+      className="fixed top-16 sm:top-20 left-2 right-2 sm:left-4 sm:right-auto sm:max-w-md z-[1050] bg-base-100 rounded-xl shadow-2xl"
       style={{
         animation: 'modal-fade-in 0.2s ease-out',
-        ...(isFollowing ? { borderColor: color } : {}),
       }}
     >
       <div className="p-4">
         {/* Header */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex-1 min-w-0 flex items-center gap-2">
-            {/* Follow indicator — pulsing nav icon when following */}
-            {isFollowing && (
-              <Navigation className="w-4 h-4 shrink-0 animate-pulse" style={{ color }} />
-            )}
             {/* Route badge */}
             <span
               className="badge font-bold text-white shrink-0 min-w-[2.5rem] justify-center"
@@ -287,7 +315,7 @@ export function RouteViewSmall({
                     className="w-4 h-4 shrink-0 text-base-content/60 self-center"
                     strokeWidth={2.5}
                   />
-                  <span className="truncate">{clickedVehicle!.headsign}</span>
+                  <span className="truncate">{clickedVehicle?.headsign}</span>
                 </>
               ) : (
                 route.longName
@@ -309,7 +337,7 @@ export function RouteViewSmall({
               />
             </button>
             {/* Follow button — only shown when a vehicle is clicked but not yet followed */}
-            {!isFollowing && followCandidateTripId && onFollowStart && (
+            {followCandidateTripId && onFollowStart && (
               <button
                 className="btn btn-ghost btn-circle btn-xs min-h-[32px] min-w-[32px]"
                 onClick={() => onFollowStart(followCandidateTripId)}
@@ -328,108 +356,17 @@ export function RouteViewSmall({
             <button
               className="btn btn-ghost btn-circle btn-xs min-h-[32px] min-w-[32px]"
               onClick={() => {
-                onUnfollow?.();
                 onClose();
               }}
-              title={isFollowing ? t('common.stopFollowingVehicle') : t('common.close')}
+              title={t('common.close')}
             >
               <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {hasVehiclePreview && onBackToRouteOverview ? (
-          <button
-            className="btn btn-sm w-full mb-2 gap-1.5 bg-base-200 hover:bg-base-300 border-0 text-base-content/70 font-medium"
-            onClick={onBackToRouteOverview}
-            type="button"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            {t('routeBar.backToRouteOverview')}
-          </button>
-        ) : null}
-
-        {/* Vehicle preview: stop + upcoming stops + delay */}
-        {hasVehiclePreview && (
-          <>
-            {stopDetail ? (
-              <div className="space-y-1 mb-3">
-                {/* Current stop: name + time on one row, metadata below */}
-                <div className="flex gap-2">
-                  <MapPin className="w-3.5 h-3.5 shrink-0 text-base-content/50 mt-1" />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline justify-between gap-2 min-w-0">
-                      <span className="font-semibold text-sm leading-snug text-base-content truncate">
-                        {stopDetail}
-                      </span>
-                      {primaryStopTime && (
-                        <span className="text-xs font-medium tabular-nums text-base-content/70 shrink-0">
-                          {primaryStopTime}
-                        </span>
-                      )}
-                    </div>
-                    {(stopLabel || delayInfo || distanceMeters !== null) && (
-                      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-0.5 text-xs text-base-content/50">
-                        {stopLabel && <span>{stopLabel}</span>}
-                        {stopLabel && (delayInfo || distanceMeters !== null) && (
-                          <span aria-hidden>·</span>
-                        )}
-                        {delayInfo && (
-                          <span
-                            className={`font-medium ${delayInfo.positive ? 'text-success' : 'text-error'}`}
-                          >
-                            {delayInfo.text}
-                          </span>
-                        )}
-                        {delayInfo && distanceMeters !== null && <span aria-hidden>·</span>}
-                        {distanceMeters !== null && (
-                          <span className="tabular-nums">{formatDistance(distanceMeters)}</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Upcoming stops */}
-                {upcomingStops.length > 0 && (
-                  <div className="border-t border-base-200 mt-1.5 pt-1.5 space-y-1">
-                    {upcomingStops.map((s, i) => (
-                      <div
-                        className="flex items-center gap-2 text-xs text-base-content/60 pl-5"
-                        key={i}
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-base-content/30 shrink-0" />
-                        <span className="truncate">{s.name}</span>
-                        <span className="ml-auto shrink-0 tabular-nums text-base-content/50">
-                          {s.time}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              /* Fallback when no stop data is available yet */
-              <div className="flex items-center gap-2 text-xs text-base-content/50 mb-3">
-                {clickedVehiclePos ? (
-                  <>
-                    <span className="w-2 h-2 rounded-full bg-success animate-pulse shrink-0" />
-                    <span>{t('routeBar.gpsActiveNoStop')}</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="loading loading-dots loading-xs" />
-                    <span>{t('routeBar.waitingGpsSignal')}</span>
-                  </>
-                )}
-              </div>
-            )}
-            <div className="border-t border-base-200 mb-3" />
-          </>
-        )}
-
         {/* Mini track diagram — no vehicle selected, route stop data available */}
-        {!hasVehiclePreview && orderedStops && stopsById && directionKeysSorted.length > 0 ? (
+        {orderedStops && stopsById && directionKeysSorted.length > 0 ? (
           <div className="space-y-2">
             {directionLabels.length > 0 && !journeyDirectionKey ? (
               <div className="flex rounded-lg overflow-hidden border border-base-300 w-full">
@@ -513,6 +450,7 @@ export function RouteViewSmall({
                     </button>
                   </div>
                   <RouteMiniTrack
+                    activeTripId={activeTripId}
                     expanded={miniTrackExpanded}
                     journeySegment={miniTrackSegment}
                     onVehicleClick={onVehicleSelect}
@@ -521,7 +459,71 @@ export function RouteViewSmall({
                     stopsById={stopsById}
                     vehicles={vehiclesForCompactList}
                   />
-                  {vehiclesForCompactList.length > 0 && (
+                  {activeTripId && (
+                    <div className="mt-3 bg-base-200/50 rounded-xl p-3 border border-base-300 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-200">
+                      <div className="flex flex-col gap-1.5 mb-3">
+                        <div className="flex items-center justify-between gap-2 min-w-0">
+                          <span className="font-semibold text-[13px] leading-tight text-base-content truncate">
+                            {stopDetail}
+                          </span>
+                          {primaryStopTime && (
+                            <span className="text-xs font-medium tabular-nums text-base-content/70 shrink-0">
+                              {primaryStopTime}
+                            </span>
+                          )}
+                        </div>
+                        {stopLabel && (
+                          <div className="text-[11px] text-base-content/50">{stopLabel}</div>
+                        )}
+                        {(delayInfo || distanceMeters !== null) && (
+                          <div className="flex items-center gap-1.5 text-[11px] mt-0.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse shrink-0" />
+                            {delayInfo && (
+                              <span
+                                className={`font-medium ${delayInfo.positive ? 'text-success' : 'text-error'}`}
+                              >
+                                {delayInfo.text}
+                              </span>
+                            )}
+                            {delayInfo && distanceMeters !== null && (
+                              <span aria-hidden className="text-base-content/20">
+                                |
+                              </span>
+                            )}
+                            {distanceMeters !== null && (
+                              <span className="font-medium text-base-content/60 tabular-nums">
+                                {formatDistance(distanceMeters)}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <button
+                          className="btn btn-sm btn-circle btn-ghost bg-base-100 border border-base-300 shadow-sm shrink-0"
+                          disabled={vehiclesForCompactList.length <= 1}
+                          onClick={handlePrevVehicle}
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <button
+                          className="btn btn-sm flex-1 font-bold rounded-full shadow-sm text-white"
+                          onClick={() => onFollowStart?.(activeTripId)}
+                          style={{ backgroundColor: color, borderColor: color }}
+                        >
+                          {t('common.followVehicle')}
+                        </button>
+                        <button
+                          className="btn btn-sm btn-circle btn-ghost bg-base-100 border border-base-300 shadow-sm shrink-0"
+                          disabled={vehiclesForCompactList.length <= 1}
+                          onClick={handleNextVehicle}
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {!activeTripId && vehiclesForCompactList.length > 0 && (
                     <p className="text-[10px] text-base-content/35 text-center mt-0.5">
                       {t('routeBar.tapVehiclesHint')}
                     </p>

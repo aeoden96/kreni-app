@@ -14,6 +14,7 @@ const NAME_ROW_H = 18;
 const TOTAL_H = TRACK_ROW_H + NAME_ROW_H;
 
 interface RouteMiniTrackProps {
+  activeTripId?: null | string;
   expanded?: boolean;
   journeySegment?: null | { fromIdx: number; toIdx: number };
   onVehicleClick?: (tripId: string) => void;
@@ -24,6 +25,7 @@ interface RouteMiniTrackProps {
 }
 
 export function RouteMiniTrack({
+  activeTripId,
   expanded = false,
   journeySegment,
   onVehicleClick,
@@ -103,23 +105,26 @@ export function RouteMiniTrack({
 
     return (
       <div
-        className="absolute"
+        className={`absolute ${vehicle.tripId === activeTripId ? 'z-[10]' : 'z-[2]'}`}
         key={`v-${idx}`}
         style={{
           left: usePercent ? `${left}%` : left,
           opacity,
           top: offsetTop,
-          transform: 'translateX(-50%)',
-          zIndex: 2,
+          transform: `translateX(-50%) ${vehicle.tripId === activeTripId ? 'scale(1.25)' : ''}`,
+          transition: 'all 0.3s ease-out',
         }}
       >
         <button
           className="flex items-center justify-center rounded-full"
           onClick={() => onVehicleClick?.(vehicle.tripId)}
           style={{
-            backgroundColor: color,
-            border: '1.5px solid white',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.35)',
+            backgroundColor: vehicle.tripId === activeTripId ? '#fff' : color,
+            border: `1.5px solid ${vehicle.tripId === activeTripId ? color : 'white'}`,
+            boxShadow:
+              vehicle.tripId === activeTripId
+                ? `0 0 0 3px ${color}40, 0 4px 12px rgba(0,0,0,0.5)`
+                : '0 2px 6px rgba(0,0,0,0.35)',
             cursor: onVehicleClick ? 'pointer' : 'default',
             height: 24,
             width: 24,
@@ -127,7 +132,11 @@ export function RouteMiniTrack({
           title={label}
           type="button"
         >
-          <VehicleIcon color="white" size={14} strokeWidth={2.5} />
+          <VehicleIcon
+            color={vehicle.tripId === activeTripId ? color : 'white'}
+            size={14}
+            strokeWidth={2.5}
+          />
         </button>
       </div>
     );

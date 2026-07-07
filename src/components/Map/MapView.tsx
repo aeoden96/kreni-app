@@ -12,7 +12,9 @@ import { BaseMap } from './BaseMap';
 import { CongestionHeatmap } from './CongestionHeatmap';
 import { OffScreenStopIndicator } from './OffScreenStopIndicator';
 import { ParentStationZoomController } from './ParentStationZoomController';
+import { PreviewVehicleZoomController } from './PreviewVehicleZoomController';
 import { RouteShape } from './RouteShape';
+import { RouteZoomController } from './RouteZoomController';
 import { SpiderfierProvider } from './SpiderfierContext';
 import { SpiderfierManager } from './SpiderfierManager';
 import { VehicleFollower } from './VehicleFollower';
@@ -21,6 +23,7 @@ import { ZoomBasedStops } from './ZoomBasedStops';
 
 interface MapViewProps {
   allVehicles?: AllVehiclePosition[];
+  autoZoomToRoute?: boolean;
   /** Live congestion data points to render */
   congestionPoints?: CongestionPoint[];
   /** GPS position of the currently followed vehicle (enables auto-pan) */
@@ -40,6 +43,8 @@ interface MapViewProps {
   parentStations: Stop[];
   parentStationZoomTarget: null | { lat: number; lon: number; panOffsetY?: number; zoom?: number };
   platformStops: Stop[];
+  previewVehiclePos?: null | { lat: number; lon: number };
+  previewVehicleTripId?: null | string;
   routesById: Map<string, Route>;
   routeShapes: Record<string, [number, number][]>;
   routeShortName?: string;
@@ -56,10 +61,12 @@ interface MapViewProps {
   /** Pixel offset for vehicle follow pan — negative shifts vehicle lower on screen (mobile) */
   vehicleFollowOffsetY?: number;
   vehicles: VehiclePosition[];
+  zoomTrigger?: number;
 }
 
 export function MapView({
   allVehicles = [],
+  autoZoomToRoute = false,
   congestionPoints = [],
   followedVehiclePos,
   highlightStopIds,
@@ -77,6 +84,8 @@ export function MapView({
   // but is not consumed by the map component directly
   parentStationZoomTarget,
   platformStops,
+  previewVehiclePos,
+  previewVehicleTripId,
   routesById,
   routeShapes,
   routeShortName,
@@ -89,6 +98,7 @@ export function MapView({
   userLocation,
   vehicleFollowOffsetY = 0,
   vehicles,
+  zoomTrigger,
 }: MapViewProps) {
   const { initialZoom, minZoom } = useGTFSMode();
 
@@ -108,6 +118,17 @@ export function MapView({
           zoomTarget={parentStationZoomTarget}
         />
 
+        {autoZoomToRoute && (
+          <RouteZoomController
+            platformStops={platformStops}
+            routeStops={routeStops}
+            selectedRouteId={selectedRouteId}
+            zoomTrigger={zoomTrigger}
+          />
+        )}
+
+        <PreviewVehicleZoomController position={previewVehiclePos} tripId={previewVehicleTripId} />
+
         {selectedStop && onFlyToStop && (
           <OffScreenStopIndicator onFlyTo={onFlyToStop} stop={selectedStop} />
         )}
@@ -123,7 +144,10 @@ export function MapView({
           selectedStopId={selectedStopId}
         />
 
-        <AllVehicleMarkers onVehicleClick={onVehicleClick} vehicles={allVehicles} />
+        <AllVehicleMarkers
+          onVehicleClick={onVehicleClick}
+          vehicles={selectedRouteId ? [] : allVehicles}
+        />
 
         <CongestionHeatmap points={congestionPoints} show={showCongestionHeatmap} />
 

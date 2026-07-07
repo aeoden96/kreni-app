@@ -10,13 +10,18 @@ import type { RouteTimetable } from '../utils/gtfs';
 
 import { fetchRouteTimetable } from '../utils/gtfs';
 
-export function useRouteTimetable(routeId: null | string, dataDir: string): null | RouteTimetable {
+export function useRouteTimetable(
+  routeId: null | string,
+  dataDir: string
+): { data: null | RouteTimetable; loading: boolean } {
   const [timetable, setTimetable] = useState<null | RouteTimetable>(null);
+  const [loading, setLoading] = useState(false);
   const prevKey = useRef<null | string>(null);
 
   useEffect(() => {
     if (!routeId) {
       setTimetable(null);
+      setLoading(false);
       return;
     }
 
@@ -25,12 +30,19 @@ export function useRouteTimetable(routeId: null | string, dataDir: string): null
     prevKey.current = key;
 
     let mounted = true;
+    setLoading(true);
     fetchRouteTimetable(routeId, dataDir)
       .then((data) => {
-        if (mounted) setTimetable(data);
+        if (mounted) {
+          setTimetable(data);
+          setLoading(false);
+        }
       })
       .catch(() => {
         // Non-fatal — the next-stops feature degrades gracefully
+        if (mounted) {
+          setLoading(false);
+        }
       });
 
     return () => {
@@ -38,5 +50,5 @@ export function useRouteTimetable(routeId: null | string, dataDir: string): null
     };
   }, [routeId, dataDir]);
 
-  return timetable;
+  return { data: timetable, loading };
 }
