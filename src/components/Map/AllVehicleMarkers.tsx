@@ -4,13 +4,12 @@
 
 import type L from 'leaflet';
 
-import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Marker, useMap } from 'react-leaflet';
 
 import type { AllVehiclePosition } from '../../utils/vehicles';
 
 import { useAnimatedVehiclePosition } from '../../hooks/useAnimatedVehiclePosition';
-import { useMapBounds } from '../../hooks/useMapBounds';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { makeVehicleIcon } from '../../utils/vehicleIcon';
 import { MARKER_Z_VEHICLE } from './mapMarkerZIndex';
@@ -109,7 +108,6 @@ interface AllVehicleMarkersProps {
 export function AllVehicleMarkers({ onVehicleClick, vehicles }: AllVehicleMarkersProps) {
   const map = useMap();
   const [zoom, setZoom] = useState(map.getZoom());
-  const bounds = useMapBounds();
   const theme = useSettingsStore((s) => s.theme);
   useEffect(() => {
     const handleZoomEnd = () => setZoom(map.getZoom());
@@ -119,11 +117,6 @@ export function AllVehicleMarkers({ onVehicleClick, vehicles }: AllVehicleMarker
     };
   }, [map]);
 
-  const visible = useMemo(
-    () => vehicles.filter((v) => bounds.contains([v.lat, v.lon])),
-    [vehicles, bounds]
-  );
-
   const FADE_MIN = 13;
   const FADE_MAX = 14;
   const opacityFactor =
@@ -132,7 +125,7 @@ export function AllVehicleMarkers({ onVehicleClick, vehicles }: AllVehicleMarker
 
   return (
     <>
-      {visible.map((vehicle) => (
+      {vehicles.map((vehicle) => (
         <MemoSpiderfiedAllVehicleMarker
           key={vehicle.tripId}
           onVehicleClick={onVehicleClick}

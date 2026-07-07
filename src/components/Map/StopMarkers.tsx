@@ -3,7 +3,7 @@
  */
 
 import L from 'leaflet';
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { memo, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { Marker, Polyline, useMap } from 'react-leaflet';
 
 import { fetchStopTimetable, type Route, type Stop } from '../../utils/gtfs';
@@ -220,7 +220,7 @@ function makeStopIcon(
   return L.divIcon({ className: '', html, iconAnchor: [cx, cx], iconSize: [size, size] });
 }
 
-function PlatformStopMarker({
+const PlatformStopMarker = memo(function PlatformStopMarker({
   color,
   effectiveFactor,
   isHighlighted,
@@ -322,7 +322,7 @@ function PlatformStopMarker({
       zIndexOffset={isSelected ? 10000 : isHighlighted ? 500 : 0}
     />
   );
-}
+});
 
 // ── Stop colour by service type ──────────────────────────────────────────────
 function stopFillColor(stop: Stop, isSelected: boolean, isHighlighted: boolean): string {

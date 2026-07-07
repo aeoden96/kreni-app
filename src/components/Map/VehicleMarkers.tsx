@@ -4,13 +4,12 @@
 
 import type L from 'leaflet';
 
-import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Marker, useMap } from 'react-leaflet';
 
 import type { VehiclePosition } from '../../utils/vehicles';
 
 import { useAnimatedVehiclePosition } from '../../hooks/useAnimatedVehiclePosition';
-import { useMapBounds } from '../../hooks/useMapBounds';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { makeVehicleIcon } from '../../utils/vehicleIcon';
 import { getDirectionColor } from './directionColors';
@@ -110,7 +109,6 @@ export function VehicleMarkers({
   const map = useMap();
   const [zoom, setZoom] = useState(map.getZoom());
   const theme = useSettingsStore((s) => s.theme);
-  const bounds = useMapBounds();
 
   useEffect(() => {
     const handleZoomEnd = () => setZoom(map.getZoom());
@@ -119,11 +117,6 @@ export function VehicleMarkers({
       map.off('zoomend', handleZoomEnd);
     };
   }, [map]);
-
-  const visible = useMemo(
-    () => vehicles.filter((v) => bounds.contains([v.lat, v.lon])),
-    [vehicles, bounds]
-  );
 
   const FADE_MIN = 13;
   const FADE_MAX = 14;
@@ -134,7 +127,7 @@ export function VehicleMarkers({
 
   return (
     <>
-      {visible.map((vehicle) => {
+      {vehicles.map((vehicle) => {
         const color = getDirectionColor(routeType, vehicle.direction ?? 0);
         return (
           <MemoSpiderfiedVehicleMarker

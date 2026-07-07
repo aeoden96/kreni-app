@@ -86,7 +86,7 @@ export function BaseMap({
       className="w-full h-full"
       maxZoom={MAP_LEAFLET_MAX_ZOOM}
       minZoom={11}
-      preferCanvas={false}
+      preferCanvas={true}
       style={{ height: '100%', width: '100%' }}
       zoom={mapZoom}
       zoomControl={false}

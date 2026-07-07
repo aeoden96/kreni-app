@@ -2,7 +2,7 @@
  * Component that renders different stops based on zoom level
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { useMap } from 'react-leaflet';
 
 import type { Route, Stop } from '../../utils/gtfs';
@@ -26,7 +26,7 @@ interface ZoomBasedStopsProps {
   selectedStopId: null | string;
 }
 
-export function ZoomBasedStops({
+export const ZoomBasedStops = memo(function ZoomBasedStops({
   highlightStopIds,
 
   onStopClick,
@@ -86,7 +86,9 @@ export function ZoomBasedStops({
 
   // Transit: either full-opacity stops or none — same threshold as the
   // "zoom in" badge (MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD). Train mode always shows stops.
-  const opacityFactor = alwaysShowStops || zoom > MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD ? 1 : 0;
+  // Also force opacity to 1 if a route is selected (routeParentIds is truthy) so the route's stops are always visible.
+  const opacityFactor =
+    alwaysShowStops || zoom > MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD || routeParentIds ? 1 : 0;
 
   let visiblePlatforms = platformStops.filter((s) => bounds.contains([s.lat, s.lon]));
   // When a route is selected, only show stops on that route (always keep the selected stop).
@@ -111,4 +113,4 @@ export function ZoomBasedStops({
       stops={visiblePlatforms}
     />
   );
-}
+});

@@ -7,6 +7,7 @@
  * radius and color encode the average delay.
  */
 
+import { memo } from 'react';
 import { CircleMarker, Tooltip } from 'react-leaflet';
 
 import type { CongestionPoint } from '../../hooks/useCongestionData';
@@ -18,7 +19,10 @@ interface CongestionHeatmapProps {
   show: boolean;
 }
 
-export function CongestionHeatmap({ points, show }: CongestionHeatmapProps) {
+export const CongestionHeatmap = memo(function CongestionHeatmap({
+  points,
+  show,
+}: CongestionHeatmapProps) {
   if (!show || points.length === 0) return null;
 
   return (
@@ -64,7 +68,7 @@ export function CongestionHeatmap({ points, show }: CongestionHeatmapProps) {
       ))}
     </>
   );
-}
+});
 
 function delayColor(level: CongestionPoint['level']): string {
   switch (level) {

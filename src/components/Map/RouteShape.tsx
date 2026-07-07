@@ -2,6 +2,7 @@
  * Render route shape polylines on the map
  */
 
+import { memo } from 'react';
 import { Polyline } from 'react-leaflet';
 
 import { getDirectionColor } from './directionColors';
@@ -13,7 +14,7 @@ interface RouteShapeProps {
   shapes: Record<string, [number, number][]>;
 }
 
-export function RouteShape({ routeType, shapes }: RouteShapeProps) {
+export const RouteShape = memo(function RouteShape({ routeType, shapes }: RouteShapeProps) {
   // Determine unique suffixes (e.g. shape ids like "1_1", "1_2") and map to palette indexes
   const suffixes: string[] = [];
   const suffixMap: Record<string, number> = {};
@@ -49,4 +50,4 @@ export function RouteShape({ routeType, shapes }: RouteShapeProps) {
       })}
     </>
   );
-}
+});
