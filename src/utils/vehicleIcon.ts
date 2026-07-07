@@ -7,6 +7,8 @@
  */
 import L from 'leaflet';
 
+import { buildDirectionalStopPinPathData } from './stopMarkersMath';
+
 /**
  * Build a Leaflet DivIcon for a vehicle marker.
  *
@@ -30,39 +32,30 @@ export function makeVehicleIcon(
   const outerRingFill = dark ? 'rgba(255,255,255,0.04)' : 'transparent';
   const fillColor = dark ? darkenHex(color, 0.36) : color;
   const len = label.length;
-  const fontSize = len <= 1 ? 13 : len === 2 ? 11 : len === 3 ? 9 : 8;
+  const fontSize = len <= 1 ? 16 : len === 2 ? 14 : len === 3 ? 11 : 9;
 
   if (bearing !== undefined) {
-    // Moving vehicle: circle with label + small directional pin.
-    // The pin is a triangle sitting just outside the circle, pointing up in SVG
-    // space (i.e. towards bearing after the rotation layer spins it).
-    //
-    // Layout (42×42 px, centre at 21,21):
-    //   circle r=13, pin tip at (21,3), pin base at (17,8)–(25,8)
-    const size = 42;
-    const cx = size / 2; // 21
-    const r = 13;
-    const pinTipY = cx - r - 5; // 3
-    const pinBaseY = cx - r; // 8
-    const pinHalfW = 4;
+    // Moving vehicle: droplet-style pin pointing in the direction of travel.
+    // The tip of the droplet acts as the directional indicator.
+    const size = 46; // Make it slightly bigger as requested
+    const cx = size / 2;
+    const pathData = buildDirectionalStopPinPathData(cx);
 
     const rotatingSvg =
       `<svg style="position:absolute;top:0;left:0;` +
       `transform:rotate(${bearing}deg);transform-origin:${cx}px ${cx}px;overflow:visible;"` +
       ` width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">` +
-      `<polygon points="${cx},${pinTipY} ${cx - pinHalfW},${pinBaseY} ${cx + pinHalfW},${pinBaseY}"` +
-      ` fill="${fillColor}" stroke="${stroke}" stroke-width="${strokeW}" stroke-linejoin="round"/>` +
+      `<path d="${pathData}" fill="${fillColor}" fill-opacity="${dark ? 1 : 0.95}" stroke="${stroke}" stroke-width="${strokeW}" stroke-linejoin="round"/>` +
       `</svg>`;
 
     let fixedSvg =
       `<svg style="position:absolute;top:0;left:0;overflow:visible;"` +
       ` width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`;
     if (dark) {
-      fixedSvg += `<circle cx="${cx}" cy="${cx}" r="${r + 4}" fill="${outerRingFill}"/>`;
+      // Add a soft circular glow behind the droplet body in dark mode
+      fixedSvg += `<circle cx="${cx}" cy="${cx}" r="${cx * 0.75}" fill="${outerRingFill}"/>`;
     }
     fixedSvg +=
-      `<circle cx="${cx}" cy="${cx}" r="${r}"` +
-      ` fill="${fillColor}" fill-opacity="${dark ? 1 : 0.95}" stroke="${stroke}" stroke-width="${strokeW}"/>` +
       `<text x="${cx}" y="${cx + Math.round(fontSize * 0.38)}"` +
       ` text-anchor="middle" font-size="${fontSize}" font-weight="bold"` +
       ` fill="white" font-family="system-ui,sans-serif">${label}</text>` +
@@ -78,16 +71,16 @@ export function makeVehicleIcon(
     return L.divIcon({
       className: '',
       html,
-      iconAnchor: [cx, cx],
+      iconAnchor: [cx, cx], // center it perfectly at the droplet head
       iconSize: [size, size],
       tooltipAnchor: [0, -cx],
     });
   }
 
   // Stationary vehicle: plain circle with label, no pin.
-  const size = 34;
-  const cx = size / 2; // 17
-  const r = 12;
+  const size = 38; // Increased slightly to maintain proportion with the bigger droplet
+  const cx = size / 2; // 19
+  const r = 14;
 
   let svgBody = '';
   if (dark) {

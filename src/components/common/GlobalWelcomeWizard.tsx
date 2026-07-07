@@ -1,17 +1,5 @@
-import {
-  ArrowRight,
-  Bike,
-  Building2,
-  Car,
-  Github,
-  Map,
-  Moon,
-  Play,
-  Sun,
-  Train,
-  X,
-} from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Moon, Sun } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -20,96 +8,41 @@ import { useSettingsStore } from '../../stores/settingsStore';
 
 // ─── Static config ─────────────────────────────────────────────────────────────
 
-interface ModeItem {
-  bodyKey: string;
-  icon: React.ComponentType<{ className?: string }>;
-  key: string;
-  path: string;
-  titleKey: string;
-}
-
-/**
- * Extend this array to add more quick-start destinations.
- */
-const MODES: ModeItem[] = [
-  {
-    bodyKey: 'onboarding.featureTransitBody',
-    icon: Map,
-    key: 'transit-map',
-    path: '/',
-    titleKey: 'onboarding.featureTransitTitle',
-  },
-  {
-    bodyKey: 'onboarding.cyclingBody0',
-    icon: Bike,
-    key: 'cycling',
-    path: '/cycling',
-    titleKey: 'onboarding.cyclingTitle0',
-  },
-  {
-    bodyKey: 'onboarding.drivingBody0',
-    icon: Car,
-    key: 'driving',
-    path: '/driving',
-    titleKey: 'onboarding.drivingTitle0',
-  },
-  {
-    bodyKey: 'onboarding.cityBody0',
-    icon: Building2,
-    key: 'city',
-    path: '/city',
-    titleKey: 'onboarding.cityTitle0',
-  },
-  {
-    bodyKey: 'onboarding.trainBody0',
-    icon: Train,
-    key: 'train',
-    path: '/train',
-    titleKey: 'onboarding.trainTitle0',
-  },
-];
-
 const LANGUAGES = [
   ['hr', 'Hrvatski'],
   ['en', 'English'],
   ['de', 'Deutsch'],
 ] as const;
 
-/**
- * Feature video carousel.
- * Add more entries here as you record new demo clips.
- * `src` is relative to BASE_URL (e.g. "onboarding/cycling.webm").
- * Leave `src` undefined to show a "coming soon" placeholder.
- */
-interface FeatureVideo {
-  descKey: string;
+interface SectionData {
+  bodyKey: string;
+  buttonKey?: string;
   id: string;
-  src?: string;
   titleKey: string;
 }
 
-const FEATURE_VIDEOS: FeatureVideo[] = [
+const SECTIONS: SectionData[] = [
   {
-    descKey: 'onboarding.transitBody0',
+    bodyKey: 'onboarding.welcomeBody',
+    buttonKey: 'common.next',
+    id: 'welcome',
+    titleKey: 'onboarding.welcomeTitle',
+  },
+  {
+    bodyKey: 'onboarding.heroBullet0',
+    buttonKey: 'common.next',
     id: 'transit',
-    src: 'onboarding/switch_views.webm',
     titleKey: 'onboarding.transitTitle0',
   },
   {
-    descKey: 'onboarding.transitBody1',
-    id: 'stop',
-    src: 'onboarding/station_view.webm',
-    titleKey: 'onboarding.transitTitle1',
-  },
-  {
-    descKey: 'onboarding.transitBody2',
-    id: 'picker',
-    src: 'onboarding/spider_selector.webm',
-    titleKey: 'onboarding.transitTitle2',
+    bodyKey: 'onboarding.modeSwitchBody',
+    buttonKey: 'common.enterApp',
+    id: 'modes',
+    titleKey: 'onboarding.modeSwitchTitle',
   },
 ];
 
-// ─── Sub-component: feature video player ──────────────────────────────────────
+// ─── Sub-components ────────────────────────────────────────────────────────────
 
 export function GlobalWelcomeWizard() {
   const { t } = useTranslation();
@@ -121,305 +54,146 @@ export function GlobalWelcomeWizard() {
   const setTheme = useSettingsStore((s) => s.setTheme);
 
   const currentLang = getCurrentLanguage();
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-    if (!mq) return;
-    const update = () => setPrefersReducedMotion(Boolean(mq.matches));
-    update();
-    if (typeof mq.addEventListener === 'function') {
-      mq.addEventListener('change', update);
-      return () => mq.removeEventListener('change', update);
-    }
-    mq.addListener(update);
-    return () => mq.removeListener(update);
-  }, []);
 
   if (globalOnboardingCompleted) return null;
 
-  const handleClose = () => setGlobalOnboardingCompleted(true);
-
-  const handleQuickStart = (path: string) => {
+  const handleClose = () => {
     setGlobalOnboardingCompleted(true);
-    navigate(path);
+    navigate('/');
   };
 
+  const handleScrollToNext = (index: number) => {
+    if (index === SECTIONS.length - 1) {
+      handleClose();
+    } else {
+      const nextSection = document.getElementById(`section-${index + 1}`);
+      if (nextSection) {
+        nextSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
+  const pillButtonClasses =
+    'rounded-full px-8 py-3.5 bg-base-content text-base-100 font-semibold shadow-sm hover:scale-105 active:scale-95 transition-transform duration-300 inline-flex items-center justify-center text-sm sm:text-base cursor-pointer';
+
   return (
-    <div className="fixed inset-0 z-9999 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-      {/* Backdrop */}
-      <div
-        aria-hidden
-        className="fixed inset-0 overflow-hidden backdrop-blur-sm"
-        onClick={handleClose}
-      >
-        <div className="absolute inset-0 bg-base-content/55" />
-        <div className="absolute -top-48 -left-48 w-[800px] h-[800px] rounded-full bg-info/[0.18] blur-[160px] pointer-events-none" />
-        <div className="absolute -bottom-32 -right-32 w-[600px] h-[600px] rounded-full bg-indigo-500/[0.14] blur-[140px] pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] rounded-full bg-sky-400/[0.06] blur-[100px] pointer-events-none" />
-      </div>
-
-      <div className="relative min-h-svh flex items-start sm:items-center justify-center p-3 sm:p-6  ">
-        <div
-          aria-labelledby="global-welcome-title"
-          aria-modal="true"
-          className={[
-            'relative w-full max-w-5xl rounded-3xl overflow-hidden',
-            'border border-base-content/8',
-            'bg-base-100',
-            'shadow-[0_32px_80px_-8px_rgba(0,0,0,0.22),0_0_0_1px_rgba(255,255,255,0.03)]',
-          ].join(' ')}
-          role="dialog"
-        >
-          {/* Top accent line */}
+    <div className="fixed inset-0 z-[9999] bg-base-100 overflow-y-auto scroll-smooth">
+      {/* ── Fixed Header Controls ── */}
+      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 pt-6 pb-4 bg-gradient-to-b from-base-100 to-transparent pointer-events-none">
+        <div className="flex items-center gap-3 pointer-events-auto">
+          {/* Language Picker */}
           <div
-            aria-hidden
-            className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-info/70 to-transparent"
-          />
-
-          {/* Ambient orbs */}
-          <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-            <div className="absolute -top-40 -left-20 w-[480px] h-[480px] rounded-full bg-info/[0.06] blur-3xl" />
-            <div className="absolute -top-20 right-10   w-[320px] h-[320px] rounded-full bg-blue-500/[0.05] blur-3xl" />
-          </div>
-
-          {/* ══════════════════════════════════════════════════════════════════
-           *  HERO
-           * ══════════════════════════════════════════════════════════════════ */}
-          <div className="relative px-6 sm:px-8 lg:px-10 pt-8 sm:pt-10 pb-7">
-            {/* Close */}
-            <button
-              aria-label={t('common.close')}
-              className="absolute top-4 right-4 sm:top-5 sm:right-5 btn btn-ghost btn-circle btn-sm opacity-50 hover:opacity-100 transition-opacity"
-              onClick={handleClose}
-              type="button"
-            >
-              <X size={18} />
-            </button>
-
-            {/* Top: language & theme */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-3 pr-10 sm:pr-12">
-              <div className="flex flex-wrap items-center gap-2">
-                <div
-                  aria-label={t('settings.languageTitle')}
-                  className="inline-flex rounded-xl border border-base-content/12 bg-base-200/30 p-px"
-                  role="group"
-                >
-                  {LANGUAGES.map(([lng, label]) => (
-                    <button
-                      aria-label={label}
-                      aria-pressed={currentLang === lng}
-                      className={[
-                        'flex h-7 items-center justify-center rounded-[10px] px-2.5 text-xs font-medium transition-colors',
-                        currentLang === lng
-                          ? 'bg-info text-info-content shadow-sm'
-                          : 'text-base-content/45 hover:bg-base-200/80 hover:text-base-content/80',
-                      ].join(' ')}
-                      key={lng}
-                      onClick={() => setLanguage(lng)}
-                      type="button"
-                    >
-                      {lng.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-
-                <div
-                  aria-label={t('onboarding.themeTitle')}
-                  className="inline-flex rounded-xl border border-base-content/12 bg-base-200/30 p-px"
-                  role="group"
-                >
-                  {(
-                    [
-                      { icon: Sun, label: t('onboarding.themeLight', 'Svijetlo'), value: 'light' },
-                      { icon: Moon, label: t('onboarding.themeDark', 'Tamno'), value: 'dark' },
-                    ] as const
-                  ).map(({ icon: Icon, label, value }) => (
-                    <button
-                      aria-label={label}
-                      aria-pressed={theme === value}
-                      className={[
-                        'flex h-7 w-8 items-center justify-center rounded-[10px] transition-colors',
-                        theme === value
-                          ? 'bg-info text-info-content shadow-sm'
-                          : 'text-base-content/45 hover:bg-base-200/80 hover:text-base-content/80',
-                      ].join(' ')}
-                      key={value}
-                      onClick={() => setTheme(value)}
-                      title={label}
-                      type="button"
-                    >
-                      <Icon className="h-3.5 w-3.5" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Headline */}
-            <h2
-              className="mt-4 text-3xl sm:text-4xl lg:text-[2.75rem] font-extrabold tracking-tight leading-[1.08] text-base-content max-w-2xl"
-              id="global-welcome-title"
-            >
-              {t('onboarding.welcomeTitle', 'Dobrodošli u Kreni')}
-            </h2>
-
-            {/* Sub-headline */}
-            <p className="mt-3 text-sm sm:text-base text-base-content/60 leading-relaxed max-w-xl">
-              {t(
-                'onboarding.welcomeBody',
-                "Zagreb's trams and buses, live on the map. Plus cycling, driving, and city services."
-              )}
-            </p>
-
-            {/* Bullets — plain text list, not chips */}
-            <ul className="mt-3 space-y-1.5">
-              {[
-                t('onboarding.heroBullet0', 'Prati javni prijevoz uživo — brzo i jednostavno.'),
-                t(
-                  'onboarding.heroBullet1',
-                  'Prebaci se između načina: prijevoz, biciklizam, auto, gradski sadržaj.'
-                ),
-                t(
-                  'onboarding.heroBullet2',
-                  'Spremi favorite i imaj nedavne stanice/linije pri ruci.'
-                ),
-              ].map((bullet) => (
-                <li
-                  className="flex items-start gap-2.5 text-sm text-base-content/60 leading-snug"
-                  key={bullet}
-                >
-                  <span className="mt-[0.35em] h-1.5 w-1.5 shrink-0 rounded-full bg-info/60" />
-                  {bullet}
-                </li>
-              ))}
-            </ul>
-
-            {/* CTAs */}
-            <div className="mt-6 flex flex-wrap gap-2.5">
+            aria-label={t('settings.languageTitle')}
+            className="inline-flex rounded-full bg-base-200/50 p-1 backdrop-blur-md"
+            role="group"
+          >
+            {LANGUAGES.map(([lng, label]) => (
               <button
-                className="btn btn-info min-h-11 px-5 font-semibold shadow-lg shadow-info/20 hover:shadow-xl hover:shadow-info/25 transition-shadow"
-                onClick={handleClose}
+                aria-label={label}
+                aria-pressed={currentLang === lng}
+                className={[
+                  'flex h-8 items-center justify-center rounded-full px-4 text-xs font-bold transition-all duration-200',
+                  currentLang === lng
+                    ? 'bg-base-100 text-base-content shadow-sm'
+                    : 'text-base-content/50 hover:text-base-content',
+                ].join(' ')}
+                key={lng}
+                onClick={() => setLanguage(lng)}
                 type="button"
               >
-                {t('common.enterApp', 'Kreni')}
-                <ArrowRight className="h-4 w-4" />
+                {lng.toUpperCase()}
               </button>
-            </div>
-
-            {/* No sign-in note */}
-            <p className="mt-2 text-xs text-base-content/40">
-              ✓ {t('onboarding.welcomeFooterNote', 'No sign-in required')}
-            </p>
-
-            {/* OSS badge + GitHub — secondary, below the fold */}
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <div className="inline-flex w-fit items-center rounded-full border border-base-content/12 bg-base-200/40 px-3 py-1 text-xs font-medium text-base-content/50 tracking-wide">
-                {t('onboarding.heroBadge', 'Free and open source')}
-              </div>
-              <a
-                className="btn btn-ghost btn-xs border border-base-content/10 hover:border-base-content/20 transition-colors"
-                href="https://github.com/aeoden96/kreni-app"
-                rel="noreferrer"
-                target="_blank"
-              >
-                <Github className="h-3.5 w-3.5" />
-                {t('onboarding.githubCta', 'GitHub')}
-              </a>
-            </div>
+            ))}
           </div>
 
-          {/* Divider */}
-          <div className="mx-6 sm:mx-8 lg:mx-10 h-px bg-gradient-to-r from-transparent via-base-content/8 to-transparent" />
+          {/* Theme Toggle */}
+          <button
+            aria-label={t('onboarding.themeTitle')}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-base-200/50 text-base-content/60 hover:text-base-content hover:bg-base-200 transition-colors backdrop-blur-md"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            type="button"
+          >
+            {theme === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+          </button>
+        </div>
 
-          {/* ══════════════════════════════════════════════════════════════════
-           *  BODY GRID
-           * ══════════════════════════════════════════════════════════════════ */}
-          <div className="relative px-6 sm:px-8 lg:px-10 py-6 grid grid-cols-1 lg:grid-cols-[1fr_minmax(280px,360px)] gap-5 items-start">
-            {/* ── Left: mode cards ── */}
-            <div className="min-w-0 space-y-5">
-              {/* Jump-in label */}
-              <div>
-                <h3 className="text-sm font-bold text-base-content">
-                  {t('onboarding.tourTitle', 'Brzi pregled')}
-                </h3>
-                <p className="text-xs text-base-content/50 mt-0.5">
-                  {t(
-                    'onboarding.tourBody',
-                    'Odaberi način rada i kreni. Kasnije se možeš uvijek prebaciti.'
-                  )}
+        {/* Skip Button */}
+        <button
+          className="text-sm font-bold text-base-content/40 hover:text-base-content transition-colors px-2 py-2 pointer-events-auto"
+          onClick={handleClose}
+          type="button"
+        >
+          {t('common.close', 'Skip')}
+        </button>
+      </div>
+
+      {/* ── Scrollable Sections ── */}
+      <div className="flex flex-col">
+        {SECTIONS.map((section, index) => (
+          <section
+            className="min-h-[100svh] flex flex-col justify-center items-center px-6 py-24 relative"
+            id={`section-${index}`}
+            key={section.id}
+          >
+            <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
+              {/* Headline */}
+              <ScrollReveal delay={0}>
+                <h2 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tighter text-center text-base-content leading-tight">
+                  {t(section.titleKey)}
+                </h2>
+              </ScrollReveal>
+
+              {/* Copy */}
+              <ScrollReveal delay={200}>
+                <p className="mt-6 text-lg sm:text-xl lg:text-2xl text-base-content/60 text-center max-w-2xl font-medium tracking-tight leading-relaxed">
+                  {t(section.bodyKey)}
                 </p>
-              </div>
+              </ScrollReveal>
 
-              {/* Featured transit card */}
-              {MODES.slice(0, 1).map(({ bodyKey, icon: Icon, key, path, titleKey }) => (
+              {/* CTA Button */}
+              <ScrollReveal className="mt-10 mb-16 sm:mb-20" delay={400}>
                 <button
-                  className="group w-full text-left rounded-2xl border border-info/25 bg-info/[0.06] p-4
-                             hover:bg-info/10 hover:border-info/35 hover:shadow-sm
-                             transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-info/50"
-                  key={key}
-                  onClick={() => handleQuickStart(path)}
+                  className={pillButtonClasses}
+                  onClick={() => handleScrollToNext(index)}
                   type="button"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-xl bg-info/15 flex items-center justify-center shrink-0 group-hover:bg-info/25 transition-colors">
-                      <Icon className="h-5 w-5 text-info" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold text-base-content">{t(titleKey)}</div>
-                      <p className="mt-0.5 text-[11px] text-base-content/55 leading-relaxed line-clamp-2">
-                        {t(bodyKey)}
-                      </p>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-info/50 group-hover:text-info transition-colors shrink-0" />
-                  </div>
+                  {t(section.buttonKey || 'common.next', 'Continue')}
                 </button>
-              ))}
+              </ScrollReveal>
 
-              {/* Secondary mode cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {MODES.slice(1).map(({ bodyKey, icon: Icon, key, path, titleKey }) => (
-                  <button
-                    className="group text-left rounded-2xl border border-base-content/8 bg-base-200/25 p-4
-                               hover:bg-info/5 hover:border-info/25 hover:shadow-sm
-                               transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-info/50"
-                    key={key}
-                    onClick={() => handleQuickStart(path)}
-                    type="button"
-                  >
-                    <div className="h-8 w-8 rounded-xl bg-info/10 flex items-center justify-center mb-3 group-hover:bg-info/18 transition-colors">
-                      <Icon className="h-4 w-4 text-info" />
-                    </div>
-                    <div className="text-xs font-semibold text-base-content leading-snug">
-                      {t(titleKey)}
-                    </div>
-                    <p className="mt-1 text-[11px] text-base-content/50 leading-relaxed line-clamp-2">
-                      {t(bodyKey)}
-                    </p>
-                  </button>
-                ))}
-              </div>
+              {/* Mockup */}
+              <ScrollReveal className="w-full" delay={600}>
+                <DeviceMockup id={section.id} />
+              </ScrollReveal>
             </div>
+          </section>
+        ))}
+      </div>
 
-            {/* ── Right: feature video showcase ── */}
-            <div className="min-w-0 space-y-5">
-              <div>
-                <h3 className="text-sm font-bold text-base-content">
-                  {t('onboarding.featureShowcaseTitle', 'Kako radi')}
-                </h3>
-                <p className="text-xs text-base-content/50 mt-0.5">
-                  {t('onboarding.featureShowcaseBody', 'Ukratki video pregled nekoliko značajki.')}
-                </p>
-              </div>
-              <FeatureShowcase prefersReducedMotion={prefersReducedMotion} />
-            </div>
-          </div>
+      {/* Bottom padding for the last section so the user can scroll past it slightly if they want to admire it */}
+      <div className="h-[10vh] bg-base-100" />
+    </div>
+  );
+}
 
-          {/* Bottom accent */}
-          <div
-            aria-hidden
-            className="h-px bg-gradient-to-r from-transparent via-base-content/6 to-transparent"
-          />
+/**
+ * A clean, CSS-only Android device mockup placeholder with soft shadows.
+ * This is designed to look extremely premium and minimal.
+ */
+function DeviceMockup({ id }: { id: string }) {
+  return (
+    <div className="relative mx-auto w-full max-w-[280px] sm:max-w-[340px] aspect-[9/19.5] rounded-[2.5rem] sm:rounded-[3rem] border-[8px] sm:border-[12px] border-base-200 bg-base-100 shadow-[0_35px_60px_-15px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden">
+      {/* Front camera punch hole */}
+      <div className="absolute top-3 sm:top-4 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-base-300 z-10" />
+
+      {/* Screen Placeholder Content */}
+      <div className="flex-1 bg-base-200/30 flex flex-col items-center justify-center p-8 text-center">
+        <div className="w-16 h-16 sm:w-20 sm:h-20 mb-6 rounded-2xl sm:rounded-3xl bg-base-300/50" />
+        <div className="text-sm sm:text-base font-semibold text-base-content/40 uppercase tracking-widest mb-3">
+          {id}
+        </div>
+        <div className="text-xs sm:text-sm text-base-content/30 leading-relaxed px-2">
+          Screenshot from theapplaunchpad will appear here.
         </div>
       </div>
     </div>
@@ -428,90 +202,47 @@ export function GlobalWelcomeWizard() {
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
-function FeatureShowcase({ prefersReducedMotion }: { prefersReducedMotion: boolean }) {
-  const { t } = useTranslation();
-  const [active, setActive] = useState(0);
-  const [hasError, setHasError] = useState<Record<number, boolean>>({});
-  const [progress, setProgress] = useState(0);
-
-  const feature = FEATURE_VIDEOS[active];
+function ScrollReveal({
+  children,
+  className = '',
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+}) {
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setProgress(0);
-  }, [active]);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          // Once visible, we can disconnect if we only want it to animate once.
+          // Apple usually only animates once per scroll down.
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.15 }
+    );
 
-  const showVideo = feature.src && !prefersReducedMotion && !hasError[active];
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
 
-  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
-    const v = e.currentTarget;
-    if (v.duration) setProgress(v.currentTime / v.duration);
-  };
-
-  const handleEnded = () => {
-    setActive((a) => (a + 1) % FEATURE_VIDEOS.length);
-  };
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <div className="rounded-2xl border border-base-content/8 bg-base-200/25 overflow-hidden">
-      {/* Tab strip */}
-      <div className="flex overflow-x-auto overflow-y-hidden scrollbar-none border-b border-base-content/6 px-3 pt-3 gap-1">
-        {FEATURE_VIDEOS.map((f, i) => (
-          <button
-            className={[
-              'relative shrink-0 rounded-t-xl px-3 py-2 text-xs font-medium transition-colors whitespace-nowrap',
-              i === active
-                ? 'bg-base-100 border border-b-base-100 border-base-content/8 text-base-content -mb-px'
-                : 'text-base-content/50 hover:text-base-content/80 hover:bg-base-200/50',
-            ].join(' ')}
-            key={f.id}
-            onClick={() => setActive(i)}
-            type="button"
-          >
-            {t(f.titleKey)}
-            {i === active && showVideo && (
-              <span
-                aria-hidden
-                className="absolute bottom-0 left-0 h-0.5 bg-info/70 rounded-full transition-none"
-                style={{ width: `${progress * 100}%` }}
-              />
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Video / placeholder */}
-      <div className="bg-base-200/30">
-        {showVideo ? (
-          <video
-            autoPlay
-            className="w-full h-auto max-h-[340px] object-contain"
-            key={feature.src}
-            muted
-            onEnded={handleEnded}
-            onError={() => setHasError((e) => ({ ...e, [active]: true }))}
-            onTimeUpdate={handleTimeUpdate}
-            playsInline
-            preload="metadata"
-            src={import.meta.env.BASE_URL + feature.src}
-          />
-        ) : (
-          <div className="flex flex-col items-center justify-center gap-2 py-14">
-            <div className="h-10 w-10 rounded-2xl bg-base-content/6 flex items-center justify-center">
-              <Play className="h-4 w-4 text-base-content/25" />
-            </div>
-            <span className="text-xs text-base-content/35 font-medium">
-              {prefersReducedMotion && feature.src
-                ? t('onboarding.previewPausedReducedMotion', 'Preview paused (reduced motion)')
-                : t('onboarding.previewUnavailable', 'Preview unavailable')}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Active feature description */}
-      <div className="px-4 py-3 border-t border-base-content/6">
-        <p className="text-xs text-base-content/55 leading-relaxed">{t(feature.descKey)}</p>
-      </div>
+    <div
+      className={`transition-all duration-1000 ease-out transform ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+      } ${className}`}
+      ref={ref}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      {children}
     </div>
   );
 }

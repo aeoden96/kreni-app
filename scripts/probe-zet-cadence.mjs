@@ -23,9 +23,8 @@
  *   DURATION_MS  – total run length in ms     (default: 180000)
  */
 
-import crypto from 'node:crypto';
-
 import GtfsRealtimeBindings from 'gtfs-realtime-bindings';
+import crypto from 'node:crypto';
 
 const ZET_URL = process.env.ZET_URL || 'https://www.zet.hr/gtfs-rt-protobuf';
 const SAMPLE_MS = Number(process.env.SAMPLE_MS) || 2000;
@@ -33,6 +32,44 @@ const DURATION_MS = Number(process.env.DURATION_MS) || 180_000;
 
 const samples = [];
 const start = Date.now();
+
+function analyze() {
+  const ok = samples.filter((s) => s.ok);
+  const elapsed = ((Date.now() - start) / 1000).toFixed(0);
+  console.log(`\n===== ANALYSIS (${ok.length} good samples over ${elapsed}s) =====`);
+
+  // Gaps between distinct feed header timestamps (the regeneration cadence).
+  const hdrGaps = [];
+  let prevHdr = null;
+  for (const s of ok) {
+    if (s.hdrTs != null && s.hdrTs !== prevHdr) {
+      if (prevHdr != null) hdrGaps.push(s.hdrTs - prevHdr);
+      prevHdr = s.hdrTs;
+    }
+  }
+
+  // Wall-clock gaps between distinct response bodies.
+  const bodyGaps = [];
+  let prevHash = null;
+  let prevWall = null;
+  for (const s of ok) {
+    if (s.hash !== prevHash) {
+      if (prevWall != null) bodyGaps.push((s.wall - prevWall) / 1000);
+      prevHash = s.hash;
+      prevWall = s.wall;
+    }
+  }
+  const distinctBodies = new Set(ok.map((s) => s.hash)).size;
+
+  console.log('\n[Feed header timestamp] gaps between distinct hdrTs (seconds):');
+  console.log('  ', JSON.stringify(stat(hdrGaps)));
+  console.log('\n[Body bytes] gaps between distinct response bodies (wall seconds):');
+  console.log('  ', JSON.stringify(stat(bodyGaps)));
+  console.log(`\n  distinct bodies: ${distinctBodies} / ${ok.length} polls`);
+  console.log(
+    `  → a true 7 s cadence over ~${elapsed}s would yield ~${Math.round(elapsed / 7)} distinct documents.`
+  );
+}
 
 /** POSIX seconds → HH:MM:SS (UTC) for compact logging. */
 function fmt(ts) {
@@ -97,44 +134,6 @@ function stat(arr) {
     n: arr.length,
     values: arr.map((v) => Number(v).toFixed(0)).join(','),
   };
-}
-
-function analyze() {
-  const ok = samples.filter((s) => s.ok);
-  const elapsed = ((Date.now() - start) / 1000).toFixed(0);
-  console.log(`\n===== ANALYSIS (${ok.length} good samples over ${elapsed}s) =====`);
-
-  // Gaps between distinct feed header timestamps (the regeneration cadence).
-  const hdrGaps = [];
-  let prevHdr = null;
-  for (const s of ok) {
-    if (s.hdrTs != null && s.hdrTs !== prevHdr) {
-      if (prevHdr != null) hdrGaps.push(s.hdrTs - prevHdr);
-      prevHdr = s.hdrTs;
-    }
-  }
-
-  // Wall-clock gaps between distinct response bodies.
-  const bodyGaps = [];
-  let prevHash = null;
-  let prevWall = null;
-  for (const s of ok) {
-    if (s.hash !== prevHash) {
-      if (prevWall != null) bodyGaps.push((s.wall - prevWall) / 1000);
-      prevHash = s.hash;
-      prevWall = s.wall;
-    }
-  }
-  const distinctBodies = new Set(ok.map((s) => s.hash)).size;
-
-  console.log('\n[Feed header timestamp] gaps between distinct hdrTs (seconds):');
-  console.log('  ', JSON.stringify(stat(hdrGaps)));
-  console.log('\n[Body bytes] gaps between distinct response bodies (wall seconds):');
-  console.log('  ', JSON.stringify(stat(bodyGaps)));
-  console.log(`\n  distinct bodies: ${distinctBodies} / ${ok.length} polls`);
-  console.log(
-    `  → a true 7 s cadence over ~${elapsed}s would yield ~${Math.round(elapsed / 7)} distinct documents.`
-  );
 }
 
 console.log(`Polling ${ZET_URL} every ${SAMPLE_MS / 1000}s for ${DURATION_MS / 1000}s...\n`);
