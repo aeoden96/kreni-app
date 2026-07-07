@@ -32,7 +32,7 @@
     "prepare": "husky",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "secret": "secretlint ."
+    "secret": "git ls-files | xargs secretlint"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
