@@ -1,5 +1,22 @@
 apply plugin: 'com.android.application'
 
+// Release signing secrets live in android/keystore.properties (gitignored).
+// Absent on CI / fresh clones → release stays unsigned and debug builds still work.
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+// versionName tracks the web app version in package.json (single source of truth).
+def appVersion = new groovy.json.JsonSlurper()
+    .parseText(rootProject.file("../package.json").text).version
+
+// versionCode must strictly increase per Play upload. CI passes a monotonic value
+// (e.g. the GitHub run number) via ANDROID_VERSION_CODE; local builds fall back to 1.
+def versionCodeEnv = System.getenv("ANDROID_VERSION_CODE")
+def appVersionCode = versionCodeEnv?.isInteger() ? versionCodeEnv.toInteger() : 1
+
 android {
     namespace = "app.kreni"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +24,8 @@ android {
         applicationId "app.kreni"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode appVersionCode
+        versionName appVersion
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,9 +33,23 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
+            // Signed only when keystore.properties is present; otherwise build an
+            // unsigned release (e.g. on CI without secrets).
+            signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : null
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }

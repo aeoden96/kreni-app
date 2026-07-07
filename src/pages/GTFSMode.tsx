@@ -429,7 +429,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
         {/* Route loading indicator — only when the small route bar isn't already visible */}
         {routeLoading &&
           (!selectedRoute || routeViewLargeOpen || stopModalOpen || !!selectedStopId) && (
-            <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[1000]">
+            <div className="absolute top-[calc(4rem+env(safe-area-inset-top))] left-1/2 -translate-x-1/2 z-[1000]">
               <div className="alert alert-info py-2 px-4 shadow-lg">
                 <span className="loading loading-spinner loading-sm" />
                 <span>{t('gtfs.loadingRoute')}</span>
@@ -466,7 +466,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
 
         {/* Low-zoom hint when vehicles and stops are hidden (transit only) */}
         {config.hasRealtime && mapZoom <= MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD && (
-          <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[1000]">
+          <div className="absolute top-[calc(5rem+env(safe-area-inset-top))] left-1/2 -translate-x-1/2 z-[1000]">
             <div className="badge badge-neutral gap-2 shadow text-xs sm:text-sm opacity-90 whitespace-nowrap">
               <span className="w-2 h-2 rounded-full bg-amber-50 animate-ping" />
               {t('gtfs.zoomForStopsAndVehicles')}
@@ -582,7 +582,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
         )}
 
         {/* Floating search: circular icon (same footprint as locate) until route is shown in-bar */}
-        <div className="absolute top-2 left-2 right-32 sm:left-4 sm:right-auto sm:top-4 z-[1000]">
+        <div className="absolute top-[max(0.5rem,env(safe-area-inset-top))] left-[max(0.5rem,env(safe-area-inset-left))] right-32 sm:left-[max(1rem,env(safe-area-inset-left))] sm:right-auto sm:top-[max(1rem,env(safe-area-inset-top))] z-[1000]">
           {selectedRoute && routeViewLargeOpen ? (
             <div className="w-full sm:w-80 flex items-center gap-2 bg-base-100 rounded-xl px-4 py-3 shadow-lg">
               <button
@@ -633,7 +633,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
         </div>
 
         {/* Floating plan journey button */}
-        <div className="absolute top-2 left-14 sm:top-4 sm:left-20 z-[1000]">
+        <div className="absolute top-[max(0.5rem,env(safe-area-inset-top))] left-[calc(3.5rem+env(safe-area-inset-left))] sm:top-[max(1rem,env(safe-area-inset-top))] sm:left-[calc(5rem+env(safe-area-inset-left))] z-[1000]">
           <button
             aria-label={t('search.planJourney')}
             className="btn btn-circle btn-gps-inactive p-0 min-h-0 w-10 h-10 min-h-10 sm:w-14 sm:h-14 sm:min-h-14 shadow-2xl transition-all duration-300 ring-2 ring-white/5"
@@ -649,7 +649,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
 
         {/* Locate error toast */}
         {locateError && (
-          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[1300]">
+          <div className="absolute top-[calc(4rem+env(safe-area-inset-top))] left-1/2 -translate-x-1/2 z-[1300]">
             <div className="alert alert-error py-2 px-4 shadow-lg text-xs max-w-72 text-center">
               <span>{locateError}</span>
             </div>

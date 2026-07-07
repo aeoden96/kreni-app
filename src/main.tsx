@@ -1,3 +1,4 @@
+import { SplashScreen } from '@capacitor/splash-screen';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -16,8 +17,15 @@ import { PrivacyPage } from './pages/PrivacyPage.tsx';
 import { PublicTransportMode } from './pages/PublicTransportMode.tsx';
 import { TallyFeedbackPage } from './pages/TallyFeedbackPage.tsx';
 import { TrainMode } from './pages/TrainMode.tsx';
+import { isNative } from './utils/platform.ts';
 
 const queryClient = new QueryClient();
+
+// Native splash is held open (launchAutoHide: false) until the app shell is on
+// screen, then dismissed here to avoid a white flash. No-op on web/PWA.
+if (isNative()) {
+  void SplashScreen.hide();
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

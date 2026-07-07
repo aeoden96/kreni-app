@@ -3,6 +3,23 @@ const de = {
     app: {
       title: 'Kreni — Zagreb live: ÖPNV, Parken, Fahrräder & städtische Dienste',
     },
+    arrivalAlerts: {
+      activeBanner: 'Erinnerung nahe {{stop}}',
+      bellTitle: 'In der Nähe erinnern',
+      cancelTitle: 'Ankunftserinnerung abbrechen',
+      channelDescription: 'Erinnerungen, wenn du dich deiner Zielhaltestelle näherst',
+      channelName: 'Ankunftserinnerungen',
+      description: 'Werde benachrichtigt, wenn du in die Nähe von {{stop}} kommst.',
+      notificationBody: 'Du kommst gleich bei {{stop}} an.',
+      notificationTitle: 'Bald aussteigen',
+      permissionDenied:
+        'Benachrichtigungen sind blockiert. Aktiviere sie in den Systemeinstellungen für Ankunftserinnerungen.',
+      radiusLabel: 'Erinnerungsentfernung',
+      start: 'Erinnerung starten',
+      title: 'Ankunftserinnerung',
+      trackingMessage: 'Wir achten auf deine Haltestelle: {{stop}}',
+      trackingTitle: 'Kreni verfolgt deine Fahrt',
+    },
     cityLayers: {
       animalZones: {
         desc: 'Zonen, in denen Nutztiere in der Stadt erlaubt sind.',
@@ -114,6 +131,7 @@ const de = {
     },
     common: {
       back: 'Zurück',
+      cancel: 'Abbrechen',
       close: 'Schließen',
       done: 'Fertig',
       enterApp: 'App öffnen',
@@ -122,6 +140,7 @@ const de = {
       kilometres: '{{km}} km',
       metresShort: '{{metres}} m',
       next: 'Weiter',
+      save: 'Speichern',
       showAllCount: 'Alle anzeigen ({{count}})',
       showDetails: 'Details anzeigen',
       showRouteDetails: 'Routendetails anzeigen',
@@ -281,6 +300,9 @@ const de = {
       subtitle: 'Nach Entfernung von Ihrem Standort sortiert',
       title: 'Haltestellen in der Nähe',
     },
+    offline: {
+      message: 'Sie sind offline — zwischengespeicherte Daten werden angezeigt.',
+    },
     onboarding: {
       cityBody0: 'Trinkbrunnen, Mensen und andere städtische Angebote finden.',
       cityTitle0: 'Stadtleben',
@@ -368,6 +390,38 @@ const de = {
         vehiclePositions: 'Fahrzeugpositionen',
         zetFeedTime: 'ZET-Feed-Zeitstempel',
         zetFeedTimeHint: 'Wann der Feed zuletzt von ZET aktualisiert wurde.',
+      },
+    },
+    reminders: {
+      add: 'Hinzufügen',
+      addTitle: 'Neue Erinnerung',
+      anyRoute: 'Beliebige Linie',
+      channelDescription: 'Wiederkehrende Erinnerungen für deine Haltestellen',
+      channelName: 'Abfahrtserinnerungen',
+      daysLabel: 'Tage',
+      delete: 'Löschen',
+      description: 'Erhalte vor deiner üblichen Abfahrt eine wiederkehrende Benachrichtigung.',
+      edit: 'Bearbeiten',
+      editTitle: 'Erinnerung bearbeiten',
+      empty: 'Noch keine Erinnerungen.',
+      noFavourites:
+        'Markiere zuerst eine Haltestelle (♥ in der Haltestellenansicht), um eine Erinnerung zu setzen.',
+      notificationBody: 'Zeit, zur Haltestelle {{stop}} aufzubrechen.',
+      permissionDenied:
+        'Benachrichtigungen sind blockiert. Aktiviere sie in den Systemeinstellungen.',
+      routeLabel: 'Linie',
+      stopLabel: 'Haltestelle',
+      timeLabel: 'Uhrzeit',
+      title: 'Abfahrtserinnerungen',
+      toggleAria: 'Diese Erinnerung ein- oder ausschalten',
+      weekday: {
+        fri: 'Fr',
+        mon: 'Mo',
+        sat: 'Sa',
+        sun: 'So',
+        thu: 'Do',
+        tue: 'Di',
+        wed: 'Mi',
       },
     },
     rideHailing: {
@@ -589,6 +643,7 @@ const de = {
         languageGerman: 'Deutsch',
         locate: 'Mein Standort',
         settings: 'Einstellungen',
+        share: 'Teilen',
         stopTracking: 'Standortverfolgung beenden',
       },
       modes: {
@@ -597,6 +652,10 @@ const de = {
         driving: 'Auto',
         train: 'Zug',
         transit: 'Öffentlicher Verkehr',
+      },
+      share: {
+        copied: 'Link kopiert',
+        text: 'Zagreber ÖPNV live — ZET, Fahrräder, Parken & städtische Dienste.',
       },
       toggles: {
         bikeParkings: 'Parkplatz',

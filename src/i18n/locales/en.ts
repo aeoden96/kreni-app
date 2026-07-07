@@ -3,6 +3,23 @@ const en = {
     app: {
       title: 'Kreni — Zagreb live: ZET, Parking, Bikes & City Services',
     },
+    arrivalAlerts: {
+      activeBanner: 'Alerting near {{stop}}',
+      bellTitle: 'Alert me near here',
+      cancelTitle: 'Cancel arrival alert',
+      channelDescription: 'Alerts when you approach your destination stop',
+      channelName: 'Arrival alerts',
+      description: 'Get notified when you come within range of {{stop}}.',
+      notificationBody: "You're arriving at {{stop}}.",
+      notificationTitle: 'Get off soon',
+      permissionDenied:
+        'Notifications are blocked. Enable them in system settings to get arrival alerts.',
+      radiusLabel: 'Alert distance',
+      start: 'Start alert',
+      title: 'Arrival alert',
+      trackingMessage: 'Watching for your stop: {{stop}}',
+      trackingTitle: 'Kreni is tracking your trip',
+    },
     cityLayers: {
       animalZones: {
         desc: 'Zones where domestic animals (livestock) are permitted in the city.',
@@ -114,6 +131,7 @@ const en = {
     },
     common: {
       back: 'Back',
+      cancel: 'Cancel',
       close: 'Close',
       done: 'Done',
       enterApp: 'Enter app',
@@ -122,6 +140,7 @@ const en = {
       kilometres: '{{km}} km',
       metresShort: '{{metres}} m',
       next: 'Next',
+      save: 'Save',
       showAllCount: 'Show all ({{count}})',
       showDetails: 'Show details',
       showRouteDetails: 'Show route details',
@@ -276,6 +295,9 @@ const en = {
       subtitle: 'Sorted by distance from your location',
       title: 'Nearby stops',
     },
+    offline: {
+      message: 'You are offline — showing cached data.',
+    },
     onboarding: {
       cityBody0: 'Find drinking fountains, student restaurants and other city amenities.',
       cityTitle0: 'City life',
@@ -368,6 +390,37 @@ const en = {
         vehiclePositions: 'Vehicle positions',
         zetFeedTime: 'ZET feed timestamp',
         zetFeedTimeHint: 'When the feed was last updated by ZET.',
+      },
+    },
+    reminders: {
+      add: 'Add',
+      addTitle: 'New reminder',
+      anyRoute: 'Any route',
+      channelDescription: 'Recurring reminders for your stops',
+      channelName: 'Departure reminders',
+      daysLabel: 'Days',
+      delete: 'Delete',
+      description: 'Get a recurring notification before your usual departure.',
+      edit: 'Edit',
+      editTitle: 'Edit reminder',
+      empty: 'No reminders yet.',
+      noFavourites: 'Star a stop first (♥ in the stop view) to set a reminder for it.',
+      notificationBody: 'Time to head to {{stop}}.',
+      permissionDenied:
+        'Notifications are blocked. Enable them in system settings to get reminders.',
+      routeLabel: 'Route',
+      stopLabel: 'Stop',
+      timeLabel: 'Time',
+      title: 'Departure reminders',
+      toggleAria: 'Enable or disable this reminder',
+      weekday: {
+        fri: 'Fri',
+        mon: 'Mon',
+        sat: 'Sat',
+        sun: 'Sun',
+        thu: 'Thu',
+        tue: 'Tue',
+        wed: 'Wed',
       },
     },
     rideHailing: {
@@ -593,6 +646,7 @@ const en = {
         languageGerman: 'Switch to German',
         locate: 'My location',
         settings: 'Settings',
+        share: 'Share',
         stopTracking: 'Stop location tracking',
       },
       modes: {
@@ -601,6 +655,10 @@ const en = {
         driving: 'Driving',
         train: 'Train',
         transit: 'Public transport',
+      },
+      share: {
+        copied: 'Link copied',
+        text: 'Zagreb public transport, live — ZET, bikes, parking & city services.',
       },
       toggles: {
         bikeParkings: 'Parking',

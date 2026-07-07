@@ -10,6 +10,12 @@ import {
 } from 'react';
 
 import { useNavigationStore } from '../stores/navigationStore';
+import {
+  clearWatch,
+  type GeoWatchId,
+  isGeolocationAvailable,
+  watchPosition,
+} from '../utils/geolocation';
 
 type GeolocationContextValue = {
   locateError: null | string;
@@ -45,7 +51,7 @@ export function GeolocationProvider({ children }: { children: ReactNode }) {
   }, [isTracking]);
 
   const handleLocateMe = useCallback(() => {
-    if (!navigator.geolocation) {
+    if (!isGeolocationAvailable()) {
       setLocateError('Geolokacija nije dostupna u ovom pregledniku.');
       return;
     }
@@ -65,8 +71,12 @@ export function GeolocationProvider({ children }: { children: ReactNode }) {
     setLocateError(null);
 
     let firstPos = true;
+    // The native watch registers asynchronously (permission prompt), so the id
+    // may not exist yet when the user cancels. Track a pending-cancel flag.
+    let cancelled = false;
+    let watchId: GeoWatchId | null = null;
 
-    const watchId = navigator.geolocation.watchPosition(
+    void watchPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
         setUserLocation({ lat: latitude, lon: longitude });
@@ -86,9 +96,15 @@ export function GeolocationProvider({ children }: { children: ReactNode }) {
         setTimeout(() => setLocateError(null), 4000);
       },
       { enableHighAccuracy: true, maximumAge: 30000, timeout: 8000 }
-    );
+    ).then((id) => {
+      watchId = id;
+      if (cancelled) clearWatch(id);
+    });
 
-    const cancel = () => navigator.geolocation.clearWatch(watchId);
+    const cancel = () => {
+      cancelled = true;
+      if (watchId !== null) clearWatch(watchId);
+    };
     setCancelTracking(cancel);
   }, [setLocatingStore, setIsTracking, setCancelTracking, triggerLocate]);
 

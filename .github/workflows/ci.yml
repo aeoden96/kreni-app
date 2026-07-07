@@ -12,6 +12,11 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# Least privilege: these jobs only read the repo. gitleaks uses GITHUB_TOKEN to
+# read, not write.
+permissions:
+  contents: read
+
 jobs:
   secrets:
     name: Scan for leaked secrets
@@ -86,3 +91,24 @@ jobs:
 
       - name: Test
         run: yarn test
+
+  secretlint:
+    name: Secretlint (config-based secret scan)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      # Mirrors the pre-push `yarn secret` hook so the .secretlintrc rules run in
+      # CI too (complements the gitleaks scan in the `secrets` job).
+      - name: Secretlint
+        run: yarn secret

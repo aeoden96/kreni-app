@@ -1,0 +1,76 @@
+name: Android build
+
+# Builds the Capacitor Android app so native regressions (Gradle, plugins,
+# manifest, and especially the R8 / resource-shrinking release path) are caught
+# in CI. No signing secrets are needed: without android/keystore.properties the
+# release build is produced unsigned, which still exercises minify/shrink.
+on:
+  pull_request:
+    branches: ['master', 'main']
+    paths:
+      - 'src/**'
+      - 'index.html'
+      - 'capacitor.config.ts'
+      - 'android/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - '.github/workflows/android.yml'
+  push:
+    branches: ['master']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Assemble debug + release (unsigned)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'yarn'
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      # webDir (dist) must exist before `cap sync` copies it into the native app.
+      - name: Build web assets
+        run: yarn build
+
+      - name: Capacitor sync (android)
+        run: npx cap sync android
+
+      - name: Assemble debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      # Exercises R8 (minifyEnabled) + shrinkResources; unsigned since no keystore.
+      - name: Bundle release AAB (unsigned, validates R8)
+        working-directory: android
+        run: ./gradlew bundleRelease --no-daemon
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn

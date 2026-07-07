@@ -4,6 +4,7 @@
 
 import {
   ArrowRight,
+  Bell,
   CarTaxiFront,
   ChevronDown,
   ChevronUp,
@@ -25,7 +26,9 @@ import { useStopTermini } from '../../hooks/useStopTermini';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { bearingToCompassKey } from '../../utils/gtfs';
 import { compassLabelForBearing } from '../../utils/localizedCompass';
+import { isNative } from '../../utils/platform';
 import { routeTypeColor } from '../../utils/routeStyle';
+import { ArrivalAlertModal } from './ArrivalAlertModal';
 import { DepartureCard } from './DepartureCard';
 import { RideHailingModal } from './RideHailingModal';
 
@@ -59,9 +62,12 @@ export function StopInfoBar({
 }: StopInfoBarProps) {
   const { t } = useTranslation();
   const { dataDir, timetableLookaheadMinutes } = useGTFSMode();
-  const { favouriteStopIds, toggleFavouriteStop } = useSettingsStore();
+  const { activeArrivalAlert, clearArrivalAlert, favouriteStopIds, toggleFavouriteStop } =
+    useSettingsStore();
   const isFav = favouriteStopIds.includes(stop.id);
+  const isAlertActive = activeArrivalAlert?.stopId === stop.id;
   const [rideHailingModalOpen, setRideHailingModalOpen] = useState(false);
+  const [arrivalModalOpen, setArrivalModalOpen] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [routesExpanded, setRoutesExpanded] = useState(false);
   const [platformsExpanded, setPlatformsExpanded] = useState(false);
@@ -176,8 +182,8 @@ export function StopInfoBar({
     <div
       className={`fixed left-2 right-2 sm:left-4 sm:right-auto sm:max-w-md z-[1050] bg-base-100 rounded-xl shadow-2xl flex flex-col overflow-hidden ${
         stackBelow
-          ? 'top-44 sm:top-44 max-h-[calc(100dvh-12rem)]'
-          : 'top-16 sm:top-20 max-h-[calc(100dvh-5rem)] sm:max-h-[calc(100dvh-6rem)]'
+          ? 'top-[calc(11rem+env(safe-area-inset-top))] max-h-[calc(100dvh-12rem-env(safe-area-inset-top))]'
+          : 'top-[calc(4rem+env(safe-area-inset-top))] sm:top-[calc(5rem+env(safe-area-inset-top))] max-h-[calc(100dvh-5rem-env(safe-area-inset-top))] sm:max-h-[calc(100dvh-6rem-env(safe-area-inset-top))]'
       }`}
       data-testid="stop-info-panel"
       style={{ animation: 'modal-fade-in 0.2s ease-out' }}
@@ -225,6 +231,21 @@ export function StopInfoBar({
               )}
             </div>
             <div className="flex items-center gap-1 shrink-0">
+              {isNative() && (
+                <button
+                  className="btn btn-ghost btn-circle btn-xs"
+                  onClick={() => (isAlertActive ? clearArrivalAlert() : setArrivalModalOpen(true))}
+                  title={
+                    isAlertActive ? t('arrivalAlerts.cancelTitle') : t('arrivalAlerts.bellTitle')
+                  }
+                >
+                  <Bell
+                    className="w-4 h-4"
+                    color={isAlertActive ? '#3b82f6' : 'currentColor'}
+                    fill={isAlertActive ? '#3b82f6' : 'none'}
+                  />
+                </button>
+              )}
               <button
                 className="btn btn-ghost btn-circle btn-xs"
                 onClick={() => setRideHailingModalOpen(true)}
@@ -391,6 +412,9 @@ export function StopInfoBar({
         onClose={() => setRideHailingModalOpen(false)}
         stop={stop}
       />
+      {arrivalModalOpen && (
+        <ArrivalAlertModal onClose={() => setArrivalModalOpen(false)} stop={stop} />
+      )}
     </div>
   );
 }

@@ -22,3 +22,8 @@
 
 /data/*
   Cache-Control: no-cache
+
+# Android App Links verification file — must be served as JSON.
+/.well-known/assetlinks.json
+  Content-Type: application/json
+  Cache-Control: no-cache

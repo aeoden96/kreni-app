@@ -28,8 +28,10 @@ import { getCurrentLanguage, setLanguage, type SupportedLanguage } from '../../i
 import { useDataCacheStore } from '../../stores/dataCache';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { trackEvent } from '../../utils/analytics';
+import { isNative } from '../../utils/platform';
 import { ChangelogModal } from '../common/ChangelogModal';
 import { FlatLanguageFlags } from '../Navigation/FlatLanguageFlags';
+import { RemindersSection } from './RemindersSection';
 
 // Map tile providers handled automatically via theme + detailedMap setting
 
@@ -98,7 +100,7 @@ export function SettingsPage() {
   return (
     <div className="h-full overflow-y-auto bg-base-200">
       {/* Header */}
-      <div className="bg-base-100 border-b border-base-300">
+      <div className="bg-base-100 border-b border-base-300 pt-[env(safe-area-inset-top)]">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
           <Link className="btn btn-circle btn-ghost btn-sm" to="/">
             <ArrowLeft className="w-5 h-5" />
@@ -132,6 +134,9 @@ export function SettingsPage() {
             </div>
           </div>
         </div>
+
+        {/* Departure reminders (native local notifications only) */}
+        {isNative() && <RemindersSection />}
 
         {/* Feedback Section */}
         <div className="card bg-base-100 shadow-sm">

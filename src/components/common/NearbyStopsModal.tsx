@@ -53,7 +53,7 @@ export function NearbyStopsModal({
   const stopCount = listSlice.length;
 
   return (
-    <div className="fixed top-14 left-2 right-2 sm:top-20 sm:left-4 sm:right-auto sm:w-auto sm:max-w-sm z-[1050]">
+    <div className="fixed top-[calc(3.5rem+env(safe-area-inset-top))] left-2 right-2 sm:top-[calc(5rem+env(safe-area-inset-top))] sm:left-4 sm:right-auto sm:w-auto sm:max-w-sm z-[1050]">
       {/* Compact card — top overlay on mobile, top-left card on desktop */}
       <div
         className={`relative w-full bg-base-100 rounded-xl shadow-2xl flex flex-col overflow-hidden ${

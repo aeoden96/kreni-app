@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 
 import { trackEvent } from '../../utils/analytics';
+import { hapticSelection } from '../../utils/haptics';
 import { SpiderFilterBar } from './SpiderFilterBar';
 
 type RouteConfig = {
@@ -74,6 +75,7 @@ export function SpiderRouteList() {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
+            hapticSelection();
             trackEvent('mode_switched', { mode: item.label });
             startTransition(() => navigate(item.to));
           }}

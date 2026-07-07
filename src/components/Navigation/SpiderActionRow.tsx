@@ -1,13 +1,14 @@
-import { HelpCircle, Settings } from 'lucide-react';
+import { HelpCircle, Settings, Share2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 type Props = {
   animationBaseDelay?: number;
   onHelp: () => void;
   onSettings: () => void;
+  onShare: () => void;
 };
 
-export function SpiderActionRow({ animationBaseDelay = 0, onHelp, onSettings }: Props) {
+export function SpiderActionRow({ animationBaseDelay = 0, onHelp, onSettings, onShare }: Props) {
   const { t } = useTranslation();
 
   const actions = [
@@ -16,6 +17,12 @@ export function SpiderActionRow({ animationBaseDelay = 0, onHelp, onSettings }: 
       key: 'help',
       label: t('spiderMenu.actions.help'),
       onClick: onHelp,
+    },
+    {
+      icon: <Share2 className="w-5 h-5" />,
+      key: 'share',
+      label: t('spiderMenu.actions.share'),
+      onClick: onShare,
     },
     {
       icon: <Settings className="w-5 h-5" />,

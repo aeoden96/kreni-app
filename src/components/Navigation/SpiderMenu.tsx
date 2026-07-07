@@ -15,6 +15,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useNavigationStore } from '../../stores/navigationStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { trackEvent } from '../../utils/analytics';
+import { hapticImpact } from '../../utils/haptics';
+import { shareCurrentView } from '../../utils/share';
 import { SpiderActionRow } from './SpiderActionRow';
 import { SpiderRouteList } from './SpiderRouteList';
 
@@ -49,7 +51,12 @@ export function SpiderMenu() {
   const { setOnboardingCompleted, setOnboardingStep } = useSettingsStore();
   const { isTracking, locating, onLocateClick } = useNavigationStore();
 
-  const toggleMenu = () => setIsOpen((prev) => !prev);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const toggleMenu = () => {
+    hapticImpact('light');
+    setIsOpen((prev) => !prev);
+  };
   const closeMenu = () => setIsOpen(false);
 
   const isHeaderMode = location.pathname === '/settings';
@@ -80,6 +87,18 @@ export function SpiderMenu() {
     closeMenu();
   };
 
+  const handleShare = () => {
+    trackEvent('share_opened', { source: 'spider_menu' });
+    void shareCurrentView(t('app.title'), t('spiderMenu.share.text')).then((result) => {
+      // The clipboard fallback (desktop web) has no native UI, so confirm inline.
+      if (result === 'copied') {
+        setLinkCopied(true);
+        setTimeout(() => setLinkCopied(false), 2000);
+      }
+    });
+    closeMenu();
+  };
+
   return (
     <>
       {isOpen && (
@@ -92,7 +111,7 @@ export function SpiderMenu() {
 
       {/* Top-right: locate + hub */}
       <div
-        className={`fixed ${isHeaderMode ? 'top-[10px] right-2' : 'top-2 right-2 sm:top-4 sm:right-4'} z-[2000] flex flex-col items-end pointer-events-none`}
+        className={`fixed ${isHeaderMode ? 'top-[max(10px,env(safe-area-inset-top))] right-[max(0.5rem,env(safe-area-inset-right))]' : 'top-[max(0.5rem,env(safe-area-inset-top))] right-[max(0.5rem,env(safe-area-inset-right))] sm:top-[max(1rem,env(safe-area-inset-top))] sm:right-[max(1rem,env(safe-area-inset-right))]'} z-[2000] flex flex-col items-end pointer-events-none`}
       >
         <div
           className={`pointer-events-auto flex flex-col items-end ${isOpen ? 'gap-3' : 'gap-0'}`}
@@ -103,7 +122,10 @@ export function SpiderMenu() {
               <button
                 className={`btn btn-circle p-0 min-h-0 ${triggerSizeClass} ${isTracking ? 'btn-gps-active' : 'btn-gps-inactive'} shadow-2xl transition-all duration-300 ring-2 ring-white/5`}
                 disabled={locating}
-                onClick={onLocateClick}
+                onClick={() => {
+                  hapticImpact('medium');
+                  onLocateClick();
+                }}
                 title={
                   isTracking ? t('spiderMenu.actions.stopTracking') : t('spiderMenu.actions.locate')
                 }
@@ -153,6 +175,7 @@ export function SpiderMenu() {
                 animationBaseDelay={ACTIONS_BASE_DELAY}
                 onHelp={handleHelp}
                 onSettings={handleSettings}
+                onShare={handleShare}
               />
             </div>
           )}
@@ -175,6 +198,17 @@ export function SpiderMenu() {
               {t('spiderMenu.actions.feedback')}
             </span>
           </button>
+        </div>
+      )}
+
+      {/* Transient "link copied" confirmation (web clipboard fallback only). */}
+      {linkCopied && (
+        <div
+          className="fixed left-1/2 -translate-x-1/2 z-[2100] rounded-full bg-neutral/95 text-neutral-content shadow-2xl border border-white/10 px-4 py-2 text-xs font-semibold backdrop-blur-xl animate-[modal-fade-in_0.2s_ease-out] pointer-events-none"
+          role="status"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)' }}
+        >
+          {t('spiderMenu.share.copied')}
         </div>
       )}
     </>

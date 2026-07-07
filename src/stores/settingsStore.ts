@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+import type { ArrivalAlert } from '../types/arrivalAlert';
 import type { MapFavouriteScope, MapPlaceFavourite } from '../types/mapPlaceFavourite';
+import type { DepartureReminder } from '../types/reminder';
 
 import { makeMapPlaceFavouriteId } from '../utils/mapPlaceFavouriteKey';
 
@@ -28,8 +30,16 @@ export const MAX_MAP_PLACE_FAVOURITES = 28;
 type MapPlaceFavouriteToggleResult = 'added' | 'at_cap' | 'removed';
 
 interface SettingsState {
+  /** Active "get off here" arrival alert, or null. Native only. */
+  activeArrivalAlert: ArrivalAlert | null;
   addRecentRoute: (id: string) => void;
   addRecentStop: (id: string) => void;
+  /** Add a recurring departure reminder; returns the created reminder. */
+  addReminder: (input: Omit<DepartureReminder, 'id' | 'slot'>) => DepartureReminder;
+  /** Default arrival-alert trigger radius in metres. */
+  arrivalAlertRadiusMeters: number;
+  /** Stop the active arrival alert (tears down the GPS watch). */
+  clearArrivalAlert: () => void;
   clearRecents: () => void;
   /** CyclOSM tile style (cycling map, when bike paths layer is shown) */
   cyclosmMapVariant: CyclosmMapVariant;
@@ -57,12 +67,16 @@ interface SettingsState {
   recentRoutes: RecentItem[];
   /** Recently viewed stops (newest first, max 10) */
   recentStops: RecentItem[];
+  /** Recurring departure reminders (native local notifications) */
+  reminders: DepartureReminder[];
   /** Remove specific stop IDs from recents */
   removeMapPlaceFavourite: (scope: MapFavouriteScope, id: string) => void;
   /** Remove specific route IDs from recents */
   removeRecentRoutes: (ids: string[]) => void;
   removeRecentStops: (ids: string[]) => void;
+  removeReminder: (id: string) => void;
   sandboxVisible: boolean;
+  setArrivalAlertRadius: (metres: number) => void;
   setCyclosmMapVariant: (variant: CyclosmMapVariant) => void;
   setDetailedMap: (detailed: boolean) => void;
   setDismissedGpsTip: (dismissed: boolean) => void;
@@ -70,8 +84,8 @@ interface SettingsState {
   setMapTileProvider: (provider: MapTileProvider) => void;
   setMapViewport: (center: [number, number], zoom: number) => void;
   setOnboardingCompleted: (mode: string, completed: boolean) => void;
-  setOnboardingStep: (step: number) => void;
 
+  setOnboardingStep: (step: number) => void;
   setSandboxVisible: (visible: boolean) => void;
   setShowBikeParkings: (show: boolean) => void;
   setShowBikePaths: (show: boolean) => void;
@@ -164,6 +178,8 @@ interface SettingsState {
   showSurveillanceCameras: boolean;
   /** Show taxi stands layer */
   showTaxiStands: boolean;
+  /** Start a "get off here" arrival alert for a stop (replaces any active one). */
+  startArrivalAlert: (input: Omit<ArrivalAlert, 'startedAt'>) => void;
   theme: Theme;
   toggleFavouriteRoute: (id: string) => void;
   toggleFavouriteStop: (id: string) => void;
@@ -175,6 +191,9 @@ interface SettingsState {
     sourceId?: string;
     title: string;
   }) => MapPlaceFavouriteToggleResult;
+  toggleReminder: (id: string) => void;
+  /** Patch a reminder's schedule/target fields. */
+  updateReminder: (id: string, patch: Partial<Omit<DepartureReminder, 'id' | 'slot'>>) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -190,6 +209,7 @@ export const useSettingsStore = create<SettingsState>()(
       }
 
       return {
+        activeArrivalAlert: null,
         addRecentRoute: (id) =>
           set((s) => {
             const filtered = s.recentRoutes.filter((r) => r.id !== id);
@@ -204,6 +224,21 @@ export const useSettingsStore = create<SettingsState>()(
               recentStops: [{ id, timestamp: Date.now() }, ...filtered].slice(0, MAX_RECENTS),
             };
           }),
+        addReminder: (input) => {
+          // slot: smallest unused positive int → keeps derived notification ids compact.
+          const used = new Set(get().reminders.map((r) => r.slot));
+          let slot = 1;
+          while (used.has(slot)) slot += 1;
+          const reminder: DepartureReminder = {
+            ...input,
+            id: `rem_${Date.now().toString(36)}_${slot}`,
+            slot,
+          };
+          set((s) => ({ reminders: [...s.reminders, reminder] }));
+          return reminder;
+        },
+        arrivalAlertRadiusMeters: 400,
+        clearArrivalAlert: () => set({ activeArrivalAlert: null }),
         clearRecents: () => set({ recentRoutes: [], recentStops: [] }),
         cyclosmMapVariant: 'full',
         detailedMap: true,
@@ -222,6 +257,7 @@ export const useSettingsStore = create<SettingsState>()(
         onboardingStep: 0,
         recentRoutes: [],
         recentStops: [],
+        reminders: [],
         removeMapPlaceFavourite: (scope, id) =>
           set((s) => {
             if (scope === 'city') {
@@ -246,7 +282,9 @@ export const useSettingsStore = create<SettingsState>()(
           set((s) => ({
             recentStops: s.recentStops.filter((item) => !ids.includes(item.id)),
           })),
+        removeReminder: (id) => set((s) => ({ reminders: s.reminders.filter((r) => r.id !== id) })),
         sandboxVisible: false,
+        setArrivalAlertRadius: (metres) => set({ arrivalAlertRadiusMeters: metres }),
         setCyclosmMapVariant: (variant) => set({ cyclosmMapVariant: variant }),
         setDetailedMap: (detailed) => set({ detailedMap: detailed }),
         setDismissedGpsTip: (dismissed) => set({ dismissedGpsTip: dismissed }),
@@ -278,8 +316,8 @@ export const useSettingsStore = create<SettingsState>()(
           set((s) => ({
             onboardingCompleted: { ...s.onboardingCompleted, [mode]: completed },
           })),
-        setOnboardingStep: (step) => set({ onboardingStep: step }),
 
+        setOnboardingStep: (step) => set({ onboardingStep: step }),
         setSandboxVisible: (visible) => set({ sandboxVisible: visible }),
         setShowBikeParkings: (show) => set({ showBikeParkings: show }),
         setShowBikePaths: (show) => set({ showBikePaths: show }),
@@ -374,6 +412,9 @@ export const useSettingsStore = create<SettingsState>()(
 
         showTaxiStands: false,
 
+        startArrivalAlert: (input) =>
+          set({ activeArrivalAlert: { ...input, startedAt: Date.now() } }),
+
         theme: initialTheme,
 
         toggleFavouriteRoute: (id) =>
@@ -439,6 +480,14 @@ export const useSettingsStore = create<SettingsState>()(
           }
           return 'added';
         },
+        toggleReminder: (id) =>
+          set((s) => ({
+            reminders: s.reminders.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)),
+          })),
+        updateReminder: (id, patch) =>
+          set((s) => ({
+            reminders: s.reminders.map((r) => (r.id === id ? { ...r, ...patch } : r)),
+          })),
       };
     },
     {
@@ -497,13 +546,23 @@ export const useSettingsStore = create<SettingsState>()(
           // Removed the transit bottom-tools FAB (menu); drop its persisted state.
           delete next.transitBottomToolsOpen;
         }
+        if (fromVersion < 10) {
+          // Departure reminders (native local notifications) — ensure the slice exists.
+          next.reminders = Array.isArray(next.reminders) ? next.reminders : [];
+        }
+        if (fromVersion < 11) {
+          // Geofenced arrival alerts — start with none active and the default radius.
+          next.activeArrivalAlert = null;
+          next.arrivalAlertRadiusMeters =
+            typeof next.arrivalAlertRadiusMeters === 'number' ? next.arrivalAlertRadiusMeters : 400;
+        }
         return next as Partial<SettingsState>;
       },
       name: 'kreni-settings',
       // Bump version here whenever a default value changes and you want
       // existing users' stored value to be overridden with the new default.
       // migrate() receives the persisted state and should return the corrected state.
-      version: 9,
+      version: 11,
     }
   )
 );
