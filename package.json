@@ -10,6 +10,7 @@
     "dev:host": "vite --host",
     "prebuild": "node scripts/generate-changelog.js",
     "build": "tsc -b && vite build",
+    "harvest-live": "node scripts/harvest-live-data.js",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run --project unit",

@@ -121,6 +121,7 @@ export const useRealtimeStore = create<RealtimeState>()((set) => ({
             anchorLat,
             anchorLon,
             anchorWallMs,
+            bearing: enriched.bearing ?? prev?.bearing,
             latitude: pos.latitude,
             longitude: pos.longitude,
             smoothedSpeed: enriched.speed ?? prev?.smoothedSpeed,

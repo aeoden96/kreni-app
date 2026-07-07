@@ -333,6 +333,8 @@ export interface VehicleSnapshot {
   anchorLon?: number;
   /** Wall-clock ms when the stationary anchor was last reset (vehicle last moved) */
   anchorWallMs?: number;
+  /** Bearing carried across polls to prevent arrows from disappearing on cache hits */
+  bearing?: number;
   latitude: number;
   longitude: number;
   /** EMA-smoothed derived speed carried across polls (m/s) */
@@ -374,7 +376,16 @@ export function enrichWithDeadReckoning(
   prev: VehicleSnapshot
 ): ParsedVehiclePosition {
   const dt = current.timestamp - prev.timestamp; // seconds
-  if (dt < 3 || dt > 300) return current;
+
+  // If time delta is too small (e.g. cache hit) or too large (stale), we can't derive new motion.
+  // But we MUST carry over the previous bearing so the arrow doesn't disappear.
+  if (dt < 3 || dt > 300) {
+    return {
+      ...current,
+      bearing: prev.bearing,
+      speed: prev.smoothedSpeed,
+    };
+  }
 
   const dist = haversineDistance(
     prev.latitude,
@@ -383,7 +394,14 @@ export function enrichWithDeadReckoning(
     current.longitude
   );
 
-  if (dist < 5) return current; // GPS noise — vehicle likely stationary
+  // GPS noise — vehicle likely stationary. Keep previous bearing.
+  if (dist < 5) {
+    return {
+      ...current,
+      bearing: prev.bearing,
+      speed: prev.smoothedSpeed,
+    };
+  }
 
   const derivedBearing = computeBearing(
     prev.latitude,
