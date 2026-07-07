@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.5.1](https://github.com/aeoden96/kreni-app/compare/v3.5.0...v3.5.1) (2026-07-07)
+
+
+### Bug Fixes
+
+* new vehicle icons and small improvements ([20be0cc](https://github.com/aeoden96/kreni-app/commit/20be0cc6ce5bd9b49501c3746dab7772a4cda870))
+* **realtime:** carry over vehicle bearing on cache hits and add harvest script ([baa4ff6](https://github.com/aeoden96/kreni-app/commit/baa4ff6b36ef57661d2cd8c4b082aa7d65e45fa7))
+* **transit:** decouple vehicle view and map zoom behavior ([1d8bacb](https://github.com/aeoden96/kreni-app/commit/1d8bacb502ceb14ad518f0887882c4237bed4c26))
+* **transit:** remove unused export VehicleFocusState ([142c9e0](https://github.com/aeoden96/kreni-app/commit/142c9e059c89a89b2b1cc00c9e023fc58fc8ee39))
+
+
+### Performance Improvements
+
+* **transit:** use canvas renderer and aggressively memoize map layers ([0b771d6](https://github.com/aeoden96/kreni-app/commit/0b771d62c919d0d71e4f868a1d0c74db0a4e0fd8))
+
 ## [3.5.0](https://github.com/aeoden96/kreni-app/compare/v3.4.0...v3.5.0) (2026-07-03)
 
 
