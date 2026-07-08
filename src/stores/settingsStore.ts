@@ -199,7 +199,7 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, get) => {
-      const initialTheme = (localStorage.getItem('theme') as Theme) || 'dark';
+      const initialTheme = (localStorage.getItem('theme') as Theme) || 'light';
       // Ensure the document theme attribute matches the initial value
       try {
         document.documentElement.setAttribute('data-theme', initialTheme);
@@ -241,7 +241,7 @@ export const useSettingsStore = create<SettingsState>()(
         clearArrivalAlert: () => set({ activeArrivalAlert: null }),
         clearRecents: () => set({ recentRoutes: [], recentStops: [] }),
         cyclosmMapVariant: 'full',
-        detailedMap: true,
+        detailedMap: false,
         dismissedGpsTip: false,
 
         favouriteRouteIds: [],
@@ -556,13 +556,35 @@ export const useSettingsStore = create<SettingsState>()(
           next.arrivalAlertRadiusMeters =
             typeof next.arrivalAlertRadiusMeters === 'number' ? next.arrivalAlertRadiusMeters : 400;
         }
+        if (fromVersion < 12) {
+          // New default: the light basemap with detailed (HOT) tiles off. Applied
+          // to existing users too. onRehydrateStorage syncs theme to the DOM +
+          // localStorage so this takes visual effect on the next load.
+          next.theme = 'light';
+          next.mapTileProvider = 'osm';
+          next.detailedMap = false;
+        }
         return next as Partial<SettingsState>;
       },
       name: 'kreni-settings',
+      // Theme lives both in this persisted store and in a mirrored
+      // localStorage['theme'] applied to <html data-theme>. Those are set
+      // imperatively (store init + setTheme), so a migrate() that changes
+      // `theme` wouldn't reach the DOM on its own. Re-apply the rehydrated theme
+      // here so migrations (and any drift) take visual effect.
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        try {
+          document.documentElement.setAttribute('data-theme', state.theme);
+          localStorage.setItem('theme', state.theme);
+        } catch (_e) {
+          void _e; // no-op in environments without document/localStorage
+        }
+      },
       // Bump version here whenever a default value changes and you want
       // existing users' stored value to be overridden with the new default.
       // migrate() receives the persisted state and should return the corrected state.
-      version: 11,
+      version: 12,
     }
   )
 );
