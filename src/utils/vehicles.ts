@@ -101,7 +101,7 @@ export function computeVehicleStopProgress(
 }
 
 /**
- * GPS-first next-stop resolution for a single trip (same rules as RouteViewSmall).
+ * GPS-first next-stop resolution for a single trip (same rules as the route panel).
  * Optionally computes `directionSortProgress` when `orderedStopIdsForSort` is provided.
  */
 export function getRouteVehicleStopPreview(args: {

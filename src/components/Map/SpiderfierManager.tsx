@@ -1,5 +1,5 @@
 import L from 'leaflet';
-import React, { Fragment, useEffect, useRef } from 'react';
+import React, { Fragment, useEffect, useMemo, useRef } from 'react';
 import { Circle, Marker, Polyline, useMap } from 'react-leaflet';
 
 import { useSettingsStore } from '../../stores/settingsStore';
@@ -19,6 +19,7 @@ import { useSpiderfierContext } from './SpiderfierContext';
 const LABEL_DIST_PX = 50;
 
 interface SpiderNodeProps {
+  bgRenderer: L.Renderer;
   centerLat: number;
   centerLon: number;
   centerPx: L.Point;
@@ -65,6 +66,7 @@ function animatedSpiderIcon(
 }
 
 const SpiderNode = React.memo(function SpiderNode({
+  bgRenderer,
   centerLat,
   centerLon,
   centerPx,
@@ -128,6 +130,7 @@ const SpiderNode = React.memo(function SpiderNode({
           color: isDark ? '#9ca3af' : '#374151',
           dashArray: '3 5',
           opacity: 0.65,
+          renderer: bgRenderer,
           weight: 1.5,
         }}
         positions={[
@@ -159,6 +162,14 @@ export const SpiderfierManager = React.memo(function SpiderfierManager() {
   const theme = useSettingsStore((s) => s.theme);
   const isDark = theme === 'dark';
 
+  // Force an SVG renderer for the spiderfy vector layers. With the map's
+  // `preferCanvas`, Leaflet would otherwise lazily create a full-viewport
+  // <canvas> in spiderBgPane (z-index 610, above the marker pane at 600) and
+  // never remove it — leaving an invisible click-blocker over every marker
+  // after the first spiderfy. An SVG renderer's root is `pointer-events: none`,
+  // so an emptied fan blocks nothing while painted paths stay interactive.
+  const bgRenderer = useMemo(() => L.svg({ pane: 'spiderBgPane' }), []);
+
   useEffect(() => {
     if (!map.getPane('spiderBgPane')) {
       const bg = map.createPane('spiderBgPane');
@@ -167,7 +178,15 @@ export const SpiderfierManager = React.memo(function SpiderfierManager() {
     if (!map.getPane('spiderNodePane')) {
       map.createPane('spiderNodePane').style.zIndex = '620';
     }
-  }, [map]);
+    // Register our SVG renderer as spiderBgPane's default renderer. Passing
+    // `renderer` per-layer isn't enough on its own: Leaflet still lazily
+    // creates and caches a <canvas> for the pane, which persists over the
+    // marker pane and eats clicks. Seeding the cache guarantees every vector
+    // in this pane reuses the SVG renderer and no canvas is ever created.
+    const m = map as unknown as { _paneRenderers?: Record<string, L.Renderer> };
+    if (!m._paneRenderers) m._paneRenderers = {};
+    m._paneRenderers['spiderBgPane'] = bgRenderer;
+  }, [map, bgRenderer]);
 
   useEffect(() => {
     if (!ctx) return;
@@ -224,12 +243,14 @@ export const SpiderfierManager = React.memo(function SpiderfierManager() {
           color: 'transparent',
           fillColor: isDark ? '#1f2937' : '#ffffff',
           fillOpacity: 0.93,
+          renderer: bgRenderer,
           weight: 0,
         }}
         radius={bgRadius}
       />
       {items.map((item, i) => (
         <SpiderNode
+          bgRenderer={bgRenderer}
           centerLat={centerLat}
           centerLon={centerLon}
           centerPx={centerPx}

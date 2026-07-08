@@ -19,13 +19,12 @@ import { DirectionsModal } from '../components/common/DirectionsModal';
 import { NearbyStopsModal } from '../components/common/NearbyStopsModal';
 import { OnboardingWizard } from '../components/common/OnboardingWizard';
 import { RealtimeStatusPanel } from '../components/common/RealtimeStatusPanel';
+import { RouteVehiclePanel } from '../components/common/routePanel/RouteVehiclePanel';
 import { RouteViewLarge } from '../components/common/RouteViewLarge';
-import { RouteViewSmall } from '../components/common/RouteViewSmall';
 import { SearchModal } from '../components/common/SearchModal';
 import { ServiceAlerts } from '../components/common/ServiceAlerts';
 import { StopInfoBar } from '../components/common/StopInfoBar';
 import { StopModal } from '../components/common/StopModal';
-import { VehicleViewSmall } from '../components/common/VehicleViewSmall';
 import { MapView } from '../components/Map/MapView';
 import { MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD } from '../components/Map/mapZoomConstants';
 import { GTFSModeProvider } from '../contexts/GTFSModeContext';
@@ -181,14 +180,12 @@ export function GTFSMode({ config }: GTFSModeProps) {
   );
 
   const {
+    focusVehicle,
     followedTripUpdate,
     followedVehicleParsedPos,
     followedVehiclePos,
-    handleBackToRouteOverview,
-    handleFollowDisengage,
     handleFollowStart,
-    handleUnfollow,
-    handleVehicleSelect,
+    handleStopFollowing,
     vehicleFocus,
     zoomToRouteTrigger,
   } = useVehicleFollow(selectedRouteId, vehiclePositions, tripUpdates);
@@ -257,7 +254,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
     tripId?: null | string,
     fromParentId?: null | string,
     toParentId?: null | string,
-    viewMode: 'full' | 'preview' = 'preview'
+    follow: boolean = false
   ) => {
     let dir: DirectionFilter = df === 'A' || df === 'B' ? df : 'A';
 
@@ -276,7 +273,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
     setSearchModalOpen(false);
     closeLegendAndDetails();
     addRecentRoute(routeId);
-    if (tripId) handleVehicleSelect(tripId, viewMode, routeId);
+    if (tripId) focusVehicle(tripId, { follow, routeId });
     setRouteViewLargeOpen(false);
     setStopModalOpen(false);
     if (fromParentId && toParentId) {
@@ -411,12 +408,12 @@ export function GTFSMode({ config }: GTFSModeProps) {
                   })
               : undefined
           }
-          onFollowDisengage={handleFollowDisengage}
+          onFollowDisengage={handleStopFollowing}
           onStopClick={handleStopClickFromMap}
           onVehicleClick={(routeId, routeType, tripId) => {
-            handleSelectRoute(routeId, routeType, undefined, tripId, undefined, undefined, 'full');
+            handleSelectRoute(routeId, routeType, undefined, tripId, undefined, undefined, true);
           }}
-          onVehicleSelect={handleVehicleSelect}
+          onVehicleSelect={(tripId) => focusVehicle(tripId, { follow: true })}
           onZoomComplete={handleZoomComplete}
           orderedStops={orderedStops}
           parentChildCounts={parentChildCounts}
@@ -425,7 +422,6 @@ export function GTFSMode({ config }: GTFSModeProps) {
           platformStops={platformStops}
           previewVehiclePos={
             vehicleFocus?.routeId === selectedRouteId &&
-            vehicleFocus.viewMode === 'preview' &&
             !vehicleFocus.isFollowing &&
             vehicleFocus.tripId &&
             vehiclePositions.get(vehicleFocus.tripId)
@@ -436,9 +432,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
               : null
           }
           previewVehicleTripId={
-            vehicleFocus?.routeId === selectedRouteId &&
-            vehicleFocus.viewMode === 'preview' &&
-            !vehicleFocus.isFollowing
+            vehicleFocus?.routeId === selectedRouteId && !vehicleFocus.isFollowing
               ? vehicleFocus.tripId
               : null
           }
@@ -551,8 +545,10 @@ export function GTFSMode({ config }: GTFSModeProps) {
           !stopModalOpen &&
           !selectedStopId &&
           (() => {
-            const isFollowing = vehicleFocus?.isFollowing ?? false;
-            const activeTripId = vehicleFocus?.tripId ?? null;
+            const isFollowing =
+              (vehicleFocus?.routeId === selectedRouteId && vehicleFocus?.isFollowing) ?? false;
+            const activeTripId =
+              vehicleFocus?.routeId === selectedRouteId ? (vehicleFocus?.tripId ?? null) : null;
             const activeVehicle = activeTripId
               ? (vehicles.find((v) => v.tripId === activeTripId) ?? null)
               : null;
@@ -571,46 +567,14 @@ export function GTFSMode({ config }: GTFSModeProps) {
                 ? '1'
                 : '0'
               : null;
-            const viewMode =
-              vehicleFocus?.routeId === selectedRouteId ? vehicleFocus.viewMode : undefined;
-            const isFullVehicleView = !!activeTripId && viewMode === 'full';
-
-            if (isFullVehicleView) {
-              return (
-                <VehicleViewSmall
-                  activeTripId={activeTripId!}
-                  clickedTripUpdate={activeTripUpdate}
-                  clickedVehicle={activeVehicle}
-                  clickedVehiclePos={activeVehiclePos}
-                  isFollowing={isFollowing}
-                  onBackToRouteOverview={() => {
-                    if (activeVehicle && selectedRouteId) {
-                      const dir = activeVehicle.direction === 1 ? 'B' : 'A';
-                      if (directionFilter !== dir) {
-                        selectRoute(selectedRouteId, { dir });
-                      }
-                    }
-                    handleBackToRouteOverview();
-                  }}
-                  onClose={handleClearRoute}
-                  onExpand={handleExpandRoute}
-                  onFollowStart={handleFollowStart}
-                  onUnfollow={handleUnfollow}
-                  route={selectedRoute}
-                  routeTimetable={routeTimetable}
-                  stopsById={stopsById}
-                  timetableLoading={timetableLoading}
-                />
-              );
-            }
 
             return (
-              <RouteViewSmall
+              <RouteVehiclePanel
                 activeTripId={activeTripId}
                 clickedTripUpdate={activeTripUpdate}
                 clickedVehicle={activeVehicle}
                 clickedVehiclePos={activeVehiclePos}
-                followCandidateTripId={isFollowing ? null : activeTripId}
+                isFollowing={isFollowing}
                 journeyDirectionKey={journeyDirectionKey}
                 journeyFromParentId={journeyContext?.fromParentId ?? null}
                 journeyToParentId={journeyContext?.toParentId ?? null}
@@ -618,11 +582,14 @@ export function GTFSMode({ config }: GTFSModeProps) {
                 onClose={handleClearRoute}
                 onExpand={handleExpandRoute}
                 onFollowStart={handleFollowStart}
-                onVehicleSelect={handleVehicleSelect}
+                onStopFollowing={handleStopFollowing}
+                onVehicleFocus={(tripId) => focusVehicle(tripId, { follow: true })}
+                onVehicleSwitch={focusVehicle}
                 orderedStops={orderedStops}
                 route={selectedRoute}
                 routeTimetable={routeTimetable}
                 stopsById={stopsById}
+                timetableLoading={timetableLoading}
                 vehicles={vehicles}
               />
             );

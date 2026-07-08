@@ -35,7 +35,7 @@ export function RouteZoomController({
             duration: 0.8,
             maxZoom: 15,
             paddingBottomRight: [20, 20],
-            paddingTopLeft: [20, 150], // Account for the RouteViewSmall modal at the top
+            paddingTopLeft: [20, 150], // Account for the RouteVehiclePanel at the top
           });
         }
       }
