@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.5.2](https://github.com/aeoden96/kreni-app/compare/v3.5.1...v3.5.2) (2026-07-08)
+
+
+### Bug Fixes
+
+* **map:** prevent canvas renderer from blocking marker clicks after spiderfy ([d035e09](https://github.com/aeoden96/kreni-app/commit/d035e09bf13435979870d8d0939bb170d514dfde))
+* **map:** prevent canvas renderer from blocking marker clicks after spiderfy ([#92](https://github.com/aeoden96/kreni-app/issues/92)) ([0a06785](https://github.com/aeoden96/kreni-app/commit/0a06785a151d373f634332a613fd4fb5af1b32c6))
+
 ## [3.5.1](https://github.com/aeoden96/kreni-app/compare/v3.5.0...v3.5.1) (2026-07-07)
 
 
