@@ -16,23 +16,6 @@ export interface AllVehiclePosition extends VehiclePosition {
   routeType: number; // 0 = Tram, 3 = Bus
 }
 
-export interface RouteVehicleStopPreview {
-  currentStop: null | Stop;
-  currentStopId: string | undefined;
-  derivedNextStop: null | Stop;
-  derivedNextStopId: null | string;
-  /** Fractional index along `orderedStopIdsForSort` (for ordering vehicles on a direction). */
-  directionSortProgress: number;
-  gpsNextStop: null | Stop;
-  gpsPrimaryIdx: number;
-  labelKind: null | RouteVehicleStopLabelKind;
-  /** Resolved index for timetable primary row + upcoming stops; -1 if unknown. */
-  primaryIdx: number;
-  stopDetail: null | string;
-  stopStatus: ParsedVehiclePosition['status'];
-  tripStops: [string, number, number][] | null;
-}
-
 export interface VehiclePosition {
   bearing?: number; // degrees 0-360
   delay?: number; // seconds (negative = early)
@@ -51,6 +34,23 @@ export interface VehiclePosition {
 
 /** Maps to `t('routeBar.<kind>')` in the UI. */
 type RouteVehicleStopLabelKind = 'arrivingAt' | 'atStop' | 'nextStop';
+
+interface RouteVehicleStopPreview {
+  currentStop: null | Stop;
+  currentStopId: string | undefined;
+  derivedNextStop: null | Stop;
+  derivedNextStopId: null | string;
+  /** Fractional index along `orderedStopIdsForSort` (for ordering vehicles on a direction). */
+  directionSortProgress: number;
+  gpsNextStop: null | Stop;
+  gpsPrimaryIdx: number;
+  labelKind: null | RouteVehicleStopLabelKind;
+  /** Resolved index for timetable primary row + upcoming stops; -1 if unknown. */
+  primaryIdx: number;
+  stopDetail: null | string;
+  stopStatus: ParsedVehiclePosition['status'];
+  tripStops: [string, number, number][] | null;
+}
 
 /**
  * Given a vehicle's GPS position and an ordered array of stops (for a single
