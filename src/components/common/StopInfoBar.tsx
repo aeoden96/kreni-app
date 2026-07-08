@@ -44,7 +44,7 @@ interface StopInfoBarProps {
   ) => void;
   onStopSelect?: (stopId: string) => void;
   routesById: Map<string, Route>;
-  /** When true, shifts the bar down so it sits below the RouteViewSmall */
+  /** When true, shifts the bar down so it sits below the RouteVehiclePanel */
   stackBelow?: boolean;
   stop: Stop;
   stopsById: Map<string, Stop>;

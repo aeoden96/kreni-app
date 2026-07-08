@@ -6,11 +6,14 @@ type VehicleFocusState = null | {
   isFollowing: boolean;
   routeId: string;
   tripId: string;
-  viewMode: 'full' | 'preview';
 };
 
 /**
- * Manages vehicle follow state and handlers.
+ * Manages vehicle focus/follow state for the route panel.
+ *
+ * The panel's appearance is a pure function of two facts held here:
+ *  - a vehicle is focused when `vehicleFocus.tripId` is set (`activeTripId`)
+ *  - the map is locked to it when `vehicleFocus.isFollowing` is true
  */
 export function useVehicleFollow(
   selectedRouteId: null | string,
@@ -25,8 +28,8 @@ export function useVehicleFollow(
     vehicleFocusRef.current = vehicleFocus;
   }, [vehicleFocus]);
 
-  // Clear follow mode when route changes, UNLESS the route change was triggered
-  // by clicking a vehicle on that specific route.
+  // Clear focus when the route changes, UNLESS the route change was triggered
+  // by focusing a vehicle on that specific route.
   useEffect(() => {
     if (selectedRouteId && vehicleFocusRef.current?.routeId === selectedRouteId) return;
     setVehicleFocus(null);
@@ -40,54 +43,49 @@ export function useVehicleFollow(
     : null;
   const followedTripUpdate = activeTripId ? (tripUpdates.get(activeTripId) ?? null) : null;
 
-  const handleVehicleSelect = useCallback(
-    (tripId: string, viewMode: 'full' | 'preview' = 'preview', explicitRouteId?: string) => {
-      const targetRouteId = explicitRouteId || selectedRouteId;
-      if (targetRouteId) {
-        setVehicleFocus({
-          isFollowing: viewMode === 'full',
-          routeId: targetRouteId,
-          tripId,
-          viewMode,
-        });
-      }
+  /**
+   * Focus a vehicle. `follow` controls whether the map locks to it; when omitted
+   * the current follow state is preserved (so switching vehicles keeps the lock).
+   */
+  const focusVehicle = useCallback(
+    (tripId: string, opts?: { follow?: boolean; routeId?: string }) => {
+      setVehicleFocus((prev) => {
+        const routeId = opts?.routeId ?? selectedRouteId;
+        if (!routeId) return prev;
+        return { isFollowing: opts?.follow ?? prev?.isFollowing ?? false, routeId, tripId };
+      });
     },
     [selectedRouteId]
   );
 
+  /** Engage follow (map locks) for a focused vehicle. */
   const handleFollowStart = useCallback(
     (tripId: string) => {
-      if (selectedRouteId) {
-        setVehicleFocus({ isFollowing: true, routeId: selectedRouteId, tripId, viewMode: 'full' });
-      }
+      focusVehicle(tripId, { follow: true });
     },
-    [selectedRouteId]
+    [focusVehicle]
   );
 
-  const handleFollowDisengage = useCallback(() => {
+  /** Stop following but keep the vehicle focused (map drag or explicit stop button). */
+  const handleStopFollowing = useCallback(() => {
     setVehicleFocus((prev) => (prev ? { ...prev, isFollowing: false } : null));
   }, []);
 
-  const handleUnfollow = useCallback(() => {
-    setVehicleFocus((prev) => (prev ? { ...prev, isFollowing: false } : null));
-  }, []);
-
-  /** Leave single-vehicle / follow UI and return to the route vehicle list. */
-  const handleBackToRouteOverview = useCallback(() => {
-    setVehicleFocus((prev) => (prev ? { ...prev, isFollowing: false, viewMode: 'preview' } : null));
+  /** Clear the focused vehicle, returning to the route overview and re-zooming to it. */
+  const handleClearVehicleFocus = useCallback(() => {
+    setVehicleFocus(null);
     setZoomToRouteTrigger(Date.now());
   }, []);
 
   return {
     activeTripId,
+    focusVehicle,
     followedTripUpdate,
     followedVehicleParsedPos: followedRawPos,
     followedVehiclePos,
-    handleBackToRouteOverview,
-    handleFollowDisengage,
+    handleClearVehicleFocus,
     handleFollowStart,
-    handleUnfollow,
-    handleVehicleSelect,
+    handleStopFollowing,
     setVehicleFocus,
     vehicleFocus,
     zoomToRouteTrigger,
