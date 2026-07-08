@@ -62,7 +62,7 @@ export function DrivingMode() {
       <OnboardingWizard variant="driving" />
       <DrivingLayersPanel onOpenChange={setIsDrivingLayersOpen} />
       {mapZoom <= MAP_ZOOM_CITY_STATIC_LAYERS_MIN && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[1000]">
+        <div className="absolute top-[calc(5rem+env(safe-area-inset-top))] left-1/2 -translate-x-1/2 z-[1000]">
           <div className="badge badge-neutral gap-2 shadow text-xs sm:text-sm opacity-90 whitespace-nowrap">
             <span className="w-2 h-2 rounded-full bg-amber-50 animate-ping" />
             {t('map.zoomForLayers')}

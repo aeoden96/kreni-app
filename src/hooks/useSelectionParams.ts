@@ -21,6 +21,8 @@
 import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { hapticSelection } from '../utils/haptics';
+
 export type DirectionFilter = 'A' | 'B';
 
 interface SelectionParams {
@@ -54,6 +56,7 @@ export function useSelectionParams(): SelectionParams {
 
   const selectRoute = useCallback(
     (routeId: string, opts: { dir?: DirectionFilter; keepStop?: boolean } = {}) => {
+      hapticSelection();
       setParams(
         (prev) => {
           const next = new URLSearchParams(prev);
@@ -82,6 +85,7 @@ export function useSelectionParams(): SelectionParams {
 
   const selectStop = useCallback(
     (stopId: string) => {
+      hapticSelection();
       setParams(
         (prev) => {
           const next = new URLSearchParams(prev);

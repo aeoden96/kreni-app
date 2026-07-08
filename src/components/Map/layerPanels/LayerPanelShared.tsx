@@ -68,7 +68,7 @@ type LayerToggleRowProps = {
 /** Top-left row: place [LayersBadge] and [SavedPlacesMapBadge] side by side. */
 export function MapControlBadgesRow({ children }: { children: ReactNode }) {
   return (
-    <div className="absolute left-3 top-3 z-[800] flex items-center gap-2 flex-wrap max-w-[calc(100vw-1.5rem)]">
+    <div className="absolute left-[max(0.75rem,env(safe-area-inset-left))] top-[max(0.75rem,env(safe-area-inset-top))] z-[800] flex items-center gap-2 flex-wrap max-w-[calc(100vw-1.5rem)]">
       {children}
     </div>
   );

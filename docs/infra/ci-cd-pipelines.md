@@ -6,22 +6,23 @@ updated: 2026-07-04
 
 # CI/CD pipelines
 
-Seven GitHub Actions workflows under `.github/workflows/`. This note covers the three that form the core test/build/release chain; the three cron-driven ones are documented separately in [[scheduled-jobs]], and `security.yml` is covered below.
+Nine GitHub Actions workflows under `.github/workflows/`. This note covers the core test/build/release chain plus the security/native jobs; the three cron-driven ones are documented separately in [[scheduled-jobs]]. Open hardening items are tracked in [[ci-hardening-roadmap]].
 
 ## `ci.yml` — test/lint gate
 
 Triggers: `pull_request` (master/main), `push` to master, `workflow_dispatch`, and `workflow_call` (so `deploy.yml`/`release-please.yml` can invoke it as a reusable workflow).
 
-Concurrency group `ci-${{ github.workflow }}-${{ github.ref }}`, cancel-in-progress **only on PRs** (pushes to master aren't cancelled mid-run).
+Concurrency group `ci-${{ github.workflow }}-${{ github.ref }}`, cancel-in-progress **only on PRs** (pushes to master aren't cancelled mid-run). Top-level `permissions: contents: read` (least privilege).
 
-Four parallel jobs, no `needs` between them:
+Five parallel jobs, no `needs` between them:
 
-| Job                  | What it does                                                                   |
-| -------------------- | ------------------------------------------------------------------------------ |
-| `secrets`            | Gitleaks secret scan, full git history (`fetch-depth: 0`)                      |
-| `typecheck-and-lint` | Node 22, `yarn tsc -b`, `yarn lint`                                            |
-| `knip`               | `yarn knip` — unused exports/files/deps                                        |
-| `test`               | `yarn test` (Vitest **unit** project only — E2E is not in CI, see [[testing]]) |
+| Job                  | What it does                                                                     |
+| -------------------- | -------------------------------------------------------------------------------- |
+| `secrets`            | Gitleaks secret scan, full git history (`fetch-depth: 0`)                        |
+| `typecheck-and-lint` | Node 22, `yarn tsc -b`, `yarn lint`                                              |
+| `knip`               | `yarn knip` — unused exports/files/deps                                          |
+| `test`               | `yarn test` (Vitest **unit** project only — E2E is not in CI, see [[testing]])   |
+| `secretlint`         | `yarn secret` — config-based (`.secretlintrc`) scan, mirrors the `pre-push` hook |
 
 ## `deploy.yml` — build + deploy to Cloudflare Pages
 
@@ -52,6 +53,14 @@ Full release flow: [[release-process]].
 ## `security.yml` — dependency review
 
 PR-only. `actions/dependency-review-action@v5`: fails on `high`/`critical` severity CVEs in newly added packages, denies copyleft licenses (`GPL-2.0`, `GPL-3.0`, `LGPL-2.0`, `LGPL-2.1`, `AGPL-3.0`).
+
+## `codeql.yml` — SAST
+
+CodeQL static analysis for `javascript-typescript` with the `security-and-quality` query pack. Triggers on PRs, `push` to master, and a weekly cron (Mon 04:17 UTC). Job-scoped `security-events: write` to upload results; everything else read-only.
+
+## `android.yml` — native build
+
+Builds the Capacitor Android app so native regressions are caught in CI. Triggers on `push` to master and on PRs **path-filtered** to `src/**`, `index.html`, `capacitor.config.ts`, `android/**`, `package.json`, `yarn.lock`, and the workflow itself. Steps: JDK 21 (Temurin) + `gradle/actions/setup-gradle`, `yarn build` → `npx cap sync android` → `./gradlew assembleDebug` **and** `./gradlew bundleRelease`. The release bundle runs unsigned (no `keystore.properties` on CI) but still exercises R8 / `shrinkResources`, catching minify breakage. The debug APK is uploaded as an artifact. Release signing/publishing is not yet automated — see [[ci-hardening-roadmap]].
 
 ## Recent hardening (commit `9e2f990`)
 

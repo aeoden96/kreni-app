@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useAppUpdate } from '../../hooks/useAppUpdate';
+import { isNative } from '../../utils/platform';
 
 interface LocalizedNotes {
   changes: string[];
@@ -33,7 +34,11 @@ const noop = () => {};
 export function UpdatePrompt({ storybook = false, storybookNotes }: UpdatePromptProps = {}) {
   const { i18n, t } = useTranslation();
   const hook = useAppUpdate();
-  const needRefresh = storybook || hook.needRefresh;
+  // In the native shell the app updates through the store, so the SW "update
+  // available" prompt (and its forced auto-apply below) is suppressed — the
+  // service worker itself keeps running for offline caching. Storybook still
+  // renders the banner for UI review.
+  const needRefresh = storybook || (hook.needRefresh && !isNative());
   const updateApp = storybook ? noop : hook.updateApp;
   const [dismissed, setDismissed] = useState(false);
   const [notes, setNotes] = useState<null | ReleaseNotes>(null);

@@ -1,17 +1,27 @@
 import { useTranslation } from 'react-i18next';
 import { Outlet } from 'react-router-dom';
 
+import { ArrivalAlertBanner } from '../components/common/ArrivalAlertBanner';
 import { GlobalAnnouncement } from '../components/common/GlobalAnnouncement';
 import { GlobalWelcomeWizard } from '../components/common/GlobalWelcomeWizard';
+import { OfflineBanner } from '../components/common/OfflineBanner';
 import { UpdatePrompt } from '../components/common/UpdatePrompt';
 import { SpiderMenu } from '../components/Navigation/SpiderMenu';
+import { useAndroidBackButton } from '../hooks/useAndroidBackButton';
+import { useArrivalAlertSync } from '../hooks/useArrivalAlertSync';
+import { useNativeStatusBar } from '../hooks/useNativeStatusBar';
 import { usePageTracking } from '../hooks/usePageTracking';
+import { useReminderSync } from '../hooks/useReminderSync';
 import { useUrlQueryParams } from '../hooks/useUrlQueryParams';
 import { useSettingsStore } from '../stores/settingsStore';
 
 export function AppLayout() {
   usePageTracking();
   useUrlQueryParams();
+  useAndroidBackButton();
+  useNativeStatusBar();
+  useReminderSync();
+  useArrivalAlertSync();
   const { t } = useTranslation();
 
   const globalOnboardingCompleted = useSettingsStore((s) => s.globalOnboardingCompleted);
@@ -49,6 +59,8 @@ export function AppLayout() {
       </div>
       <SpiderMenu />
       <UpdatePrompt />
+      <OfflineBanner />
+      <ArrivalAlertBanner />
       <GlobalWelcomeWizard />
     </div>
   );

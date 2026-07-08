@@ -33,7 +33,7 @@
     "prepare": "husky",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "secret": "secretlint ."
+    "secret": "git ls-files | xargs secretlint"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -46,7 +46,17 @@
     ]
   },
   "dependencies": {
+    "@capacitor-community/background-geolocation": "^1.2.26",
+    "@capacitor/app": "^8",
     "@capacitor/core": "^8.4.1",
+    "@capacitor/geolocation": "^8",
+    "@capacitor/haptics": "^8",
+    "@capacitor/keyboard": "^8",
+    "@capacitor/local-notifications": "^8",
+    "@capacitor/network": "^8",
+    "@capacitor/share": "^8",
+    "@capacitor/splash-screen": "^8",
+    "@capacitor/status-bar": "^8",
     "@tanstack/react-query": "^5.101.2",
     "gtfs-realtime-bindings": "^1.1.1",
     "i18next": "^25.10.10",

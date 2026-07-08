@@ -3,6 +3,23 @@ const hr = {
     app: {
       title: 'Kreni — Zagreb uživo: ZET, Parking, Bicikli i Gradske usluge',
     },
+    arrivalAlerts: {
+      activeBanner: 'Upozorenje blizu {{stop}}',
+      bellTitle: 'Upozori me blizu',
+      cancelTitle: 'Otkaži upozorenje o dolasku',
+      channelDescription: 'Upozorenja kad se približiš svojoj odredišnoj stanici',
+      channelName: 'Upozorenja o dolasku',
+      description: 'Primi obavijest kad se približiš stanici {{stop}}.',
+      notificationBody: 'Stižeš na {{stop}}.',
+      notificationTitle: 'Uskoro izlaziš',
+      permissionDenied:
+        'Obavijesti su blokirane. Uključi ih u postavkama sustava za upozorenja o dolasku.',
+      radiusLabel: 'Udaljenost upozorenja',
+      start: 'Pokreni upozorenje',
+      title: 'Upozorenje o dolasku',
+      trackingMessage: 'Pratimo tvoju stanicu: {{stop}}',
+      trackingTitle: 'Kreni prati tvoju vožnju',
+    },
     cityLayers: {
       animalZones: {
         desc: 'Zone u kojima su domaće životinje (blago) dopuštene u gradu.',
@@ -114,6 +131,7 @@ const hr = {
     },
     common: {
       back: 'Natrag',
+      cancel: 'Odustani',
       close: 'Zatvori',
       done: 'Završi',
       enterApp: 'Uđi u aplikaciju',
@@ -122,6 +140,7 @@ const hr = {
       kilometres: '{{km}} km',
       metresShort: '{{metres}} m',
       next: 'Sljedeće',
+      save: 'Spremi',
       showAllCount: 'Prikaži sve ({{count}})',
       showDetails: 'Prikaži detalje',
       showRouteDetails: 'Prikaži detalje rute',
@@ -279,6 +298,9 @@ const hr = {
       subtitle: 'Sortirano po udaljenosti od vaše lokacije',
       title: 'Obližnje stanice',
     },
+    offline: {
+      message: 'Bez veze ste — prikazujemo spremljene podatke.',
+    },
     onboarding: {
       cityBody0:
         'Pronađi javne fontane za pitku vodu, studentske restorane i druge gradske sadržaje.',
@@ -376,6 +398,37 @@ const hr = {
         vehiclePositions: 'Vehicle positions',
         zetFeedTime: 'Vrijeme feeda ZET-a',
         zetFeedTimeHint: 'Označava kada je feed posljednji put ažuriran od strane ZET-a.',
+      },
+    },
+    reminders: {
+      add: 'Dodaj',
+      addTitle: 'Novi podsjetnik',
+      anyRoute: 'Bilo koja linija',
+      channelDescription: 'Ponavljajući podsjetnici za tvoja stajališta',
+      channelName: 'Podsjetnici za polazak',
+      daysLabel: 'Dani',
+      delete: 'Obriši',
+      description: 'Primaj ponavljajuću obavijest prije uobičajenog polaska.',
+      edit: 'Uredi',
+      editTitle: 'Uredi podsjetnik',
+      empty: 'Još nema podsjetnika.',
+      noFavourites:
+        'Prvo označi stajalište zvjezdicom (♥ u prikazu stajališta) da postaviš podsjetnik.',
+      notificationBody: 'Vrijeme je da kreneš prema {{stop}}.',
+      permissionDenied: 'Obavijesti su blokirane. Omogući ih u postavkama sustava za podsjetnike.',
+      routeLabel: 'Linija',
+      stopLabel: 'Stajalište',
+      timeLabel: 'Vrijeme',
+      title: 'Podsjetnici za polazak',
+      toggleAria: 'Uključi ili isključi ovaj podsjetnik',
+      weekday: {
+        fri: 'Pet',
+        mon: 'Pon',
+        sat: 'Sub',
+        sun: 'Ned',
+        thu: 'Čet',
+        tue: 'Uto',
+        wed: 'Sri',
       },
     },
     rideHailing: {
@@ -606,6 +659,7 @@ const hr = {
         languageGerman: 'Promijeni jezik na Njemački',
         locate: 'Moja lokacija',
         settings: 'Postavke',
+        share: 'Podijeli',
         stopTracking: 'Zaustavi praćenje lokacije',
       },
       modes: {
@@ -614,6 +668,10 @@ const hr = {
         driving: 'Auto',
         train: 'Vlak',
         transit: 'Javni prijevoz',
+      },
+      share: {
+        copied: 'Poveznica kopirana',
+        text: 'Zagrebački javni prijevoz uživo — ZET, bicikli, parking i gradske usluge.',
       },
       toggles: {
         bikeParkings: 'Parking',

@@ -89,7 +89,7 @@ export function GlobalAnnouncement() {
   };
 
   return (
-    <div className="fixed bottom-4 left-0 right-0 z-[2010] flex justify-center w-full px-4 sm:bottom-6 pointer-events-none">
+    <div className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-0 right-0 z-[2010] flex justify-center w-full px-4 sm:bottom-[max(1.5rem,env(safe-area-inset-bottom))] pointer-events-none">
       <div
         className={`alert rounded-2xl shadow-2xl flex flex-row items-center border border-white/20 pointer-events-auto max-w-lg w-full backdrop-blur-md bg-opacity-95 ${getAlertClass()}`}
       >

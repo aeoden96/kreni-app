@@ -4,4 +4,17 @@
     <string name="title_activity_main">Kreni</string>
     <string name="package_name">app.kreni</string>
     <string name="custom_url_scheme">app.kreni</string>
+    <!-- Launcher shortcuts (res/xml/shortcuts.xml) -->
+    <string name="shortcut_transit_short">Transit</string>
+    <string name="shortcut_transit_long">Public transport</string>
+    <string name="shortcut_cycling_short">Cycling</string>
+    <string name="shortcut_cycling_long">Cycling map</string>
+    <string name="shortcut_driving_short">Driving</string>
+    <string name="shortcut_driving_long">Parking &amp; driving</string>
+    <!-- @capacitor-community/background-geolocation: the ongoing foreground-service
+         notification shown while an arrival alert is tracking. Uses the white
+         monochrome launcher mark (note: no leading "@"). -->
+    <string name="capacitor_background_geolocation_notification_channel_name">Arrival alerts</string>
+    <string name="capacitor_background_geolocation_notification_icon">drawable/ic_launcher_monochrome</string>
+    <string name="capacitor_background_geolocation_notification_color">#102a44</string>
 </resources>

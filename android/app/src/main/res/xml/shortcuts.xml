@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Static launcher shortcuts (long-press the app icon). Each intent is explicit
+  (targetPackage/targetClass = MainActivity) with an https data URI, so it always
+  opens the app regardless of App-Links verification; the WebView's appUrlOpen
+  handler (src/hooks/useAndroidBackButton.ts) routes the path into the SPA.
+-->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="transit"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_transit_short"
+        android:shortcutLongLabel="@string/shortcut_transit_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="app.kreni"
+            android:targetClass="app.kreni.MainActivity"
+            android:data="https://kreni.app/" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="cycling"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_cycling_short"
+        android:shortcutLongLabel="@string/shortcut_cycling_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="app.kreni"
+            android:targetClass="app.kreni.MainActivity"
+            android:data="https://kreni.app/cycling" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="driving"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_driving_short"
+        android:shortcutLongLabel="@string/shortcut_driving_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="app.kreni"
+            android:targetClass="app.kreni.MainActivity"
+            android:data="https://kreni.app/driving" />
+    </shortcut>
+</shortcuts>

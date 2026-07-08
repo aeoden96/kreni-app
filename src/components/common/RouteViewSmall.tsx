@@ -290,7 +290,7 @@ export function RouteViewSmall({
 
   return (
     <div
-      className="fixed top-16 sm:top-20 left-2 right-2 sm:left-4 sm:right-auto sm:max-w-md z-[1050] bg-base-100 rounded-xl shadow-2xl"
+      className="fixed top-[calc(4rem+env(safe-area-inset-top))] sm:top-[calc(5rem+env(safe-area-inset-top))] left-2 right-2 sm:left-4 sm:right-auto sm:max-w-md z-[1050] bg-base-100 rounded-xl shadow-2xl"
       style={{
         animation: 'modal-fade-in 0.2s ease-out',
       }}
