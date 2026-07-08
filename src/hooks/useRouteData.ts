@@ -16,6 +16,13 @@ interface RouteData {
   shapes: Record<string, [number, number][]>;
 }
 
+// Stable empty fallbacks: returning fresh `{}` / `[]` literals on every render
+// (the common no-route-selected case) gives these a new identity each time,
+// which defeats memoization/`React.memo` in every consumer (notably MapView).
+const EMPTY_ORDERED_STOPS: Record<string, string[]> = {};
+const EMPTY_ROUTE_STOPS: string[] = [];
+const EMPTY_SHAPES: Record<string, [number, number][]> = {};
+
 interface UseRouteDataOptions {
   /** Data directory to load from (default: 'data'). Use 'data-train' for train mode. */
   dataDir?: string;
@@ -60,8 +67,8 @@ export function useRouteData(routeId: null | string, options: UseRouteDataOption
     activeTripsData: query.data?.activeTripsData || null,
     error: query.error as Error | null,
     loading: query.isLoading && !!routeId,
-    orderedStops: query.data?.orderedStops || {},
-    routeStops: query.data?.routeStops || [],
-    shapes: query.data?.shapes || {},
+    orderedStops: query.data?.orderedStops ?? EMPTY_ORDERED_STOPS,
+    routeStops: query.data?.routeStops ?? EMPTY_ROUTE_STOPS,
+    shapes: query.data?.shapes ?? EMPTY_SHAPES,
   };
 }

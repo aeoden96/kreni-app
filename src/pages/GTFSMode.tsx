@@ -35,7 +35,6 @@ import { useGeolocation, useRegisterGeolocationFirstFix } from '../hooks/useGeol
 import { useInitialData } from '../hooks/useInitialData';
 import { useMapPanTarget } from '../hooks/useMapPanTarget';
 import { useRealtimeData } from '../hooks/useRealtimeData';
-import { useRealtimeFreshness } from '../hooks/useRealtimeFreshness';
 import { useRouteData } from '../hooks/useRouteData';
 import { useRouteTimetable } from '../hooks/useRouteTimetable';
 import { useRssServiceAlerts } from '../hooks/useRssServiceAlerts';
@@ -108,17 +107,20 @@ export function GTFSMode({ config }: GTFSModeProps) {
     stopsById,
   } = useInitialData({ dataDir: config.dataDir });
 
-  // Separate parent stations and platform stops for zoom-based rendering
-  const parentStations = stops.filter((stop) => stop.locationType === 1);
-  const platformStops = stops.filter((stop) => stop.locationType === 0);
+  // Separate parent stations and platform stops for zoom-based rendering.
+  // Memoized so these keep a stable identity across renders (they only depend on
+  // the static `stops` data) — otherwise every render hands MapView fresh arrays
+  // and defeats its React.memo.
+  const parentStations = useMemo(() => stops.filter((stop) => stop.locationType === 1), [stops]);
+  const platformStops = useMemo(() => stops.filter((stop) => stop.locationType === 0), [stops]);
 
-  const parentChildCounts = new Map<string, number>();
-  parentStations.forEach((parent) => {
-    parentChildCounts.set(
-      parent.id,
-      platformStops.filter((s) => s.parentStation === parent.id).length
-    );
-  });
+  const parentChildCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    parentStations.forEach((parent) => {
+      counts.set(parent.id, platformStops.filter((s) => s.parentStation === parent.id).length);
+    });
+    return counts;
+  }, [parentStations, platformStops]);
 
   const {
     handleSelectStop,
@@ -172,12 +174,6 @@ export function GTFSMode({ config }: GTFSModeProps) {
   const fetchLatencyMs = useRealtimeStore((s) => s.fetchLatencyMs);
   const vehiclePositions = useRealtimeStore((s) => s.vehiclePositions);
   const tripUpdates = useRealtimeStore((s) => s.tripUpdates);
-
-  const { feedAgeStr, timeAgoStr } = useRealtimeFreshness(
-    config,
-    lastUpdate,
-    realtimeStats ?? null
-  );
 
   const {
     focusVehicle,
@@ -344,6 +340,22 @@ export function GTFSMode({ config }: GTFSModeProps) {
     [selectedRouteId, routeStops]
   );
 
+  // Stable handler identities so MapView's React.memo isn't defeated by fresh
+  // inline arrows each render. onVehicleClick goes through a ref because
+  // handleSelectRoute is recreated every render; the ref keeps the callback
+  // identity constant while always invoking the latest handleSelectRoute.
+  const handleSelectRouteRef = useRef(handleSelectRoute);
+  useEffect(() => {
+    handleSelectRouteRef.current = handleSelectRoute;
+  });
+  const onVehicleClick = useCallback((routeId: string, routeType: number, tripId: string) => {
+    handleSelectRouteRef.current(routeId, routeType, undefined, tripId, undefined, undefined, true);
+  }, []);
+  const onVehicleSelect = useCallback(
+    (tripId: string) => focusVehicle(tripId, { follow: true }),
+    [focusVehicle]
+  );
+
   const selectedRoute = selectedRouteId ? routesById.get(selectedRouteId) : null;
   const selectedStop = selectedStopId ? stopsById.get(selectedStopId) : null;
 
@@ -410,10 +422,8 @@ export function GTFSMode({ config }: GTFSModeProps) {
           }
           onFollowDisengage={handleStopFollowing}
           onStopClick={handleStopClickFromMap}
-          onVehicleClick={(routeId, routeType, tripId) => {
-            handleSelectRoute(routeId, routeType, undefined, tripId, undefined, undefined, true);
-          }}
-          onVehicleSelect={(tripId) => focusVehicle(tripId, { follow: true })}
+          onVehicleClick={onVehicleClick}
+          onVehicleSelect={onVehicleSelect}
           onZoomComplete={handleZoomComplete}
           orderedStops={orderedStops}
           parentChildCounts={parentChildCounts}
@@ -480,14 +490,12 @@ export function GTFSMode({ config }: GTFSModeProps) {
               <RealtimeStatusPanel
                 cacheAgeSeconds={cacheAgeSeconds}
                 cacheStatus={cacheStatus}
-                feedAgeStr={feedAgeStr}
                 fetchLatencyMs={fetchLatencyMs}
                 lastUpdate={lastUpdate}
                 nextPollAtMs={nextPollAtMs}
                 realtimeLoading={realtimeLoading}
                 realtimeStats={realtimeStats}
                 ref={realtimePanelRef}
-                timeAgoStr={timeAgoStr}
                 workerTimestamp={workerTimestamp}
               />
             )}
