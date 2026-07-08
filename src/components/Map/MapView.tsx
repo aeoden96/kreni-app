@@ -2,6 +2,8 @@
  * Main Leaflet map component
  */
 
+import { memo } from 'react';
+
 import type { CongestionPoint } from '../../hooks/useCongestionData';
 import type { Route, Stop } from '../../utils/gtfs';
 import type { AllVehiclePosition, VehiclePosition } from '../../utils/vehicles';
@@ -64,7 +66,7 @@ interface MapViewProps {
   zoomTrigger?: number;
 }
 
-export function MapView({
+function MapViewImpl({
   allVehicles = [],
   autoZoomToRoute = false,
   congestionPoints = [],
@@ -174,3 +176,8 @@ export function MapView({
     </SpiderfierProvider>
   );
 }
+
+// Memoized: with the map fed stable prop identities (static GTFS data + stable
+// handlers), this now re-renders only when live data actually changes (~1×/poll)
+// instead of on every GTFSMode render.
+export const MapView = memo(MapViewImpl);

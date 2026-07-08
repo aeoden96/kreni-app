@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react';
 
-import type { GTFSModeConfig } from '../config/modes';
 import type { FeedStatistics } from '../utils/realtime';
 
 /**
  * Manages the two ticker effects that display human-readable freshness strings
  * for the GTFS-RT feed: "X ago" (time since app received feed) and feed age.
+ *
+ * Owns two 1 s intervals, so it must live in the leaf component that displays
+ * these strings — keep it out of high-level containers (e.g. the page/map
+ * shell), where the per-second state updates would needlessly re-render the
+ * whole subtree, including the map.
  */
 export function useRealtimeFreshness(
-  config: GTFSModeConfig,
+  hasRealtime: boolean,
   lastUpdate: null | number,
   realtimeStats: FeedStatistics | null
 ): { feedAgeStr: string; timeAgoStr: string } {
@@ -16,7 +20,7 @@ export function useRealtimeFreshness(
   const [feedAgeStr, setFeedAgeStr] = useState<string>('');
 
   useEffect(() => {
-    if (!config.hasRealtime || !lastUpdate) {
+    if (!hasRealtime || !lastUpdate) {
       setTimeAgoStr('');
       return;
     }
@@ -27,10 +31,10 @@ export function useRealtimeFreshness(
     updateTimeAgo();
     const interval = setInterval(updateTimeAgo, 1000);
     return () => clearInterval(interval);
-  }, [config.hasRealtime, lastUpdate]);
+  }, [hasRealtime, lastUpdate]);
 
   useEffect(() => {
-    if (!config.hasRealtime || !realtimeStats?.lastUpdate) {
+    if (!hasRealtime || !realtimeStats?.lastUpdate) {
       setFeedAgeStr('');
       return;
     }
@@ -43,7 +47,7 @@ export function useRealtimeFreshness(
     updateFeedAge();
     const interval = setInterval(updateFeedAge, 1000);
     return () => clearInterval(interval);
-  }, [config.hasRealtime, realtimeStats?.lastUpdate]);
+  }, [hasRealtime, realtimeStats?.lastUpdate]);
 
   return { feedAgeStr, timeAgoStr };
 }

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { FeedStatistics } from '../../utils/realtime';
 
 import { REALTIME_POLL_INTERVAL } from '../../config';
+import { useRealtimeFreshness } from '../../hooks/useRealtimeFreshness';
 import { BadgeWithPanel } from './BadgeWithPanel';
 import { RealtimeFeedToggleIcon } from './RealtimeFeedToggleIcon';
 
@@ -14,7 +15,6 @@ export interface RealtimeStatusPanelHandle {
 interface RealtimeStatusPanelProps {
   cacheAgeSeconds: null | number;
   cacheStatus: 'HIT' | 'MISS' | null;
-  feedAgeStr: string;
   fetchLatencyMs: null | number;
   lastUpdate: null | number;
   /** Estimated wall-clock time (ms) when the next poll runs; null while a fetch is in flight or polling off */
@@ -22,7 +22,6 @@ interface RealtimeStatusPanelProps {
   /** True while fetchAll is running */
   realtimeLoading: boolean;
   realtimeStats: FeedStatistics | null;
-  timeAgoStr: string;
   workerTimestamp: null | string;
 }
 
@@ -34,15 +33,19 @@ export const RealtimeStatusPanel = forwardRef<RealtimeStatusPanelHandle, Realtim
     const {
       cacheAgeSeconds,
       cacheStatus,
-      feedAgeStr,
       fetchLatencyMs,
       lastUpdate,
       nextPollAtMs,
       realtimeLoading,
       realtimeStats,
-      timeAgoStr,
       workerTimestamp,
     } = props;
+
+    // Owned here (a leaf) rather than in the page shell: the two 1 s ticker
+    // intervals inside this hook update state every second, and keeping that
+    // churn local avoids re-rendering the map subtree once per second. This
+    // panel only renders when the mode has realtime, so hasRealtime is true.
+    const { feedAgeStr, timeAgoStr } = useRealtimeFreshness(true, lastUpdate, realtimeStats);
 
     const { t } = useTranslation();
     const [realtimeDetailsOpen, setRealtimeDetailsOpen] = useState(false);
