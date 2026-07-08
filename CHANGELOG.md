@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.5.3](https://github.com/aeoden96/kreni-app/compare/v3.5.2...v3.5.3) (2026-07-08)
+
+
+### Performance Improvements
+
+* **map:** efficient live vehicle tracking (steady-state, poll, and citywide) ([#94](https://github.com/aeoden96/kreni-app/issues/94)) ([d4472af](https://github.com/aeoden96/kreni-app/commit/d4472af42669092f2adc2ecf0d310a38cb7e0520))
+* **map:** efficient vehicle marker rendering for live tracking ([18fbec3](https://github.com/aeoden96/kreni-app/commit/18fbec3a12f379c61c71a1ccf97ce1e9e7f14dce))
+* **map:** stop needless MapView re-renders on realtime polls ([359d63b](https://github.com/aeoden96/kreni-app/commit/359d63b8b4e394c459b62920114d192a523890b3))
+
 ## [3.5.2](https://github.com/aeoden96/kreni-app/compare/v3.5.1...v3.5.2) (2026-07-08)
 
 
