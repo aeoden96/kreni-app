@@ -17,6 +17,21 @@ import {
 
 // ── Public types ─────────────────────────────────────────────────────────────
 
+export interface SpiderfierEntry {
+  /** Called fresh each time the spider fan is rendered to get the current icon. */
+  getIcon?: () => L.DivIcon | null;
+  /** When true, the text label bubble is hidden in the spider fan (icon is sufficient). */
+  hideLabel?: boolean;
+  id: string;
+  /** Shown in the list-fallback popup and as tooltip on node markers. */
+  label: string;
+  lat: number;
+  lon: number;
+  onClick: () => void;
+  /** Optional: Resolve a more descriptive label on-demand (e.g. including route info). */
+  resolveLabel?: () => Promise<string>;
+}
+
 interface SpiderfiedGroup {
   centerLat: number;
   centerLon: number;
@@ -52,21 +67,6 @@ interface SpiderfierCtx {
    */
   triggerSpiderfy: (id: string, map: L.Map) => void;
   unregister: (id: string) => void;
-}
-
-interface SpiderfierEntry {
-  /** Called fresh each time the spider fan is rendered to get the current icon. */
-  getIcon?: () => L.DivIcon | null;
-  /** When true, the text label bubble is hidden in the spider fan (icon is sufficient). */
-  hideLabel?: boolean;
-  id: string;
-  /** Shown in the list-fallback popup and as tooltip on node markers. */
-  label: string;
-  lat: number;
-  lon: number;
-  onClick: () => void;
-  /** Optional: Resolve a more descriptive label on-demand (e.g. including route info). */
-  resolveLabel?: () => Promise<string>;
 }
 
 // ── Context ───────────────────────────────────────────────────────────────────
