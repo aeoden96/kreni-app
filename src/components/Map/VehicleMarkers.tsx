@@ -156,6 +156,7 @@ export function VehicleMarkers({
   const map = useMap();
   const [zoom, setZoom] = useState(map.getZoom());
   const theme = useSettingsStore((s) => s.theme);
+  const isDark = theme === 'dark';
 
   useEffect(() => {
     const handleZoomEnd = () => setZoom(map.getZoom());
@@ -175,7 +176,7 @@ export function VehicleMarkers({
   return (
     <>
       {vehicles.map((vehicle) => {
-        const color = getDirectionColor(routeType, vehicle.direction ?? 0);
+        const color = getDirectionColor(routeType, vehicle.direction ?? 0, isDark);
         return (
           <MemoSpiderfiedVehicleMarker
             color={color}

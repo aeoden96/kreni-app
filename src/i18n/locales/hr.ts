@@ -133,6 +133,7 @@ const hr = {
       back: 'Natrag',
       cancel: 'Odustani',
       close: 'Zatvori',
+      continue: 'Nastavi',
       done: 'Završi',
       enterApp: 'Uđi u aplikaciju',
       followVehicle: 'Prati ovo vozilo',
@@ -312,10 +313,10 @@ const hr = {
       drivingTitle0: 'Vožnja Auta',
       featureShowcaseBody: 'Ukratki video pregled nekoliko značajki.',
       featureShowcaseTitle: 'Kako radi',
+      featuresTitle: 'Četiri načina za kretanje gradom',
       featureTransitBody: 'Vozila uživo + stanice na karti.',
       featureTransitTitle: 'Javni prijevoz',
       githubCta: 'GitHub',
-      heroBadge: 'Besplatno i bez prijave',
       heroBullet0: 'Nikad ne propusti tramvaj — vidi vozila kako se kreću prema tvojoj stanici.',
       heroBullet1: 'Prebaci se između načina: prijevoz, biciklizam, auto, gradski sadržaj.',
       heroBullet2: 'Spremi favorite i imaj nedavne stanice/linije pri ruci.',
@@ -323,8 +324,8 @@ const hr = {
         'Brzi pregled svih linija i stanica u jednostavnom tekstualnom formatu, bez učitavanja karte.',
       listTitle0: 'Prikaz Liste',
       modeSwitchBody:
-        'Klikni na glavni gumb gore desno (Spider izbornik) za brzo prebacivanje između javnog prijevoza, bicikla, auta ili gradskog sadržaja.',
-      modeSwitchTitle: 'Promjena načina rada',
+        'Gumbom u gornjem desnom kutu prebacuj se između javnog prijevoza, bicikla, auta i grada — kad god želiš.',
+      modeSwitchTitle: 'Prebaci se kad želiš',
       navBody:
         'Klikni na ikonu u gornjem desnom kutu (Spider izbornik) za brzu promjenu između javnog prijevoza, bicikala, auta i gradskog sadržaja.',
       navTitle: 'Navigacija',
@@ -335,6 +336,7 @@ const hr = {
         'Neobavezno: odaberi jezik i temu sada. Možeš to promijeniti bilo kada u Postavkama.',
       previewPausedReducedMotion: 'Pregled pauziran (smanjeni pokreti)',
       previewUnavailable: 'Pregled nije dostupan',
+      skip: 'Preskoči',
       themeBody: 'Svijetla ili tamna tema? Uvijek možeš promijeniti kasnije u postavkama.',
       themeDark: 'Tamno',
       themeLight: 'Svijetlo',
@@ -345,13 +347,15 @@ const hr = {
         'Pregledaj vozni red HŽ Putničkog prijevoza za željezničke stanice u Zagrebu i okolici. Odaberi stanicu ili prugu za detalje.',
       trainTitle0: 'Vlakovi HŽ',
       transitBody0: 'Prati ZET tramvaje i autobuse uživo na karti.',
-      transitBody1:
-        'Klikni na stanicu na karti kako bi otvorio detalje i provjerio raspored dolazaka i odlazećih linija.',
+      transitBody1: 'Vidi koji se tramvaji i autobusi približavaju stanici.',
       transitBody2:
         'Kada klikneš na grupu stanica ili vozila, otvara se izbornik iz kojeg lako možeš odabrati točno ono što želiš pratiti.',
+      transitBody3: 'Unesi polazište i odredište i vidi koje te linije vode do cilja.',
+      transitNote1: 'GPS pozicije uživo uparene s rasporedom, po stanici.',
       transitTitle0: 'Javni prijevoz',
       transitTitle1: 'Pregled stanice',
       transitTitle2: 'Precizan odabir',
+      transitTitle3: 'Planiraj put',
       welcomeBody:
         'Tramvaji i autobusi Zagreba, uživo na karti. Plus biciklizam, vožnja auta i gradski sadržaj.',
       welcomeFooterNote: 'Bez prijave',
@@ -470,6 +474,7 @@ const hr = {
     routeBar: {
       arrivingAt: 'Dolazi na',
       atStop: 'Na postaji',
+      backToResults: 'Natrag na rezultate',
       backToRouteOverview: 'Sva vozila na liniji',
       catchableVehiclesHint: 'Samo svijetla vozila možete još ukrcati',
       delayEarly: '{{time}} ispred',
@@ -485,6 +490,7 @@ const hr = {
       positionUnknown: 'Položaj nepoznat',
       stationsLabel: 'Stanice',
       tapVehiclesHint: 'Dodirnite vozilo za pracenje',
+      viewDeparturesHere: 'Polasci sa stanice {{stop}}',
       waitingGpsSignal: 'Čeka se GPS signal…',
     },
     routeModal: {
@@ -529,6 +535,7 @@ const hr = {
       noDirectRoutes: 'Nema izravne linije za odabrane stanice',
       noDirectTrains: 'Danas nema izravnih vlakova za ove stanice',
       noLinesForStop: 'Nema linija za prikaz',
+      noLiveVehiclesHint: 'Trenutno nema vozila uživo',
       placeholder: {
         fromWhere: 'Odakle?',
         routeQuery: 'Broj ili naziv linije...',
@@ -539,6 +546,7 @@ const hr = {
       recentClear: 'Očisti',
       recentSection: 'Nedavno pregledano',
       routeDirectionMeta: 'Smjer {{direction}} · {{count}} stanica',
+      routeTerminusMeta: 'Prema {{place}} · {{count}} stanica',
       searchingDirectRoutes: 'Traženje direktnih linija...',
       stopTypes: {
         bus: 'Autobusna stanica',

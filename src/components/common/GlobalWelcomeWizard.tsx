@@ -1,4 +1,4 @@
-import { Moon, Sun } from 'lucide-react';
+import { Bike, Building2, Car, Moon, Sun, TramFront } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -9,40 +9,48 @@ import { useSettingsStore } from '../../stores/settingsStore';
 // ─── Static config ─────────────────────────────────────────────────────────────
 
 const LANGUAGES = [
-  ['hr', 'Hrvatski'],
-  ['en', 'English'],
-  ['de', 'Deutsch'],
+  ['hr', 'HR'],
+  ['en', 'EN'],
+  ['de', 'DE'],
 ] as const;
 
-interface SectionData {
-  bodyKey: string;
-  buttonKey?: string;
-  id: string;
-  titleKey: string;
-}
-
-const SECTIONS: SectionData[] = [
+/** The four ways to get around, shown as an iOS-style feature list. */
+const FEATURES = [
   {
-    bodyKey: 'onboarding.welcomeBody',
-    buttonKey: 'common.next',
-    id: 'welcome',
-    titleKey: 'onboarding.welcomeTitle',
-  },
-  {
-    bodyKey: 'onboarding.heroBullet0',
-    buttonKey: 'common.next',
-    id: 'transit',
+    bodyKey: 'onboarding.transitBody0',
+    icon: TramFront,
+    tint: 'transit',
     titleKey: 'onboarding.transitTitle0',
   },
   {
-    bodyKey: 'onboarding.modeSwitchBody',
-    buttonKey: 'common.enterApp',
-    id: 'modes',
-    titleKey: 'onboarding.modeSwitchTitle',
+    bodyKey: 'onboarding.cyclingBody0',
+    icon: Bike,
+    tint: 'cycling',
+    titleKey: 'onboarding.cyclingTitle0',
   },
-];
+  {
+    bodyKey: 'onboarding.drivingBody0',
+    icon: Car,
+    tint: 'driving',
+    titleKey: 'onboarding.drivingTitle0',
+  },
+  {
+    bodyKey: 'onboarding.cityBody0',
+    icon: Building2,
+    tint: 'city',
+    titleKey: 'onboarding.cityTitle0',
+  },
+] as const;
 
-// ─── Sub-components ────────────────────────────────────────────────────────────
+// Static class strings (so Tailwind keeps them in the build).
+const TINTS: Record<string, string> = {
+  city: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
+  cycling: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+  driving: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+  transit: 'bg-[#2337ff]/10 text-[#2337ff] dark:text-[#8ea0ff]',
+};
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
 
 export function GlobalWelcomeWizard() {
   const { t } = useTranslation();
@@ -55,36 +63,36 @@ export function GlobalWelcomeWizard() {
 
   const currentLang = getCurrentLanguage();
 
-  if (globalOnboardingCompleted) return null;
-
-  const handleClose = () => {
+  const finish = () => {
     setGlobalOnboardingCompleted(true);
     navigate('/');
   };
 
-  const handleScrollToNext = (index: number) => {
-    if (index === SECTIONS.length - 1) {
-      handleClose();
-    } else {
-      const nextSection = document.getElementById(`section-${index + 1}`);
-      if (nextSection) {
-        nextSection.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
-  };
+  // Esc skips the whole flow.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') finish();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const pillButtonClasses =
-    'rounded-full px-8 py-3.5 bg-base-content text-base-100 font-semibold shadow-sm hover:scale-105 active:scale-95 transition-transform duration-300 inline-flex items-center justify-center text-sm sm:text-base cursor-pointer';
+  if (globalOnboardingCompleted) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-base-100 overflow-y-auto scroll-smooth">
-      {/* ── Fixed Header Controls ── */}
-      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 pt-6 pb-4 bg-gradient-to-b from-base-100 to-transparent pointer-events-none">
-        <div className="flex items-center gap-3 pointer-events-auto">
-          {/* Language Picker */}
+    <div
+      aria-label={t('onboarding.welcomeTitle')}
+      aria-modal="true"
+      className="fixed inset-0 z-[9999] overflow-y-auto overscroll-contain bg-base-100 text-base-content"
+      role="dialog"
+    >
+      {/* ── Floating header: language · theme · skip ── */}
+      <header className="fixed inset-x-0 top-0 z-20 flex items-center justify-between px-5 pt-[max(0.75rem,env(safe-area-inset-top))] pb-2 sm:px-8">
+        <div className="flex items-center gap-2">
           <div
             aria-label={t('settings.languageTitle')}
-            className="inline-flex rounded-full bg-base-200/50 p-1 backdrop-blur-md"
+            className="inline-flex rounded-full bg-base-100/60 p-0.5 shadow-sm backdrop-blur"
             role="group"
           >
             {LANGUAGES.map(([lng, label]) => (
@@ -92,117 +100,197 @@ export function GlobalWelcomeWizard() {
                 aria-label={label}
                 aria-pressed={currentLang === lng}
                 className={[
-                  'flex h-8 items-center justify-center rounded-full px-4 text-xs font-bold transition-all duration-200',
+                  'flex h-8 min-w-9 items-center justify-center rounded-full px-3 text-xs font-semibold transition-colors',
                   currentLang === lng
-                    ? 'bg-base-100 text-base-content shadow-sm'
-                    : 'text-base-content/50 hover:text-base-content',
+                    ? 'bg-base-content text-base-100'
+                    : 'text-base-content/60 hover:text-base-content',
                 ].join(' ')}
                 key={lng}
                 onClick={() => setLanguage(lng)}
                 type="button"
               >
-                {lng.toUpperCase()}
+                {label}
               </button>
             ))}
           </div>
 
-          {/* Theme Toggle */}
           <button
             aria-label={t('onboarding.themeTitle')}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-base-200/50 text-base-content/60 hover:text-base-content hover:bg-base-200 transition-colors backdrop-blur-md"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-base-100/60 text-base-content/70 shadow-sm backdrop-blur transition-colors hover:text-base-content"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             type="button"
           >
-            {theme === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+            {theme === 'dark' ? (
+              <Moon className="h-[18px] w-[18px]" />
+            ) : (
+              <Sun className="h-[18px] w-[18px]" />
+            )}
           </button>
         </div>
 
-        {/* Skip Button */}
         <button
-          className="text-sm font-bold text-base-content/40 hover:text-base-content transition-colors px-2 py-2 pointer-events-auto"
-          onClick={handleClose}
+          className="rounded-full bg-base-100/60 px-3 py-2 text-sm font-medium text-base-content/70 shadow-sm backdrop-blur transition-colors hover:text-base-content"
+          onClick={finish}
           type="button"
         >
-          {t('common.close', 'Skip')}
+          {t('onboarding.skip', 'Skip')}
         </button>
-      </div>
+      </header>
 
-      {/* ── Scrollable Sections ── */}
-      <div className="flex flex-col">
-        {SECTIONS.map((section, index) => (
-          <section
-            className="min-h-[100svh] flex flex-col justify-center items-center px-6 py-24 relative"
-            id={`section-${index}`}
-            key={section.id}
-          >
-            <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
-              {/* Headline */}
-              <ScrollReveal delay={0}>
-                <h2 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tighter text-center text-base-content leading-tight">
-                  {t(section.titleKey)}
-                </h2>
-              </ScrollReveal>
-
-              {/* Copy */}
-              <ScrollReveal delay={200}>
-                <p className="mt-6 text-lg sm:text-xl lg:text-2xl text-base-content/60 text-center max-w-2xl font-medium tracking-tight leading-relaxed">
-                  {t(section.bodyKey)}
-                </p>
-              </ScrollReveal>
-
-              {/* CTA Button */}
-              <ScrollReveal className="mt-10 mb-16 sm:mb-20" delay={400}>
-                <button
-                  className={pillButtonClasses}
-                  onClick={() => handleScrollToNext(index)}
-                  type="button"
-                >
-                  {t(section.buttonKey || 'common.next', 'Continue')}
-                </button>
-              </ScrollReveal>
-
-              {/* Mockup */}
-              <ScrollReveal className="w-full" delay={600}>
-                <DeviceMockup id={section.id} />
-              </ScrollReveal>
-            </div>
-          </section>
-        ))}
-      </div>
-
-      {/* Bottom padding for the last section so the user can scroll past it slightly if they want to admire it */}
-      <div className="h-[10vh] bg-base-100" />
+      <VideoHero onEnter={finish} theme={theme} />
+      <ShowcaseSection theme={theme} />
+      <FeaturesSection />
+      <ModesSection onEnter={finish} />
     </div>
   );
 }
 
-/**
- * A clean, CSS-only Android device mockup placeholder with soft shadows.
- * This is designed to look extremely premium and minimal.
- */
-function DeviceMockup({ id }: { id: string }) {
+function FeaturesSection() {
+  const { t } = useTranslation();
   return (
-    <div className="relative mx-auto w-full max-w-[280px] sm:max-w-[340px] aspect-[9/19.5] rounded-[2.5rem] sm:rounded-[3rem] border-[8px] sm:border-[12px] border-base-200 bg-base-100 shadow-[0_35px_60px_-15px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden">
-      {/* Front camera punch hole */}
-      <div className="absolute top-3 sm:top-4 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-base-300 z-10" />
-
-      {/* Screen Placeholder Content */}
-      <div className="flex-1 bg-base-200/30 flex flex-col items-center justify-center p-8 text-center">
-        <div className="w-16 h-16 sm:w-20 sm:h-20 mb-6 rounded-2xl sm:rounded-3xl bg-base-300/50" />
-        <div className="text-sm sm:text-base font-semibold text-base-content/40 uppercase tracking-widest mb-3">
-          {id}
-        </div>
-        <div className="text-xs sm:text-sm text-base-content/30 leading-relaxed px-2">
-          Screenshot from theapplaunchpad will appear here.
+    <section className="px-6 py-24 sm:py-36">
+      <div className="mx-auto w-full max-w-3xl">
+        <Reveal>
+          <h2 className="text-balance text-center text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
+            {t('onboarding.featuresTitle', 'Four ways to get around')}
+          </h2>
+        </Reveal>
+        <div className="mt-16 grid w-full grid-cols-1 gap-x-12 gap-y-12 text-left sm:grid-cols-2">
+          {FEATURES.map((f, i) => {
+            const Icon = f.icon;
+            return (
+              <Reveal className="w-full" delay={i * 90} key={f.titleKey}>
+                <div className="flex flex-col gap-3.5">
+                  <div
+                    className={`flex h-14 w-14 items-center justify-center rounded-2xl ${TINTS[f.tint]}`}
+                  >
+                    <Icon className="h-7 w-7" strokeWidth={2} />
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold leading-snug">{t(f.titleKey)}</p>
+                    <p className="mt-1.5 text-base leading-relaxed text-base-content/55">
+                      {t(f.bodyKey)}
+                    </p>
+                  </div>
+                </div>
+              </Reveal>
+            );
+          })}
         </div>
       </div>
-    </div>
+    </section>
+  );
+}
+
+/** Closing section: switch-anytime message + the final "Enter app" call to action. */
+function ModesSection({ onEnter }: { onEnter: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <section className="bg-base-200/40 px-6 py-28 pb-[max(7rem,env(safe-area-inset-bottom))] sm:py-40">
+      <div className="mx-auto flex w-full max-w-lg flex-col items-center text-center">
+        <Reveal>
+          <ModeSwitcherVisual />
+        </Reveal>
+        <Reveal delay={120}>
+          <h2 className="mt-10 text-balance text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
+            {t('onboarding.modeSwitchTitle')}
+          </h2>
+        </Reveal>
+        <Reveal delay={200}>
+          <p className="mt-4 text-balance text-lg leading-relaxed text-base-content/55">
+            {t('onboarding.modeSwitchBody')}
+          </p>
+        </Reveal>
+        <Reveal delay={280}>
+          <button
+            className="mt-12 h-12 rounded-full bg-[#2337ff] px-10 text-base font-semibold text-white shadow-[0_10px_30px_-10px_rgba(35,55,255,0.6)] transition-all duration-200 hover:brightness-110 active:scale-[0.98] motion-reduce:transition-none"
+            onClick={onEnter}
+            type="button"
+          >
+            {t('common.enterApp')}
+          </button>
+          <p className="mt-4 text-sm text-base-content/45">
+            {t('onboarding.welcomeFooterNote', 'No sign-in required')}
+          </p>
+        </Reveal>
+      </div>
+    </section>
   );
 }
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
-function ScrollReveal({
+/** Four mode tiles with transit highlighted — evokes switching modes anytime. */
+function ModeSwitcherVisual() {
+  const modes = [
+    { active: true, icon: TramFront },
+    { active: false, icon: Bike },
+    { active: false, icon: Car },
+    { active: false, icon: Building2 },
+  ];
+  return (
+    <div className="flex items-center justify-center gap-3.5">
+      {modes.map(({ active, icon: Icon }, i) => (
+        <div
+          className={[
+            'flex h-16 w-16 items-center justify-center rounded-2xl transition-colors',
+            active
+              ? 'bg-[#2337ff] text-white shadow-[0_10px_24px_-8px_rgba(35,55,255,0.6)]'
+              : 'bg-base-200 text-base-content/40',
+          ].join(' ')}
+          key={i}
+        >
+          <Icon className="h-7 w-7" strokeWidth={2} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Sections ──────────────────────────────────────────────────────────────────
+
+/** A big device mockup that slides + scales in, then floats gently, with a glow. */
+function PhoneShot({ alt, reverse, src }: { alt: string; reverse: boolean; src: string }) {
+  const reduced = usePrefersReducedMotion();
+  const [ref, inView] = useInView<HTMLDivElement>();
+  const visible = inView || reduced;
+  return (
+    <div
+      className="relative w-[260px] shrink-0 sm:w-[320px] lg:w-[380px]"
+      ref={ref}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'none' : `translateX(${reverse ? 48 : -48}px) scale(0.94)`,
+        transition: reduced
+          ? undefined
+          : 'opacity .85s cubic-bezier(.16,1,.3,1), transform .85s cubic-bezier(.16,1,.3,1)',
+      }}
+    >
+      {/* soft brand glow behind the device */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 blur-3xl"
+        style={{
+          background: 'radial-gradient(58% 50% at 50% 45%, rgba(35,55,255,0.30), transparent 70%)',
+        }}
+      />
+      <div className="relative">
+        <div className="overflow-hidden rounded-[1.8rem] border-[9px] border-base-300 bg-base-300 shadow-[0_16px_36px_-24px_rgba(0,0,0,0.4)]">
+          <img
+            alt={alt}
+            className="block aspect-[1082/2399] w-full object-cover"
+            decoding="async"
+            loading="lazy"
+            src={src}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Fades + rises its children the first time they scroll into view. */
+function Reveal({
   children,
   className = '',
   delay = 0,
@@ -211,38 +299,197 @@ function ScrollReveal({
   className?: string;
   delay?: number;
 }) {
-  const [isVisible, setIsVisible] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          // Once visible, we can disconnect if we only want it to animate once.
-          // Apple usually only animates once per scroll down.
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.15 }
-    );
-
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
+  const reduced = usePrefersReducedMotion();
+  const [ref, inView] = useInView<HTMLDivElement>();
+  const visible = inView || reduced;
   return (
     <div
-      className={`transition-all duration-1000 ease-out transform ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
-      } ${className}`}
+      className={className}
       ref={ref}
-      style={{ transitionDelay: `${delay}ms` }}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible || reduced ? 'none' : 'translateY(22px)',
+        transition: reduced
+          ? undefined
+          : 'opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1)',
+        transitionDelay: `${delay}ms`,
+      }}
     >
       {children}
     </div>
+  );
+}
+
+/** Alternating device-framed product shots (theme-matched screenshots). */
+function ShowcaseSection({ theme }: { theme: 'dark' | 'light' }) {
+  const { t } = useTranslation();
+  const s = theme === 'dark' ? 'dark' : 'light';
+  const shots = [
+    {
+      bodyKey: 'onboarding.transitBody0',
+      ext: 'webp',
+      img: 'vehicle-view-mobile',
+      note: '',
+      titleKey: 'onboarding.transitTitle0',
+    },
+    {
+      bodyKey: 'onboarding.transitBody1',
+      ext: 'webp',
+      img: 'stop-view-mobile',
+      note: 'onboarding.transitNote1',
+      titleKey: 'onboarding.transitTitle1',
+    },
+    {
+      bodyKey: 'onboarding.transitBody3',
+      ext: 'png',
+      img: 'plan-journey-mobile',
+      note: '',
+      titleKey: 'onboarding.transitTitle3',
+    },
+  ] as const;
+
+  return (
+    <section className="overflow-hidden bg-base-200/40 px-6 py-24 sm:py-36">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-28 sm:gap-40">
+        {shots.map((shot, i) => (
+          <div
+            className={[
+              'flex flex-col items-center gap-12 sm:gap-20',
+              i % 2 === 1 ? 'sm:flex-row-reverse' : 'sm:flex-row',
+            ].join(' ')}
+            key={shot.img}
+          >
+            <PhoneShot
+              alt={t(shot.titleKey)}
+              reverse={i % 2 === 1}
+              src={`/onboarding_new/${s}-${shot.img}.${shot.ext}`}
+            />
+            <div className="flex-1 text-center sm:text-left">
+              <Reveal>
+                <h3 className="text-balance text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
+                  {t(shot.titleKey)}
+                </h3>
+                <p className="mx-auto mt-4 max-w-md text-balance text-lg leading-relaxed text-base-content/55 sm:mx-0">
+                  {t(shot.bodyKey)}
+                </p>
+                {shot.note && (
+                  <p className="mx-auto mt-3 max-w-md text-balance text-sm leading-relaxed text-base-content/40 sm:mx-0">
+                    {t(shot.note)}
+                  </p>
+                )}
+              </Reveal>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/** Sets its flag true the first time the element scrolls into view. */
+function useInView<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === 'undefined') {
+      setInView(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: '0px 0px -12% 0px', threshold: 0.2 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return [ref, inView] as const;
+}
+
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReduced(mq.matches);
+    update();
+    mq.addEventListener?.('change', update);
+    return () => mq.removeEventListener?.('change', update);
+  }, []);
+  return reduced;
+}
+
+/**
+ * Full-bleed live-map hero. Theme-matched, de-paused seamless loop (transcoded
+ * from the ZET live map). Bottom-up scrim + text-shadow keep the copy legible
+ * over the moving vehicles without washing the whole frame.
+ */
+function VideoHero({ onEnter, theme }: { onEnter: () => void; theme: 'dark' | 'light' }) {
+  const { t } = useTranslation();
+  const reduced = usePrefersReducedMotion();
+  const ctaRef = useRef<HTMLButtonElement>(null);
+  const s = theme === 'dark' ? 'dark' : 'light';
+  const tint = theme === 'dark' ? '0,0,0' : '255,255,255';
+
+  useEffect(() => {
+    ctaRef.current?.focus();
+  }, []);
+
+  return (
+    <section className="relative flex h-svh min-h-[560px] w-full items-center justify-center overflow-hidden">
+      <video
+        aria-hidden
+        autoPlay={!reduced}
+        className="absolute inset-0 h-full w-full object-cover"
+        key={s}
+        loop
+        muted
+        playsInline
+        poster={`/onboarding_new/hero-${s}-poster.jpg`}
+      >
+        <source src={`/onboarding_new/hero-${s}.webm`} type="video/webm" />
+        <source src={`/onboarding_new/hero-${s}.mp4`} type="video/mp4" />
+      </video>
+
+      {/* bottom-up scrim only — top & middle of the video stay clean */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `linear-gradient(0deg, rgba(${tint},0.52) 0%, rgba(${tint},0.20) 12%, rgba(${tint},0) 34%)`,
+        }}
+      />
+
+      <div className="relative z-[2] flex max-w-[860px] flex-col items-center px-6 text-center">
+        <h1
+          className="text-balance text-5xl font-semibold leading-[1.02] tracking-tight sm:text-6xl md:text-7xl"
+          style={{ textShadow: `0 1px 1px rgba(${tint},0.85), 0 2px 14px rgba(${tint},0.7)` }}
+        >
+          {t('onboarding.welcomeTitle')}
+        </h1>
+
+        <button
+          className="mt-9 h-12 rounded-full bg-base-content px-8 text-base font-semibold text-base-100 shadow-lg transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98] motion-reduce:transition-none"
+          onClick={onEnter}
+          ref={ctaRef}
+          type="button"
+        >
+          {t('common.enterApp')}
+        </button>
+      </div>
+
+      {/* scroll cue */}
+      <div
+        aria-hidden
+        className="absolute inset-x-0 bottom-[max(1.25rem,env(safe-area-inset-bottom))] flex justify-center"
+      >
+        <span className="text-sm text-base-content/60 motion-safe:animate-bounce">↓</span>
+      </div>
+    </section>
   );
 }

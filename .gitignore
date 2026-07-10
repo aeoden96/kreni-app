@@ -57,3 +57,9 @@ storybook-static
 *.keystore
 *.jks
 keystore.properties
+
+# Raw onboarding sources — kept local only. Shipped assets are the compressed
+# loops (mp4/webm) + posters (jpg) + screenshots (webp) produced from these.
+public/onboarding_new/full-screen-*.mp4
+public/onboarding_new/*Zone.Identifier
+public/onboarding_new/*.png

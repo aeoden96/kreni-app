@@ -10,6 +10,8 @@ import { DirectionsContent } from './search/DirectionsContent';
 import { StopDropdown } from './search/StopDropdown';
 
 interface DirectionsModalProps {
+  initialFromStop?: null | Stop;
+  initialToStop?: null | Stop;
   isOpen: boolean;
   onClose: () => void;
   onSelectRoute: (

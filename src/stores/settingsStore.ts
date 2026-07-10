@@ -199,7 +199,7 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, get) => {
-      const initialTheme = (localStorage.getItem('theme') as Theme) || 'light';
+      const initialTheme = (localStorage.getItem('theme') as Theme) || 'dark';
       // Ensure the document theme attribute matches the initial value
       try {
         document.documentElement.setAttribute('data-theme', initialTheme);

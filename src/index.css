@@ -30,6 +30,32 @@
   --text-8xl: clamp(72px, 4.75rem, 80px);
 }
 
+/* Onboarding: staggered entrance rise (paired with `motion-safe:` so
+   reduced-motion users simply see the final state). */
+@keyframes onboardRise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Onboarding: "live vehicle" pulse ring on the welcome map graphic. */
+@keyframes livePing {
+  0% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
 :root {
   --accent: #2337ff;
   --accent-dark: #000d8a;
@@ -354,6 +380,17 @@ body {
 .leaflet-tooltip-left:before,
 .leaflet-tooltip-right:before {
   display: none !important;
+}
+
+/* Leaflet/OSM attribution control theme-aware (default is a white box, which
+   stands out sharply on the dark basemap) */
+[data-theme='dark'] .leaflet-control-attribution {
+  background-color: rgba(31, 41, 55, 0.8) !important;
+  color: #d1d5db !important;
+}
+
+[data-theme='dark'] .leaflet-control-attribution a {
+  color: #f3f4f6 !important;
 }
 
 /* Hover effects for bike markers */

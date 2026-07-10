@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronUp,
+  MapPin,
   Maximize2,
   Navigation,
   Star,
@@ -32,10 +33,13 @@ import type { ParsedTripUpdate, ParsedVehiclePosition } from '../../../utils/rea
 import type { VehiclePosition } from '../../../utils/vehicles';
 import type { DirectionLabel } from './RouteDirectionToggle';
 
+import { useGTFSMode } from '../../../contexts/GTFSModeContext';
+import { useStopDepartures } from '../../../hooks/useStopDepartures';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { routeTypeColor } from '../../../utils/routeStyle';
 import { computeVehicleStopProgress } from '../../../utils/vehicles';
 import { getDirectionColor } from '../../Map/directionColors';
+import { DepartureCard } from '../DepartureCard';
 import { RouteMiniTrack } from '../RouteMiniTrack';
 import { FocusedVehicleCard } from './FocusedVehicleCard';
 import { RouteDirectionToggle } from './RouteDirectionToggle';
@@ -51,6 +55,8 @@ interface RouteVehiclePanelProps {
   journeyFromParentId?: null | string;
   journeyToParentId?: null | string;
   loading?: boolean;
+  /** Return to the Plan Journey results this route was opened from. */
+  onBackToJourney?: () => void;
   onClose: () => void;
   onExpand: () => void;
   onFollowStart: (tripId: string) => void;
@@ -61,6 +67,7 @@ interface RouteVehiclePanelProps {
   onVehicleSwitch: (tripId: string) => void;
   orderedStops?: Record<string, string[]>;
   route: Route;
+  routesById?: Map<string, Route>;
   routeTimetable?: null | RouteTimetable;
   stopsById?: Map<string, Stop>;
   timetableLoading?: boolean;
@@ -77,6 +84,7 @@ export function RouteVehiclePanel({
   journeyFromParentId,
   journeyToParentId,
   loading = false,
+  onBackToJourney,
   onClose,
   onExpand,
   onFollowStart,
@@ -85,12 +93,14 @@ export function RouteVehiclePanel({
   onVehicleSwitch,
   orderedStops,
   route,
+  routesById,
   routeTimetable,
   stopsById,
   timetableLoading = false,
   vehicles,
 }: RouteVehiclePanelProps) {
   const { t } = useTranslation();
+  const { dataDir } = useGTFSMode();
   const color = routeTypeColor(route.type);
   const RouteIcon = route.type === 3 ? Bus : Train;
   const { favouriteRouteIds, toggleFavouriteRoute } = useSettingsStore();
@@ -98,6 +108,7 @@ export function RouteVehiclePanel({
 
   const [compactListDirectionKey, setCompactListDirectionKey] = useState('');
   const [miniTrackExpanded, setMiniTrackExpanded] = useState(false);
+  const [showOriginDepartures, setShowOriginDepartures] = useState(false);
 
   const directionKeysSorted = useMemo(
     () => (orderedStops ? Object.keys(orderedStops).sort((a, b) => Number(a) - Number(b)) : []),
@@ -180,6 +191,12 @@ export function RouteVehiclePanel({
   const miniTrackIds = orderedStops?.[activeKey] ?? [];
   const hasDirections = !!orderedStops && !!stopsById && directionKeysSorted.length > 0;
 
+  // Boarding stop of the journey — its departures can be expanded inline for
+  // schedule context, especially when no live vehicles are tracked.
+  const originStopId =
+    miniTrackSegment && routesById ? (miniTrackIds[miniTrackSegment.fromIdx] ?? null) : null;
+  const originStopName = originStopId ? stopsById?.get(originStopId)?.name : undefined;
+
   return (
     <div
       className="fixed top-16 sm:top-20 left-2 right-2 sm:left-4 sm:right-auto sm:max-w-md z-[1050] bg-base-100 rounded-xl shadow-2xl"
@@ -189,6 +206,15 @@ export function RouteVehiclePanel({
         {/* Header */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex-1 min-w-0 flex items-center gap-2">
+            {onBackToJourney && (
+              <button
+                className="btn btn-ghost btn-circle btn-xs min-h-[32px] min-w-[32px] shrink-0"
+                onClick={onBackToJourney}
+                title={t('routeBar.backToResults')}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            )}
             <span
               className="badge font-bold text-white shrink-0 min-w-[2.5rem] justify-center"
               style={{ backgroundColor: color, borderColor: color }}
@@ -356,6 +382,37 @@ export function RouteVehiclePanel({
                 </span>
               </div>
             )}
+
+            {originStopId && stopsById && routesById && (
+              <div>
+                <button
+                  aria-expanded={showOriginDepartures}
+                  className="btn btn-sm btn-block justify-start gap-2 border border-base-300 font-normal btn-ghost"
+                  onClick={() => setShowOriginDepartures((v) => !v)}
+                  type="button"
+                >
+                  <MapPin className="w-3.5 h-3.5 shrink-0" />
+                  <span className="flex-1 truncate text-left text-xs">
+                    {t('routeBar.viewDeparturesHere', { stop: originStopName })}
+                  </span>
+                  {showOriginDepartures ? (
+                    <ChevronUp className="w-3.5 h-3.5 shrink-0" />
+                  ) : (
+                    <ChevronDown className="w-3.5 h-3.5 shrink-0" />
+                  )}
+                </button>
+                {showOriginDepartures && (
+                  <div className="mt-1.5">
+                    <OriginDeparturesSection
+                      dataDir={dataDir}
+                      routesById={routesById}
+                      stopId={originStopId}
+                      stopsById={stopsById}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ) : loading ? (
           <div className="space-y-2">
@@ -369,6 +426,60 @@ export function RouteVehiclePanel({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Inline departures board for the journey's boarding stop, rendered *inside* the
+ * route panel (no separate overlay). Isolated as its own component so the 1s
+ * clock tick only re-renders this section, not the whole panel.
+ */
+function OriginDeparturesSection({
+  dataDir,
+  routesById,
+  stopId,
+  stopsById,
+}: {
+  dataDir: string;
+  routesById: Map<string, Route>;
+  stopId: string;
+  stopsById: Map<string, Stop>;
+}) {
+  const { t } = useTranslation();
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const { departures, loading } = useStopDepartures(stopId, routesById, stopsById, nowMs, {
+    dataDir,
+  });
+  const top = departures.slice(0, 4);
+
+  if (loading && departures.length === 0) {
+    return (
+      <p className="px-1 py-1 text-[11px] text-base-content/50">{t('stopView.loadingTimetable')}</p>
+    );
+  }
+  if (top.length === 0) {
+    return (
+      <p className="px-1 py-1 text-[11px] text-base-content/50">
+        {t('stopView.noDeparturesInMins', { minutes: 60 })}
+      </p>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-1">
+      {top.map((dep) => (
+        <DepartureCard compact departure={dep} key={dep.tripId} />
+      ))}
+      {departures.length > top.length && (
+        <span className="px-1 text-[11px] text-base-content/50">
+          {t('stopView.seeAllCount', { count: departures.length })}
+        </span>
+      )}
     </div>
   );
 }
