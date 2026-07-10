@@ -64,6 +64,12 @@ export function GTFSMode({ config }: GTFSModeProps) {
     fromParentId: string;
     toParentId: string;
   }>(null);
+  // When set, the Plan Journey modal re-opens pre-filled with these stops
+  // (used to return from a route detail back to the results list).
+  const [directionsRestore, setDirectionsRestore] = useState<null | {
+    fromParentId: string;
+    toParentId: string;
+  }>(null);
 
   const setNearbyPanelOpen = useCallback((open: boolean) => {
     setNearbyOpen(open);
@@ -333,6 +339,20 @@ export function GTFSMode({ config }: GTFSModeProps) {
 
   const handleCloseStopInfo = () => clearStop();
 
+  // Open the Plan Journey modal fresh (no restored stops).
+  const openPlanJourney = () => {
+    setDirectionsRestore(null);
+    setDirectionsModalOpen(true);
+  };
+
+  // Return from a route detail to the Plan Journey results, restoring the
+  // origin/destination that produced this route.
+  const handleBackToJourney = () => {
+    if (journeyContext) setDirectionsRestore(journeyContext);
+    handleClearRoute();
+    setDirectionsModalOpen(true);
+  };
+
   // ── Derived ───────────────────────────────────────────────────────────────
 
   const activeHighlightStopIds = useMemo(
@@ -587,6 +607,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
                 journeyFromParentId={journeyContext?.fromParentId ?? null}
                 journeyToParentId={journeyContext?.toParentId ?? null}
                 loading={routeLoading}
+                onBackToJourney={journeyContext ? handleBackToJourney : undefined}
                 onClose={handleClearRoute}
                 onExpand={handleExpandRoute}
                 onFollowStart={handleFollowStart}
@@ -595,6 +616,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
                 onVehicleSwitch={focusVehicle}
                 orderedStops={orderedStops}
                 route={selectedRoute}
+                routesById={routesById}
                 routeTimetable={routeTimetable}
                 stopsById={stopsById}
                 timetableLoading={timetableLoading}
@@ -675,7 +697,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
             className="btn btn-circle btn-gps-inactive p-0 min-h-0 w-10 h-10 min-h-10 sm:w-14 sm:h-14 sm:min-h-14 shadow-2xl transition-all duration-300 ring-2 ring-white/5"
             onClick={() => {
               trackEvent('directions_opened');
-              setDirectionsModalOpen(true);
+              openPlanJourney();
             }}
             type="button"
           >
@@ -703,6 +725,12 @@ export function GTFSMode({ config }: GTFSModeProps) {
 
         {/* Directions Modal */}
         <DirectionsModal
+          initialFromStop={
+            directionsRestore ? (stopsById.get(directionsRestore.fromParentId) ?? null) : null
+          }
+          initialToStop={
+            directionsRestore ? (stopsById.get(directionsRestore.toParentId) ?? null) : null
+          }
           isOpen={directionsModalOpen}
           onClose={() => setDirectionsModalOpen(false)}
           onSelectRoute={handleSelectRoute}

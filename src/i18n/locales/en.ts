@@ -312,7 +312,6 @@ const en = {
       featureTransitBody: 'Live vehicles + stops on the map.',
       featureTransitTitle: 'Transit',
       githubCta: 'GitHub',
-      heroBadge: 'Free and open source',
       heroBullet0: 'Never miss the next tram — see vehicles moving toward your stop.',
       heroBullet1: 'Switch between modes: transit, cycling, driving, city life.',
       heroBullet2: 'Save favourites and keep recent stops/lines handy.',
@@ -342,12 +341,15 @@ const en = {
         'Browse HŽ passenger rail timetables for Zagreb and surroundings. Pick a stop or line for details.',
       trainTitle0: 'HŽ trains',
       transitBody0: 'Follow ZET trams and buses live on the map.',
-      transitBody1: 'Tap a stop on the map to open details and check arrivals and departures.',
+      transitBody1: 'See which trams and buses are approaching a stop right now.',
       transitBody2:
         'When you tap a group of stops or vehicles, a picker opens so you can choose exactly what to follow.',
+      transitBody3: 'Enter a start and destination to see which lines take you there.',
+      transitNote1: 'Live GPS positions matched with the timetable, per stop.',
       transitTitle0: 'Public transport',
       transitTitle1: 'Stop details',
       transitTitle2: 'Precise selection',
+      transitTitle3: 'Plan a journey',
       welcomeBody:
         "Zagreb's trams and buses, live on the map. Plus cycling, driving, and city services.",
       welcomeFooterNote: 'No sign-in required',
@@ -463,6 +465,7 @@ const en = {
     routeBar: {
       arrivingAt: 'Arriving at',
       atStop: 'At stop',
+      backToResults: 'Back to results',
       backToRouteOverview: 'All vehicles on route',
       catchableVehiclesHint: 'Only bright vehicles can still be boarded',
       delayEarly: '{{time}} early',
@@ -478,6 +481,7 @@ const en = {
       positionUnknown: 'Position unknown',
       stationsLabel: 'Stations',
       tapVehiclesHint: 'Tap a vehicle icon to track it',
+      viewDeparturesHere: 'Departures at {{stop}}',
       waitingGpsSignal: 'Waiting for GPS…',
     },
     routeModal: {
@@ -522,6 +526,7 @@ const en = {
       noDirectRoutes: 'No direct route for these stops',
       noDirectTrains: 'No direct trains today for these stations',
       noLinesForStop: 'No lines to show',
+      noLiveVehiclesHint: 'No live vehicles right now',
       placeholder: {
         fromWhere: 'From where?',
         routeQuery: 'Line number or name…',
@@ -532,6 +537,7 @@ const en = {
       recentClear: 'Clear',
       recentSection: 'Recently viewed',
       routeDirectionMeta: 'Direction {{direction}} · {{count}} stops',
+      routeTerminusMeta: 'Towards {{place}} · {{count}} stops',
       searchingDirectRoutes: 'Finding direct routes…',
       stopTypes: {
         bus: 'Bus stop',

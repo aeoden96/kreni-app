@@ -157,6 +157,9 @@ export function DirectionsContent({
                 (v) => v.routeId === item.route.id && v.direction === directionIndex
               );
               const journeySegment = { fromIdx: item.fromIndex, toIdx: item.toIndex };
+              const terminusName = stopsById.get(
+                item.parentStopIds[item.parentStopIds.length - 1]
+              )?.name;
 
               return (
                 <div key={`${item.route.id}-${item.directionKey}`}>
@@ -178,10 +181,15 @@ export function DirectionsContent({
                       <div className="min-w-0 flex-1">
                         <div className="text-sm line-clamp-1">{item.route.longName}</div>
                         <div className="text-xs text-base-content/60">
-                          {t('search.routeDirectionMeta', {
-                            count: item.stopsBetween + 1,
-                            direction: item.directionFilter,
-                          })}
+                          {terminusName
+                            ? t('search.routeTerminusMeta', {
+                                count: item.stopsBetween + 1,
+                                place: terminusName,
+                              })
+                            : t('search.routeDirectionMeta', {
+                                count: item.stopsBetween + 1,
+                                direction: item.directionFilter,
+                              })}
                         </div>
                       </div>
                       <ChevronRight className="w-4 h-4 text-base-content/30 shrink-0" />
@@ -207,6 +215,11 @@ export function DirectionsContent({
                         stopsById={stopsById}
                         vehicles={routeVehicles}
                       />
+                      {routeVehicles.length === 0 && (
+                        <div className="mt-1 text-center text-[11px] text-base-content/45">
+                          {t('search.noLiveVehiclesHint')}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

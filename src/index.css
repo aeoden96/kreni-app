@@ -43,17 +43,6 @@
   }
 }
 
-/* Onboarding: gentle perpetual float for the device mockups. */
-@keyframes onboardFloat {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-12px);
-  }
-}
-
 /* Onboarding: "live vehicle" pulse ring on the welcome map graphic. */
 @keyframes livePing {
   0% {

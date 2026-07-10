@@ -11,6 +11,10 @@ import { filterParentStops } from '../utils/searchUtils';
 import { useDirections } from './useDirections';
 
 interface DirectionsModalProps {
+  /** When opening, pre-fill the "from" field (e.g. returning from a route detail). */
+  initialFromStop?: null | Stop;
+  /** When opening, pre-fill the "to" field. */
+  initialToStop?: null | Stop;
   isOpen: boolean;
   onClose: () => void;
   onSelectRoute: (
@@ -28,6 +32,8 @@ interface DirectionsModalProps {
 }
 
 export function useDirectionsModal({
+  initialFromStop,
+  initialToStop,
   isOpen,
   onClose,
   onSelectRoute,
@@ -49,9 +55,24 @@ export function useDirectionsModal({
 
   const { favouriteStopIds } = useSettingsStore();
 
+  // Read initial stops through a ref so the open effect (keyed only on isOpen)
+  // always sees the latest values without re-running on every prop change.
+  const initialStopsRef = useRef({ from: initialFromStop, to: initialToStop });
+  useEffect(() => {
+    initialStopsRef.current = { from: initialFromStop, to: initialToStop };
+  });
+
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => fromInputRef.current?.focus(), 100);
+      const { from, to } = initialStopsRef.current;
+      if (from || to) {
+        // Restoring a previous journey (e.g. back from a route detail).
+        setDirFromStop(from ?? null);
+        setDirToStop(to ?? null);
+        setDirActiveField(from && !to ? 'to' : 'from');
+      } else {
+        setTimeout(() => fromInputRef.current?.focus(), 100);
+      }
     } else {
       setDirFromStop(null);
       setDirToStop(null);

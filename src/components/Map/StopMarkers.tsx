@@ -6,6 +6,7 @@ import L from 'leaflet';
 import { memo, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { Marker, Polyline, useMap } from 'react-leaflet';
 
+import { useSettingsStore } from '../../stores/settingsStore';
 import { fetchStopTimetable, type Route, type Stop } from '../../utils/gtfs';
 import {
   buildDirectionalStopPinPathData,
@@ -25,6 +26,7 @@ import { useSpiderfierContext } from './SpiderfierContext';
 interface PlatformStopMarkerProps {
   color: string;
   effectiveFactor: number;
+  isDark: boolean;
   isHighlighted: boolean;
   isSelected: boolean;
   onStopClick: (id: string) => void;
@@ -65,6 +67,7 @@ export function StopMarkers({
   stopDirectionMap,
   stops,
 }: StopMarkersProps) {
+  const isDark = useSettingsStore((s) => s.theme) === 'dark';
   const highlightSet = new Set(highlightStopIds as string[]);
 
   // Build a lookup of parent stations by id for quick access
@@ -127,15 +130,16 @@ export function StopMarkers({
         if (effectiveFactor === 0) return null;
 
         // If highlighted and a direction map is available, use the direction color
-        let color = stopFillColor(stop, isSelected, isHighlighted);
+        let color = stopFillColor(stop, isSelected, isHighlighted, isDark);
         if (isHighlighted && stopDirectionMap && stopDirectionMap[id] !== undefined) {
           const dirIdx = stopDirectionMap[id];
-          color = getDirectionColor(stop.routeType ?? null, dirIdx);
+          color = getDirectionColor(stop.routeType ?? null, dirIdx, isDark);
         }
         return (
           <PlatformStopMarker
             color={color}
             effectiveFactor={effectiveFactor}
+            isDark={isDark}
             isHighlighted={isHighlighted}
             isSelected={isSelected}
             key={stop.id}
@@ -187,12 +191,16 @@ function makeStopIcon(
   size: number,
   r: number,
   opacityFactor: number,
+  isDark: boolean,
   label?: string
 ): L.DivIcon {
   const cx = size / 2;
   const safeLabel = label
     ? String(label).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     : '';
+  // White ring on light maps, black ring on dark maps (paired with the deep
+  // "ink" dark-mode fill colors so stops read as dark chips, not glowing pins).
+  const stroke = isDark ? '#000000' : 'white';
 
   if (bearing !== undefined) {
     const pathData = buildDirectionalStopPinPathData(cx);
@@ -202,7 +210,7 @@ function makeStopIcon(
       `<svg style="position:absolute;top:0;left:0;transform:rotate(${bearing}deg);transform-origin:${cx}px ${cx}px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));overflow:visible;"` +
       ` width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">` +
       // The Unified Silhouette
-      `<path d="${pathData}" fill="${color}" stroke="white" stroke-width="2.5" stroke-linejoin="round"/>` +
+      `<path d="${pathData}" fill="${color}" stroke="${stroke}" stroke-width="2.5" stroke-linejoin="round"/>` +
       `</svg>` +
       `${safeLabel ? `<span class="stop-label">${safeLabel}</span>` : ''}` +
       `</div>`;
@@ -213,7 +221,7 @@ function makeStopIcon(
     `<div data-testid="stop-marker" class="stop-marker-pin" style="position:relative;width:${size}px;height:${size}px;">` +
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"` +
     ` style="opacity:${opacityFactor};filter:drop-shadow(0 2px 3px rgba(0,0,0,0.35));overflow:visible;">` +
-    `<circle cx="${cx}" cy="${cx}" r="${r}" fill="${color}" fill-opacity="0.95" stroke="white" stroke-width="2.5"/>` +
+    `<circle cx="${cx}" cy="${cx}" r="${r}" fill="${color}" fill-opacity="0.95" stroke="${stroke}" stroke-width="2.5"/>` +
     `</svg>` +
     `${safeLabel ? `<span class="stop-label">${safeLabel}</span>` : ''}` +
     `</div>`;
@@ -223,6 +231,7 @@ function makeStopIcon(
 const PlatformStopMarker = memo(function PlatformStopMarker({
   color,
   effectiveFactor,
+  isDark,
   isHighlighted,
   isSelected,
   onStopClick,
@@ -240,8 +249,8 @@ const PlatformStopMarker = memo(function PlatformStopMarker({
   // for the sparse, non-platform HŽ network, so drop the bearing for rail.
   const bearing = stop.routeType === 2 ? undefined : stop.bearing;
   const icon = useMemo(
-    () => makeStopIcon(color, bearing, size, r, effectiveFactor, undefined),
-    [color, bearing, size, r, effectiveFactor]
+    () => makeStopIcon(color, bearing, size, r, effectiveFactor, isDark, undefined),
+    [color, bearing, size, r, effectiveFactor, isDark]
   );
   const iconRef = useRef(icon);
   useLayoutEffect(() => {
@@ -325,16 +334,21 @@ const PlatformStopMarker = memo(function PlatformStopMarker({
 });
 
 // ── Stop colour by service type ──────────────────────────────────────────────
-function stopFillColor(stop: Stop, isSelected: boolean, isHighlighted: boolean): string {
+function stopFillColor(
+  stop: Stop,
+  isSelected: boolean,
+  isHighlighted: boolean,
+  isDark: boolean
+): string {
   if (isHighlighted && !isSelected) return '#2337ff';
   switch (stop.routeType) {
     case 0:
-      return '#2563eb'; // tram-only  → blue
+      return isDark ? '#1e3a8a' : '#2563eb'; // tram-only  → blue
     case 2:
-      return '#dc2626'; // rail       → red
+      return isDark ? '#7f1d1d' : '#dc2626'; // rail       → red
     case 3:
-      return '#d97706'; // bus-only   → amber
+      return isDark ? '#78350f' : '#d97706'; // bus-only   → amber
     default:
-      return '#475569'; // fallback    → slate
+      return isDark ? '#0f172a' : '#475569'; // fallback    → slate
   }
 }

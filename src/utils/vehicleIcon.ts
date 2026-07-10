@@ -26,11 +26,15 @@ export function makeVehicleIcon(
   opacity: number = 1
 ): L.DivIcon {
   const dark = darkBackground;
-  // Match platform stop markers (StopMarkers): white ring + drop shadow
-  const stroke = 'white';
+  // Match platform stop markers (StopMarkers): white ring on light maps,
+  // black ring on dark maps (paired with the deep "ink" dark-mode fill colors).
+  const stroke = dark ? '#000000' : 'white';
   const strokeW = 2.5;
   const outerRingFill = dark ? 'rgba(255,255,255,0.04)' : 'transparent';
-  const fillColor = dark ? darkenHex(color, 0.36) : color;
+  // `color` is already the theme-appropriate hue (see getDirectionColor's dark
+  // palette) — no further darkening here, since that would just reduce contrast
+  // against the near-black dark basemap.
+  const fillColor = color;
   const len = label.length;
   const fontSize = len <= 1 ? 16 : len === 2 ? 14 : len === 3 ? 11 : 9;
 
@@ -106,23 +110,4 @@ export function makeVehicleIcon(
     iconSize: [size, size],
     tooltipAnchor: [0, -cx],
   });
-}
-
-// Utility: darken a hex color by a fraction (0-1). Returns #rrggbb.
-function darkenHex(hex: string, amount: number): string {
-  const h = hex.replace('#', '');
-  const parse = (s: string) => parseInt(s, 16);
-  let b: number, g: number, r: number;
-  if (h.length === 3) {
-    r = parse(h[0] + h[0]);
-    g = parse(h[1] + h[1]);
-    b = parse(h[2] + h[2]);
-  } else {
-    r = parse(h.substring(0, 2));
-    g = parse(h.substring(2, 4));
-    b = parse(h.substring(4, 6));
-  }
-  const lerp = (v: number) => Math.max(0, Math.min(255, Math.round(v * (1 - amount))));
-  const toHex = (v: number) => v.toString(16).padStart(2, '0');
-  return `#${toHex(lerp(r))}${toHex(lerp(g))}${toHex(lerp(b))}`;
 }

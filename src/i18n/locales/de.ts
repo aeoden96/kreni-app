@@ -317,7 +317,6 @@ const de = {
       featureTransitBody: 'Live-Fahrzeuge + Haltestellen auf der Karte.',
       featureTransitTitle: 'ÖPNV',
       githubCta: 'GitHub',
-      heroBadge: 'Kostenlos und Open Source',
       heroBullet0: 'Kein Tram verpassen — sieh Fahrzeuge live auf dem Weg zu deiner Haltestelle.',
       heroBullet1: 'Zwischen Modi wechseln: ÖPNV, Rad, Auto, Stadtleben.',
       heroBullet2: 'Favoriten speichern und zuletzt genutzte Stops/Linien griffbereit halten.',
@@ -342,12 +341,15 @@ const de = {
         'Fahrpläne der HŽ für Zagreb und Umgebung. Haltestelle oder Strecke für Details wählen.',
       trainTitle0: 'HŽ-Züge',
       transitBody0: 'ZET-Straßenbahnen und Busse live auf der Karte verfolgen.',
-      transitBody1: 'Tippe auf eine Haltestelle, um Details und Ankünfte/Abfahrten zu sehen.',
+      transitBody1: 'Sieh, welche Straßenbahnen und Busse sich einer Haltestelle nähern.',
       transitBody2:
         'Bei Gruppen von Haltestellen oder Fahrzeugen öffnet sich eine Auswahl, damit du genau das wählen kannst, was du verfolgen willst.',
+      transitBody3: 'Gib Start und Ziel ein und sieh, welche Linien dich hinbringen.',
+      transitNote1: 'Live-GPS-Positionen, pro Haltestelle mit dem Fahrplan abgeglichen.',
       transitTitle0: 'Öffentlicher Verkehr',
       transitTitle1: 'Haltestellendetails',
       transitTitle2: 'Genaue Auswahl',
+      transitTitle3: 'Route planen',
       welcomeBody:
         'Straßenbahnen und Busse in Zagreb, live auf der Karte. Plus Radfahren, Autofahren und Stadtinfos.',
       welcomeFooterNote: 'Ohne Anmeldung',
@@ -464,6 +466,7 @@ const de = {
     routeBar: {
       arrivingAt: 'Fährt ein nach',
       atStop: 'An der Haltestelle',
+      backToResults: 'Zurück zu den Ergebnissen',
       backToRouteOverview: 'Alle Fahrzeuge auf der Linie',
       catchableVehiclesHint: 'Nur helle Fahrzeuge können noch eingestiegen werden',
       delayEarly: '{{time}} zu früh',
@@ -479,6 +482,7 @@ const de = {
       positionUnknown: 'Position unbekannt',
       stationsLabel: 'Haltestellen',
       tapVehiclesHint: 'Fahrzeug antippen zum Verfolgen',
+      viewDeparturesHere: 'Abfahrten an {{stop}}',
       waitingGpsSignal: 'Warte auf GPS…',
     },
     routeModal: {
@@ -520,6 +524,7 @@ const de = {
       noDirectRoutes: 'Keine Direktverbindung für diese Haltestellen',
       noDirectTrains: 'Heute keine direkten Züge für diese Bahnhöfe',
       noLinesForStop: 'Keine Linien',
+      noLiveVehiclesHint: 'Derzeit keine Live-Fahrzeuge',
       placeholder: {
         fromWhere: 'Von wo?',
         routeQuery: 'Liniennummer oder Name…',
@@ -529,6 +534,7 @@ const de = {
       recentClear: 'Leeren',
       recentSection: 'Zuletzt angesehen',
       routeDirectionMeta: 'Richtung {{direction}} · {{count}} Haltestellen',
+      routeTerminusMeta: 'Richtung {{place}} · {{count}} Haltestellen',
       searchingDirectRoutes: 'Direktverbindungen werden gesucht…',
       stopTypes: {
         bus: 'Bushaltestelle',

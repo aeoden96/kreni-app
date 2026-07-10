@@ -138,7 +138,6 @@ export function GlobalWelcomeWizard() {
       </header>
 
       <VideoHero onEnter={finish} theme={theme} />
-      <StripSection theme={theme} />
       <ShowcaseSection theme={theme} />
       <FeaturesSection />
       <ModesSection onEnter={finish} />
@@ -150,26 +149,26 @@ function FeaturesSection() {
   const { t } = useTranslation();
   return (
     <section className="px-6 py-24 sm:py-36">
-      <div className="mx-auto w-full max-w-lg">
+      <div className="mx-auto w-full max-w-3xl">
         <Reveal>
           <h2 className="text-balance text-center text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
             {t('onboarding.featuresTitle', 'Four ways to get around')}
           </h2>
         </Reveal>
-        <div className="mt-14 grid w-full grid-cols-1 gap-x-8 gap-y-10 text-left sm:grid-cols-2">
+        <div className="mt-16 grid w-full grid-cols-1 gap-x-12 gap-y-12 text-left sm:grid-cols-2">
           {FEATURES.map((f, i) => {
             const Icon = f.icon;
             return (
               <Reveal className="w-full" delay={i * 90} key={f.titleKey}>
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-3.5">
                   <div
-                    className={`flex h-12 w-12 items-center justify-center rounded-2xl ${TINTS[f.tint]}`}
+                    className={`flex h-14 w-14 items-center justify-center rounded-2xl ${TINTS[f.tint]}`}
                   >
-                    <Icon className="h-6 w-6" strokeWidth={2} />
+                    <Icon className="h-7 w-7" strokeWidth={2} />
                   </div>
                   <div>
-                    <p className="font-semibold leading-snug">{t(f.titleKey)}</p>
-                    <p className="mt-1 text-sm leading-relaxed text-base-content/55">
+                    <p className="text-lg font-semibold leading-snug">{t(f.titleKey)}</p>
+                    <p className="mt-1.5 text-base leading-relaxed text-base-content/55">
                       {t(f.bodyKey)}
                     </p>
                   </div>
@@ -188,7 +187,7 @@ function ModesSection({ onEnter }: { onEnter: () => void }) {
   const { t } = useTranslation();
   return (
     <section className="bg-base-200/40 px-6 py-28 pb-[max(7rem,env(safe-area-inset-bottom))] sm:py-40">
-      <div className="mx-auto flex w-full max-w-md flex-col items-center text-center">
+      <div className="mx-auto flex w-full max-w-lg flex-col items-center text-center">
         <Reveal>
           <ModeSwitcherVisual />
         </Reveal>
@@ -230,18 +229,18 @@ function ModeSwitcherVisual() {
     { active: false, icon: Building2 },
   ];
   return (
-    <div className="flex items-center justify-center gap-3">
+    <div className="flex items-center justify-center gap-3.5">
       {modes.map(({ active, icon: Icon }, i) => (
         <div
           className={[
-            'flex h-14 w-14 items-center justify-center rounded-2xl transition-colors',
+            'flex h-16 w-16 items-center justify-center rounded-2xl transition-colors',
             active
               ? 'bg-[#2337ff] text-white shadow-[0_10px_24px_-8px_rgba(35,55,255,0.6)]'
               : 'bg-base-200 text-base-content/40',
           ].join(' ')}
           key={i}
         >
-          <Icon className="h-6 w-6" strokeWidth={2} />
+          <Icon className="h-7 w-7" strokeWidth={2} />
         </div>
       ))}
     </div>
@@ -275,8 +274,8 @@ function PhoneShot({ alt, reverse, src }: { alt: string; reverse: boolean; src: 
           background: 'radial-gradient(58% 50% at 50% 45%, rgba(35,55,255,0.30), transparent 70%)',
         }}
       />
-      <div className="relative motion-safe:animate-[onboardFloat_6s_ease-in-out_infinite]">
-        <div className="overflow-hidden rounded-[2.6rem] border-[9px] border-base-300 bg-base-300 shadow-[0_50px_90px_-30px_rgba(0,0,0,0.6)]">
+      <div className="relative">
+        <div className="overflow-hidden rounded-[1.8rem] border-[9px] border-base-300 bg-base-300 shadow-[0_16px_36px_-24px_rgba(0,0,0,0.4)]">
           <img
             alt={alt}
             className="block aspect-[1082/2399] w-full object-cover"
@@ -328,13 +327,24 @@ function ShowcaseSection({ theme }: { theme: 'dark' | 'light' }) {
   const shots = [
     {
       bodyKey: 'onboarding.transitBody0',
+      ext: 'webp',
       img: 'vehicle-view-mobile',
+      note: '',
       titleKey: 'onboarding.transitTitle0',
     },
     {
       bodyKey: 'onboarding.transitBody1',
+      ext: 'webp',
       img: 'stop-view-mobile',
+      note: 'onboarding.transitNote1',
       titleKey: 'onboarding.transitTitle1',
+    },
+    {
+      bodyKey: 'onboarding.transitBody3',
+      ext: 'png',
+      img: 'plan-journey-mobile',
+      note: '',
+      titleKey: 'onboarding.transitTitle3',
     },
   ] as const;
 
@@ -352,7 +362,7 @@ function ShowcaseSection({ theme }: { theme: 'dark' | 'light' }) {
             <PhoneShot
               alt={t(shot.titleKey)}
               reverse={i % 2 === 1}
-              src={`/onboarding_new/${s}-${shot.img}.webp`}
+              src={`/onboarding_new/${s}-${shot.img}.${shot.ext}`}
             />
             <div className="flex-1 text-center sm:text-left">
               <Reveal>
@@ -362,50 +372,15 @@ function ShowcaseSection({ theme }: { theme: 'dark' | 'light' }) {
                 <p className="mx-auto mt-4 max-w-md text-balance text-lg leading-relaxed text-base-content/55 sm:mx-0">
                   {t(shot.bodyKey)}
                 </p>
+                {shot.note && (
+                  <p className="mx-auto mt-3 max-w-md text-balance text-sm leading-relaxed text-base-content/40 sm:mx-0">
+                    {t(shot.note)}
+                  </p>
+                )}
               </Reveal>
             </div>
           </div>
         ))}
-      </div>
-    </section>
-  );
-}
-
-/**
- * "See it in action" — full-width band with the street-level (zoom-in) live loop,
- * theme-matched. The de-paused seamless clip we transcoded from the ZET map.
- */
-function StripSection({ theme }: { theme: 'dark' | 'light' }) {
-  const { t } = useTranslation();
-  const reduced = usePrefersReducedMotion();
-  const s = theme === 'dark' ? 'dark' : 'light';
-  return (
-    <section className="px-6 py-20 sm:py-28">
-      <div className="mx-auto w-full max-w-4xl">
-        <Reveal>
-          <h2 className="text-balance text-center text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
-            {t('onboarding.featureShowcaseTitle', 'See it in action')}
-          </h2>
-          <p className="mx-auto mt-3 max-w-md text-balance text-center text-base leading-relaxed text-base-content/55">
-            {t('onboarding.featureShowcaseBody', 'Short clips of a few key features.')}
-          </p>
-        </Reveal>
-        <Reveal delay={120}>
-          <div className="mt-9 aspect-[1280/506] w-full overflow-hidden rounded-3xl bg-black shadow-[0_40px_80px_-40px_rgba(0,0,0,0.55)]">
-            <video
-              aria-hidden
-              autoPlay={!reduced}
-              className="h-full w-full object-cover"
-              key={s}
-              loop
-              muted
-              playsInline
-              poster={`/onboarding_new/strip-${s}-poster.jpg`}
-            >
-              <source src={`/onboarding_new/strip-${s}.mp4`} type="video/mp4" />
-            </video>
-          </div>
-        </Reveal>
       </div>
     </section>
   );
@@ -491,13 +466,8 @@ function VideoHero({ onEnter, theme }: { onEnter: () => void; theme: 'dark' | 'l
       />
 
       <div className="relative z-[2] flex max-w-[860px] flex-col items-center px-6 text-center">
-        <span className="inline-flex items-center gap-2 rounded-full bg-base-100/60 px-3 py-1 text-xs font-medium text-base-content shadow-sm backdrop-blur">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#2337ff]" />
-          {t('onboarding.heroBadge')}
-        </span>
-
         <h1
-          className="mt-5 text-balance text-5xl font-semibold leading-[1.02] tracking-tight sm:text-6xl md:text-7xl"
+          className="text-balance text-5xl font-semibold leading-[1.02] tracking-tight sm:text-6xl md:text-7xl"
           style={{ textShadow: `0 1px 1px rgba(${tint},0.85), 0 2px 14px rgba(${tint},0.7)` }}
         >
           {t('onboarding.welcomeTitle')}
