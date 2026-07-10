@@ -341,7 +341,7 @@ function ShowcaseSection({ theme }: { theme: 'dark' | 'light' }) {
     },
     {
       bodyKey: 'onboarding.transitBody3',
-      ext: 'png',
+      ext: 'webp',
       img: 'plan-journey-mobile',
       note: '',
       titleKey: 'onboarding.transitTitle3',
