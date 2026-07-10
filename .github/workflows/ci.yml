@@ -21,6 +21,7 @@ jobs:
   secrets:
     name: Scan for leaked secrets
     runs-on: ubuntu-latest
+    if: ${{ !startsWith(github.head_ref, 'release-please--') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -35,6 +36,7 @@ jobs:
   typecheck-and-lint:
     name: TypeScript & lint
     runs-on: ubuntu-latest
+    if: ${{ !startsWith(github.head_ref, 'release-please--') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -57,6 +59,7 @@ jobs:
   knip:
     name: Knip (unused exports, files & deps)
     runs-on: ubuntu-latest
+    if: ${{ !startsWith(github.head_ref, 'release-please--') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -76,6 +79,7 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    if: ${{ !startsWith(github.head_ref, 'release-please--') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -95,6 +99,7 @@ jobs:
   secretlint:
     name: Secretlint (config-based secret scan)
     runs-on: ubuntu-latest
+    if: ${{ !startsWith(github.head_ref, 'release-please--') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7

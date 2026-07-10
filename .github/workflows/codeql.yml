@@ -17,6 +17,7 @@ jobs:
   analyze:
     name: Analyze (javascript-typescript)
     runs-on: ubuntu-latest
+    if: ${{ !startsWith(github.head_ref, 'release-please--') }}
     permissions:
       contents: read
       security-events: write # required to upload CodeQL results
