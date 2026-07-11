@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.6.0](https://github.com/aeoden96/kreni-app/compare/v3.5.3...v3.6.0) (2026-07-11)
+
+
+### Features
+
+* **onboarding:** scrollable live-map welcome page ([#97](https://github.com/aeoden96/kreni-app/issues/97)) ([8644a85](https://github.com/aeoden96/kreni-app/commit/8644a856368a8c8f9a74244251650d54655995c3))
+
+
+### Bug Fixes
+
+* **onboarding:** ship plan-journey shot as webp ([53b1b9a](https://github.com/aeoden96/kreni-app/commit/53b1b9a7f072c77db65a08696d740f7a33722b7f))
+
 ## [3.5.3](https://github.com/aeoden96/kreni-app/compare/v3.5.2...v3.5.3) (2026-07-08)
 
 
