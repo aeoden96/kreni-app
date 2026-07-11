@@ -19,11 +19,20 @@ jobs:
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       pr: ${{ steps.release.outputs.pr }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
       - uses: googleapis/release-please-action@v5
         id: release
         with:
           release-type: node
+
+  release-android:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    uses: ./.github/workflows/android.yml
+    with:
+      upload_to_release: true
+      tag_name: ${{ needs.release-please.outputs.tag_name }}
 
   deploy:
     needs: release-please

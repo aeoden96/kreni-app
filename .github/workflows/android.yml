@@ -5,6 +5,15 @@ name: Android build
 # in CI. No signing secrets are needed: without android/keystore.properties the
 # release build is produced unsigned, which still exercises minify/shrink.
 on:
+  workflow_call:
+    inputs:
+      upload_to_release:
+        type: boolean
+        required: false
+        default: false
+      tag_name:
+        type: string
+        required: false
   pull_request:
     branches: ['master', 'main']
     paths:
@@ -20,7 +29,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: android-${{ github.workflow }}-${{ github.ref }}
@@ -65,9 +74,16 @@ jobs:
         run: ./gradlew assembleDebug --no-daemon
 
       # Exercises R8 (minifyEnabled) + shrinkResources; unsigned since no keystore.
-      - name: Bundle release AAB (unsigned, validates R8)
+      - name: Bundle and assemble release (unsigned, validates R8)
         working-directory: android
-        run: ./gradlew bundleRelease --no-daemon
+        run: ./gradlew bundleRelease assembleRelease --no-daemon
+
+      - name: Upload Release APK to GitHub Release
+        if: ${{ inputs.upload_to_release }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag_name }}
+          files: android/app/build/outputs/apk/release/*.apk
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v7
