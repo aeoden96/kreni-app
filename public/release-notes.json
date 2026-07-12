@@ -1,16 +1,38 @@
 [
   {
     "de": {
-      "title": "🚀 Neuigkeiten",
+      "title": "🚀 Update",
       "changes": [
-        "✨ Willkommensseite mit scrollbarer Live-Karte",
-        "🖼️ Optimierte Bilder im Onboarding"
+        "Optimierte Aktualisierung der Live-Daten"
       ]
     },
     "en": {
       "title": "✨ App Updates",
       "changes": [
-        "Improved welcome page with a scrollable live map",
+        "🚌 Improved real-time vehicle tracking"
+      ]
+    },
+    "force": false,
+    "hr": {
+      "title": "🚌 Ažuriranje aplikacije",
+      "changes": [
+        "Ubrzano osvježavanje položaja vozila u stvarnom vremenu"
+      ]
+    },
+    "version": "3.6.1"
+  },
+  {
+    "de": {
+      "title": "✨ App-Updates",
+      "changes": [
+        "Willkommensseite mit scrollbarer Live-Karte",
+        "Optimierte Bilder im Onboarding"
+      ]
+    },
+    "en": {
+      "title": "✨ App Updates",
+      "changes": [
+        "🗺️ Improved welcome page with a scrollable live map",
         "Optimized onboarding images for faster loading"
       ]
     },
@@ -18,18 +40,16 @@
     "hr": {
       "title": "✨ Novosti u aplikaciji",
       "changes": [
-        "🚚 Poboljšana početna stranica s mapom",
-        "🖼️ Brže učitavanje slika u aplikaciji"
+        "🚚 Poboljšana početna stranica s mapom"
       ]
     },
     "version": "3.6.0"
   },
   {
     "de": {
-      "title": "🚀 Update der Karte",
+      "title": "🚀 Update",
       "changes": [
-        "🚌 Flüssigere Anzeige der Fahrzeuge in Echtzeit",
-        "✨ Optimierte Darstellung der Fahrzeug-Marker"
+        "🚌 Flüssigere Darstellung der Fahrzeuge in Echtzeit"
       ]
     },
     "en": {
@@ -50,20 +70,20 @@
   },
   {
     "de": {
-      "title": "🚀 Updates",
+      "title": "🗺️ Karten-Update",
       "changes": [
-        "📍 Marker-Klicks auf der Karte funktionieren nun zuverlässiger"
+        "Klicks auf Haltestellen-Marker funktionieren nun zuverlässiger"
       ]
     },
     "en": {
       "title": "🗺️ Map Updates",
       "changes": [
-        "Fixed marker click issues on the map"
+        "Fixed marker clicks on the map"
       ]
     },
     "force": false,
     "hr": {
-      "title": "🗺️ Ažuriranja karte",
+      "title": "🗺️ Ažuriranje karte",
       "changes": [
         "Ispravljen problem s klikanjem na oznake na karti"
       ]
@@ -75,38 +95,38 @@
       "title": "✨ App-Aktualisierungen",
       "changes": [
         "Neue Fahrzeug-Icons und kleine Verbesserungen",
-        "Flüssigere Anzeige der Fahrzeugausrichtung",
-        "Optimiertes Zoom-Verhalten der Kartenansicht",
-        "Verbesserte Performance der Kartenlayer"
+        "Optimierte Darstellung der Fahrzeugausrichtung",
+        "Verbesserte Steuerung des Kartenzooms",
+        "Schnellere Kartenleistung durch technische Optimierungen"
       ]
     },
     "en": {
-      "title": "🚌 App Updates",
+      "title": "✨ App Updates",
       "changes": [
-        "✨ New vehicle icons and general improvements",
-        "📍 Smoother vehicle movement and direction",
-        "🗺️ Improved map zoom and vehicle view behavior",
-        "🚀 Better map performance and loading"
+        "🚌 New vehicle icons and general improvements",
+        "📍 Smoother vehicle movement and tracking",
+        "🗺️ Improved map zoom and view behavior",
+        "⚡ Better map performance and loading"
       ]
     },
     "force": false,
     "hr": {
-      "title": "✨ Nove nadogradnje",
+      "title": "✨ Nove poboljšanja",
       "changes": [
-        "🚌 Nove ikone vozila i poboljšanja",
-        "📍 Precizniji smjer kretanja vozila",
-        "🗺️ Poboljšan prikaz karte i zumiranje",
-        "⚡ Brže učitavanje i rad karte"
+        "🎨 Nove ikone vozila i sitna poboljšanja",
+        "🚌 Precizniji smjer kretanja vozila u stvarnom vremenu",
+        "🗺️ Poboljšano ponašanje karte i zumiranja",
+        "🚀 Brže učitavanje i optimizacija prikaza karte"
       ]
     },
     "version": "3.5.1"
   },
   {
     "de": {
-      "title": "✨ App-Aktualisierungen",
+      "title": "🚀 Update",
       "changes": [
-        "Verkehrsmeldungen jetzt direkt sichtbar",
-        "📍 GPS und Fahrpläne in der Haltestellenansicht korrigiert"
+        "Verkehrsmeldungen direkt sichtbar und Kartenmenü entfernt",
+        "📍 GPS und Fahrpläne an Haltestellen korrigiert"
       ]
     },
     "en": {
@@ -118,10 +138,10 @@
     },
     "force": false,
     "hr": {
-      "title": "🚀 Novosti u aplikaciji",
+      "title": "🚌 Novosti u aplikaciji",
       "changes": [
-        "📢 Prometne obavijesti sada vidljive izravno na ekranu",
-        "📍 Ispravljen prikaz GPS-a i reda vožnje na stajalištima"
+        "Prometne obavijesti su sada vidljivije",
+        "Popravljen prikaz GPS-a i reda vožnje na stajalištima"
       ]
     },
     "version": "3.5.0"
@@ -130,7 +150,7 @@
     "de": {
       "title": "✨ Aktualisierungen",
       "changes": [
-        "Verbesserte Ansicht für Züge"
+        "Verbesserte Zug-Ansicht"
       ]
     },
     "en": {
@@ -150,20 +170,20 @@
   },
   {
     "de": {
-      "title": "✨ App-Update",
+      "title": "🚀 Update",
       "changes": [
-        "🚌 Verbesserte Auswahl von Routen"
+        "📍 Verbesserte Standortbestimmung beim Auswählen von Routen"
       ]
     },
     "en": {
-      "title": "🚌 App Updates",
+      "title": "✨ App Updates",
       "changes": [
-        "Improved route selection accuracy"
+        "🚌 Improved route selection accuracy"
       ]
     },
     "force": false,
     "hr": {
-      "title": "🚌 Novosti",
+      "title": "🚌 Ažuriranja aplikacije",
       "changes": [
         "Preciznije određivanje lokacije pri odabiru linije"
       ]
@@ -172,33 +192,33 @@
   },
   {
     "de": {
-      "title": "🚀 Neuerungen",
+      "title": "🚀 App-Aktualisierungen",
       "changes": [
         "Kompakte Anzeige von Routeninformationen",
-        "Verbesserte Verarbeitung von Routen und Fahrten",
-        "Optimierte Fahrzeugverfolgung und Routenauswahl",
+        "Optimierte Routen- und Reiseverwaltung",
+        "Verbesserte Fahrzeugverfolgung und Routenauswahl",
         "Aktualisierte Willkommensnachrichten",
-        "Verbesserungen bei der Fahrtwiedergabe"
+        "Verbesserungen an der Funktion 'Reise abspielen'"
       ]
     },
     "en": {
       "title": "✨ App Updates",
       "changes": [
-        "🚌 More compact route information display",
+        "🚌 New compact route information display",
         "🗺️ Improved route and journey navigation",
         "📍 Better vehicle tracking and route selection",
         "👋 Updated welcome messages",
-        "▶️ Improvements to the Play Journey feature"
+        "▶️ Improvements to the play journey feature"
       ]
     },
     "force": false,
     "hr": {
-      "title": "🚌 Novosti u aplikaciji",
+      "title": "🚌 Nove nadogradnje",
       "changes": [
-        "✨ Pregledniji prikaz informacija o linijama",
-        "🛠 Poboljšano praćenje vozila i putovanja",
-        "💬 Unaprijeđene pozdravne poruke",
-        "▶️ Poboljšana funkcija 'Reproduciraj putovanje'"
+        "Kompaktniji prikaz informacija o rutama",
+        "Poboljšano praćenje vozila i rute",
+        "Ažurirane pozdravne poruke",
+        "Unaprijeđena funkcija 'Play journey'"
       ]
     },
     "version": "3.2.0"
@@ -214,32 +234,34 @@
     "en": {
       "title": "✨ App Improvements",
       "changes": [
-        "Improved search and pop-up window functionality"
+        "Improved search and navigation menus",
+        "Better accessibility and direction handling in search"
       ]
     },
     "force": false,
     "hr": {
       "title": "✨ Poboljšanja aplikacije",
       "changes": [
-        " Poboljšan izgled i rad prozora s informacijama",
-        " 🔍 Unaprijeđeno pretraživanje i pristupačnost"
+        " Poboljšan izgled i rad izbornika",
+        "Lakše pretraživanje i bolja pristupačnost"
       ]
     },
     "version": "3.1.0"
   },
   {
     "de": {
-      "title": "🚀 Neuerungen",
+      "title": "🚀 Neuigkeiten",
       "changes": [
-        "🗺️ Neue Kartenlayer für Verkehrsmittel, Gruppierung und gespeicherte Orte",
-        "📝 Versionshinweise jetzt in deiner Sprache verfügbar"
+        "🗺️ Neue Kartenlayer für Verkehrsmittel, Gruppierungen und gespeicherte Orte",
+        "📝 Versionshinweise jetzt in deiner Sprache verfügbar",
+        "🛠️ Fehlerbehebungen im System"
       ]
     },
     "en": {
       "title": "🚌 App Updates",
       "changes": [
         "🗺️ Improved map layers, clustering, and saved places",
-        "📝 Localized release notes",
+        "📝 Added localized release notes",
         "🛠️ Hidden debug tools in production"
       ]
     },
@@ -247,55 +269,55 @@
     "hr": {
       "title": "🚌 Novosti u aplikaciji",
       "changes": [
-        "🗺️ Poboljšani slojevi karte, grupiranje i spremljanje mjesta",
-        "📝 Uvedene lokalizirane napomene o novim verzijama",
-        "🛠️ Uklonjeni razvojni paneli iz javnog prikaza"
+        "✨ Poboljšani slojevi karte, grupiranje i spremljena mjesta",
+        "📝 Uvođenje lokaliziranih napomena o novostima",
+        "🛠️ Uklonjen pristup razvojnim postavkama u aplikaciji"
       ]
     },
     "version": "3.0.0"
   },
   {
     "de": {
-      "title": "✨ Updates",
+      "title": "✨ Update",
       "changes": [
         "Fehler bei der Anzeige von Systeminformationen behoben"
       ]
     },
     "en": {
-      "title": "Small Improvements",
+      "title": "✨ App Updates",
       "changes": [
-        "✨ Fixed a display issue"
+        "Fixed an internal display issue"
       ]
     },
     "force": true,
     "hr": {
-      "title": "✨ Ažuriranja aplikacije",
+      "title": "🚀 Ažuriranja",
       "changes": [
-        "Popravljen prikaz izbornika za dijagnostiku"
+        "✨ Ispravljen prikaz kontrolne ploče"
       ]
     },
     "version": "2.3.4"
   },
   {
     "de": {
-      "title": "🚀 Updates",
+      "title": "✨ App-Updates",
       "changes": [
         "🚌 Fahrzeugpositionen werden im Hintergrund aktualisiert",
-        "✨ App-Updates im Hintergrund verbessert"
+        "⚙️ App-Updates im Hintergrund optimiert"
       ]
     },
     "en": {
       "title": "✨ App Updates",
       "changes": [
-        "🚌 Vehicle positions now update in the background",
-        "⚙️ Improved app update frequency"
+        "🚌 Smoother vehicle position updates in the background",
+        "⚙️ Faster app updates"
       ]
     },
     "force": false,
     "hr": {
-      "title": "🚀 Ažuriranja aplikacije",
+      "title": "🚀 Novosti u aplikaciji",
       "changes": [
-        "🚌 Precizniji prikaz položaja vozila u pozadini",
+        "🚌 Preciznije praćenje vozila u pozadini",
         "✨ Brže ažuriranje aplikacije"
       ]
     },
@@ -303,7 +325,7 @@
   },
   {
     "de": {
-      "title": "✨ App-Update",
+      "title": "✨ App-Updates",
       "changes": [
         "Verbesserte Sichtbarkeit von Echtzeitdaten"
       ]
@@ -325,7 +347,7 @@
   },
   {
     "de": {
-      "title": "🚀 Update",
+      "title": "Aktualisierungen",
       "changes": [
         "🚌 Fahrzeuge in der Nähe werden korrekt angezeigt"
       ]
@@ -333,7 +355,7 @@
     "en": {
       "title": "🚌 App Updates",
       "changes": [
-        "Nearby vehicles now show correctly"
+        "Nearby vehicles now display correctly"
       ]
     },
     "force": false,
@@ -347,12 +369,12 @@
   },
   {
     "de": {
-      "title": "🚀 Neuerungen",
+      "title": "✨ App-Aktualisierungen",
       "changes": [
-        "🚲 Verbesserungen im Fahrradmodus und bei Stationen",
-        "✨ Optimierte Aktualisierung der Fahrplandaten",
-        "👋 Neues Einführungsmenü",
-        "🎨 Überarbeitetes Spider-Menü",
+        "🚲 Verbesserungen am Fahrradmodus und den Stationsdaten",
+        "🔄 Optimierte Aktualisierung der Fahrplandaten",
+        "👋 Neuer Einführungsbildschirm",
+        "🎨 Neues Design für das Menü",
         "🚧 Bessere Anzeige von Straßensperrungen"
       ]
     },
@@ -360,19 +382,19 @@
       "title": "✨ App Updates",
       "changes": [
         "🚲 Improved cycling mode and bike station data",
-        "🚌 Better transit data updates",
+        "🚌 Better transit data loading",
         "👋 New onboarding screen",
         "🎨 Redesigned menu",
-        "🚧 Improved road closure displays and refreshing"
+        "🚧 Improved road closure updates"
       ]
     },
     "force": false,
     "hr": {
-      "title": "🚌 Novosti u aplikaciji",
+      "title": "✨ Novosti u aplikaciji",
       "changes": [
-        "🚲 Poboljšanja za način putovanja biciklom i podatke o stanicama",
-        "✨ Brže i preciznije učitavanje podataka o linijama",
-        "👋 Novi uvodni zaslon za korisnike",
+        "🚲 Poboljšanja za način putovanja biciklom i stanice",
+        "🚌 Ažurirani podaci o linijama",
+        "👋 Novi uvodni zaslon",
         "🎨 Redizajn izbornika",
         "🚧 Poboljšan prikaz i osvježavanje zatvorenih cesta"
       ]
@@ -390,16 +412,16 @@
     "en": {
       "title": "🚌 App Updates",
       "changes": [
-        "Fixed real-time vehicle tracking accuracy",
-        "Improved stability of schedule updates"
+        "✨ Improved real-time vehicle tracking accuracy",
+        "⚙️ More stable data updates"
       ]
     },
     "force": false,
     "hr": {
       "title": "🚌 Ažuriranja aplikacije",
       "changes": [
-        "✨ Poboljšan prikaz vozila u stvarnom vremenu",
-        "⚙️ Stabilnije ažuriranje podataka o linijama"
+        "Popravljen prikaz vozila u stvarnom vremenu",
+        "Stabilnije ažuriranje podataka o linijama"
       ]
     },
     "version": "2.2.1"
@@ -409,13 +431,13 @@
       "title": "🚌 App-Updates",
       "changes": [
         "Verbesserte Routenansicht mit Fahrzeugauswahl und Haltestellenvorschau",
-        "Optimierte Kartenbedienung und Sichtbarkeit der Haltestellen"
+        "Optimierte Kartenbedienung und bessere Sichtbarkeit von Haltestellen"
       ]
     },
     "en": {
-      "title": "🚌 App Improvements",
+      "title": "✨ App Improvements",
       "changes": [
-        "✨ Better route views with vehicle selection and stop previews",
+        "🚌 Better route views with vehicle selection and stop previews",
         "🗺️ Improved map interaction and stop visibility"
       ]
     },
@@ -423,7 +445,7 @@
     "hr": {
       "title": "🚌 Novosti u aplikaciji",
       "changes": [
-        "✨ Poboljšan prikaz ruta, vozila i predpregled stanica",
+        "✨ Poboljšan prikaz ruta, vozila i stanica",
         "🗺️ Bolje upravljanje kartom i vidljivost stanica"
       ]
     },
@@ -438,18 +460,18 @@
       ]
     },
     "en": {
-      "title": "🚕 App Updates",
+      "title": "✨ App Updates",
       "changes": [
-        "Added taxi hailing option",
-        "Visual improvements"
+        "🚕 Added taxi hailing",
+        "🎨 Visual improvements"
       ]
     },
     "force": false,
     "hr": {
-      "title": "🚌 Novosti",
+      "title": "✨ Novosti",
       "changes": [
-        "🚕 Dodana opcija za naručivanje taksija",
-        "✨ Ispravke u izgledu aplikacije"
+        "🚕 Dodana opcija naručivanja taksija",
+        "🎨 Ispravci u izgledu aplikacije"
       ]
     },
     "version": "2.1.0"
@@ -463,7 +485,7 @@
       ]
     },
     "en": {
-      "title": "🚀 New Release",
+      "title": "🚀 New Updates",
       "changes": [
         "Project is now open source",
         "Added a built-in changelog viewer"
@@ -473,8 +495,8 @@
     "hr": {
       "title": "🚀 Nova verzija",
       "changes": [
-        "Projekt je sada dostupan kao otvoreni kod",
-        "✨ Dodan pregled novosti unutar aplikacije"
+        "✨ Projekt je sada dostupan kao otvoreni kod",
+        "📝 Dodan je pregled novosti unutar aplikacije"
       ]
     },
     "version": "2.0.0"
@@ -483,13 +505,13 @@
     "de": {
       "title": "✨ Neuigkeiten",
       "changes": [
-        "🌙 Dunkler Modus hinzugefügt",
+        "🌙 Dunkelmodus hinzugefügt",
         "🗺️ Neue Kartenlayer",
         "🛠️ App-Abstürze beim Start behoben"
       ]
     },
     "en": {
-      "title": "✨ What's New",
+      "title": "✨ App Updates",
       "changes": [
         "🌙 Added dark mode",
         "🗺️ New map layers",
@@ -502,7 +524,7 @@
       "changes": [
         "🌙 Dodan tamni način rada",
         "🗺️ Novi slojevi karte",
-        "🛠️ Popravljeno rušenje aplikacije pri pokretanju"
+        "🛠️ Ispravljen ruš-u aplikacije pri pokretanju"
       ]
     },
     "version": "1.5.7"
