@@ -21,5 +21,12 @@ export function getTallyFeedbackEmbedSrc(formId: string): string {
   return `https://tally.so/r/${encodeURIComponent(formId)}?${params}`;
 }
 
-/** How often to poll the realtime feed (ms). Keep in sync with worker CACHE_TTL_SECONDS. */
-export const REALTIME_POLL_INTERVAL = 7_000;
+/**
+ * How often to poll the realtime feed (ms). ZET regenerates every ~10 s, so 10 s
+ * matches the source with no freshness loss (7 s over-polled ~30%).
+ * INVARIANT: the Worker's CACHE_TTL_SECONDS must stay <= this value. If the worker
+ * TTL ever exceeds the poll interval, the client polls while the edge cache is still
+ * valid, gets stale HITs, and the adaptive scheduler (useRealtimeData.ts:getAdaptiveDelayMs)
+ * degrades into 1 s rapid re-polls with paused vehicle motion. Keep TTL <= interval.
+ */
+export const REALTIME_POLL_INTERVAL = 10_000;
