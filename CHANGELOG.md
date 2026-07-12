@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.6.1](https://github.com/aeoden96/kreni-app/compare/v3.6.0...v3.6.1) (2026-07-12)
+
+
+### Performance Improvements
+
+* **realtime:** poll live feed at 10s to match ZET, ~26% fewer requests ([e1c0f9e](https://github.com/aeoden96/kreni-app/commit/e1c0f9eedae6fd3dc8c4e6717df03a9a7b890c9c))
+
 ## [3.6.0](https://github.com/aeoden96/kreni-app/compare/v3.5.3...v3.6.0) (2026-07-11)
 
 
