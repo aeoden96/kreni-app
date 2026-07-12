@@ -69,6 +69,7 @@ updated: 2026-07-04
 ### Status
 
 - [[train-mode-roadmap]] — what's left to build for train mode
+- [[infra-scaling-and-monetization]] — free-tier headroom (measured), the $5-tier trigger, one-box-for-everything, WAF posture, and a paid Android tier
 - [[project-roadmap]] — every open item across the vault, in one place
 
 ## Open items across the vault

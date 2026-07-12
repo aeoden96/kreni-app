@@ -1,7 +1,7 @@
 ---
 tags: [area/infra, type/reference]
 status: current
-updated: 2026-07-04
+updated: 2026-07-12
 ---
 
 # `kreni-app-worker` (zet-gtfs-proxy) — the external Cloudflare Worker
@@ -9,7 +9,7 @@ updated: 2026-07-04
 > [!note] Lives in a separate repo
 > Source: `~/projects/zet-live-realtime-cf-worker` (remote: `aeoden96/zet-live-realtime-cf-worker`), **not** part of the kreni-app repo. This note documents it because kreni-app's frontend and GitHub Actions depend on it directly — see [[cloudflare-topology]] for how the two repos' Cloudflare resources relate, and [[environment-variables]] for `VITE_GTFS_PROXY_URL`.
 
-Deployed Worker name: **`zet-gtfs-proxy`** (from that repo's `wrangler.toml`), reachable at its default `*.workers.dev` subdomain — no custom route/domain is configured, no dev/staging/prod environments, no Durable Objects.
+Deployed Worker name: **`zet-gtfs-proxy`** (from that repo's `wrangler.toml`). In production it is reached at the **`api.kreni.app` Workers Custom Domain** (proxied on the `kreni.app` zone). Two things to know: (1) the custom domain is configured in the **Cloudflare dashboard, not in that repo's `wrangler.toml`** (which declares no routes), so the repo alone doesn't reveal it — verified 2026-07-12 via the CF API; (2) as of 2026-07-12 the default `*.workers.dev` route (`zet-gtfs-proxy.mateo1559.workers.dev`) **and** Preview URLs are **disabled**, making `api.kreni.app` the sole ingress (see the security rationale in [[infra-scaling-and-monetization]]). No dev/staging/prod environments, no Durable Objects. _(Corrects an earlier claim here that the Worker was only reachable on `*.workers.dev` with no custom domain.)_
 
 ## Stack
 
@@ -64,7 +64,10 @@ Both path-based (`/road-closures`) and query-param (`?endpoint=road-closures`) r
 
 ## Auth & CORS (actual behavior, not the repo's aspirational setup guide)
 
-- **Auth**: a single optional `API_KEY` secret compared against the `X-API-Key` request header. If `API_KEY` is unset (the apparent production state, given kreni-app's `VITE_GTFS_API_KEY` is documented as optional/commented-out — see [[environment-variables]]), **no auth is enforced at all**.
+> [!info] The real first line of defense is at the edge, not in the Worker
+> Because production traffic enters through `api.kreni.app` (a proxied custom domain), the **zone's WAF custom rules + rate-limiting rule + DDoS protection run _before_ the Worker** and blocked requests never become billed invocations. Verified 2026-07-12: the `http_request_firewall_custom` and `http_ratelimit` rulesets are deployed on the zone, and a header-less `curl https://api.kreni.app/...` returns a `403` from `server: cloudflare` (an edge block). So the "no in-Worker auth" below is largely mitigated by edge filtering — see [[infra-scaling-and-monetization]] for the full posture and the billing-overage implications.
+
+- **Auth**: a single optional `API_KEY` secret compared against the `X-API-Key` request header. If `API_KEY` is unset (the apparent production state, given kreni-app's `VITE_GTFS_API_KEY` is documented as optional/commented-out — see [[environment-variables]]), **no auth is enforced at the Worker level** (edge WAF rules are the actual gate).
 - **CORS**: an `ALLOWED_ORIGINS` secret (comma-separated). Unset or `"*"` → all origins allowed. Otherwise the Worker echoes back the request's `Origin` header only if it's in the list, else falls back to the _first_ allowed origin (which the browser will then reject client-side for a mismatched origin — a fail-closed-ish behavior).
 - Only `GET` is allowed (`405` otherwise); `OPTIONS` preflight is handled before auth.
 
@@ -79,6 +82,6 @@ Both path-based (`/road-closures`) and query-param (`?endpoint=road-closures`) r
 
 ## Known gaps (as of this writing)
 
-- **Rate limiting is not enforced** despite being partially scaffolded (`RATE_LIMITER` type in `Env`, commented-out binding in `wrangler.toml`) — a public, unauthenticated (if `API_KEY` is unset) proxy with no rate limiting.
+- **In-Worker rate limiting is not enforced** despite being partially scaffolded (`RATE_LIMITER` type in `Env`, commented-out binding in `wrangler.toml`). Note this is _not_ the same as "no rate limiting": the **zone-level rate-limiting rule (15 req/10 s per IP) is live at the edge** on `api.kreni.app` and runs before the Worker. The gap is that (a) the in-Worker binding remains off, so requests that reach the Worker aren't further limited, and (b) 15 req/10 s ≈ 130k/day per IP — looser than a 1-poll-per-10 s client needs, and above the free plan's 100k/day dark-out threshold. See [[infra-scaling-and-monetization]] §Billing-overage protection.
 - Mixed lockfiles in that repo (both `yarn.lock` and `package-lock.json` present).
 - `test-endpoint.js` there is a manual, ad hoc Node script (decodes a manually-downloaded protobuf file) — not wired into `npm test`, no automated test suite.

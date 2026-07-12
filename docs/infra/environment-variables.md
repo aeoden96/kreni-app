@@ -1,19 +1,19 @@
 ---
 tags: [area/infra, type/reference]
 status: current
-updated: 2026-07-04
+updated: 2026-07-12
 ---
 
 # Environment variables
 
 ## Local development (`.env`, from `.env.example`)
 
-| Variable                      | Required                                                 | Purpose                                                                                                                                                                 |
-| ----------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `VITE_GTFS_PROXY_URL`         | yes                                                      | URL of the external `kreni-app-worker` Cloudflare Worker. Used for GTFS-RT, Nextbike, global announcement, and Driving-mode road closures. See [[cloudflare-topology]]. |
-| `OLLAMA_API_KEY`              | only for running the alert/release-notes scripts locally | Ollama Cloud API key — see [[ollama-integration]]                                                                                                                       |
-| `VITE_GTFS_API_KEY`           | optional, commented out                                  | Only needed if the proxy Worker has key-based auth configured                                                                                                           |
-| `VITE_TALLY_FEEDBACK_FORM_ID` | optional, commented out                                  | Tally feedback form ID (Publish → Share → Form ID)                                                                                                                      |
+| Variable                      | Required                                                 | Purpose                                                                                                                                                                                                                                                                                                   |
+| ----------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VITE_GTFS_PROXY_URL`         | yes                                                      | URL of the external `kreni-app-worker` Cloudflare Worker — in production `https://api.kreni.app` (the Worker's custom domain, not `*.workers.dev`; local dev uses `http://localhost:8787`). Used for GTFS-RT, Nextbike, global announcement, and Driving-mode road closures. See [[cloudflare-topology]]. |
+| `OLLAMA_API_KEY`              | only for running the alert/release-notes scripts locally | Ollama Cloud API key — see [[ollama-integration]]                                                                                                                                                                                                                                                         |
+| `VITE_GTFS_API_KEY`           | optional, commented out                                  | Only needed if the proxy Worker has key-based auth configured                                                                                                                                                                                                                                             |
+| `VITE_TALLY_FEEDBACK_FORM_ID` | optional, commented out                                  | Tally feedback form ID (Publish → Share → Form ID)                                                                                                                                                                                                                                                        |
 
 ## GitHub Actions secrets (configured in repo settings, not in code)
 

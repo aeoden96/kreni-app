@@ -1,7 +1,7 @@
 ---
 tags: [area/decisions, type/decision-record]
 status: proposed
-updated: 2026-07-04
+updated: 2026-07-12
 ---
 
 # 0002 — Realtime Proxy: Cost, Cadence & Android Data Path
@@ -18,7 +18,7 @@ updated: 2026-07-04
 
 ## How the data path actually works
 
-App (`VITE_GTFS_PROXY_URL` → `zet-gtfs-proxy.workers.dev`, see [[environment-variables]]) talks to a single external Worker that fans out to several upstreams. The live layer is efficient already:
+App (`VITE_GTFS_PROXY_URL` → `api.kreni.app`, the Worker's custom domain — see [[environment-variables]], [[cloudflare-topology]]) talks to a single external Worker that fans out to several upstreams. The live layer is efficient already:
 
 - `src/stores/realtimeStore.ts` → `fetchAll()` pulls **one** combined GTFS-RT protobuf per poll (`?endpoint=vehicle-positions`) and decodes vehicles + trip-updates + alerts from that single ~2 KB response.
 - `src/hooks/useRealtimeData.ts` schedules polling via React Query, using an **adaptive delay** derived from the Worker's `Age` header (clock-skew-safe) so the next poll lands just after the edge cache expires. Foreground only (`refetchIntervalInBackground: false`).
@@ -78,7 +78,10 @@ header.timestamp: 01:25:08 → 01:25:18 → 01:25:28 → 01:25:38 → 01:25:48 �
 
 ## Q1 — Improving cost for everyone
 
-**Lever A (free, do this):** `REALTIME_POLL_INTERVAL` **7 → 10 s** and Worker `CACHE_TTL_SECONDS` **7 → 10**. Same freshness, ~30% fewer requests, no phase drift. Keeps the adaptive `Age` logic.
+**Lever A (free) — ✅ Step 1 shipped 2026-07-12:** raise `REALTIME_POLL_INTERVAL` **7 → 10 s** (`config/index.ts`). ~26% fewer requests, same freshness, keeps the adaptive `Age` logic.
+
+> [!important] Frontend-first, not "both together" — the invariant is `TTL ≤ P`
+> An earlier version of this note said to change `REALTIME_POLL_INTERVAL` **and** Worker `CACHE_TTL_SECONDS` in lockstep. That's unnecessarily risky: the only harmful mismatch is `TTL > P` (client polls a still-valid cache → stale HIT → 1 s repoll storm → paused markers). **Step 1 raised only the client interval (P = 10 s) and left the Worker `TTL = 7 s`** — `TTL(7) < P(10)` is the _benign_ always-MISS side, safe even for users on an old cached bundle. Bumping the Worker `TTL` 7 → 10 is an **optional Step 2** (marginal multi-user cache coalescing, not needed for the cost win) — do it only after Step 1 is fully rolled out, never letting `TTL` exceed `P`. Full mechanism + the corrected invariant: [[realtime-polling-timing]].
 
 - _Optional enhancement:_ Worker sets cache TTL dynamically to `header.timestamp + 10 s`, so the edge expires exactly when ZET emits the next document — phase-locks the whole pipeline; every client poll returns a fresh doc with near-zero waste.
 
@@ -121,7 +124,7 @@ So Android can point the live feed **straight at ZET**, removing the dominant co
 
 ## Recommendation (prioritized)
 
-1. **Poll 10 s, not 7 s** (`REALTIME_POLL_INTERVAL` + Worker `CACHE_TTL_SECONDS`). Free ~30% cut, correct alignment to ZET, helps web _and_ Android. Do this first regardless of anything else.
+1. **Poll 10 s, not 7 s** — ✅ **Step 1 done 2026-07-12** (`REALTIME_POLL_INTERVAL` → 10 s, client only; Worker `TTL` left at 7 s per the `TTL ≤ P` invariant above). Free ~26% cut, correct alignment to ZET, helps web _and_ Android. Optional Step 2 (Worker `TTL` → 10 s) remains on the shelf.
 2. **Android-direct-to-ZET via `CapacitorHttp`, hybrid with Worker fallback.** Structurally removes the biggest cost as the Android base grows; bigger win than any vendor swap for the mobile slice.
 3. **Do not migrate to CloudFront / another CDN** — strictly more expensive for tiny-payload/high-request-count.
 4. **Keep the R2 + Durable-Object cache re-arch on the shelf** as the scale play (correct at tens-of-thousands+ MAU, stays on Cloudflare).
@@ -131,7 +134,8 @@ Net cheapest path: **poll less → take Android off the Worker → (only later) 
 ## Open items
 
 - [ ] Re-run the cadence probe at **rush hour** to confirm the 10 s step holds under load.
-- [ ] Implement Lever A (7 → 10 s) — one-liner each in `src/config/index.ts` and the Worker's `CACHE_TTL_SECONDS`.
+- [x] Implement Lever A Step 1 (client `REALTIME_POLL_INTERVAL` 7 → 10 s) — done 2026-07-12, `src/config/index.ts`.
+- [ ] _Optional Step 2:_ Worker `CACHE_TTL_SECONDS` 7 → 10 (marginal cache-coalescing gain; keep `TTL ≤ P`).
 - [ ] Spec the Android hybrid path (`@capacitor/http`, `isNativePlatform()` branch in `src/utils/realtime.ts`, fallback + fixed-timer polling).
 - [ ] If/when scale warrants: full design for the R2 + Durable-Object-writer model (write cadence, cache TTL/purge, staleness budget).
 - [ ] Fix the stale `service-alerts` staleness comment in the Worker repo (unrelated, noted in [[gtfs-proxy-worker]]).
