@@ -80,7 +80,7 @@ jobs:
 
       - name: Upload Release APK to GitHub Release
         if: ${{ inputs.upload_to_release }}
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ inputs.tag_name }}
           files: android/app/build/outputs/apk/release/*.apk
