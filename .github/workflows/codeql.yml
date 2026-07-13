@@ -1,0 +1,38 @@
+name: CodeQL
+
+# Static analysis (SAST) for the JS/TS codebase — catches vulnerability classes
+# that dependency-review (new deps only) and lint don't. Weekly scan + PR/push.
+on:
+  pull_request:
+    branches: ['master', 'main']
+  push:
+    branches: ['master']
+  schedule:
+    - cron: '17 4 * * 1' # Mondays 04:17 UTC
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze (javascript-typescript)
+    runs-on: ubuntu-latest
+    if: ${{ !startsWith(github.head_ref, 'release-please--') }}
+    permissions:
+      contents: read
+      security-events: write # required to upload CodeQL results
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+          queries: security-and-quality
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: '/language:javascript-typescript'

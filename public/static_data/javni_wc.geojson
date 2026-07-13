@@ -1,0 +1,453 @@
+{
+  "type": "FeatureCollection",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "EPSG:4326"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": 1,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [15.9744934607972, 45.8418589747418]
+      },
+      "properties": {
+        "OBJECTID": 1,
+        "naziv": "Mihaljevac - okretište tramvaja",
+        "adresa": "Matije Jandrića bb",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 2,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [15.9789864995344, 45.8134089189698]
+      },
+      "properties": {
+        "OBJECTID": 2,
+        "naziv": "Cesarčeva ulica",
+        "adresa": "Augusta Cesarca bb",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 3,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [15.9774691912288, 45.8038153231147]
+      },
+      "properties": {
+        "OBJECTID": 3,
+        "naziv": "Pothodnik Glavni Kolodvor",
+        "adresa": "Grgura Ninskog bb",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 4,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [15.9649245031121, 45.8127429028861]
+      },
+      "properties": {
+        "OBJECTID": 4,
+        "naziv": "Britanski trg",
+        "adresa": "Britanski trg bb",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 5,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [15.9367497000133, 45.7974757014756]
+      },
+      "properties": {
+        "OBJECTID": 5,
+        "naziv": "Ljubljnica - Remiza",
+        "adresa": "Labinska bb",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 6,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [15.9795764267479, 45.8148615772838]
+      },
+      "properties": {
+        "OBJECTID": 6,
+        "naziv": "Kaptol – kod katedrale",
+        "adresa": "Kaptol 30A",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 7,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [15.9746528274557, 45.8152726558172]
+      },
+      "properties": {
+        "OBJECTID": 7,
+        "naziv": "Habdelićeva – Gornji grad",
+        "adresa": "Jezuitski trg bb",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 8,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [15.9707188512849, 45.8103288082063]
+      },
+      "properties": {
+        "OBJECTID": 8,
+        "naziv": "Trg RH – do sveučilišta",
+        "adresa": "Trg Republike Hrvatske",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 9,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [15.9813457431783, 45.814391983364]
+      },
+      "properties": {
+        "OBJECTID": 9,
+        "naziv": "Langov trg – ulaz u park",
+        "adresa": "Trg Josipa Langa",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 10,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [15.9833589296608, 45.8362588349766]
+      },
+      "properties": {
+        "OBJECTID": 10,
+        "naziv": "Mirogoj",
+        "adresa": "Mirogojska cesta 10",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 11,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [16.0155954567479, 45.8211020372016]
+      },
+      "properties": {
+        "OBJECTID": 11,
+        "naziv": "Maksimir - ulaz",
+        "adresa": "Maksimirska cesta bb",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 12,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [16.0440105500206, 45.8408392901914]
+      },
+      "properties": {
+        "OBJECTID": 12,
+        "naziv": "Miroševac – ispred ulaza u groblje",
+        "adresa": "Aleja tišine bb",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 13,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [15.9689505119949, 45.8222949856562]
+      },
+      "properties": {
+        "OBJECTID": 13,
+        "naziv": "Tuškanac - vidikovac",
+        "adresa": "Tuškanac 9",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 14,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [16.0434605248086, 45.8427036187767]
+      },
+      "properties": {
+        "OBJECTID": 14,
+        "naziv": "Miroševac – mrtvačnica",
+        "adresa": "Aleja tišine bb",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 15,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [15.9827285501016, 45.8455517610159]
+      },
+      "properties": {
+        "OBJECTID": 15,
+        "naziv": "Krematorij",
+        "adresa": "Remetska cesta bb",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 16,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [15.9965168790191, 45.8133796250248]
+      },
+      "properties": {
+        "OBJECTID": 16,
+        "naziv": "Tržnica Gorica",
+        "adresa": "Martićeva bb",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 17,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [15.974093533856, 45.8066247738321]
+      },
+      "properties": {
+        "OBJECTID": 17,
+        "naziv": "Svačićev trg – dječji WC",
+        "adresa": "Trg Petra Svačića bb",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 18,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [15.9806078017638, 45.8166320891475]
+      },
+      "properties": {
+        "OBJECTID": 18,
+        "naziv": "Ribnjak – dječji WC",
+        "adresa": "Ribnjak bb",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 19,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [15.9767384094394, 45.817901631831]
+      },
+      "properties": {
+        "OBJECTID": 19,
+        "naziv": "Opatovina",
+        "adresa": "Opatovina bb",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 20,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [15.9774232662315, 45.8145729584889]
+      },
+      "properties": {
+        "OBJECTID": 20,
+        "naziv": "Trg Petrice Kerempuha",
+        "adresa": "Skalinska bb",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 21,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [16.0369577444464, 45.8248099321408]
+      },
+      "properties": {
+        "OBJECTID": 21,
+        "naziv": "Dubrava",
+        "adresa": "Avenija Gojka Šuška",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 22,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [16.0773423808762, 45.828493956477]
+      },
+      "properties": {
+        "OBJECTID": 22,
+        "naziv": "Dubec",
+        "adresa": "Dubečka bb",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 23,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [15.9972069421832, 45.8148029536813]
+      },
+      "properties": {
+        "OBJECTID": 23,
+        "naziv": "Kvaternikov trg",
+        "adresa": "Trg Eugena Kvaternika",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 24,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [15.9739074612592, 45.8239555332017]
+      },
+      "properties": {
+        "OBJECTID": 24,
+        "naziv": "Šetnica Dubravkin put",
+        "adresa": "Dubravkin put",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 25,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [15.9914830590475, 45.8058460607352]
+      },
+      "properties": {
+        "OBJECTID": 25,
+        "naziv": "Ulica kneza Branimira – kod tržnice",
+        "adresa": "Trg kneza Branimira bb",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 26,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [15.9981338138667, 45.7893354955087]
+      },
+      "properties": {
+        "OBJECTID": 26,
+        "naziv": "Gradski vrt Savica",
+        "adresa": "Trnjanska Savica",
+        "naplata": "Ne naplaćuje se",
+        "nadlezan": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izvor": "Gradsko stambeno komunalno gospodarstvo d.o.o.",
+        "izradio": "Gradski ured za gospodarstvo, ekološku održivost i strategijsko planiranje"
+      }
+    }
+  ]
+}

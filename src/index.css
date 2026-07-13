@@ -1,0 +1,1030 @@
+@import 'tailwindcss';
+@import 'leaflet/dist/leaflet.css';
+@plugin '@tailwindcss/typography';
+@plugin "daisyui";
+
+/*@custom-variant dark (&:where(.dark, .dark *));*/
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@theme {
+  --color-dark: #2b2d42;
+  --color-medium: #8d99ae;
+  --color-light: #edf2f4;
+  /* Nextbike / Bajs official brand; keep in sync with NEXTBIKE_BRAND_HEX in nextbikeAppLinks.ts */
+  --color-nextbike: #0046d7;
+  /* Lighter blue for Nextbike accents on dark backgrounds (popups, favourites) */
+  --color-nextbike-bright: #7eb8ff;
+
+  /* Responsive typography using clamp() for fluid scaling */
+  --text-xs: clamp(11px, 0.7rem, 12px);
+  --text-sm: clamp(13px, 0.85rem, 14px);
+  --text-md: clamp(15px, 0.95rem, 16px);
+  --text-lg: clamp(18px, 1.15rem, 20px);
+  --text-xl: clamp(22px, 1.4rem, 24px);
+  --text-2xl: clamp(28px, 1.8rem, 32px);
+  --text-3xl: clamp(36px, 2.25rem, 40px);
+  --text-4xl: clamp(42px, 2.75rem, 48px);
+  --text-5xl: clamp(48px, 3.25rem, 56px);
+  --text-6xl: clamp(56px, 3.75rem, 64px);
+  --text-7xl: clamp(64px, 4.25rem, 72px);
+  --text-8xl: clamp(72px, 4.75rem, 80px);
+}
+
+/* Onboarding: staggered entrance rise (paired with `motion-safe:` so
+   reduced-motion users simply see the final state). */
+@keyframes onboardRise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Onboarding: "live vehicle" pulse ring on the welcome map graphic. */
+@keyframes livePing {
+  0% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+:root {
+  --accent: #2337ff;
+  --accent-dark: #000d8a;
+  --black: 15, 18, 25;
+  --gray: 96, 115, 159;
+  --gray-light: 229, 233, 240;
+  --gray-dark: 34, 41, 57;
+  --gray-gradient: rgba(var(--gray-light), 50%), #fff;
+  --box-shadow:
+    0 2px 6px rgba(var(--gray), 25%), 0 8px 24px rgba(var(--gray), 33%),
+    0 16px 32px rgba(var(--gray), 33%);
+}
+
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    sans-serif;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  font-size: clamp(15px, 0.95rem, 16px);
+  line-height: 1.6;
+}
+
+[data-theme='dark'] body {
+  background:
+    linear-gradient(to bottom, #323232 0%, #3f3f3f 40%, #1c1c1c 150%),
+    linear-gradient(to top, rgba(255, 255, 255, 0.4) 0%, rgba(0, 0, 0, 0.25) 200%);
+  background-blend-mode: multiply;
+  color: var(--color-light);
+}
+
+[data-theme='light'] body {
+  background:
+    linear-gradient(to bottom, #d5dee7 0%, #e8ebf2 50%, #e2e7ed 100%),
+    linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.02) 50%,
+      rgba(255, 255, 255, 0.02) 61%,
+      rgba(0, 0, 0, 0.02) 73%
+    ),
+    linear-gradient(33deg, rgba(255, 255, 255, 0.2) 0%, rgba(0, 0, 0, 0.2) 100%);
+  background-blend-mode: normal, color-burn;
+  color: var(--color-dark);
+}
+
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  /* dvh = dynamic viewport height — fills the real visible area as browser chrome shows/hides */
+  height: 100dvh;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* ── DVH viewport utilities ─────────────────────────────────────────────── */
+/* 100dvh = "dynamic viewport height" — always matches the real visible area */
+/* Falls back to 100vh for browsers without dvh support (Safari < 15.4)     */
+
+.h-svh {
+  height: 100vh;
+  /* fallback */
+  height: 100dvh;
+}
+
+.min-h-svh {
+  min-height: 100vh;
+  /* fallback */
+  min-height: 100dvh;
+}
+
+.max-h-svh {
+  max-height: 100vh;
+  /* fallback */
+  max-height: 100dvh;
+}
+
+.sr-only {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  position: absolute !important;
+  height: 1px;
+  width: 1px;
+  overflow: hidden;
+  clip: rect(1px 1px 1px 1px);
+  clip: rect(1px, 1px, 1px, 1px);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* scroll bar */
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: black;
+}
+
+::-webkit-scrollbar-thumb {
+  background: gray;
+}
+
+[data-theme='dark'] pre {
+  background-color: rgb(var(--gray-dark));
+}
+
+/* Safe area utilities for mobile notches and home indicators */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-left {
+  padding-left: env(safe-area-inset-left);
+}
+
+.safe-right {
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Ensure touch targets are at least 44x44px for better mobile UX */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Modal animations */
+@keyframes modal-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes backdrop-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* One-shot pulse on realtime status icon when client receives a new feed (~10s poll) */
+@keyframes realtime-data-refresh-tick {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+
+  35% {
+    transform: scale(1.22);
+    filter: brightness(1.35);
+  }
+
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+.realtime-data-refresh-tick {
+  animation: realtime-data-refresh-tick 0.75s cubic-bezier(0.34, 1.4, 0.64, 1) 1;
+  transform-origin: center;
+  will-change: transform, filter;
+}
+
+/* Dot flash on same remount as feed icon (keyed by lastUpdate) */
+@keyframes realtime-feed-dot-flash {
+  0%,
+  100% {
+    background-color: #ffffff;
+  }
+
+  40% {
+    background-color: #fbbf24;
+  }
+}
+
+.realtime-feed-dot-refresh {
+  animation: realtime-feed-dot-flash 0.75s ease-out 1;
+}
+
+@keyframes spider-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(-1rem) scale(0.9);
+    filter: blur(4px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.animate-spider-reveal {
+  animation: spider-reveal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  will-change: transform, opacity, filter;
+}
+
+/* Leaflet popup styling for enhanced stop popups */
+.leaflet-popup-content-wrapper {
+  border-radius: 16px !important;
+  padding: 0 !important;
+  overflow: hidden;
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+}
+
+[data-theme='light'] .leaflet-popup-content-wrapper {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+}
+
+[data-theme='dark'] .leaflet-popup-content-wrapper {
+  background-color: #1f2937 !important;
+  color: #f3f4f6 !important;
+}
+
+.leaflet-popup-content {
+  margin: 12px 14px !important;
+  line-height: 1.5 !important;
+  font-family: inherit !important;
+}
+
+.leaflet-popup-tip-container {
+  display: none !important;
+}
+
+/* Make popup close button theme-aware */
+.leaflet-popup-close-button {
+  opacity: 0.5 !important;
+  font-size: 18px !important;
+  line-height: 18px !important;
+  padding: 4px !important;
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 6px !important;
+  transition: all 0.2s !important;
+  top: 8px !important;
+  right: 8px !important;
+  text-align: center !important;
+}
+
+[data-theme='light'] .leaflet-popup-close-button {
+  color: #1f2937 !important;
+}
+
+[data-theme='dark'] .leaflet-popup-close-button {
+  color: #f3f4f6 !important;
+}
+
+.leaflet-popup-close-button:hover {
+  opacity: 1 !important;
+}
+
+[data-theme='light'] .leaflet-popup-close-button:hover {
+  background-color: #f3f4f6 !important;
+}
+
+[data-theme='dark'] .leaflet-popup-close-button:hover {
+  background-color: #374151 !important;
+}
+
+/* Leaflet tooltip styling theme-aware */
+.leaflet-tooltip {
+  border-radius: 12px !important;
+  border: none !important;
+  box-sizing: border-box !important;
+  max-width: min(300px, calc(100vw - 2rem)) !important;
+  opacity: 0.98 !important;
+  overflow: hidden !important;
+  padding: 8px 12px !important;
+  width: min(300px, calc(100vw - 2rem)) !important;
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+  font-family: inherit !important;
+  overflow-wrap: anywhere !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+}
+
+[data-theme='light'] .leaflet-tooltip {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+}
+
+[data-theme='dark'] .leaflet-tooltip {
+  background-color: #1f2937 !important;
+  color: #f3f4f6 !important;
+}
+
+.leaflet-tooltip-top:before,
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+  display: none !important;
+}
+
+/* Leaflet/OSM attribution control theme-aware (default is a white box, which
+   stands out sharply on the dark basemap) */
+[data-theme='dark'] .leaflet-control-attribution {
+  background-color: rgba(31, 41, 55, 0.8) !important;
+  color: #d1d5db !important;
+}
+
+[data-theme='dark'] .leaflet-control-attribution a {
+  color: #f3f4f6 !important;
+}
+
+/* Hover effects for bike markers */
+.bajs-station-icon:hover > div,
+.bike-parking-icon:hover > div {
+  transform: scale(1.1);
+  filter: brightness(1.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4) !important;
+}
+
+.bajs-station-icon.selected > div {
+  transform: scale(1.2) !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4) !important;
+}
+
+/* Parent station marker styles */
+.parent-station-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.parent-station-marker {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #475569;
+  /* slate (was purple) */
+  border: 2px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transform-origin: center center;
+  transition:
+    transform 0.1s ease-out,
+    box-shadow 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.parent-station-marker:hover {
+  transform: scale(1.1);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+.parent-station-marker:active {
+  transform: scale(0.92);
+  transition-duration: 0.08s;
+}
+
+.parent-station-marker.selected {
+  background-color: #ff6b6b;
+  border-width: 3px;
+  width: 32px;
+  height: 32px;
+}
+
+.parent-station-marker.highlighted {
+  background-color: #2337ff;
+  border-width: 2px;
+}
+
+.parent-station-marker .count {
+  color: white;
+  font-weight: bold;
+  font-size: 11px;
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+}
+
+.parent-station-marker.selected .count {
+  font-size: 12px;
+}
+
+/* User location marker (pulsing 'you are here' dot) */
+.user-location-marker {
+  width: 44px;
+  height: 44px;
+  position: relative;
+  pointer-events: none;
+}
+
+.user-location-marker .pulse {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(34, 197, 94, 0.12);
+  /* green pulse */
+  animation: user-location-pulse 1.6s ease-out infinite;
+}
+
+.user-location-marker .dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #22c55e;
+  /* green */
+  border: 2px solid white;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+@keyframes user-location-pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.6);
+    opacity: 0.6;
+  }
+
+  70% {
+    transform: translate(-50%, -50%) scale(1.6);
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+.map-favourite-pulse-icon {
+  pointer-events: none;
+}
+
+.map-favourite-pulse-ring {
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  border-radius: 50%;
+  border: 3px solid rgba(168, 85, 247, 0.85);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+  animation: map-favourite-pulse-once 2.2s ease-out forwards;
+}
+
+@keyframes map-favourite-pulse-once {
+  0% {
+    transform: scale(0.35);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1.65);
+    opacity: 0;
+  }
+}
+
+@keyframes gps-active-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.2);
+    transform: scale(1);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+    transform: scale(1.03);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    transform: scale(1);
+  }
+}
+
+/* Platform stop: press-only scale (no idle animation) */
+.stop-marker-pin {
+  cursor: pointer;
+  transform-origin: center center;
+  transition: transform 0.1s ease-out;
+}
+
+.stop-marker-pin:active {
+  transform: scale(0.88);
+  transition-duration: 0.08s;
+}
+
+.btn-gps-active {
+  background: rgba(22, 101, 52, 0.5) !important;
+  /* Muted deep green glass */
+  color: #86efac !important;
+  /* Softer light green */
+  border: 1.5px solid rgba(134, 239, 172, 0.3) !important;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 0 12px rgba(34, 197, 94, 0.15) !important;
+  animation: gps-active-pulse 3s infinite ease-in-out;
+  backdrop-filter: blur(12px);
+}
+
+.btn-gps-inactive {
+  background: rgba(0, 0, 0, 0.6) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(12px);
+}
+
+.btn-gps-inactive:hover {
+  background: rgba(0, 0, 0, 0.8) !important;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Platform stop label shown at max zoom */
+.stop-label {
+  position: absolute;
+  left: 50%;
+  top: -6px;
+  transform: translate(-50%, -100%);
+  background: rgba(255, 255, 255, 0.92);
+  color: #111827;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+/* Parent station label (same visual style but slightly bolder) */
+.parent-station-label {
+  position: absolute;
+  left: 50%;
+  /* Center label at the anchor point and nudge 5 px down so it sits
+     exactly where connector lines converge */
+  top: 0;
+  transform: translate(-50%, calc(-50% + 5px));
+  background: rgba(255, 255, 255, 0.95);
+  color: #111827;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.14);
+}
+
+/* ── Spiderfier ──────────────────────────────────────────────────────────── */
+
+/**
+ * .spider-node-wrap  – animated envelope placed around real marker icons.
+ *   Each item gets a staggered scale-in via --spider-idx CSS var.
+ * .spider-node-dot   – fallback small dot when no base icon is available.
+ * .spider-leg        – SVG path element of the dashed leg line (fade-in).
+ */
+
+.spider-node-wrap {
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
+  animation: spider-expand-in 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: calc(var(--spider-idx, 0) * 35ms);
+  transform-origin: center;
+}
+
+@keyframes spider-expand-in {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Fallback neutral dot rendered when no base icon was found */
+.spider-node-dot {
+  width: 14px;
+  height: 14px;
+  background: #374151;
+  border: 2.5px solid white;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme='dark'] .spider-node-dot {
+  background: #9ca3af;
+  border-color: #111827;
+}
+
+.spider-node-dot:hover {
+  background: #111827;
+}
+
+[data-theme='dark'] .spider-node-dot:hover {
+  background: #f3f4f6;
+}
+
+.spider-node-label {
+  position: absolute;
+  /* Anchor at icon centre, then offset outward via --lx / --ly set per-item */
+  top: 50%;
+  left: 50%;
+  transform: translate(calc(-50% + var(--lx, 0px)), calc(-50% + var(--ly, 0px)));
+  background: white;
+  color: #111827;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+  pointer-events: auto;
+  cursor: pointer;
+  animation: spider-label-fadein 0.35s ease-out both;
+  animation-delay: calc(var(--spider-idx, 0) * 35ms + 80ms);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  z-index: 1000;
+}
+
+[data-theme='dark'] .spider-node-label {
+  background: #374151;
+  color: #f3f4f6;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+.spider-label-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.spider-route-badges {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 3px;
+  max-width: 160px;
+}
+
+.spider-route-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.spider-route-badge.is-tram {
+  background-color: #2563eb;
+  /* blue-600 */
+}
+
+.spider-route-badge.is-bus {
+  background-color: #d97706;
+  /* amber-600 */
+}
+
+.spider-route-badge.is-mixed {
+  background-color: #475569;
+  /* slate-600 */
+}
+
+.spider-route-ticker {
+  width: 100%;
+  max-width: 130px;
+  overflow: hidden;
+  position: relative;
+  mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 15%,
+    black 85%,
+    transparent 100%
+  );
+}
+
+.spider-route-ticker-inner {
+  display: flex;
+  gap: 3px;
+  padding: 0 10px;
+  width: max-content;
+  animation: spider-marquee 10s linear infinite;
+}
+
+/* Pause on hover would be nice, but since it's pointer-events: none, 
+   we can't easily hover individual labels. However, the spider view 
+   itself isn't pointer-events: none. */
+
+@keyframes spider-marquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes spider-label-fadein {
+  from {
+    opacity: 0;
+    /* Start at ~70% of the final outward distance, slide outward to full */
+    transform: translate(calc(-50% + var(--lx, 0px) * 0.7), calc(-50% + var(--ly, 0px) * 0.7))
+      scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--lx, 0px)), calc(-50% + var(--ly, 0px)));
+  }
+}
+
+/* Leg lines: fade in slightly after expansion starts */
+.spider-leg {
+  animation: spider-leg-fadein 0.35s ease-out both;
+  animation-delay: 30ms;
+}
+
+@keyframes spider-leg-fadein {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Single encompassing background circle behind all spider fan nodes */
+.spider-bg-circle {
+  animation: spider-bg-fadein 0.22s ease-out both;
+  cursor: default;
+}
+
+@keyframes spider-bg-fadein {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Scrollable list popup for large clusters (> MAX_SPIDER_FAN items) */
+.spider-list-popup {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+  padding: 6px 4px;
+  min-width: 176px;
+  max-width: 260px;
+  max-height: 280px;
+  overflow-y: auto;
+  /* Ensure the popup floats above all map layers */
+  position: relative;
+  z-index: 1300;
+}
+
+.dark .spider-list-popup {
+  background: #1f2937;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55);
+}
+
+.spider-list-header {
+  font-size: 11px;
+  color: #6b7280;
+  padding: 3px 10px 5px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 2px;
+}
+
+.dark .spider-list-header {
+  color: #9ca3af;
+  border-bottom-color: #374151;
+}
+
+.spider-list-item {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 6px;
+  color: #111827;
+  font-size: 13px;
+  line-height: 1.3;
+  transition: background 0.1s ease;
+}
+
+.spider-list-item:hover {
+  background: #f3f4f6;
+}
+
+.dark .spider-list-item {
+  color: #f9fafb;
+}
+
+.dark .spider-list-item:hover {
+  background: #374151;
+}
+
+/* ── City Layers Panel — CSS remnants (pseudo-elements & keyframes) ─────── */
+
+/* Custom toggle checkbox — impossible to replicate with Tailwind alone */
+.city-layer-toggle {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 36px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(128, 128, 128, 0.3);
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.city-layer-toggle::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  top: 50%;
+  left: 2px;
+  transform: translateY(-50%);
+  transition:
+    transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background 0.2s ease;
+}
+
+[data-theme='dark'] .city-layer-toggle {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='dark'] .city-layer-toggle::after {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+[data-theme='light'] .city-layer-toggle {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='light'] .city-layer-toggle::after {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.city-layer-toggle:checked {
+  background: #a855f7;
+  border-color: #9333ea;
+}
+
+.city-layer-toggle:checked::after {
+  transform: translateY(-50%) translateX(16px);
+  background: #fff;
+}
+
+/* Driving layers panel — orange switch (default .city-layer-toggle is purple when checked) */
+.city-layer-toggle--driving:checked {
+  background: #f97316;
+  border-color: #ea580c;
+}
+
+/* Thin scrollbar track for the panel body */
+.city-layers-panel-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Vertical only — horizontal gutter comes from children (e.g. px-4) or utilities on this node */
+  padding-top: 8px;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.city-layers-panel-body::-webkit-scrollbar {
+  width: 3px;
+}
+
+.city-layers-panel-body::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.3);
+  border-radius: 2px;
+}
+
+/* Panel slide animations */
+@keyframes city-panel-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes city-panel-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes city-layers-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

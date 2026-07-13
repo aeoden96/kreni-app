@@ -1,0 +1,65 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Environment variables — never commit real values
+.env
+.env.local
+.env.*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+dev-dist/
+public/changelog.json
+
+__pycache__/
+
+
+data/
+data-train/
+# Un-ignore the directory so git can see inside it, re-ignore everything,
+# then carve out just the one file we want committed.
+!public/data/
+public/data/*
+!public/data/service-alerts.json
+
+# Playwright
+playwright-report/
+test-results/
+.playwright-cache/
+
+*storybook.log
+storybook-static
+
+# Capacitor — native build artifacts & signing secrets (android/ itself is committed)
+*.apk
+*.aab
+*.idsig
+*.keystore
+*.jks
+keystore.properties
+
+# Raw onboarding sources — kept local only. Shipped assets are the compressed
+# loops (mp4/webm) + posters (jpg) + screenshots (webp) produced from these.
+public/onboarding_new/full-screen-*.mp4
+public/onboarding_new/*Zone.Identifier
+public/onboarding_new/*.png

@@ -1,0 +1,103 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parking Zones GeoJSON Schema",
+  "type": "object",
+  "required": ["type", "features"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": ["FeatureCollection"]
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "properties", "geometry"],
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "enum": ["Feature"] },
+          "properties": {
+            "type": "object",
+            "required": ["id", "zone", "subzone", "block", "name", "color", "streets"],
+            "properties": {
+              "id": { "type": "string" },
+              "zone": { "type": "number" },
+              "subzone": { "type": ["string", "null"] },
+              "block": { "type": "string" },
+              "name": { "type": "string" },
+              "color": { "type": "string", "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" },
+              "streets": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          },
+          "geometry": {
+            "type": "object",
+            "required": ["type", "coordinates"],
+            "properties": {
+              "type": { "enum": ["Polygon"] },
+              "coordinates": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 2,
+                    "items": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "zoneInfo": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["sms", "name", "enforcement", "maxTime", "prices", "subzones"],
+        "properties": {
+          "sms": { "type": ["string", "null"] },
+          "name": { "type": "string" },
+          "enforcement": {
+            "type": "object",
+            "properties": {
+              "weekday": { "type": ["string", "null"] },
+              "saturday": { "type": ["string", "null"] },
+              "sunday": { "type": ["string", "null"] }
+            }
+          },
+          "maxTime": { "type": ["string", "null"] },
+          "prices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "unit": { "type": "string" },
+                "price": { "type": "string" }
+              }
+            }
+          },
+          "subzones": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "sms": { "type": "string" },
+                "enforcement": {
+                  "$ref": "#/properties/zoneInfo/additionalProperties/properties/enforcement"
+                },
+                "maxTime": { "type": ["string", "null"] },
+                "prices": { "$ref": "#/properties/zoneInfo/additionalProperties/properties/prices" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
