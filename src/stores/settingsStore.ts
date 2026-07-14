@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import type { ArrivalAlert } from '../types/arrivalAlert';
 import type { MapFavouriteScope, MapPlaceFavourite } from '../types/mapPlaceFavourite';
 import type { DepartureReminder } from '../types/reminder';
 
@@ -30,16 +29,10 @@ export const MAX_MAP_PLACE_FAVOURITES = 28;
 type MapPlaceFavouriteToggleResult = 'added' | 'at_cap' | 'removed';
 
 interface SettingsState {
-  /** Active "get off here" arrival alert, or null. Native only. */
-  activeArrivalAlert: ArrivalAlert | null;
   addRecentRoute: (id: string) => void;
   addRecentStop: (id: string) => void;
   /** Add a recurring departure reminder; returns the created reminder. */
   addReminder: (input: Omit<DepartureReminder, 'id' | 'slot'>) => DepartureReminder;
-  /** Default arrival-alert trigger radius in metres. */
-  arrivalAlertRadiusMeters: number;
-  /** Stop the active arrival alert (tears down the GPS watch). */
-  clearArrivalAlert: () => void;
   clearRecents: () => void;
   /** CyclOSM tile style (cycling map, when bike paths layer is shown) */
   cyclosmMapVariant: CyclosmMapVariant;
@@ -76,7 +69,6 @@ interface SettingsState {
   removeRecentStops: (ids: string[]) => void;
   removeReminder: (id: string) => void;
   sandboxVisible: boolean;
-  setArrivalAlertRadius: (metres: number) => void;
   setCyclosmMapVariant: (variant: CyclosmMapVariant) => void;
   setDetailedMap: (detailed: boolean) => void;
   setDismissedGpsTip: (dismissed: boolean) => void;
@@ -178,8 +170,6 @@ interface SettingsState {
   showSurveillanceCameras: boolean;
   /** Show taxi stands layer */
   showTaxiStands: boolean;
-  /** Start a "get off here" arrival alert for a stop (replaces any active one). */
-  startArrivalAlert: (input: Omit<ArrivalAlert, 'startedAt'>) => void;
   theme: Theme;
   toggleFavouriteRoute: (id: string) => void;
   toggleFavouriteStop: (id: string) => void;
@@ -209,7 +199,6 @@ export const useSettingsStore = create<SettingsState>()(
       }
 
       return {
-        activeArrivalAlert: null,
         addRecentRoute: (id) =>
           set((s) => {
             const filtered = s.recentRoutes.filter((r) => r.id !== id);
@@ -237,8 +226,6 @@ export const useSettingsStore = create<SettingsState>()(
           set((s) => ({ reminders: [...s.reminders, reminder] }));
           return reminder;
         },
-        arrivalAlertRadiusMeters: 400,
-        clearArrivalAlert: () => set({ activeArrivalAlert: null }),
         clearRecents: () => set({ recentRoutes: [], recentStops: [] }),
         cyclosmMapVariant: 'full',
         detailedMap: false,
@@ -284,7 +271,6 @@ export const useSettingsStore = create<SettingsState>()(
           })),
         removeReminder: (id) => set((s) => ({ reminders: s.reminders.filter((r) => r.id !== id) })),
         sandboxVisible: false,
-        setArrivalAlertRadius: (metres) => set({ arrivalAlertRadiusMeters: metres }),
         setCyclosmMapVariant: (variant) => set({ cyclosmMapVariant: variant }),
         setDetailedMap: (detailed) => set({ detailedMap: detailed }),
         setDismissedGpsTip: (dismissed) => set({ dismissedGpsTip: dismissed }),
@@ -411,9 +397,6 @@ export const useSettingsStore = create<SettingsState>()(
         showSurveillanceCameras: false,
 
         showTaxiStands: false,
-
-        startArrivalAlert: (input) =>
-          set({ activeArrivalAlert: { ...input, startedAt: Date.now() } }),
 
         theme: initialTheme,
 
@@ -549,12 +532,6 @@ export const useSettingsStore = create<SettingsState>()(
         if (fromVersion < 10) {
           // Departure reminders (native local notifications) — ensure the slice exists.
           next.reminders = Array.isArray(next.reminders) ? next.reminders : [];
-        }
-        if (fromVersion < 11) {
-          // Geofenced arrival alerts — start with none active and the default radius.
-          next.activeArrivalAlert = null;
-          next.arrivalAlertRadiusMeters =
-            typeof next.arrivalAlertRadiusMeters === 'number' ? next.arrivalAlertRadiusMeters : 400;
         }
         if (fromVersion < 12) {
           // New default: the light basemap with detailed (HOT) tiles off. Applied

@@ -3,23 +3,6 @@ const hr = {
     app: {
       title: 'Kreni — Zagreb uživo: ZET, Parking, Bicikli i Gradske usluge',
     },
-    arrivalAlerts: {
-      activeBanner: 'Upozorenje blizu {{stop}}',
-      bellTitle: 'Upozori me blizu',
-      cancelTitle: 'Otkaži upozorenje o dolasku',
-      channelDescription: 'Upozorenja kad se približiš svojoj odredišnoj stanici',
-      channelName: 'Upozorenja o dolasku',
-      description: 'Primi obavijest kad se približiš stanici {{stop}}.',
-      notificationBody: 'Stižeš na {{stop}}.',
-      notificationTitle: 'Uskoro izlaziš',
-      permissionDenied:
-        'Obavijesti su blokirane. Uključi ih u postavkama sustava za upozorenja o dolasku.',
-      radiusLabel: 'Udaljenost upozorenja',
-      start: 'Pokreni upozorenje',
-      title: 'Upozorenje o dolasku',
-      trackingMessage: 'Pratimo tvoju stanicu: {{stop}}',
-      trackingTitle: 'Kreni prati tvoju vožnju',
-    },
     cityLayers: {
       animalZones: {
         desc: 'Zone u kojima su domaće životinje (blago) dopuštene u gradu.',

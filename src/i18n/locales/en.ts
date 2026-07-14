@@ -3,23 +3,6 @@ const en = {
     app: {
       title: 'Kreni — Zagreb live: ZET, Parking, Bikes & City Services',
     },
-    arrivalAlerts: {
-      activeBanner: 'Alerting near {{stop}}',
-      bellTitle: 'Alert me near here',
-      cancelTitle: 'Cancel arrival alert',
-      channelDescription: 'Alerts when you approach your destination stop',
-      channelName: 'Arrival alerts',
-      description: 'Get notified when you come within range of {{stop}}.',
-      notificationBody: "You're arriving at {{stop}}.",
-      notificationTitle: 'Get off soon',
-      permissionDenied:
-        'Notifications are blocked. Enable them in system settings to get arrival alerts.',
-      radiusLabel: 'Alert distance',
-      start: 'Start alert',
-      title: 'Arrival alert',
-      trackingMessage: 'Watching for your stop: {{stop}}',
-      trackingTitle: 'Kreni is tracking your trip',
-    },
     cityLayers: {
       animalZones: {
         desc: 'Zones where domestic animals (livestock) are permitted in the city.',

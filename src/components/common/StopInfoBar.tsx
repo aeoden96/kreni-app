@@ -4,7 +4,6 @@
 
 import {
   ArrowRight,
-  Bell,
   CarTaxiFront,
   ChevronDown,
   ChevronUp,
@@ -26,9 +25,7 @@ import { useStopTermini } from '../../hooks/useStopTermini';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { bearingToCompassKey } from '../../utils/gtfs';
 import { compassLabelForBearing } from '../../utils/localizedCompass';
-import { isNative } from '../../utils/platform';
 import { routeTypeColor } from '../../utils/routeStyle';
-import { ArrivalAlertModal } from './ArrivalAlertModal';
 import { DepartureCard } from './DepartureCard';
 import { RideHailingModal } from './RideHailingModal';
 
@@ -62,12 +59,9 @@ export function StopInfoBar({
 }: StopInfoBarProps) {
   const { t } = useTranslation();
   const { dataDir, timetableLookaheadMinutes } = useGTFSMode();
-  const { activeArrivalAlert, clearArrivalAlert, favouriteStopIds, toggleFavouriteStop } =
-    useSettingsStore();
+  const { favouriteStopIds, toggleFavouriteStop } = useSettingsStore();
   const isFav = favouriteStopIds.includes(stop.id);
-  const isAlertActive = activeArrivalAlert?.stopId === stop.id;
   const [rideHailingModalOpen, setRideHailingModalOpen] = useState(false);
-  const [arrivalModalOpen, setArrivalModalOpen] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [routesExpanded, setRoutesExpanded] = useState(false);
   const [platformsExpanded, setPlatformsExpanded] = useState(false);
@@ -231,21 +225,6 @@ export function StopInfoBar({
               )}
             </div>
             <div className="flex items-center gap-1 shrink-0">
-              {isNative() && (
-                <button
-                  className="btn btn-ghost btn-circle btn-xs"
-                  onClick={() => (isAlertActive ? clearArrivalAlert() : setArrivalModalOpen(true))}
-                  title={
-                    isAlertActive ? t('arrivalAlerts.cancelTitle') : t('arrivalAlerts.bellTitle')
-                  }
-                >
-                  <Bell
-                    className="w-4 h-4"
-                    color={isAlertActive ? '#3b82f6' : 'currentColor'}
-                    fill={isAlertActive ? '#3b82f6' : 'none'}
-                  />
-                </button>
-              )}
               <button
                 className="btn btn-ghost btn-circle btn-xs"
                 onClick={() => setRideHailingModalOpen(true)}
@@ -412,9 +391,6 @@ export function StopInfoBar({
         onClose={() => setRideHailingModalOpen(false)}
         stop={stop}
       />
-      {arrivalModalOpen && (
-        <ArrivalAlertModal onClose={() => setArrivalModalOpen(false)} stop={stop} />
-      )}
     </div>
   );
 }

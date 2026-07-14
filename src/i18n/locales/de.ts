@@ -3,23 +3,6 @@ const de = {
     app: {
       title: 'Kreni — Zagreb live: ÖPNV, Parken, Fahrräder & städtische Dienste',
     },
-    arrivalAlerts: {
-      activeBanner: 'Erinnerung nahe {{stop}}',
-      bellTitle: 'In der Nähe erinnern',
-      cancelTitle: 'Ankunftserinnerung abbrechen',
-      channelDescription: 'Erinnerungen, wenn du dich deiner Zielhaltestelle näherst',
-      channelName: 'Ankunftserinnerungen',
-      description: 'Werde benachrichtigt, wenn du in die Nähe von {{stop}} kommst.',
-      notificationBody: 'Du kommst gleich bei {{stop}} an.',
-      notificationTitle: 'Bald aussteigen',
-      permissionDenied:
-        'Benachrichtigungen sind blockiert. Aktiviere sie in den Systemeinstellungen für Ankunftserinnerungen.',
-      radiusLabel: 'Erinnerungsentfernung',
-      start: 'Erinnerung starten',
-      title: 'Ankunftserinnerung',
-      trackingMessage: 'Wir achten auf deine Haltestelle: {{stop}}',
-      trackingTitle: 'Kreni verfolgt deine Fahrt',
-    },
     cityLayers: {
       animalZones: {
         desc: 'Zonen, in denen Nutztiere in der Stadt erlaubt sind.',
