@@ -6,7 +6,7 @@
 
 **All on one map: track ZET trams and buses live, find free parking spots, public garages, Nextbike bicycles, and cycling paths in Zagreb. Also includes locations of public water fountains, EV charging stations, and student cafeterias.**
 
-[![License](https://img.shields.io/badge/license-GPLv3-blue.svg?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/badge/license-PolyForm_Noncommercial_1.0.0-blue.svg?style=flat-square)](LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/aeoden96/kreni-app/deploy.yml?branch=master&style=flat-square)](https://github.com/aeoden96/kreni-app/actions)
 [![Static Analysis](https://img.shields.io/github/actions/workflow/status/aeoden96/kreni-app/ci.yml?branch=master&label=ci&style=flat-square)](https://github.com/aeoden96/kreni-app/actions)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
@@ -143,6 +143,8 @@ yarn dev
 
 ## License & Legal
 
-Distributed under the **GNU General Public License v3.0**. See `LICENSE` for more information.
+Distributed under the **PolyForm Noncommercial License 1.0.0** — free to use, study, modify, and share for any noncommercial purpose. See `LICENSE` for the full terms. Commercial use (including redistributing this app or derivatives on app stores) is not permitted under this license; the official Google Play build is distributed separately by the copyright holder under their own terms. For commercial licensing inquiries, open an issue.
+
+_Note: versions up to and including v3.6.1 were published under GPLv3; that grant remains valid for those historical versions. All later versions are PolyForm Noncommercial 1.0.0._
 
 **Disclaimer**: This is an unofficial hobby-driven project. Kreni operates "as is" and provides no warranties regarding the accuracy of its information. It is not affiliated with, endorsed by, or integrated with ZET, HŽPP, Nextbike, or any official Zagreb authorities in any formal capacity.

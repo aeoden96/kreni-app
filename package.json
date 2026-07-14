@@ -2,7 +2,7 @@
   "name": "kreni-app",
   "private": true,
   "version": "3.6.1",
-  "license": "GPL-3.0-only",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "type": "module",
   "packageManager": "yarn@1.22.22",
   "scripts": {
