@@ -1,7 +1,7 @@
 /**
  * Debug panel — three tabs:
- *  1. Sandbox  — time override (existing)
- *  2. Live Feed — browse all vehicles currently in the GTFS-RT feed
+ *  1. Live Feed — browse all vehicles currently in the GTFS-RT feed
+ *  2. Vehicle   — full context for one trip (see DebugVehicleTab)
  *  3. Stop      — per-trip diagnostic for the currently selected stop
  */
 
@@ -14,6 +14,7 @@ import {
   MapPin,
   Presentation,
   Radio,
+  SearchCode,
   X,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
@@ -24,33 +25,97 @@ import type { ParsedVehiclePosition } from '../../utils/realtime';
 
 import { useGTFSMode } from '../../contexts/GTFSModeContext';
 import { useStopDiagnostic } from '../../hooks/useStopDiagnostic';
+import { useVehicleDiagnostic } from '../../hooks/useVehicleDiagnostic';
 import { useRealtimeStore } from '../../stores/realtimeStore';
+import { formatSignedSeconds, formatTimestampAge } from '../../utils/debugFormat';
 import { minutesToTime } from '../../utils/gtfs';
+import { DebugVehicleTab } from './DebugVehicleTab';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface DebugPanelProps {
   routesById?: Map<string, Route>;
   selectedStopId?: null | string;
+  /** tripId of the vehicle currently focused in the app */
+  selectedTripId?: null | string;
   stopsById?: Map<string, Stop>;
 }
 
-type TabId = 'feed' | 'stop';
+type TabId = 'feed' | 'stop' | 'vehicle';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function fmtSeconds(sec: number): string {
-  const abs = Math.abs(Math.round(sec));
-  if (abs < 60) return `${Math.round(sec)}s`;
-  const m = Math.floor(abs / 60);
-  const s = abs % 60;
-  const sign = sec < 0 ? '-' : '';
-  return `${sign}${m}m ${s}s`;
+// ── Stop copy-payload scope ───────────────────────────────────────────────────
+// The board itself only ever shows a handful of departures, so the paste should too.
+/** Recently-departed trips worth keeping — answers "why did that one vanish?" */
+const COPY_PAST_SECONDS = 5 * 60;
+/** Far-future trips explain nothing about what's on screen now */
+const COPY_FUTURE_SECONDS = 20 * 60;
+/** Hard cap so a busy interchange can't blow the paste up again */
+const COPY_TRIP_LIMIT = 8;
+
+/**
+ * Narrow the diagnostics to the trips that explain what's on screen right now, and
+ * account for everything dropped so the numbers still add up. `beyond_diag_window`
+ * entries exist purely so the UI can show a "N trips outside ±60 min" toggle and carry
+ * no GPS or distance data, so they never reach the clipboard.
+ */
+function pickStopTrips(diagnostics: TripDiagnostic[], nowMs: number) {
+  const inWindow = diagnostics.filter(
+    (d) =>
+      d.filterReason !== 'beyond_diag_window' &&
+      d.arrivingInSeconds >= -COPY_PAST_SECONDS &&
+      d.arrivingInSeconds <= COPY_FUTURE_SECONDS
+  );
+  // Included trips are what the user is actually looking at — never let a run of
+  // already-departed rows (sorted first, ETA ascending) crowd them out of the cap.
+  const ranked = [...inWindow].sort((a, b) => Number(b.included) - Number(a.included));
+  const kept = new Set(ranked.slice(0, COPY_TRIP_LIMIT));
+
+  return {
+    omitted: {
+      beyondCopyWindow:
+        diagnostics.filter((d) => d.filterReason !== 'beyond_diag_window').length - inWindow.length,
+      overTripLimit: inWindow.length - kept.size,
+    },
+    trips: inWindow.filter((d) => kept.has(d)).map((d) => summariseTrip(d, nowMs)),
+    tripWindow: `-${COPY_PAST_SECONDS / 60}min … +${COPY_FUTURE_SECONDS / 60}min`,
+  };
 }
 
-function fmtTimestamp(ts: number, nowMs: number): string {
-  const age = Math.round(nowMs / 1000 - ts);
-  return `${age}s ago`;
+/**
+ * Flatten one diagnostic to the fields that actually explain why a trip did or didn't
+ * show at this stop. Deliberately drops the raw `tripUpdate` (its `stopTimeUpdates` array
+ * covers the whole route and dwarfs everything else) and the raw `vehiclePos` — the
+ * stop-relative facts derived from them (delay, distance, stopsAway) are what matter.
+ */
+function summariseTrip(d: TripDiagnostic, nowMs: number) {
+  return {
+    delaySec: d.delaySeconds,
+    direction: d.directionKey,
+    distanceM: d.distanceMeters,
+    etaSec: Math.round(d.arrivingInSeconds),
+    gps: d.vehiclePos
+      ? {
+          ageSec: Math.round(nowMs / 1000 - d.vehiclePos.timestamp),
+          bearing: d.vehiclePos.bearing,
+          lat: d.vehiclePos.latitude,
+          lon: d.vehiclePos.longitude,
+          speedKmh: d.vehiclePos.speed != null ? +(d.vehiclePos.speed * 3.6).toFixed(1) : null,
+          stopSeq: d.vehiclePos.currentStopSequence,
+          vehicleId: d.vehiclePos.vehicleId || null,
+        }
+      : null,
+    included: d.included,
+    passedStop: d.passedStop,
+    reason: d.filterReason,
+    route: d.routeShortName,
+    routeId: d.routeId,
+    scheduled: minutesToTime(d.scheduledMinutes),
+    stopIdx: d.targetStopIndex,
+    stopsAway: d.stopsAway,
+    tripId: d.tripId,
+  };
 }
 
 const REASON_LABELS: Record<string, { color: string; label: string }> = {
@@ -102,6 +167,7 @@ interface VehicleCardProps {
 export function DebugPanel({
   routesById = new Map(),
   selectedStopId = null,
+  selectedTripId = null,
   stopsById = new Map(),
 }: DebugPanelProps) {
   const vehiclePositions = useRealtimeStore((s) => s.vehiclePositions);
@@ -118,37 +184,43 @@ export function DebugPanel({
 
   const { dataDir } = useGTFSMode();
   const stopDiag = useStopDiagnostic(selectedStopId, stopsById, routesById, nowMs, { dataDir });
+  const vehicleDiag = useVehicleDiagnostic(selectedTripId, stopsById, routesById, nowMs, {
+    dataDir,
+  });
 
   const handleCopy = useCallback(() => {
     const vehicles = Array.from(vehiclePositions.values());
     const selectedStop = selectedStopId ? stopsById.get(selectedStopId) : null;
+    // With a stop selected the payload is about THAT stop: the full feed dump is noise
+    // (every trip that matters already carries its own gps block), so send counts only.
     const payload = {
       capturedAt: new Date(nowMs).toISOString(),
       liveFeed: {
         lastUpdate: lastUpdate ? new Date(lastUpdate).toISOString() : null,
         vehicleCount: vehicles.length,
-        vehicles,
+        ...(selectedStop ? {} : { vehicles }),
       },
       selectedStop: selectedStop
         ? {
-            diagnostics: {
-              totalTrips: stopDiag.totalTrips,
-              trips: stopDiag.diagnostics,
-              tripsIncluded: stopDiag.tripsIncluded,
-              tripsWithGPS: stopDiag.tripsWithGPS,
-            },
             id: selectedStopId,
             lat: selectedStop.lat,
             lon: selectedStop.lon,
             name: selectedStop.name,
+            summary: {
+              totalTrips: stopDiag.totalTrips,
+              tripsIncluded: stopDiag.tripsIncluded,
+              tripsWithGPS: stopDiag.tripsWithGPS,
+            },
+            ...pickStopTrips(stopDiag.diagnostics, nowMs),
           }
         : null,
+      selectedVehicle: vehicleDiag.diagnostic,
     };
     void navigator.clipboard.writeText(JSON.stringify(payload, null, 2)).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
-  }, [vehiclePositions, lastUpdate, nowMs, selectedStopId, stopsById, stopDiag]);
+  }, [vehiclePositions, lastUpdate, nowMs, selectedStopId, stopsById, stopDiag, vehicleDiag]);
 
   if (!isOpen) {
     return (
@@ -164,6 +236,7 @@ export function DebugPanel({
 
   const tabs: { icon: React.ReactNode; id: TabId; label: string }[] = [
     { icon: <Radio className="w-3 h-3" />, id: 'feed', label: 'Live Feed' },
+    { icon: <SearchCode className="w-3 h-3" />, id: 'vehicle', label: 'Vehicle' },
     { icon: <Bus className="w-3 h-3" />, id: 'stop', label: 'Stop' },
   ];
 
@@ -179,7 +252,7 @@ export function DebugPanel({
             aria-label="Copy context to clipboard"
             className="btn btn-ghost btn-circle btn-xs"
             onClick={handleCopy}
-            title="Copy live feed + stop context to clipboard"
+            title="Copy debug context to clipboard (stop-scoped when a stop is selected)"
           >
             {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
           </button>
@@ -212,6 +285,16 @@ export function DebugPanel({
 
       <div className="overflow-y-auto flex-1 px-4 py-3">
         {activeTab === 'feed' && <LiveFeedTab nowMs={nowMs} routesById={routesById} />}
+
+        {activeTab === 'vehicle' && (
+          <DebugVehicleTab
+            diagnostic={vehicleDiag.diagnostic}
+            error={vehicleDiag.error}
+            loading={vehicleDiag.loading}
+            nowMs={nowMs}
+            selectedTripId={selectedTripId}
+          />
+        )}
 
         {activeTab === 'stop' && (
           <StopDiagnosticTab
@@ -398,8 +481,8 @@ function TripDiagnosticRow({ d, nowMs }: TripDiagnosticRowProps) {
   const meta = REASON_LABELS[d.filterReason] ?? { color: 'badge-ghost', label: d.filterReason };
   const etaStr =
     d.arrivingInSeconds > 0
-      ? `in ${fmtSeconds(d.arrivingInSeconds)}`
-      : `${fmtSeconds(d.arrivingInSeconds)} ago`;
+      ? `in ${formatSignedSeconds(d.arrivingInSeconds)}`
+      : `${formatSignedSeconds(d.arrivingInSeconds)} ago`;
 
   return (
     <div
@@ -437,7 +520,7 @@ function TripDiagnosticRow({ d, nowMs }: TripDiagnosticRowProps) {
             <span className="text-base-content/50">delay</span>
             <span>{d.delaySeconds != null ? `${d.delaySeconds}s` : '—'}</span>
             <span className="text-base-content/50">arrivingIn</span>
-            <span>{fmtSeconds(d.arrivingInSeconds)}</span>
+            <span>{formatSignedSeconds(d.arrivingInSeconds)}</span>
             <span className="text-base-content/50">GPS</span>
             <span>{d.hasVehiclePosition ? '✓' : '✗'}</span>
             <span className="text-base-content/50">distance</span>
@@ -472,7 +555,7 @@ function TripDiagnosticRow({ d, nowMs }: TripDiagnosticRowProps) {
                 <span className="text-base-content/50">bearing</span>
                 <span>{d.vehiclePos.bearing != null ? `${d.vehiclePos.bearing}°` : '—'}</span>
                 <span className="text-base-content/50">gps age</span>
-                <span>{fmtTimestamp(d.vehiclePos.timestamp, nowMs)}</span>
+                <span>{formatTimestampAge(d.vehiclePos.timestamp, nowMs)}</span>
                 <span className="text-base-content/50">stopSeq</span>
                 <span>{d.vehiclePos.currentStopSequence ?? '—'}</span>
               </div>
@@ -564,7 +647,7 @@ function VehicleCard({ nowMs, onPin, pinned, pos, routeShortName }: VehicleCardP
             <span className="text-base-content/50">speed</span>
             <span>{pos.speed != null ? `${(pos.speed * 3.6).toFixed(1)} km/h` : '—'}</span>
             <span className="text-base-content/50">gps age</span>
-            <span>{fmtTimestamp(pos.timestamp, nowMs)}</span>
+            <span>{formatTimestampAge(pos.timestamp, nowMs)}</span>
             <span className="text-base-content/50">stopSeq</span>
             <span>{pos.currentStopSequence ?? '—'}</span>
             <span className="text-base-content/50">stopId</span>

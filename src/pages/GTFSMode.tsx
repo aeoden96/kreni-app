@@ -772,6 +772,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
           <DebugPanel
             routesById={routesById}
             selectedStopId={selectedStopId}
+            selectedTripId={vehicleFocus?.tripId ?? null}
             stopsById={stopsById}
           />
         )}
