@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { Route, Stop } from '../../utils/gtfs';
 import type { AllVehiclePosition } from '../../utils/vehicles';
+import type { JourneyStopFilter } from './search/DirectionsContent';
 
 import { useDirectionsModal } from '../../hooks/useDirectionsModal';
 import { DirectionsContent } from './search/DirectionsContent';
@@ -14,6 +15,8 @@ interface DirectionsModalProps {
   initialToStop?: null | Stop;
   isOpen: boolean;
   onClose: () => void;
+  /** Transit results hand off to the boarding stop view, filtered to the journey. */
+  onSelectJourneyStop: (childStopId: string, filter: JourneyStopFilter) => void;
   onSelectRoute: (
     routeId: string,
     routeType: number,
@@ -251,6 +254,7 @@ export const DirectionsModal = memo(function DirectionsModal(props: DirectionsMo
               dirResults={dirResults}
               dirToStop={dirToStop}
               onSelectDirectionsRoute={handleSelectDirectionsRoute}
+              onSelectJourneyStop={props.onSelectJourneyStop}
               stopsById={props.stopsById}
               vehicles={vehicles}
             />

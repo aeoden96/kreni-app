@@ -16,38 +16,41 @@ export function useRouteTimetable(
 ): { data: null | RouteTimetable; loading: boolean } {
   const [timetable, setTimetable] = useState<null | RouteTimetable>(null);
   const [loading, setLoading] = useState(false);
-  const prevKey = useRef<null | string>(null);
+
+  /**
+   * Key of the request whose result we still want. Used *only* to discard
+   * out-of-order responses — never to skip a fetch. Skipping on a key match
+   * used to strand the hook at `{ data: null, loading: false }` whenever the
+   * successful response was dropped (StrictMode's double-invoke, any remount)
+   * or whenever the same route was selected, cleared, then selected again.
+   * `fetchRouteTimetable` is memoised, so re-running is cheap.
+   */
+  const requestedKey = useRef<null | string>(null);
 
   useEffect(() => {
     if (!routeId) {
+      requestedKey.current = null;
       setTimetable(null);
       setLoading(false);
       return;
     }
 
     const key = `${dataDir}:${routeId}`;
-    if (prevKey.current === key) return;
-    prevKey.current = key;
-
-    let mounted = true;
+    requestedKey.current = key;
+    setTimetable(null);
     setLoading(true);
+
     fetchRouteTimetable(routeId, dataDir)
       .then((data) => {
-        if (mounted) {
-          setTimetable(data);
-          setLoading(false);
-        }
+        if (requestedKey.current !== key) return;
+        setTimetable(data);
+        setLoading(false);
       })
       .catch(() => {
         // Non-fatal — the next-stops feature degrades gracefully
-        if (mounted) {
-          setLoading(false);
-        }
+        if (requestedKey.current !== key) return;
+        setLoading(false);
       });
-
-    return () => {
-      mounted = false;
-    };
   }, [routeId, dataDir]);
 
   return { data: timetable, loading };

@@ -39,7 +39,7 @@ export function FocusedVehicleCard({
   if (!preview) return null;
 
   return (
-    <div className="mt-1 bg-base-200/50 rounded-xl p-3 border border-base-300 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-200">
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-200">
       <VehicleStopTimeline
         color={color}
         gpsActive={!!clickedVehiclePos}

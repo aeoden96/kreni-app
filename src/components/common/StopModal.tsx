@@ -3,7 +3,7 @@
  * Opened from the map popup expand button.
  */
 
-import { ArrowRight, CarTaxiFront, Clock, Info, Navigation2, Star, X } from 'lucide-react';
+import { ArrowRight, Clock, Info, Navigation2, Star, X } from 'lucide-react';
 import { memo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -20,10 +20,16 @@ import { bearingToCompassKey, minutesToTime } from '../../utils/gtfs';
 import { compassLabelForBearing } from '../../utils/localizedCompass';
 import { routeTypeColor } from '../../utils/routeStyle';
 import { DepartureCard } from './DepartureCard';
-import { RideHailingModal } from './RideHailingModal';
 
 interface StopModalProps {
   isOpen: boolean;
+  /**
+   * When set, the departure board is narrowed to the routes of a planned trip and
+   * a banner names the journey. The stop shown is the boarding platform for that
+   * journey. `onClearJourneyFilter` drops back to the full board for this stop.
+   */
+  journeyFilter?: null | { fromName: string; routeIds: string[]; toName: string };
+  onClearJourneyFilter?: () => void;
   onClose: () => void;
   onRouteClick: (
     routeId: string,
@@ -40,6 +46,8 @@ interface StopModalProps {
 
 export const StopModal = memo(function StopModal({
   isOpen,
+  journeyFilter,
+  onClearJourneyFilter,
   onClose,
   onRouteClick,
   onStopSelect,
@@ -53,7 +61,6 @@ export const StopModal = memo(function StopModal({
   const { dismissedGpsTip, favouriteStopIds, setDismissedGpsTip, toggleFavouriteStop } =
     useSettingsStore();
   const isFav = favouriteStopIds.includes(stop.id);
-  const [rideHailingModalOpen, setRideHailingModalOpen] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [routesExpanded, setRoutesExpanded] = useState(false);
   const [platformsExpanded, setPlatformsExpanded] = useState(false);
@@ -79,6 +86,14 @@ export const StopModal = memo(function StopModal({
     dataDir,
     lookaheadMinutes: timetableLookaheadMinutes,
   });
+
+  // When arriving from a planned trip, keep only the routes that make the journey.
+  const shownDepartures = journeyFilter
+    ? departures.filter((d) => journeyFilter.routeIds.includes(d.routeId))
+    : departures;
+  const shownLiveCount = journeyFilter
+    ? shownDepartures.filter((d) => d.hasGps && !d.passedStop).length
+    : liveCount;
 
   // Sibling platforms — stops at the same parent station, or (fallback) same-named stops
   // when no parent station is set (common for bus stop pairs without GTFS grouping).
@@ -188,13 +203,6 @@ export const StopModal = memo(function StopModal({
         <div className="p-4 border-b border-base-300">
           <div className="flex items-center gap-3 mb-2">
             <h2 className="text-xl font-bold flex-1">{stop.name}</h2>
-            <button
-              className="btn btn-ghost btn-circle btn-sm"
-              onClick={() => setRideHailingModalOpen(true)}
-              title={t('stopView.rideHailing')}
-            >
-              <CarTaxiFront className="w-5 h-5" />
-            </button>
             <button
               className="btn btn-ghost btn-circle btn-sm"
               onClick={() => toggleFavouriteStop(stop.id)}
@@ -342,8 +350,28 @@ export const StopModal = memo(function StopModal({
 
         {/* Content — single unified departure board */}
         <div className="flex-1 overflow-y-auto overscroll-contain">
+          {/* Planned-trip filter banner */}
+          {journeyFilter && (
+            <div className="mx-4 mt-4 mb-3 p-3 rounded-xl bg-primary/10 border border-primary/30 flex gap-2 items-center">
+              <Navigation2 className="w-4 h-4 text-primary shrink-0" />
+              <p className="flex-1 min-w-0 text-sm text-base-content/80">
+                {t('stopView.journeyFilterNotice', {
+                  from: journeyFilter.fromName,
+                  to: journeyFilter.toName,
+                })}
+              </p>
+              <button
+                className="btn btn-ghost btn-circle btn-xs shrink-0"
+                onClick={onClearJourneyFilter}
+                title={t('common.close')}
+                type="button"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
           {/* GPS tip banner */}
-          {hasRealtime && liveCount > 0 && !dismissedGpsTip && (
+          {hasRealtime && shownLiveCount > 0 && !dismissedGpsTip && (
             <div className="mx-4 mt-4 mb-3 p-4 rounded-xl bg-info/10 border border-info/30 flex gap-3 items-start">
               <Info className="w-5 h-5 text-info shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
@@ -372,21 +400,27 @@ export const StopModal = memo(function StopModal({
               <span className="loading loading-spinner loading-sm" />
               <span>{t('stopView.loadingTimetable')}</span>
             </div>
-          ) : departures.length === 0 ? (
-            (terminusBanner ?? (
+          ) : shownDepartures.length === 0 ? (
+            journeyFilter ? (
               <div className="p-8 text-center text-base-content/50">
                 {t('stopView.noDeparturesInMins', { minutes: timetableLookaheadMinutes })}
               </div>
-            ))
+            ) : (
+              (terminusBanner ?? (
+                <div className="p-8 text-center text-base-content/50">
+                  {t('stopView.noDeparturesInMins', { minutes: timetableLookaheadMinutes })}
+                </div>
+              ))
+            )
           ) : (
             <div className="p-4 space-y-2">
               <div className="flex items-center justify-between mb-1">
                 <h3 className="font-semibold">{t('stopView.departuresHeading')}</h3>
                 <div className="flex items-center gap-2">
-                  {liveCount > 0 && (
+                  {shownLiveCount > 0 && (
                     <span className="inline-flex items-center gap-1 text-xs font-medium text-success">
                       <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                      {t('stopView.liveNowCount', { count: liveCount })}
+                      {t('stopView.liveNowCount', { count: shownLiveCount })}
                     </span>
                   )}
                   <span className="text-xs text-base-content/40">
@@ -394,7 +428,7 @@ export const StopModal = memo(function StopModal({
                   </span>
                 </div>
               </div>
-              {departures.map((dep) => (
+              {shownDepartures.map((dep) => (
                 <DepartureCard
                   departure={dep}
                   key={dep.tripId}
@@ -408,11 +442,6 @@ export const StopModal = memo(function StopModal({
           )}
         </div>
       </div>
-      <RideHailingModal
-        isOpen={rideHailingModalOpen}
-        onClose={() => setRideHailingModalOpen(false)}
-        stop={stop}
-      />
     </div>
   );
 });

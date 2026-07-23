@@ -2,16 +2,7 @@
  * Fixed stop info bar at the top — tabbed view with "Vozila" (live GPS) and "Red vožnje" (timetable).
  */
 
-import {
-  ArrowRight,
-  CarTaxiFront,
-  ChevronDown,
-  ChevronUp,
-  Maximize2,
-  Navigation2,
-  Star,
-  X,
-} from 'lucide-react';
+import { ArrowRight, Maximize2, Navigation2, Star, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -27,9 +18,11 @@ import { bearingToCompassKey } from '../../utils/gtfs';
 import { compassLabelForBearing } from '../../utils/localizedCompass';
 import { routeTypeColor } from '../../utils/routeStyle';
 import { DepartureCard } from './DepartureCard';
-import { RideHailingModal } from './RideHailingModal';
 
 interface StopInfoBarProps {
+  /** When set, narrows the board to a planned trip's routes and shows a banner. */
+  journeyFilter?: null | { fromName: string; routeIds: string[]; toName: string };
+  onClearJourneyFilter?: () => void;
   onClose: () => void;
   onExpand: (stopId: string) => void;
   onRouteClick?: (
@@ -48,6 +41,8 @@ interface StopInfoBarProps {
 }
 
 export function StopInfoBar({
+  journeyFilter,
+  onClearJourneyFilter,
   onClose,
   onExpand,
   onRouteClick,
@@ -61,10 +56,8 @@ export function StopInfoBar({
   const { dataDir, timetableLookaheadMinutes } = useGTFSMode();
   const { favouriteStopIds, toggleFavouriteStop } = useSettingsStore();
   const isFav = favouriteStopIds.includes(stop.id);
-  const [rideHailingModalOpen, setRideHailingModalOpen] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [routesExpanded, setRoutesExpanded] = useState(false);
-  const [platformsExpanded, setPlatformsExpanded] = useState(false);
 
   const ROUTES_COLLAPSED_MAX = 3;
 
@@ -112,18 +105,11 @@ export function StopInfoBar({
   })();
 
   // Fetch routes for each sibling platform so we can show route badges
-  const { routeMap: siblingRouteMap, terminusSet: siblingTerminusSet } = useSiblingPlatformRoutes(
+  const { routeMap: siblingRouteMap } = useSiblingPlatformRoutes(
     siblingPlatforms.map((s) => s.id),
     routesById,
     { dataDir }
   );
-
-  // Terminus stops sorted last
-  const sortedSiblingPlatforms = siblingPlatforms.slice().sort((a, b) => {
-    const aT = siblingTerminusSet.has(a.id) ? 1 : 0;
-    const bT = siblingTerminusSet.has(b.id) ? 1 : 0;
-    return aT - bT;
-  });
 
   // Filter sibling platforms that actually have departures (for terminus banner)
   const departingSiblings = siblingPlatforms.filter((s) => {
@@ -167,7 +153,12 @@ export function StopInfoBar({
       })}
     </div>
   ) : null;
-  const topDepartures = departures.slice(0, 4);
+
+  // When arriving from a planned trip, keep only the journey's routes.
+  const relevantDepartures = journeyFilter
+    ? departures.filter((d) => journeyFilter.routeIds.includes(d.routeId))
+    : departures;
+  const topDepartures = relevantDepartures.slice(0, 4);
 
   const { routes: stopRoutes } = useStopRoutes(stop.id, routesById, { dataDir });
   const { termini } = useStopTermini(stop.id, stopsById, routesById, { dataDir });
@@ -227,13 +218,6 @@ export function StopInfoBar({
             <div className="flex items-center gap-1 shrink-0">
               <button
                 className="btn btn-ghost btn-circle btn-xs"
-                onClick={() => setRideHailingModalOpen(true)}
-                title={t('stopView.rideHailing')}
-              >
-                <CarTaxiFront className="w-4 h-4" />
-              </button>
-              <button
-                className="btn btn-ghost btn-circle btn-xs"
                 onClick={() => toggleFavouriteStop(stop.id)}
                 title={isFav ? t('search.favouriteRemove') : t('search.favouriteAdd')}
               >
@@ -270,92 +254,28 @@ export function StopInfoBar({
               </span>
             </div>
           )}
-          {siblingPlatforms.length > 0 && !isAllTerminus && (
-            <div className="mt-1">
-              {siblingPlatforms.length > 1 && (
-                <button
-                  aria-expanded={platformsExpanded}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] text-base-content/50 bg-base-200/70 border border-base-300 hover:bg-base-200 hover:text-base-content/70 active:scale-[0.98] transition-colors mb-1"
-                  onClick={() => setPlatformsExpanded((e) => !e)}
-                  type="button"
-                >
-                  <Navigation2 className="w-3 h-3 shrink-0" />
-                  <span>{t('stopView.otherPlatforms')}</span>
-                  <span className="font-semibold">{siblingPlatforms.length}</span>
-                  {platformsExpanded ? (
-                    <ChevronUp className="w-3 h-3" />
-                  ) : (
-                    <ChevronDown className="w-3 h-3" />
-                  )}
-                </button>
-              )}
-              {(platformsExpanded || siblingPlatforms.length === 1) && (
-                <div className="flex flex-col gap-1">
-                  {sortedSiblingPlatforms.map((s) => {
-                    const routes = siblingRouteMap.get(s.id) ?? [];
-                    const isTerminus = siblingTerminusSet.has(s.id);
-                    const label =
-                      s.bearing !== undefined
-                        ? t('search.headingTowards', {
-                            place: compassLabelForBearing(s.bearing, t),
-                          })
-                        : undefined;
-                    return (
-                      <button
-                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full border text-[11px] text-base-content/70 transition-colors ${
-                          isTerminus
-                            ? 'bg-warning/10 border-warning/40 hover:bg-warning/20 active:bg-warning/30'
-                            : 'bg-base-200/60 border-base-300 hover:bg-base-200 active:bg-base-300'
-                        }`}
-                        key={s.id}
-                        onClick={() => onStopSelect?.(s.id)}
-                        title={`${t('stopView.switchToStop', { name: s.name })}${
-                          s.bearing !== undefined
-                            ? t('stopView.bearingInTitle', {
-                                direction: compassLabelForBearing(s.bearing, t),
-                              })
-                            : ''
-                        }${isTerminus ? t('stopView.terminusInTitle') : ''}`}
-                        type="button"
-                      >
-                        <Navigation2
-                          className="w-2.5 h-2.5 shrink-0"
-                          style={
-                            s.bearing !== undefined
-                              ? { transform: `rotate(${s.bearing}deg)` }
-                              : undefined
-                          }
-                        />
-                        {label && <span>{label}</span>}
-                        {isTerminus && (
-                          <span className="badge-xs text-warning font-semibold">
-                            {t('stopView.terminusBadgeLong')}
-                          </span>
-                        )}
-                        {routes.length > 0 && (
-                          <span className="flex gap-0.5 ml-auto">
-                            {routes.slice(0, 3).map((r) => (
-                              <span
-                                className="badge badge-xs font-bold text-white"
-                                key={r.id}
-                                style={{ backgroundColor: routeTypeColor(r.type) }}
-                              >
-                                {r.shortName}
-                              </span>
-                            ))}
-                            {routes.length > 3 && (
-                              <span className="text-[10px] opacity-50">+{routes.length - 3}</span>
-                            )}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
         </div>
+
+        {/* Planned-trip filter banner */}
+        {journeyFilter && (
+          <div className="mb-2 p-2 rounded-lg bg-primary/10 border border-primary/30 flex gap-1.5 items-center">
+            <Navigation2 className="w-3.5 h-3.5 text-primary shrink-0" />
+            <p className="flex-1 min-w-0 text-xs text-base-content/80">
+              {t('stopView.journeyFilterNotice', {
+                from: journeyFilter.fromName,
+                to: journeyFilter.toName,
+              })}
+            </p>
+            <button
+              className="btn btn-ghost btn-circle btn-xs shrink-0"
+              onClick={onClearJourneyFilter}
+              title={t('common.close')}
+              type="button"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
         {/* Unified departure board */}
         {departuresLoading ? (
@@ -372,25 +292,20 @@ export function StopInfoBar({
         ) : (
           <div className="space-y-2">
             {topDepartures.map((dep) => (
-              <DepartureCard compact departure={dep} key={dep.tripId} onRouteClick={onRouteClick} />
+              <DepartureCard departure={dep} key={dep.tripId} onRouteClick={onRouteClick} />
             ))}
-            {departures.length > topDepartures.length && (
+            {relevantDepartures.length > topDepartures.length && (
               <button
                 className="w-full text-xs text-base-content/50 hover:text-base-content/80 py-1 text-center transition-colors"
                 onClick={() => onExpand(stop.id)}
                 type="button"
               >
-                {t('stopView.seeAllCount', { count: departures.length })} →
+                {t('stopView.seeAllCount', { count: relevantDepartures.length })} →
               </button>
             )}
           </div>
         )}
       </div>
-      <RideHailingModal
-        isOpen={rideHailingModalOpen}
-        onClose={() => setRideHailingModalOpen(false)}
-        stop={stop}
-      />
     </div>
   );
 }

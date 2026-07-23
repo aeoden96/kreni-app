@@ -70,6 +70,15 @@ export function GTFSMode({ config }: GTFSModeProps) {
     fromParentId: string;
     toParentId: string;
   }>(null);
+  // When arriving at a stop from a planned trip: narrows the stop's departure
+  // board to the journey's routes and shows a banner. Scoped to `stopId` so it
+  // auto-clears if the user switches to a different platform.
+  const [stopJourneyFilter, setStopJourneyFilter] = useState<null | {
+    fromName: string;
+    routeIds: string[];
+    stopId: string;
+    toName: string;
+  }>(null);
 
   const setNearbyPanelOpen = useCallback((open: boolean) => {
     setNearbyOpen(open);
@@ -292,19 +301,49 @@ export function GTFSMode({ config }: GTFSModeProps) {
   const handleExpandStop = (stopId: string) => {
     closeLegendAndDetails();
     const stop = stopsById.get(stopId);
-    if (stop && stop.locationType === 1) {
-      const childPlatform = stops.find((s) => s.parentStation === stopId && s.locationType === 0);
-      selectStop(childPlatform ? childPlatform.id : stopId);
-    } else {
-      selectStop(stopId);
-    }
+    const targetId =
+      stop && stop.locationType === 1
+        ? (stops.find((s) => s.parentStation === stopId && s.locationType === 0)?.id ?? stopId)
+        : stopId;
+    // Keep the planned-trip filter only when expanding the same journey stop.
+    if (stopJourneyFilter?.stopId !== targetId) setStopJourneyFilter(null);
+    selectStop(targetId);
     addRecentStop(stopId);
     setStopModalOpen(true);
   };
 
-  const handleStopClickFromRoute = (stopId: string) => {
+  // Plan-trip result tapped: jump the stop view to the boarding platform and
+  // narrow its board to the journey's routes (replaces the old route overlay).
+  const handleSelectJourneyStop = (
+    childStopId: string,
+    filter: { fromName: string; routeIds: string[]; toName: string }
+  ) => {
     closeLegendAndDetails();
-    selectStop(stopId);
+    setDirectionsModalOpen(false);
+    setDirectionsRestore(null);
+    clearRoute();
+    setJourneyContext(null);
+    selectStop(childStopId);
+    addRecentStop(childStopId);
+    setStopJourneyFilter({ ...filter, stopId: childStopId });
+    // Land on the compact stop bar, not the expanded modal.
+    setStopModalOpen(false);
+  };
+
+  /**
+   * A stop tapped on the route's line diagram. Zooms the map to it like any
+   * other stop selection — on mobile the marker is pushed into the lower half,
+   * since the stop bar that replaces this panel covers the top of the screen.
+   */
+  const handleStopClickFromRoute = (stopId: string) => {
+    handleSelectStop(stopId);
+    setRouteViewLargeOpen(false);
+  };
+
+  /** A vehicle tapped on the route's line diagram — same landing as tapping it on the map. */
+  const handleVehicleClickFromRoute = (tripId: string) => {
+    closeLegendAndDetails();
+    focusVehicle(tripId);
     setRouteViewLargeOpen(false);
   };
 
@@ -339,9 +378,13 @@ export function GTFSMode({ config }: GTFSModeProps) {
 
   const handleCloseStop = () => {
     setStopModalOpen(false);
+    setStopJourneyFilter(null);
   };
 
-  const handleCloseStopInfo = () => clearStop();
+  const handleCloseStopInfo = () => {
+    clearStop();
+    setStopJourneyFilter(null);
+  };
 
   // Open the Plan Journey modal fresh (no restored stops).
   const openPlanJourney = () => {
@@ -615,9 +658,9 @@ export function GTFSMode({ config }: GTFSModeProps) {
                 onClose={handleClearRoute}
                 onExpand={handleExpandRoute}
                 onFollowStart={handleFollowStart}
+                onStopClick={handleStopClickFromRoute}
                 onStopFollowing={handleStopFollowing}
-                onVehicleFocus={(tripId) => focusVehicle(tripId, { follow: true })}
-                onVehicleSwitch={focusVehicle}
+                onVehicleClick={handleVehicleClickFromRoute}
                 orderedStops={orderedStops}
                 route={selectedRoute}
                 routesById={routesById}
@@ -632,6 +675,12 @@ export function GTFSMode({ config }: GTFSModeProps) {
         {/* Stop Info Bar */}
         {selectedStop && !stopModalOpen && (
           <StopInfoBar
+            journeyFilter={
+              stopJourneyFilter && stopJourneyFilter.stopId === selectedStopId
+                ? stopJourneyFilter
+                : null
+            }
+            onClearJourneyFilter={() => setStopJourneyFilter(null)}
             onClose={handleCloseStopInfo}
             onExpand={handleExpandStop}
             onRouteClick={handleRouteClickFromStop}
@@ -737,6 +786,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
           }
           isOpen={directionsModalOpen}
           onClose={() => setDirectionsModalOpen(false)}
+          onSelectJourneyStop={handleSelectJourneyStop}
           onSelectRoute={handleSelectRoute}
           routes={routes}
           stops={stops}
@@ -758,12 +808,16 @@ export function GTFSMode({ config }: GTFSModeProps) {
         {/* Route Modal */}
         {selectedRoute && (
           <RouteViewLarge
+            focusedTripId={
+              vehicleFocus?.routeId === selectedRouteId ? (vehicleFocus?.tripId ?? null) : null
+            }
             initialDirectionFilter={directionFilter}
             isOpen={routeViewLargeOpen}
             journeyFromParentId={journeyContext?.fromParentId ?? null}
             journeyToParentId={journeyContext?.toParentId ?? null}
             onClose={handleCloseRoute}
             onStopClick={handleStopClickFromRoute}
+            onVehicleClick={handleVehicleClickFromRoute}
             orderedStops={orderedStops}
             route={selectedRoute}
             routeStops={routeStops}
@@ -778,6 +832,12 @@ export function GTFSMode({ config }: GTFSModeProps) {
         {selectedStop && (
           <StopModal
             isOpen={stopModalOpen}
+            journeyFilter={
+              stopJourneyFilter && stopJourneyFilter.stopId === selectedStopId
+                ? stopJourneyFilter
+                : null
+            }
+            onClearJourneyFilter={() => setStopJourneyFilter(null)}
             onClose={handleCloseStop}
             onRouteClick={handleRouteClickFromStop}
             onStopSelect={handleSelectStop}

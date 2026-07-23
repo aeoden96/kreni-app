@@ -6,9 +6,10 @@
  *  - `isFollowing`  — is the map locked to it?
  *
  * States:
- *  1. Browse (no `activeTripId`)          — direction toggle + mini-track + counts
- *  2. Focused (`activeTripId`, follow off) — as above + the vehicle's itinerary & switch
- *  3. Following (`activeTripId` + follow)  — colored border, mini-track collapsed, itinerary
+ *  1. Browse (no `activeTripId`)          — the whole line of stops (same metro
+ *     diagram as `RouteViewLarge`) with every vehicle on it, plus a direction
+ *     toggle and the no-vehicles banner
+ *  2. Focused (`activeTripId`)            — the vehicle's itinerary (next stops)
  */
 
 import {
@@ -16,7 +17,6 @@ import {
   Bus,
   ChevronDown,
   ChevronLeft,
-  ChevronRight,
   ChevronUp,
   MapPin,
   Maximize2,
@@ -31,18 +31,16 @@ import { useTranslation } from 'react-i18next';
 import type { Route, RouteTimetable, Stop } from '../../../utils/gtfs';
 import type { ParsedTripUpdate, ParsedVehiclePosition } from '../../../utils/realtime';
 import type { VehiclePosition } from '../../../utils/vehicles';
-import type { DirectionLabel } from './RouteDirectionToggle';
 
 import { useGTFSMode } from '../../../contexts/GTFSModeContext';
 import { useStopDepartures } from '../../../hooks/useStopDepartures';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { routeTypeColor } from '../../../utils/routeStyle';
-import { computeVehicleStopProgress } from '../../../utils/vehicles';
 import { getDirectionColor } from '../../Map/directionColors';
 import { DepartureCard } from '../DepartureCard';
-import { RouteMiniTrack } from '../RouteMiniTrack';
+import { RouteDirectionHeader } from '../RouteDirectionHeader';
+import { RouteStopList } from '../RouteStopList';
 import { FocusedVehicleCard } from './FocusedVehicleCard';
-import { RouteDirectionToggle } from './RouteDirectionToggle';
 
 interface RouteVehiclePanelProps {
   activeTripId: null | string;
@@ -60,11 +58,11 @@ interface RouteVehiclePanelProps {
   onClose: () => void;
   onExpand: () => void;
   onFollowStart: (tripId: string) => void;
+  /** Open the stop view for a stop picked off the line. */
+  onStopClick: (stopId: string) => void;
   onStopFollowing: () => void;
-  /** Focus a vehicle from the mini-track (starts following). */
-  onVehicleFocus: (tripId: string) => void;
-  /** Switch the focused vehicle via prev/next (preserves follow state). */
-  onVehicleSwitch: (tripId: string) => void;
+  /** Focus a vehicle picked off the line, switching the card to its itinerary. */
+  onVehicleClick: (tripId: string) => void;
   orderedStops?: Record<string, string[]>;
   route: Route;
   routesById?: Map<string, Route>;
@@ -88,9 +86,9 @@ export function RouteVehiclePanel({
   onClose,
   onExpand,
   onFollowStart,
+  onStopClick,
   onStopFollowing,
-  onVehicleFocus,
-  onVehicleSwitch,
+  onVehicleClick,
   orderedStops,
   route,
   routesById,
@@ -107,23 +105,12 @@ export function RouteVehiclePanel({
   const isFav = favouriteRouteIds.includes(route.id);
 
   const [compactListDirectionKey, setCompactListDirectionKey] = useState('');
-  const [miniTrackExpanded, setMiniTrackExpanded] = useState(false);
   const [showOriginDepartures, setShowOriginDepartures] = useState(false);
 
   const directionKeysSorted = useMemo(
     () => (orderedStops ? Object.keys(orderedStops).sort((a, b) => Number(a) - Number(b)) : []),
     [orderedStops]
   );
-
-  const directionLabels = useMemo<DirectionLabel[]>(() => {
-    if (!orderedStops || !stopsById) return [];
-    return directionKeysSorted.map((key, idx) => {
-      const ids = orderedStops[key] || [];
-      const endId = ids[ids.length - 1] || ids[0] || null;
-      const stopName = endId ? stopsById.get(endId)?.name || endId : key;
-      return { color: getDirectionColor(route.type, idx), key, label: stopName };
-    });
-  }, [directionKeysSorted, orderedStops, route.type, stopsById]);
 
   useEffect(() => {
     if (directionKeysSorted.length === 0) return;
@@ -135,8 +122,8 @@ export function RouteVehiclePanel({
     });
   }, [directionKeysSorted, journeyDirectionKey, route.id]);
 
-  /** Filter by direction index; if none match, show all. Then sort by route progress. */
-  const vehiclesForCompactList = useMemo(() => {
+  /** Vehicles in the active direction; if none match, fall back to all of them. */
+  const vehiclesInDirection = useMemo(() => {
     if (vehicles.length === 0) return [];
     if (!orderedStops || directionKeysSorted.length === 0 || !stopsById) return vehicles;
     const directionIndex =
@@ -144,23 +131,10 @@ export function RouteVehiclePanel({
         ? directionKeysSorted.indexOf(compactListDirectionKey)
         : 0;
     const dirVehicles = vehicles.filter((v) => v.direction === directionIndex);
-    const toSort = dirVehicles.length > 0 ? dirVehicles : vehicles;
-
-    const activeKey = compactListDirectionKey || directionKeysSorted[0] || '';
-    const ids = orderedStops[activeKey] ?? [];
-    const resolvedStops = ids.map((id) => {
-      const s = stopsById.get(id);
-      return s ? { lat: s.lat, lon: s.lon } : { lat: 0, lon: 0 };
-    });
-
-    return [...toSort].sort(
-      (a, b) =>
-        computeVehicleStopProgress(b.lat, b.lon, resolvedStops) -
-        computeVehicleStopProgress(a.lat, a.lon, resolvedStops)
-    );
+    return dirVehicles.length > 0 ? dirVehicles : vehicles;
   }, [compactListDirectionKey, directionKeysSorted, orderedStops, vehicles, stopsById]);
 
-  const miniTrackSegment = useMemo(() => {
+  const journeySegment = useMemo(() => {
     if (!journeyFromParentId || !journeyToParentId || !stopsById) return null;
     const ids = orderedStops?.[compactListDirectionKey] ?? [];
     const fromIdx = ids.findIndex((id) => stopsById.get(id)?.parentStation === journeyFromParentId);
@@ -175,26 +149,40 @@ export function RouteVehiclePanel({
     return { fromIdx, toIdx };
   }, [journeyFromParentId, journeyToParentId, compactListDirectionKey, orderedStops, stopsById]);
 
-  const switchToOffset = (offset: number) => {
-    if (!activeTripId || vehiclesForCompactList.length === 0) return;
-    const idx = vehiclesForCompactList.findIndex((v) => v.tripId === activeTripId);
-    if (idx === -1) return;
-    const len = vehiclesForCompactList.length;
-    const nextIdx = (idx + offset + len) % len;
-    onVehicleSwitch(vehiclesForCompactList[nextIdx].tripId);
-  };
-
   const showHeadsignInsteadOfRouteName =
     !!activeTripId && !!clickedVehicle?.headsign && clickedVehicle.headsign !== route.longName;
 
   const activeKey = compactListDirectionKey || directionKeysSorted[0] || '';
-  const miniTrackIds = orderedStops?.[activeKey] ?? [];
+  const directionStopIds = orderedStops?.[activeKey] ?? [];
   const hasDirections = !!orderedStops && !!stopsById && directionKeysSorted.length > 0;
+
+  /** Terminus name + colour per direction — drives the compact direction toggle. */
+  const directionLabels = useMemo(
+    () =>
+      directionKeysSorted.map((key, idx) => {
+        const ids = orderedStops?.[key] ?? [];
+        const endId = ids[ids.length - 1] ?? ids[0] ?? null;
+        return {
+          color: getDirectionColor(route.type ?? null, idx),
+          key,
+          label: (endId ? stopsById?.get(endId)?.name : null) ?? key,
+        };
+      }),
+    [directionKeysSorted, orderedStops, route.type, stopsById]
+  );
+  const activeDirection = directionLabels[directionKeysSorted.indexOf(activeKey)];
+
+  /** Step to the next direction of the line (two on ZET lines, but cycle anyway). */
+  const switchDirection = () => {
+    if (directionKeysSorted.length < 2) return;
+    const idx = directionKeysSorted.indexOf(activeKey);
+    setCompactListDirectionKey(directionKeysSorted[(idx + 1) % directionKeysSorted.length]);
+  };
 
   // Boarding stop of the journey — its departures can be expanded inline for
   // schedule context, especially when no live vehicles are tracked.
   const originStopId =
-    miniTrackSegment && routesById ? (miniTrackIds[miniTrackSegment.fromIdx] ?? null) : null;
+    journeySegment && routesById ? (directionStopIds[journeySegment.fromIdx] ?? null) : null;
   const originStopName = originStopId ? stopsById?.get(originStopId)?.name : undefined;
 
   return (
@@ -278,86 +266,24 @@ export function RouteVehiclePanel({
         {/* Body */}
         {hasDirections ? (
           <div className="space-y-2">
-            {directionLabels.length > 0 && !journeyDirectionKey ? (
-              <RouteDirectionToggle
-                activeKey={compactListDirectionKey}
-                directions={directionLabels}
-                onSelect={setCompactListDirectionKey}
-                routeType={route.type}
-                vehicles={vehicles}
-              />
-            ) : null}
-
-            {miniTrackSegment && (
+            {journeySegment && (
               <div className="flex flex-col gap-1 px-3 py-2 rounded-lg border border-primary/25 bg-primary/5">
                 <div className="flex items-center gap-2">
                   <Navigation className="w-3.5 h-3.5 shrink-0 text-primary/70" />
                   <span className="text-xs text-base-content/70">
                     {t('routeBar.journeySegmentLabel', {
-                      from: stopsById?.get(miniTrackIds[miniTrackSegment.fromIdx])?.name ?? '',
-                      to: stopsById?.get(miniTrackIds[miniTrackSegment.toIdx])?.name ?? '',
+                      from: stopsById?.get(directionStopIds[journeySegment.fromIdx])?.name ?? '',
+                      to: stopsById?.get(directionStopIds[journeySegment.toIdx])?.name ?? '',
                     })}
                   </span>
                 </div>
-                {vehiclesForCompactList.length > 0 && (
+                {vehiclesInDirection.length > 0 && (
                   <span className="text-[10px] text-base-content/50 pl-[22px]">
                     {t('routeBar.catchableVehiclesHint')}
                   </span>
                 )}
               </div>
             )}
-
-            <div className="flex items-center justify-between px-0.5 mb-1">
-              <span className="text-[10px] text-base-content/40 uppercase tracking-wide">
-                {t('routeBar.stationsLabel')}
-              </span>
-              {!isFollowing && (
-                <button
-                  className="btn btn-ghost btn-xs p-0 h-5 w-5 min-h-0 rounded"
-                  onClick={() => setMiniTrackExpanded((v) => !v)}
-                  type="button"
-                >
-                  {miniTrackExpanded ? (
-                    <ChevronUp className="w-3 h-3" />
-                  ) : (
-                    <ChevronDown className="w-3 h-3" />
-                  )}
-                </button>
-              )}
-            </div>
-
-            <div className="flex items-center gap-1">
-              {activeTripId && (
-                <button
-                  className="btn btn-sm btn-circle btn-ghost bg-base-100 border border-base-300 shadow-sm shrink-0"
-                  disabled={vehiclesForCompactList.length <= 1}
-                  onClick={() => switchToOffset(1)}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-              )}
-              <div className="flex-1 min-w-0">
-                <RouteMiniTrack
-                  activeTripId={activeTripId}
-                  expanded={miniTrackExpanded && !isFollowing}
-                  journeySegment={miniTrackSegment}
-                  onVehicleClick={onVehicleFocus}
-                  orderedStopIds={miniTrackIds}
-                  routeType={route.type}
-                  stopsById={stopsById!}
-                  vehicles={vehiclesForCompactList}
-                />
-              </div>
-              {activeTripId && (
-                <button
-                  className="btn btn-sm btn-circle btn-ghost bg-base-100 border border-base-300 shadow-sm shrink-0"
-                  disabled={vehiclesForCompactList.length <= 1}
-                  onClick={() => switchToOffset(-1)}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              )}
-            </div>
 
             {activeTripId ? (
               <FocusedVehicleCard
@@ -370,17 +296,47 @@ export function RouteVehiclePanel({
                 stopsById={stopsById}
                 timetableLoading={timetableLoading}
               />
-            ) : vehiclesForCompactList.length > 0 ? (
-              <p className="text-[10px] text-base-content/35 text-center mt-0.5">
-                {t('routeBar.tapVehiclesHint')}
-              </p>
             ) : (
-              <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-warning/30 bg-warning/10">
-                <RouteIcon className="w-4 h-4 shrink-0 text-warning" />
-                <span className="text-xs font-medium text-base-content/70">
-                  {t('routeBar.noActiveVehiclesBanner')}
-                </span>
-              </div>
+              <>
+                {vehiclesInDirection.length === 0 && (
+                  <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-warning/30 bg-warning/10">
+                    <RouteIcon className="w-4 h-4 shrink-0 text-warning" />
+                    <span className="text-xs font-medium text-base-content/70">
+                      {t('routeBar.noActiveVehiclesBanner')}
+                    </span>
+                  </div>
+                )}
+
+                {/* Direction header — the journey context pins the direction */}
+                {!journeySegment && activeDirection && (
+                  <RouteDirectionHeader
+                    caption={t('routeBar.directionTowards')}
+                    color={activeDirection.color}
+                    label={activeDirection.label}
+                    onSwitch={directionLabels.length > 1 ? switchDirection : undefined}
+                  />
+                )}
+
+                {/* The line of stops — same diagram as the expanded route view */}
+                <div className="max-h-[45vh] overflow-y-auto overflow-x-hidden overscroll-contain rounded-lg border border-base-300">
+                  <RouteStopList
+                    journeySegment={journeySegment}
+                    onStopClick={onStopClick}
+                    onVehicleClick={onVehicleClick}
+                    orderedStopIds={directionStopIds}
+                    routeType={route.type}
+                    segmentColor={activeDirection?.color ?? color}
+                    stopsById={stopsById}
+                    vehicles={vehiclesInDirection}
+                  />
+                </div>
+
+                {vehiclesInDirection.length > 0 && (
+                  <p className="text-[10px] text-base-content/35 text-center">
+                    {t('routeBar.tapVehiclesHint')}
+                  </p>
+                )}
+              </>
             )}
 
             {originStopId && stopsById && routesById && (

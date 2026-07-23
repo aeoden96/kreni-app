@@ -18,9 +18,11 @@ import type { VehiclePosition } from '../../utils/vehicles';
 
 import { useGTFSMode } from '../../contexts/GTFSModeContext';
 import { useCurrentTime } from '../../hooks/useCurrentTime';
+import { formatMinutes } from '../../utils/format';
 import { routeTypeColor } from '../../utils/routeStyle';
 import { getDirectionColor } from '../Map/directionColors';
-import { RouteLineDiagram, STOP_LIST_PADDING_TOP, STOP_ROW_HEIGHT } from './RouteLineDiagram';
+import { RouteDirectionHeader } from './RouteDirectionHeader';
+import { RouteStopList } from './RouteStopList';
 
 /** A single scheduled run of the line in the active direction. */
 interface Departure {
@@ -34,6 +36,8 @@ interface Departure {
 type DirectionFilter = 'A' | 'B';
 
 interface RouteViewLargeProps {
+  /** Trip id of the currently focused vehicle, drawn with a heavier ring. */
+  focusedTripId?: null | string;
   /** Default direction — 'A' or 'B'. */
   initialDirectionFilter?: DirectionFilter;
   isOpen: boolean;
@@ -43,6 +47,8 @@ interface RouteViewLargeProps {
   journeyToParentId?: null | string;
   onClose: () => void;
   onStopClick: (stopId: string) => void;
+  /** Focus a vehicle picked off the line; the panel closes onto its itinerary. */
+  onVehicleClick: (tripId: string) => void;
   orderedStops?: Record<string, string[]>;
   route: Route;
   routeStops: string[];
@@ -54,21 +60,15 @@ interface RouteViewLargeProps {
   vehicles: VehiclePosition[];
 }
 
-/** Format minutes-from-midnight as HH:MM, wrapping past-midnight times (>24:00). */
-function formatTime(minutesFromMidnight: number): string {
-  const wrapped = ((minutesFromMidnight % 1440) + 1440) % 1440;
-  const h = Math.floor(wrapped / 60);
-  const m = wrapped % 60;
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-}
-
 export const RouteViewLarge = memo(function RouteViewLarge({
+  focusedTripId,
   initialDirectionFilter = 'A',
   isOpen,
   journeyFromParentId,
   journeyToParentId,
   onClose,
   onStopClick,
+  onVehicleClick,
   orderedStops,
   route,
   routeStops,
@@ -104,6 +104,13 @@ export const RouteViewLarge = memo(function RouteViewLarge({
 
   // Track selected direction by key (default based on initialDirectionFilter)
   const [directionKey, setDirectionKey] = useState<string>(initialKey);
+
+  /** Step to the next direction of the line (two on ZET lines, but cycle anyway). */
+  const switchDirection = () => {
+    if (directionKeys.length < 2) return;
+    const idx = directionKeys.indexOf(directionKey);
+    setDirectionKey(directionKeys[(idx + 1) % directionKeys.length]);
+  };
 
   // Ordered stop IDs for the active direction
   const orderedStopIds: string[] = orderedStops?.[directionKey]?.length
@@ -210,12 +217,6 @@ export const RouteViewLarge = memo(function RouteViewLarge({
 
   if (!isOpen) return null;
 
-  const stopRows = orderedStopIds.map((stopId, idx) => ({
-    idx,
-    stop: stopsById.get(stopId),
-    stopId,
-  }));
-
   return (
     <>
       {/* Mobile-only backdrop */}
@@ -264,57 +265,15 @@ export const RouteViewLarge = memo(function RouteViewLarge({
             </button>
           </div>
 
-          {/* Row 2: direction toggle OR static journey direction label */}
-          {journeySegment ? (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-base-200 border border-base-300">
-              <span className="text-xs text-base-content/50 shrink-0">
-                {t('routeModal.journeyDirection')}
-              </span>
-              <span className="font-semibold text-sm flex-1 truncate">
-                {directionLabels[directionIndex]?.label}
-              </span>
-            </div>
-          ) : (
-            <div className="flex rounded-lg overflow-hidden border border-base-300 w-full">
-              {directionLabels.map((dir, idx) => {
-                const dirCount = vehicles.filter((v) => v.direction === idx).length;
-                const isActive = directionKey === dir.key;
-                const VehicleIcon = RouteIcon;
-                return (
-                  <button
-                    className={[
-                      'flex-1 flex items-center justify-between gap-2 px-3 py-1.5 text-sm font-semibold transition-colors min-w-0',
-                      isActive
-                        ? 'text-white'
-                        : 'bg-base-100 text-base-content/60 hover:bg-base-200',
-                    ].join(' ')}
-                    key={dir.key}
-                    onClick={() => setDirectionKey(dir.key)}
-                    style={isActive ? { backgroundColor: dir.color } : undefined}
-                  >
-                    <span className="truncate">{dir.label}</span>
-                    <span
-                      className={[
-                        'flex items-center gap-1 shrink-0 text-xs font-bold tabular-nums',
-                        isActive ? 'text-white/90' : dirCount > 0 ? 'text-success' : 'opacity-30',
-                      ].join(' ')}
-                    >
-                      {dirCount > 0 && (
-                        <span
-                          className={[
-                            'w-1.5 h-1.5 rounded-full animate-pulse',
-                            isActive ? 'bg-white/80' : 'bg-success',
-                          ].join(' ')}
-                        />
-                      )}
-                      <VehicleIcon className="w-3 h-3" />
-                      {dirCount}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          {/* Row 2: active direction — switchable unless a journey pins it */}
+          <RouteDirectionHeader
+            caption={
+              journeySegment ? t('routeModal.journeyDirection') : t('routeBar.directionTowards')
+            }
+            color={color}
+            label={directionLabels[directionIndex]?.label ?? ''}
+            onSwitch={!journeySegment && directionLabels.length > 1 ? switchDirection : undefined}
+          />
 
           {/* Departures strip (train mode) — pick a run to see its calling times */}
           {showTimetable && departures.length > 0 && (
@@ -341,7 +300,7 @@ export const RouteViewLarge = memo(function RouteViewLarge({
                     style={isActive ? { backgroundColor: color } : undefined}
                     type="button"
                   >
-                    {formatTime(d.departureMin)}
+                    {formatMinutes(d.departureMin)}
                   </button>
                 );
               })}
@@ -351,67 +310,18 @@ export const RouteViewLarge = memo(function RouteViewLarge({
 
         {/* Scrollable body: metro diagram + stop list side-by-side */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
-          <div className="flex" style={{ paddingTop: STOP_LIST_PADDING_TOP }}>
-            {/* Metro line diagram column */}
-            <RouteLineDiagram
-              journeySegment={journeySegment}
-              orderedStopIds={orderedStopIds}
-              routeType={route.type}
-              stopsById={stopsById}
-              vehicles={filteredVehicles}
-            />
-
-            {/* Stop name list */}
-            <div className="flex-1 min-w-0">
-              {stopRows.map(({ idx, stop, stopId }) => {
-                const isEndpoint =
-                  stopRows[0]?.stopId === stopId ||
-                  stopRows[stopRows.length - 1]?.stopId === stopId;
-                const isInSegment = journeySegment
-                  ? idx >= journeySegment.fromIdx && idx <= journeySegment.toIdx
-                  : true;
-                const isJourneyEndpoint = journeySegment
-                  ? idx === journeySegment.fromIdx || idx === journeySegment.toIdx
-                  : false;
-                const name = stop?.name ?? stopId;
-                const stopTime = selectedStopTimes?.get(stopId);
-                return (
-                  <button
-                    className={[
-                      'w-full text-left px-3 flex items-center gap-2',
-                      'transition-colors hover:bg-base-200 active:bg-base-300',
-                      isEndpoint ? 'font-semibold' : '',
-                      !isInSegment ? 'opacity-25' : '',
-                    ].join(' ')}
-                    key={stopId}
-                    onClick={() => onStopClick(stopId)}
-                    style={{ height: STOP_ROW_HEIGHT }}
-                  >
-                    {isJourneyEndpoint && (
-                      <span
-                        className="w-2 h-2 rounded-full shrink-0"
-                        style={{ backgroundColor: color }}
-                      />
-                    )}
-                    <span className="text-sm leading-tight line-clamp-1 flex-1 min-w-0">
-                      {name}
-                    </span>
-                    {showTimetable && stopTime !== undefined && (
-                      <span className="text-xs font-semibold tabular-nums text-base-content/60 shrink-0">
-                        {formatTime(stopTime)}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-
-              {stopRows.length === 0 && (
-                <div className="text-sm text-base-content/50 px-3 py-8 text-center">
-                  {t('routeModal.noStops')}
-                </div>
-              )}
-            </div>
-          </div>
+          <RouteStopList
+            focusedTripId={focusedTripId}
+            journeySegment={journeySegment}
+            onStopClick={onStopClick}
+            onVehicleClick={onVehicleClick}
+            orderedStopIds={orderedStopIds}
+            routeType={route.type}
+            segmentColor={color}
+            stopsById={stopsById}
+            stopTimes={showTimetable ? selectedStopTimes : null}
+            vehicles={filteredVehicles}
+          />
         </div>
       </div>
     </>

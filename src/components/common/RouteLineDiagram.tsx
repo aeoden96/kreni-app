@@ -12,6 +12,7 @@
  * stop list take the remaining space.
  */
 
+import { Bus, TrainFront, TramFront } from 'lucide-react';
 import { useMemo } from 'react';
 
 import type { Stop } from '../../utils/gtfs';
@@ -30,9 +31,20 @@ export const STOP_LIST_PADDING_TOP = 8;
 /** Width of the diagram column (in px). */
 const DIAGRAM_WIDTH = 44;
 
+/** Left inset of the whole diagram + stop list, so the track line isn't flush left. */
+export const STOP_LIST_PADDING_LEFT = 8;
+
+/** Vehicle marker circle and the glyph cut out of it (in px). */
+const VEHICLE_MARKER_SIZE = 28;
+const VEHICLE_ICON_SIZE = 16;
+
 interface RouteLineDiagramProps {
+  /** Trip id of the currently focused vehicle, drawn with a heavier ring. */
+  focusedTripId?: null | string;
   /** Journey segment to highlight — stops outside are dimmed. */
   journeySegment?: null | { fromIdx: number; toIdx: number };
+  /** Focus a vehicle. Markers stay decorative (non-focusable) when omitted. */
+  onVehicleClick?: (tripId: string) => void;
   /** Ordered stop IDs for the selected direction. */
   orderedStopIds: string[];
   /** GTFS route_type: 0 = tram, 2 = rail, 3 = bus. */
@@ -49,7 +61,9 @@ interface VehicleMarker {
 }
 
 export function RouteLineDiagram({
+  focusedTripId,
   journeySegment,
+  onVehicleClick,
   orderedStopIds,
   routeType,
   stopsById,
@@ -57,6 +71,8 @@ export function RouteLineDiagram({
 }: RouteLineDiagramProps) {
   const color = routeTypeColor(routeType);
   const stopCount = orderedStopIds.length;
+  // route_type: 0 = tram, 2 = rail, 3 = bus (see routeTypeColor).
+  const VehicleIcon = routeType === 3 ? Bus : routeType === 2 ? TrainFront : TramFront;
 
   // Build a resolved (lat, lon) array aligned with orderedStopIds
   const resolvedStops = useMemo(
@@ -95,106 +111,108 @@ export function RouteLineDiagram({
     : null;
 
   return (
-    <div
-      aria-hidden="true"
-      className="relative flex-shrink-0"
-      style={{ height: totalHeight, width: DIAGRAM_WIDTH }}
-    >
-      {/* Vertical track line — split into 3 segments when journey context is active */}
-      {journeySegment && segmentFromTop !== null && segmentToTop !== null ? (
-        <>
-          {/* Before segment: dimmed */}
-          {segmentFromTop > firstDotTop && (
+    <div className="relative flex-shrink-0" style={{ height: totalHeight, width: DIAGRAM_WIDTH }}>
+      {/* Decorative layer: the track and its stop dots. Kept out of the a11y tree
+          (the stop list next to it carries the real names), but the vehicle
+          markers below must stay reachable, so aria-hidden sits here, not on the
+          diagram as a whole. */}
+      <div aria-hidden="true" className="absolute inset-0">
+        {/* Vertical track line — split into 3 segments when journey context is active */}
+        {journeySegment && segmentFromTop !== null && segmentToTop !== null ? (
+          <>
+            {/* Before segment: dimmed */}
+            {segmentFromTop > firstDotTop && (
+              <div
+                className="absolute"
+                style={{
+                  backgroundColor: color,
+                  borderRadius: 2,
+                  height: segmentFromTop - firstDotTop,
+                  left: '50%',
+                  opacity: 0.2,
+                  top: firstDotTop,
+                  transform: 'translateX(-50%)',
+                  width: 3,
+                }}
+              />
+            )}
+            {/* Active segment: full opacity, slightly wider */}
             <div
               className="absolute"
               style={{
                 backgroundColor: color,
                 borderRadius: 2,
-                height: segmentFromTop - firstDotTop,
+                height: segmentToTop - segmentFromTop,
                 left: '50%',
-                opacity: 0.2,
-                top: firstDotTop,
+                opacity: 1,
+                top: segmentFromTop,
                 transform: 'translateX(-50%)',
-                width: 3,
+                width: 4,
               }}
             />
-          )}
-          {/* Active segment: full opacity, slightly wider */}
+            {/* After segment: dimmed */}
+            {segmentToTop < lastDotTop && (
+              <div
+                className="absolute"
+                style={{
+                  backgroundColor: color,
+                  borderRadius: 2,
+                  height: lastDotTop - segmentToTop,
+                  left: '50%',
+                  opacity: 0.2,
+                  top: segmentToTop,
+                  transform: 'translateX(-50%)',
+                  width: 3,
+                }}
+              />
+            )}
+          </>
+        ) : (
+          /* Single full-height track line */
           <div
             className="absolute"
             style={{
               backgroundColor: color,
               borderRadius: 2,
-              height: segmentToTop - segmentFromTop,
+              height: lastDotTop - firstDotTop,
               left: '50%',
-              opacity: 1,
-              top: segmentFromTop,
+              opacity: 0.75,
+              top: firstDotTop,
               transform: 'translateX(-50%)',
-              width: 4,
+              width: 3,
             }}
           />
-          {/* After segment: dimmed */}
-          {segmentToTop < lastDotTop && (
+        )}
+
+        {/* Stop dots */}
+        {orderedStopIds.map((_, idx) => {
+          const isEndpoint = idx === 0 || idx === stopCount - 1;
+          const isOutsideSegment =
+            journeySegment && (idx < journeySegment.fromIdx || idx > journeySegment.toIdx);
+          const dotSize = isEndpoint ? 12 : 7;
+          const top = STOP_LIST_PADDING_TOP + idx * STOP_ROW_HEIGHT + STOP_ROW_HEIGHT / 2;
+
+          return (
             <div
               className="absolute"
+              key={idx}
               style={{
-                backgroundColor: color,
-                borderRadius: 2,
-                height: lastDotTop - segmentToTop,
+                backgroundColor: isEndpoint ? color : 'white',
+                border: `2.5px solid ${color}`,
+                borderRadius: '50%',
+                boxShadow: isEndpoint ? `0 0 0 2px ${color}33` : undefined,
+                height: dotSize,
                 left: '50%',
-                opacity: 0.2,
-                top: segmentToTop,
-                transform: 'translateX(-50%)',
-                width: 3,
+                opacity: isOutsideSegment ? 0.2 : 1,
+                top,
+                transform: 'translate(-50%, -50%)',
+                width: dotSize,
+                zIndex: 1,
               }}
             />
-          )}
-        </>
-      ) : (
-        /* Single full-height track line */
-        <div
-          className="absolute"
-          style={{
-            backgroundColor: color,
-            borderRadius: 2,
-            height: lastDotTop - firstDotTop,
-            left: '50%',
-            opacity: 0.75,
-            top: firstDotTop,
-            transform: 'translateX(-50%)',
-            width: 3,
-          }}
-        />
-      )}
-
-      {/* Stop dots */}
-      {orderedStopIds.map((_, idx) => {
-        const isEndpoint = idx === 0 || idx === stopCount - 1;
-        const isOutsideSegment =
-          journeySegment && (idx < journeySegment.fromIdx || idx > journeySegment.toIdx);
-        const dotSize = isEndpoint ? 12 : 7;
-        const top = STOP_LIST_PADDING_TOP + idx * STOP_ROW_HEIGHT + STOP_ROW_HEIGHT / 2;
-
-        return (
-          <div
-            className="absolute"
-            key={idx}
-            style={{
-              backgroundColor: isEndpoint ? color : 'white',
-              border: `2.5px solid ${color}`,
-              borderRadius: '50%',
-              boxShadow: isEndpoint ? `0 0 0 2px ${color}33` : undefined,
-              height: dotSize,
-              left: '50%',
-              opacity: isOutsideSegment ? 0.2 : 1,
-              top,
-              transform: 'translate(-50%, -50%)',
-              width: dotSize,
-              zIndex: 1,
-            }}
-          />
-        );
-      })}
+          );
+        })}
+      </div>
 
       {/* Vehicle markers */}
       {vehicleMarkers.map(({ progress, vehicle }, idx) => {
@@ -217,17 +235,26 @@ export function RouteLineDiagram({
                 : 'Na vrijeme'
           );
         const tooltip = tooltipParts.join(' · ');
+        const isFocused = !!focusedTripId && vehicle.tripId === focusedTripId;
 
         return (
-          <div
+          <button
+            aria-hidden={onVehicleClick ? undefined : true}
+            aria-label={tooltip}
             className="absolute"
+            disabled={!onVehicleClick}
             key={`v-${idx}`}
+            onClick={onVehicleClick ? () => onVehicleClick(vehicle.tripId) : undefined}
             style={{
+              cursor: onVehicleClick ? 'pointer' : 'default',
               left: '50%',
               top,
               transform: 'translate(-50%, -50%)',
               zIndex: 2,
             }}
+            tabIndex={onVehicleClick ? undefined : -1}
+            title={tooltip}
+            type="button"
           >
             {/* Pulsing halo ring — offset by -2px each side so it stays centred without
                 relying on transform (animate-ping's keyframe overwrites transform) */}
@@ -235,33 +262,30 @@ export function RouteLineDiagram({
               className="absolute rounded-full animate-ping"
               style={{
                 backgroundColor: color,
-                height: 28,
+                height: VEHICLE_MARKER_SIZE + 4,
                 left: -2,
                 opacity: 0.35,
                 top: -2,
-                width: 28,
+                width: VEHICLE_MARKER_SIZE + 4,
               }}
             />
             {/* Vehicle circle */}
             <div
-              className="relative flex items-center justify-center"
+              className="relative flex items-center justify-center transition-transform active:scale-95"
               style={{
                 backgroundColor: color,
                 border: '2.5px solid white',
                 borderRadius: '50%',
-                boxShadow: '0 1px 5px rgba(0,0,0,0.45)',
-                cursor: 'default',
-                height: 24,
-                width: 24,
+                boxShadow: isFocused
+                  ? `0 0 0 3px ${color}, 0 1px 5px rgba(0,0,0,0.45)`
+                  : '0 1px 5px rgba(0,0,0,0.45)',
+                height: VEHICLE_MARKER_SIZE,
+                width: VEHICLE_MARKER_SIZE,
               }}
-              title={tooltip}
             >
-              {/* Small direction triangle — pointing down (direction of travel) */}
-              <svg fill="none" height="10" viewBox="0 0 8 8" width="10">
-                <polygon fill="white" points="4,7 7,1 1,1" />
-              </svg>
+              <VehicleIcon color="white" size={VEHICLE_ICON_SIZE} strokeWidth={2.25} />
             </div>
-          </div>
+          </button>
         );
       })}
     </div>

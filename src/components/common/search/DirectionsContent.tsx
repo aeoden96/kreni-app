@@ -7,8 +7,16 @@ import type { AllVehiclePosition } from '../../../utils/vehicles';
 
 import { useGTFSMode } from '../../../contexts/GTFSModeContext';
 import { useJourneyDepartures } from '../../../hooks/useJourneyDepartures';
+import { useRouteTripDirections } from '../../../hooks/useRouteTripDirections';
+import { fetchRouteStops } from '../../../utils/gtfs';
 import { routeTypeColor } from '../../../utils/routeStyle';
 import { RouteMiniTrack } from '../RouteMiniTrack';
+
+export interface JourneyStopFilter {
+  fromName: string;
+  routeIds: string[];
+  toName: string;
+}
 
 interface DirectionResult {
   directionFilter: 'A' | 'B';
@@ -18,6 +26,17 @@ interface DirectionResult {
   route: Route;
   stopsBetween: number;
   toIndex: number;
+}
+
+interface DirectionResultRowProps {
+  dataDir: string;
+  fromName: string;
+  item: DirectionResult;
+  journeyRouteIds: string[];
+  onSelectJourneyStop: (childStopId: string, filter: JourneyStopFilter) => void;
+  stopsById: Map<string, Stop>;
+  toName: string;
+  vehicles: AllVehiclePosition[];
 }
 
 interface DirectionsContentProps {
@@ -32,6 +51,8 @@ interface DirectionsContentProps {
     direction: 'A' | 'B',
     tripId?: null | string
   ) => void;
+  /** Tapping a transit result jumps to the boarding platform's stop view, filtered to the journey. */
+  onSelectJourneyStop: (childStopId: string, filter: JourneyStopFilter) => void;
   stopsById: Map<string, Stop>;
   vehicles: AllVehiclePosition[];
 }
@@ -43,11 +64,19 @@ export function DirectionsContent({
   dirResults,
   dirToStop,
   onSelectDirectionsRoute,
+  onSelectJourneyStop,
   stopsById,
   vehicles,
 }: DirectionsContentProps) {
   const { t } = useTranslation();
   const { dataDir, hasRealtime } = useGTFSMode();
+
+  // Every direct route that makes this journey — the departure board at the
+  // boarding stop is narrowed to these once a result is tapped.
+  const journeyRouteIds = useMemo(
+    () => [...new Set(dirResults.map((r) => r.route.id))],
+    [dirResults]
+  );
 
   // Train mode: show a chronological A→B departures board (times + duration)
   // instead of a bare list of connecting lines.
@@ -150,81 +179,19 @@ export function DirectionsContent({
         )}
         {!dirLoading && dirResults.length > 0 && (
           <div className="divide-y divide-base-300 border border-base-300 rounded-xl overflow-hidden">
-            {dirResults.map((item) => {
-              const color = routeTypeColor(item.route.type);
-              const directionIndex = item.directionFilter === 'A' ? 0 : 1;
-              const routeVehicles = vehicles.filter(
-                (v) => v.routeId === item.route.id && v.direction === directionIndex
-              );
-              const journeySegment = { fromIdx: item.fromIndex, toIdx: item.toIndex };
-              const terminusName = stopsById.get(
-                item.parentStopIds[item.parentStopIds.length - 1]
-              )?.name;
-
-              return (
-                <div key={`${item.route.id}-${item.directionKey}`}>
-                  {/* Route info row — clickable header */}
-                  <button
-                    className="w-full px-3 pt-3 pb-2 text-left hover:bg-base-200 transition-colors"
-                    onClick={() =>
-                      onSelectDirectionsRoute(item.route.id, item.route.type, item.directionFilter)
-                    }
-                    type="button"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span
-                        className="badge font-bold text-white min-w-[3rem] justify-center"
-                        style={{ backgroundColor: color }}
-                      >
-                        {item.route.shortName}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm line-clamp-1">{item.route.longName}</div>
-                        <div className="text-xs text-base-content/60">
-                          {terminusName
-                            ? t('search.routeTerminusMeta', {
-                                count: item.stopsBetween + 1,
-                                place: terminusName,
-                              })
-                            : t('search.routeDirectionMeta', {
-                                count: item.stopsBetween + 1,
-                                direction: item.directionFilter,
-                              })}
-                        </div>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-base-content/30 shrink-0" />
-                    </div>
-                  </button>
-
-                  {/* Mini track — vehicles are separately clickable */}
-                  {item.parentStopIds.length >= 2 && (
-                    <div className="px-3 pb-3">
-                      <RouteMiniTrack
-                        expanded={false}
-                        journeySegment={journeySegment}
-                        onVehicleClick={(tripId) =>
-                          onSelectDirectionsRoute(
-                            item.route.id,
-                            item.route.type,
-                            item.directionFilter,
-                            tripId
-                          )
-                        }
-                        orderedStopIds={item.parentStopIds}
-                        routeType={item.route.type}
-                        stopsById={stopsById}
-                        vehicles={routeVehicles}
-                      />
-                      {routeVehicles.length === 0 && (
-                        <div className="mt-1 text-center text-[11px] text-base-content/45">
-                          {t('search.noLiveVehiclesHint')}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            {dirResults.map((item) => (
+              <DirectionResultRow
+                dataDir={dataDir}
+                fromName={dirFromStop?.name ?? ''}
+                item={item}
+                journeyRouteIds={journeyRouteIds}
+                key={`${item.route.id}-${item.directionKey}`}
+                onSelectJourneyStop={onSelectJourneyStop}
+                stopsById={stopsById}
+                toName={dirToStop?.name ?? ''}
+                vehicles={vehicles}
+              />
+            ))}
           </div>
         )}
       </div>
@@ -232,6 +199,116 @@ export function DirectionsContent({
   }
 
   return null;
+}
+
+/**
+ * One direction result: the clickable route header plus a mini-track showing the
+ * journey segment and any live vehicles heading that way.
+ *
+ * The realtime feed gives no direction, so a route's live vehicles arrive
+ * undifferentiated. We resolve each vehicle's real direction from the route's
+ * trip index (keyed by tripId) and keep only those going this result's way —
+ * otherwise every result would show its route's vehicles from both directions,
+ * or (as before) only the "A" direction ever matched. The index is fetched only
+ * when the route actually has live vehicles to place.
+ *
+ * Tapping the result (header or a vehicle) resolves the boarding platform and
+ * hands off to the stop view, filtered to the journey's routes.
+ */
+function DirectionResultRow({
+  dataDir,
+  fromName,
+  item,
+  journeyRouteIds,
+  onSelectJourneyStop,
+  stopsById,
+  toName,
+  vehicles,
+}: DirectionResultRowProps) {
+  const { t } = useTranslation();
+  const color = routeTypeColor(item.route.type);
+
+  const candidateVehicles = useMemo(
+    () => vehicles.filter((v) => v.routeId === item.route.id),
+    [vehicles, item.route.id]
+  );
+
+  const tripDirections = useRouteTripDirections(
+    item.route.id,
+    candidateVehicles.length > 0,
+    dataDir
+  );
+
+  // route_parent_stops direction keys are the GTFS direction_id, matching the
+  // trip index's `direction` field.
+  const wantDirection = Number(item.directionKey);
+  const routeVehicles = useMemo(
+    () => candidateVehicles.filter((v) => tripDirections.get(v.tripId) === wantDirection),
+    [candidateVehicles, tripDirections, wantDirection]
+  );
+
+  const journeySegment = { fromIdx: item.fromIndex, toIdx: item.toIndex };
+  const terminusName = stopsById.get(item.parentStopIds[item.parentStopIds.length - 1])?.name;
+
+  const goToBoardingStop = async () => {
+    const childStopId = await resolveBoardingPlatform(item, stopsById, dataDir);
+    onSelectJourneyStop(childStopId, { fromName, routeIds: journeyRouteIds, toName });
+  };
+
+  return (
+    <div>
+      {/* Route info row — clickable header */}
+      <button
+        className="w-full px-3 pt-3 pb-2 text-left hover:bg-base-200 transition-colors"
+        onClick={goToBoardingStop}
+        type="button"
+      >
+        <div className="flex items-center gap-3">
+          <span
+            className="badge font-bold text-white min-w-[3rem] justify-center"
+            style={{ backgroundColor: color }}
+          >
+            {item.route.shortName}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm line-clamp-1">{item.route.longName}</div>
+            <div className="text-xs text-base-content/60">
+              {terminusName
+                ? t('search.routeTerminusMeta', {
+                    count: item.stopsBetween + 1,
+                    place: terminusName,
+                  })
+                : t('search.routeDirectionMeta', {
+                    count: item.stopsBetween + 1,
+                    direction: item.directionFilter,
+                  })}
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-base-content/30 shrink-0" />
+        </div>
+      </button>
+
+      {/* Mini track — tapping a vehicle also opens the boarding stop view */}
+      {item.parentStopIds.length >= 2 && (
+        <div className="px-3 pb-3">
+          <RouteMiniTrack
+            expanded={false}
+            journeySegment={journeySegment}
+            onVehicleClick={goToBoardingStop}
+            orderedStopIds={item.parentStopIds}
+            routeType={item.route.type}
+            stopsById={stopsById}
+            vehicles={routeVehicles}
+          />
+          {routeVehicles.length === 0 && (
+            <div className="mt-1 text-center text-[11px] text-base-content/45">
+              {t('search.noLiveVehiclesHint')}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 /** Format a duration in minutes as e.g. "2h 15m" or "45m". */
@@ -245,4 +322,44 @@ function fmtDuration(min: number): string {
 function fmtTime(min: number): string {
   const w = ((min % 1440) + 1440) % 1440;
   return `${String(Math.floor(w / 60)).padStart(2, '0')}:${String(w % 60).padStart(2, '0')}`;
+}
+
+/**
+ * The origin parent may have several platforms; the one this route+direction
+ * actually departs from is the exact stop to send the user to. We match the
+ * origin parent against the direction's platform-level stop list. A parent can
+ * appear more than once on loop/branch routes, so ties break to the occurrence
+ * nearest the boarding index. Falls back to any child platform of the parent,
+ * then the parent id itself.
+ */
+async function resolveBoardingPlatform(
+  item: DirectionResult,
+  stopsById: Map<string, Stop>,
+  dataDir: string
+): Promise<string> {
+  const originParent = item.parentStopIds[item.fromIndex];
+  const parentOf = (platformId: string) => stopsById.get(platformId)?.parentStation ?? platformId;
+  try {
+    const platforms = (await fetchRouteStops(item.route.id, dataDir)).orderedStops?.[
+      item.directionKey
+    ];
+    const candidates = (platforms ?? []).filter((p) => parentOf(p) === originParent);
+    if (candidates.length === 1) return candidates[0];
+    if (candidates.length > 1 && platforms) {
+      const ratio =
+        item.parentStopIds.length > 1 ? item.fromIndex / (item.parentStopIds.length - 1) : 0;
+      const target = ratio * (platforms.length - 1);
+      return candidates.reduce((best, c) =>
+        Math.abs(platforms.indexOf(c) - target) < Math.abs(platforms.indexOf(best) - target)
+          ? c
+          : best
+      );
+    }
+  } catch {
+    // fall through to the parent-scan fallback
+  }
+  for (const s of stopsById.values()) {
+    if (s.locationType === 0 && s.parentStation === originParent) return s.id;
+  }
+  return originParent;
 }
