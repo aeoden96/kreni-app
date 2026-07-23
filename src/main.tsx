@@ -19,6 +19,7 @@ import { PublicTransportMode } from './pages/PublicTransportMode.tsx';
 import { TallyFeedbackPage } from './pages/TallyFeedbackPage.tsx';
 import { TrainMode } from './pages/TrainMode.tsx';
 import { isNative } from './utils/platform.ts';
+import { startSwUpdateChecks } from './utils/swUpdate.ts';
 
 const queryClient = new QueryClient();
 
@@ -28,13 +29,23 @@ if (isNative()) {
   void SplashScreen.hide();
 }
 
-// Register the service worker in autoUpdate mode: a newly deployed build skips
-// waiting, activates immediately, and the page hard-reloads on its own. Deploys
-// happen during quiet windows, so the automatic reload is acceptable. The
-// "updated to vX" toast on the next load is handled by <AppUpdatedToast />.
+// Register the service worker in autoUpdate mode: once a new build is *found*
+// it skips waiting, activates, and vite-plugin-pwa reloads the page on its own.
+// Deploys happen during quiet windows, so the automatic reload is acceptable.
+// The "updated to vX" toast on the next load is handled by <AppUpdatedToast />.
+//
+// autoUpdate does not look for that build, though — the browser only re-checks
+// on a navigation or its ~24h timer, which never fires for an open tab or a
+// resumed PWA. startSwUpdateChecks supplies the missing trigger.
+//
 // Suppressed in the native shell, which updates through the app store.
 if (!isNative()) {
-  registerSW({ immediate: true });
+  registerSW({
+    immediate: true,
+    onRegisteredSW(swUrl, registration) {
+      if (registration) startSwUpdateChecks(swUrl, registration);
+    },
+  });
 }
 
 createRoot(document.getElementById('root')!).render(
