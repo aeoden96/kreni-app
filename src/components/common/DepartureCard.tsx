@@ -12,6 +12,7 @@
 
 import type { TFunction } from 'i18next';
 
+import { Navigation } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import type { StopDeparture } from '../../hooks/useStopDepartures';
@@ -91,14 +92,17 @@ export function DepartureCard({ compact = false, departure, onRouteClick }: Depa
   }
 
   // ── Subtitle: proximity fact for tracked rows only; scheduled rows stay clean ──
+  // Kept even under the "na stajalištu" hero: metres there read as "5 m", which confirms
+  // the hero rather than repeating it — unlike the old label, which just said it twice.
+  const liveProximity = isLive ? proximityLabel(departure, t) : null;
   const subtitle = passedStop ? (
     <div className="text-[11px] text-base-content/45 leading-tight flex items-center gap-1">
       <span className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" />
       <span className="truncate">{t('vehicleCard.passedStop')}</span>
     </div>
-  ) : isLive ? (
+  ) : liveProximity ? (
     <div className="text-[11px] text-base-content/45 leading-tight">
-      <span className="truncate">{proximityLabel(departure, t)}</span>
+      <span className="truncate">{liveProximity}</span>
     </div>
   ) : null;
 
@@ -116,10 +120,11 @@ export function DepartureCard({ compact = false, departure, onRouteClick }: Depa
     </span>
   );
 
-  // Pulsing live dot sits next to the countdown — colour + motion mark realtime rows
+  // A green navigation icon sits next to the countdown — colour + motion mark realtime rows
   const liveDot = isLive ? (
-    <span
-      className={`w-1.5 h-1.5 rounded-full bg-success shrink-0 ${gpsStale ? '' : 'animate-pulse'}`}
+    <Navigation
+      aria-hidden="true"
+      className={`w-3 h-3 shrink-0 text-success ${gpsStale ? '' : 'animate-pulse'}`}
     />
   ) : null;
 
@@ -152,8 +157,8 @@ export function DepartureCard({ compact = false, departure, onRouteClick }: Depa
       <div
         className={`font-bold text-sm tabular-nums whitespace-nowrap flex items-center justify-end gap-1.5 ${primaryColor}`}
       >
-        {liveDot}
         <span>{primaryText}</span>
+        {liveDot}
       </div>
       {secondary !== null && (
         <div className={`mt-0.5 text-[11px] tabular-nums ${secondaryColor}`}>{secondary}</div>
@@ -190,23 +195,33 @@ export function DepartureCard({ compact = false, departure, onRouteClick }: Depa
   );
 }
 
-/** Format distance: metres below 1000, km above */
+/**
+ * Format distance: metres below 1000, km above. Rounded coarsely on purpose — the feed
+ * pings every 10–20 s and GPS jitters, so "187 m" would claim precision we don't have,
+ * the same reasoning that puts a minutes floor on the countdown. Rounding happens before
+ * the km cutover so 980 m reads as "1.0 km" rather than "1000 m".
+ */
 function formatDistance(meters: number, t: TFunction): string {
-  if (meters < 1000) return t('common.metresShort', { metres: meters });
-  return t('common.kilometres', { km: (meters / 1000).toFixed(1) });
+  const rounded =
+    meters < 100 ? Math.max(10, Math.round(meters / 10) * 10) : Math.round(meters / 50) * 50;
+  if (rounded < 1000) return t('common.metresShort', { metres: rounded });
+  return t('common.kilometres', { km: (rounded / 1000).toFixed(1) });
 }
 
 /**
- * Proximity fact for live rows. Stops-away is the most ping-robust signal we have —
- * it stays true while the vehicle idles at a red light, quietly explaining a stalled
- * minute estimate. Metres appear only when stop topology is unavailable.
+ * Proximity fact for live rows, picked so each range shows the signal that is actually
+ * trustworthy there. Stops-away leads while the vehicle is still stops out: it survives
+ * red lights that stall the minute estimate. Inside the last stop it stops discriminating
+ * — 0 covers everything from the platform to the whole inter-stop link — and that is
+ * exactly where straight-line distance is most accurate, so metres take over. Metres also
+ * remain the fallback when stop topology is unavailable; with neither, the row stays clean.
  */
-function proximityLabel(d: StopDeparture, t: TFunction): string {
-  if (d.stopsAway === null) {
-    return d.distanceMeters !== null
-      ? `${t('vehicleCard.gpsLive')} · ${formatDistance(d.distanceMeters, t)}`
-      : t('vehicleCard.gpsLive');
+function proximityLabel(d: StopDeparture, t: TFunction): null | string {
+  if (d.stopsAway !== null && d.stopsAway > 0) {
+    return t('vehicleCard.stopsAway', { count: d.stopsAway });
   }
-  if (d.stopsAway === 0) return t('vehicleCard.atPlatform');
-  return t('vehicleCard.stopsAway', { count: d.stopsAway });
+  if (d.distanceMeters !== null) {
+    return t('vehicleCard.distanceAway', { distance: formatDistance(d.distanceMeters, t) });
+  }
+  return null;
 }

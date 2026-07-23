@@ -719,8 +719,8 @@ const de = {
       passedStop: 'Haltestelle passiert',
       perSchedule: 'laut Fahrplan',
       secondsTilde: '~{{secs}} s',
-      stopsAway_one: '{{count}} Haltestelle',
-      stopsAway_other: '{{count}} Haltestellen',
+      stopsAway_one: '{{count}} Haltestelle entfernt',
+      stopsAway_other: '{{count}} Haltestellen entfernt',
     },
   },
 } as const;

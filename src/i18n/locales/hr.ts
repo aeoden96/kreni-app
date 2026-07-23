@@ -737,9 +737,9 @@ const hr = {
       passedStop: 'Prošao stajalište',
       perSchedule: 'prema redu vožnje',
       secondsTilde: '~{{secs}} sek',
-      stopsAway_few: '{{count}} stajališta',
-      stopsAway_one: '{{count}} stajalište',
-      stopsAway_other: '{{count}} stajališta',
+      stopsAway_few: '{{count}} stajališta udaljen',
+      stopsAway_one: '{{count}} stajalište udaljen',
+      stopsAway_other: '{{count}} stajališta udaljen',
     },
   },
 } as const;

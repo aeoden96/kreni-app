@@ -723,8 +723,8 @@ const en = {
       passedStop: 'Passed stop',
       perSchedule: 'per timetable',
       secondsTilde: '~{{secs}} s',
-      stopsAway_one: '{{count}} stop',
-      stopsAway_other: '{{count}} stops',
+      stopsAway_one: '{{count}} stop away',
+      stopsAway_other: '{{count}} stops away',
     },
   },
 } as const;
