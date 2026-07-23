@@ -163,7 +163,11 @@ export function GTFSMode({ config }: GTFSModeProps) {
   );
 
   // Scheduled vehicle positions (transit only; null activeTripsData yields [])
-  const vehicles = useVehiclePositions(config.hasRealtime ? activeTripsData : null, serviceId);
+  const vehicles = useVehiclePositions(
+    config.hasRealtime ? selectedRouteId : null,
+    config.hasRealtime ? activeTripsData : null,
+    serviceId
+  );
 
   // Realtime GTFS-RT polling (no-op when disabled)
   const {

@@ -11,6 +11,21 @@ import { calculateDistance } from './gtfs';
 export const DIRECTIONAL_PIN_HALF_ANGLE_DEG = 48;
 
 /**
+ * Inner hole of the terminus ring, as a fraction of the ring's radius.
+ * Large enough to read as a ring rather than a dot with a speck in it, small
+ * enough that the coloured band still carries the route colour at 32px.
+ */
+export const TERMINUS_INNER_RADIUS_RATIO = 0.45;
+
+/**
+ * How much larger a terminus ring is than an ordinary stop circle. End of the
+ * line is the landmark you scan a map for, so it outweighs the through stops
+ * around it rather than merely differing in shape. Stays well inside the icon
+ * box at every size: 9px radius in a 32px box, 18px in the 64px selected box.
+ */
+export const TERMINUS_RADIUS_SCALE = 1.5;
+
+/**
  * SVG path for the unified directional stop pin (tip up, circular cap below).
  * @param cx - Horizontal center and circle vertical center (= size / 2 in callers)
  */

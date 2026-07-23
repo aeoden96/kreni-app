@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { computeVehicleStopProgress, getStopAwareProgress, interpolatePosition } from './vehicles';
+import type { ActiveTrip } from './gtfs';
+import type { ParsedVehiclePosition } from './realtime';
+
+import {
+  computeVehicleStopProgress,
+  getStopAwareProgress,
+  interpolatePosition,
+  mapRealtimeToVehiclePositions,
+} from './vehicles';
 
 describe('interpolatePosition', () => {
   it('returns [0,0] for empty shape', () => {
@@ -122,5 +130,54 @@ describe('computeVehicleStopProgress', () => {
     // Far east of segment — projects to end (1,0)
     const p = computeVehicleStopProgress(1, 5, stops);
     expect(p).toBeCloseTo(1, 10);
+  });
+});
+
+describe('mapRealtimeToVehiclePositions', () => {
+  const pos = (tripId: string, routeId: string): ParsedVehiclePosition => ({
+    latitude: 45.8,
+    longitude: 15.9,
+    routeId,
+    timestamp: 1_700_000_000,
+    tripId,
+    vehicleId: `v-${tripId}`,
+  });
+
+  const trip = (id: string): ActiveTrip => ({
+    direction: 1,
+    end: 600,
+    headsign: 'Sopot',
+    id,
+    shapeId: '6_25',
+    start: 540,
+  });
+
+  const positions = new Map([
+    ['t1', pos('t1', '6')],
+    ['t2', pos('t2', '7')],
+  ]);
+  const noUpdates = new Map();
+
+  it('uses the trip index for membership, headsign and direction', () => {
+    const result = mapRealtimeToVehiclePositions(positions, noUpdates, [trip('t1')], '6');
+    expect(result.map((v) => v.tripId)).toEqual(['t1']);
+    expect(result[0].headsign).toBe('Sopot');
+    expect(result[0].direction).toBe(1);
+  });
+
+  it('falls back to the feed routeId while the trip index is empty', () => {
+    const result = mapRealtimeToVehiclePositions(positions, noUpdates, [], '6');
+    expect(result.map((v) => v.tripId)).toEqual(['t1']);
+    expect(result[0].headsign).toBe('');
+    expect(result[0].direction).toBe(0);
+  });
+
+  it('drops trips missing from a loaded index even when the routeId matches', () => {
+    const result = mapRealtimeToVehiclePositions(positions, noUpdates, [trip('t3')], '6');
+    expect(result).toEqual([]);
+  });
+
+  it('returns nothing without a trip index or a routeId', () => {
+    expect(mapRealtimeToVehiclePositions(positions, noUpdates, [], null)).toEqual([]);
   });
 });

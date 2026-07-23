@@ -20,6 +20,12 @@ import { useRealtimeStore } from '../stores/realtimeStore';
 import { mapRealtimeToVehiclePositions } from '../utils/vehicles';
 
 export function useVehiclePositions(
+  /**
+   * Selected route. Lets the markers render straight from the feed while
+   * `activeTripsData` (a sizeable fetch) is still in flight — see
+   * `mapRealtimeToVehiclePositions`.
+   */
+  routeId: null | string,
   activeTripsData: null | RouteActiveTripsData,
   // serviceId kept in signature for API compatibility; filtering is now done
   // by matching tripIds from the realtime feed against the route's trip list.
@@ -29,8 +35,13 @@ export function useVehiclePositions(
   const tripUpdates = useRealtimeStore((s) => s.tripUpdates);
 
   return useMemo(() => {
-    if (!activeTripsData) return [];
+    if (!routeId && !activeTripsData) return [];
 
-    return mapRealtimeToVehiclePositions(vehiclePositions, tripUpdates, activeTripsData.trips);
-  }, [vehiclePositions, tripUpdates, activeTripsData]);
+    return mapRealtimeToVehiclePositions(
+      vehiclePositions,
+      tripUpdates,
+      activeTripsData?.trips ?? [],
+      routeId
+    );
+  }, [vehiclePositions, tripUpdates, activeTripsData, routeId]);
 }

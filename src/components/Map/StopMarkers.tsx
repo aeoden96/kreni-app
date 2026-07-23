@@ -13,6 +13,8 @@ import {
   buildParentLabelGroups,
   estimateSpiderRouteBadgeRowWidth,
   SPIDER_TICKER_VISIBLE_PX,
+  TERMINUS_INNER_RADIUS_RATIO,
+  TERMINUS_RADIUS_SCALE,
 } from '../../utils/stopMarkersMath';
 import { getDirectionColor } from './directionColors';
 import {
@@ -184,6 +186,8 @@ export function StopMarkers({
  * Build a DivIcon for a platform stop marker.
  * When `bearing` is supplied a small directional triangle is rendered
  * just outside the circle, pointing in the direction of travel.
+ * `terminus` stops draw a ring instead — nothing continues past them, so a
+ * direction of travel would be misleading.
  */
 function makeStopIcon(
   color: string,
@@ -192,7 +196,8 @@ function makeStopIcon(
   r: number,
   opacityFactor: number,
   isDark: boolean,
-  label?: string
+  label?: string,
+  terminus?: boolean
 ): L.DivIcon {
   const cx = size / 2;
   const safeLabel = label
@@ -201,6 +206,23 @@ function makeStopIcon(
   // White ring on light maps, black ring on dark maps (paired with the deep
   // "ink" dark-mode fill colors so stops read as dark chips, not glowing pins).
   const stroke = isDark ? '#000000' : 'white';
+
+  if (terminus) {
+    // Ring: the outer disc in the stop colour with a punched-out centre, the
+    // conventional end-of-line mark on transit maps. Drawn larger than a through
+    // stop so it reads as a landmark, not just a differently shaped dot.
+    const ringR = r * TERMINUS_RADIUS_SCALE;
+    const html =
+      `<div data-testid="stop-marker" class="stop-marker-pin" style="position:relative;width:${size}px;height:${size}px;">` +
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"` +
+      ` style="opacity:${opacityFactor};filter:drop-shadow(0 2px 3px rgba(0,0,0,0.35));overflow:visible;">` +
+      `<circle cx="${cx}" cy="${cx}" r="${ringR.toFixed(2)}" fill="${color}" fill-opacity="0.95" stroke="${stroke}" stroke-width="2.5"/>` +
+      `<circle cx="${cx}" cy="${cx}" r="${(ringR * TERMINUS_INNER_RADIUS_RATIO).toFixed(2)}" fill="${stroke}"/>` +
+      `</svg>` +
+      `${safeLabel ? `<span class="stop-label">${safeLabel}</span>` : ''}` +
+      `</div>`;
+    return L.divIcon({ className: '', html, iconAnchor: [cx, cx], iconSize: [size, size] });
+  }
 
   if (bearing !== undefined) {
     const pathData = buildDirectionalStopPinPathData(cx);
@@ -248,9 +270,10 @@ const PlatformStopMarker = memo(function PlatformStopMarker({
   // Rail stations render as plain dots — the directional bearing pin looks off
   // for the sparse, non-platform HŽ network, so drop the bearing for rail.
   const bearing = stop.routeType === 2 ? undefined : stop.bearing;
+  const terminus = stop.terminus === true;
   const icon = useMemo(
-    () => makeStopIcon(color, bearing, size, r, effectiveFactor, isDark, undefined),
-    [color, bearing, size, r, effectiveFactor, isDark]
+    () => makeStopIcon(color, bearing, size, r, effectiveFactor, isDark, undefined, terminus),
+    [color, bearing, size, r, effectiveFactor, isDark, terminus]
   );
   const iconRef = useRef(icon);
   useLayoutEffect(() => {

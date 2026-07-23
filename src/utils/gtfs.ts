@@ -19,6 +19,13 @@ export interface Stop {
   parentStation: null | string;
   /** 0 = tram-only, 3 = bus-only, 2 = mixed tram+bus; undefined = parent station / unknown */
   routeType?: number;
+  /**
+   * End of the line: every route direction reaching this platform terminates on
+   * it. Rendered as a ring rather than a directional pin — any bearing such a
+   * stop has points at the depot or turnaround loop past it, not at anywhere a
+   * passenger can ride to.
+   */
+  terminus?: boolean;
 }
 
 /** Eight compass sectors — stable keys for grouping (locale-independent). */
@@ -30,7 +37,11 @@ export interface ActiveTrip {
   id: string;
   shapeId: string;
   start: number; // minutes from midnight
-  stopTimes?: [number, number][]; // [[time_minutes, shape_progress], ...] for stop-aware interpolation
+  /**
+   * Legacy: [[time_minutes, shape_progress], ...] for the retired schedule
+   * interpolation. No longer emitted by the pipeline — it was ~90% of the file.
+   */
+  stopTimes?: [number, number][];
 }
 
 export interface AllActiveTripsData {
@@ -63,7 +74,11 @@ export interface Route {
 }
 
 export interface RouteActiveTripsData {
-  shapes: Record<string, [number, number][]>;
+  /**
+   * Legacy: the pipeline no longer emits this — route shapes are fetched from
+   * `shapes/{routeId}.json`. Optional so cached copies of the old file still parse.
+   */
+  shapes?: Record<string, [number, number][]>;
   trips: ActiveTrip[];
 }
 

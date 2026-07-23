@@ -433,29 +433,39 @@ export function mapRealtimeToAllVehiclePositions(
  * Map ParsedVehiclePosition entries (from the GTFS-RT proxy) to
  * VehiclePosition objects for the single-route view.
  *
+ * Trip membership normally comes from `routeTrips`, which also supplies the
+ * headsign and direction. That index arrives over the network, so until it does
+ * we fall back to the feed's own `routeId` — otherwise selecting a route would
+ * leave the map with no vehicles at all until the fetch lands, and a vehicle the
+ * user just clicked would blink out. Headsign and direction fill in once the
+ * index is here; the fallback stops applying the moment it is.
+ *
  * @param positions - Map of tripId → ParsedVehiclePosition from the realtime store
  * @param tripUpdates - Map of tripId → ParsedTripUpdate for delay data
  * @param routeTrips - Active trips for the selected route (used for headsign/direction lookup)
+ * @param routeId - Selected route; used only for the pre-index fallback above
  */
 export function mapRealtimeToVehiclePositions(
   positions: Map<string, ParsedVehiclePosition>,
   tripUpdates: Map<string, ParsedTripUpdate>,
-  routeTrips: ActiveTrip[]
+  routeTrips: ActiveTrip[],
+  routeId?: null | string
 ): VehiclePosition[] {
   const tripMeta = new Map(routeTrips.map((t) => [t.id, t]));
+  const indexLoaded = routeTrips.length > 0;
   const result: VehiclePosition[] = [];
 
   for (const [tripId, pos] of positions) {
     const meta = tripMeta.get(tripId);
-    if (!meta) continue; // not on this route
+    if (!meta && (indexLoaded || !routeId || pos.routeId !== routeId)) continue; // not on this route
 
     const update = tripUpdates.get(tripId);
 
     result.push({
       bearing: pos.bearing,
       delay: update?.delay,
-      direction: meta.direction,
-      headsign: meta.headsign,
+      direction: meta?.direction ?? 0,
+      headsign: meta?.headsign ?? '',
       isRealtime: true,
       lat: pos.latitude,
       lon: pos.longitude,
