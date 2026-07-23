@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { Outlet } from 'react-router-dom';
 
+import { AppUpdatedToast } from '../components/common/AppUpdatedToast';
 import { GlobalAnnouncement } from '../components/common/GlobalAnnouncement';
 import { GlobalWelcomeWizard } from '../components/common/GlobalWelcomeWizard';
 import { OfflineBanner } from '../components/common/OfflineBanner';
-import { UpdatePrompt } from '../components/common/UpdatePrompt';
 import { SpiderMenu } from '../components/Navigation/SpiderMenu';
 import { useAndroidBackButton } from '../hooks/useAndroidBackButton';
 import { useNativeStatusBar } from '../hooks/useNativeStatusBar';
@@ -55,7 +55,7 @@ export function AppLayout() {
         <Outlet />
       </div>
       <SpiderMenu />
-      <UpdatePrompt />
+      <AppUpdatedToast />
       <OfflineBanner />
       <GlobalWelcomeWizard />
     </div>

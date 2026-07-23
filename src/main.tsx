@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { registerSW } from 'virtual:pwa-register';
 
 import './index.css';
 import './i18n';
@@ -25,6 +26,15 @@ const queryClient = new QueryClient();
 // screen, then dismissed here to avoid a white flash. No-op on web/PWA.
 if (isNative()) {
   void SplashScreen.hide();
+}
+
+// Register the service worker in autoUpdate mode: a newly deployed build skips
+// waiting, activates immediately, and the page hard-reloads on its own. Deploys
+// happen during quiet windows, so the automatic reload is acceptable. The
+// "updated to vX" toast on the next load is handled by <AppUpdatedToast />.
+// Suppressed in the native shell, which updates through the app store.
+if (!isNative()) {
+  registerSW({ immediate: true });
 }
 
 createRoot(document.getElementById('root')!).render(

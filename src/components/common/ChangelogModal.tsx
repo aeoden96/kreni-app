@@ -7,30 +7,24 @@ interface ChangelogModalProps {
   onClose: () => void;
 }
 
-interface LocalizedNotes {
+interface Release {
   changes: string[];
-  title: string;
-}
-
-interface ReleaseNotes {
-  de: LocalizedNotes;
-  en: LocalizedNotes;
-  force?: boolean;
-  hr: LocalizedNotes;
   version: string;
 }
 
 export function ChangelogModal({ isOpen, onClose }: ChangelogModalProps) {
-  const { i18n, t } = useTranslation();
-  const [changelog, setChangelog] = useState<ReleaseNotes[]>([]);
+  const { t } = useTranslation();
+  const [changelog, setChangelog] = useState<Release[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!isOpen) return;
     setLoading(true);
-    fetch(`${import.meta.env.BASE_URL}release-notes.json?t=${Date.now()}`, { cache: 'no-store' })
+    // Reads changelog.json — the English release notes generated from the
+    // repo's CHANGELOG.md at build time (see scripts/generate-changelog.js).
+    fetch(`${import.meta.env.BASE_URL}changelog.json?t=${Date.now()}`, { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : []))
-      .then((data: ReleaseNotes[]) => {
+      .then((data: Release[]) => {
         if (Array.isArray(data)) setChangelog(data);
         setLoading(false);
       })
@@ -84,37 +78,27 @@ export function ChangelogModal({ isOpen, onClose }: ChangelogModalProps) {
             <p className="text-center text-sm opacity-50 p-8">{t('common.noData')}</p>
           ) : (
             <div className="space-y-6">
-              {changelog.map((rel) => {
-                const lang = i18n.language.slice(0, 2) as 'de' | 'en' | 'hr';
-                const notes = rel[lang] || rel.en || rel.hr;
-
-                return (
-                  <div className="space-y-2" key={rel.version}>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-base text-base-content/90">v{rel.version}</h3>
-                      {notes?.title && (
-                        <span className="text-sm text-base-content/60 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
-                          — {notes.title}
-                        </span>
-                      )}
-                    </div>
-                    <ul className="space-y-1.5 text-sm text-base-content/70 leading-relaxed pl-1">
-                      {notes?.changes.map((c, i) => (
-                        <li className="flex gap-2" key={i}>
-                          <span className="shrink-0 text-primary font-bold leading-[1.35]">·</span>
-                          <span>{c}</span>
-                        </li>
-                      ))}
-                      {(!notes || notes.changes.length === 0) && (
-                        <li className="flex gap-2">
-                          <span className="shrink-0 text-base-300 font-bold leading-[1.35]">-</span>
-                          <span className="italic opacity-60">No specific features logged.</span>
-                        </li>
-                      )}
-                    </ul>
+              {changelog.map((rel) => (
+                <div className="space-y-2" key={rel.version}>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-base text-base-content/90">v{rel.version}</h3>
                   </div>
-                );
-              })}
+                  <ul className="space-y-1.5 text-sm text-base-content/70 leading-relaxed pl-1">
+                    {rel.changes.map((c, i) => (
+                      <li className="flex gap-2" key={i}>
+                        <span className="shrink-0 text-primary font-bold leading-[1.35]">·</span>
+                        <span>{c}</span>
+                      </li>
+                    ))}
+                    {rel.changes.length === 0 && (
+                      <li className="flex gap-2">
+                        <span className="shrink-0 text-base-300 font-bold leading-[1.35]">-</span>
+                        <span className="italic opacity-60">No specific changes logged.</span>
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -126,7 +110,7 @@ export function ChangelogModal({ isOpen, onClose }: ChangelogModalProps) {
             rel="noopener noreferrer"
             target="_blank"
           >
-            {t('updatePrompt.technicalChanges', 'Tehničke promjene')}
+            {t('settings.changelogGithub', 'View full changelog on GitHub')}
             <ExternalLink className="w-3.5 h-3.5" />
           </a>
         </div>

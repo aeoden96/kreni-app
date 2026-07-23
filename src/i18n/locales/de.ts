@@ -3,6 +3,9 @@ const de = {
     app: {
       title: 'Kreni — Zagreb live: ÖPNV, Parken, Fahrräder & städtische Dienste',
     },
+    appUpdated: {
+      toast: 'App auf v{{version}} aktualisiert',
+    },
     cityLayers: {
       animalZones: {
         desc: 'Zonen, in denen Nutztiere in der Stadt erlaubt sind.',
@@ -560,6 +563,7 @@ const de = {
       aboutTitle: 'Über die App',
       appearanceTitle: 'Erscheinungsbild',
       appVersion: 'App-Version',
+      changelogGithub: 'Vollständiges Changelog auf GitHub ansehen',
       clearGtfsCache: 'GTFS-Cache leeren',
       confirmClearCache: 'GTFS-Zwischenspeicher löschen? Die App lädt neu und holt frische Daten.',
       confirmDeleteAll:
@@ -707,27 +711,14 @@ const de = {
       perSchedule: 'laut Fahrplan',
       scheduleOnly: 'Fahrplan',
     },
-    updatePrompt: {
-      englishNote:
-        '* Detaillierte Versionshinweise werden automatisch aus den Projekt-Commits generiert und sind nur auf Englisch verfügbar.',
-      fallbackGeneral: 'Verschiedene Verbesserungen und Fehlerbehebungen',
-      fallbackPerformance: 'Bessere App-Performance',
-      later: 'Später',
-      refreshApp: 'App aktualisieren',
-      seeFullChangelog: 'Vollständiges Changelog ansehen',
-      storyFeatures: 'Neue Funktionen',
-      storyFixes: 'Fehlerbehebungen',
-      storyPerf: 'Leistungsverbesserungen',
-      title: 'Neue Version verfügbar',
-    },
     vehicleCard: {
       arriving: 'Kommt',
       atPlatform: 'an der Haltestelle',
       atStop: 'An der Haltestelle',
-      gpsLive: 'GPS live',
+      distanceAway: '{{distance}} entfernt',
       inMinutes: 'in {{mins}} Min.',
       inSeconds: 'in {{secs}} s',
-      minutesTilde: '~{{mins}} Min.',
+      minutesTilde: '{{mins}} Min.',
       nextStop: 'nächste Haltestelle',
       nowTilde: 'Jetzt',
       onTimeShort: 'Pünktl.',

@@ -3,6 +3,9 @@ const en = {
     app: {
       title: 'Kreni — Zagreb live: ZET, Parking, Bikes & City Services',
     },
+    appUpdated: {
+      toast: 'App updated to v{{version}}',
+    },
     cityLayers: {
       animalZones: {
         desc: 'Zones where domestic animals (livestock) are permitted in the city.',
@@ -563,6 +566,7 @@ const en = {
       aboutTitle: 'About',
       appearanceTitle: 'Appearance',
       appVersion: 'App version',
+      changelogGithub: 'View full changelog on GitHub',
       clearGtfsCache: 'Clear GTFS cache',
       confirmClearCache: 'Clear GTFS cache? The app will reload and fetch fresh data.',
       confirmDeleteAll:
@@ -711,27 +715,14 @@ const en = {
       perSchedule: 'per timetable',
       scheduleOnly: 'timetable',
     },
-    updatePrompt: {
-      englishNote:
-        '* Detailed release notes are automatically generated from project commits and are available in English only.',
-      fallbackGeneral: 'Various improvements and bug fixes',
-      fallbackPerformance: 'Better app performance',
-      later: 'Later',
-      refreshApp: 'Refresh app',
-      seeFullChangelog: 'See full changelog',
-      storyFeatures: 'New features',
-      storyFixes: 'Bug fixes',
-      storyPerf: 'Performance improvements',
-      title: 'A new version is available',
-    },
     vehicleCard: {
       arriving: 'Arriving',
       atPlatform: 'at stop',
       atStop: 'At stop',
-      gpsLive: 'GPS live',
+      distanceAway: '{{distance}} away',
       inMinutes: 'in {{mins}} min',
       inSeconds: 'in {{secs}} s',
-      minutesTilde: '~{{mins}} min',
+      minutesTilde: '{{mins}} min',
       nextStop: 'next stop',
       nowTilde: 'Now',
       onTimeShort: 'On time',

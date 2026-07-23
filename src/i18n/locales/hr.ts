@@ -3,6 +3,9 @@ const hr = {
     app: {
       title: 'Kreni — Zagreb uživo: ZET, Parking, Bicikli i Gradske usluge',
     },
+    appUpdated: {
+      toast: 'Aplikacija ažurirana na v{{version}}',
+    },
     cityLayers: {
       animalZones: {
         desc: 'Zone u kojima su domaće životinje (blago) dopuštene u gradu.',
@@ -574,6 +577,7 @@ const hr = {
       aboutTitle: 'O aplikaciji',
       appearanceTitle: 'Izgled',
       appVersion: 'Verzija aplikacije',
+      changelogGithub: 'Pogledaj cijeli changelog na GitHubu',
       clearGtfsCache: 'Obriši GTFS predmemoriju',
       confirmClearCache:
         'Obrisati GTFS predmemoriju? Aplikacija će se ponovo učitati i dohvatiti svježe podatke.',
@@ -725,27 +729,14 @@ const hr = {
       perSchedule: 'prema redu vožnje',
       scheduleOnly: 'red vožnje',
     },
-    updatePrompt: {
-      englishNote:
-        '* Detaljni zapisnici promjena automatski se generiraju iz commitova projekta i dostupni su samo na engleskom jeziku.',
-      fallbackGeneral: 'Razna poboljšanja i ispravci grešaka',
-      fallbackPerformance: 'Bolje performanse aplikacije',
-      later: 'Kasnije',
-      refreshApp: 'Osvježi aplikaciju',
-      seeFullChangelog: 'Vidi cijeli changelog',
-      storyFeatures: 'Nove funkcionalnosti',
-      storyFixes: 'Ispravci grešaka',
-      storyPerf: 'Poboljšanja performansi',
-      title: 'Nova verzija je dostupna',
-    },
     vehicleCard: {
       arriving: 'Dolazi',
       atPlatform: 'na stajalištu',
       atStop: 'Na stajalištu',
-      gpsLive: 'GPS uživo',
+      distanceAway: '{{distance}} udaljen',
       inMinutes: 'za {{mins}} min',
       inSeconds: 'za {{secs}} sek',
-      minutesTilde: '~{{mins}} min',
+      minutesTilde: '{{mins}} min',
       nextStop: 'iduće stajalište',
       nowTilde: 'Sada',
       onTimeShort: 'Na vrij.',

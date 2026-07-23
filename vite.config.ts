@@ -1,9 +1,41 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import { existsSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 import pkg from './package.json';
+
+/**
+ * Which GTFS datasets to proxy to production, decided per dataset.
+ *
+ * The processed output comes from a private pipeline and is not committed (see
+ * README), so a fresh checkout has neither directory and both fall through to
+ * production — the UI runs with live data out of the box. Once a dataset has
+ * been built locally it is served from disk instead, so a local pipeline run is
+ * actually visible on the map. The two are independent: having `public/data`
+ * but no `public/data-train` serves local transit data and proxied train data.
+ *
+ * Set VITE_REMOTE_DATA=1 to force the proxy for both, e.g. to compare against
+ * production without deleting a local build.
+ */
+const forceRemote = process.env.VITE_REMOTE_DATA === '1';
+
+const dataProxy = Object.fromEntries(
+  ['data', 'data-train']
+    .filter(
+      (dataset) =>
+        forceRemote || !existsSync(new URL(`./public/${dataset}/manifest.json`, import.meta.url))
+    )
+    .map((dataset) => [
+      `/${dataset}`,
+      {
+        changeOrigin: true,
+        headers: { 'X-App-Request': '1' },
+        target: 'https://kreni.app',
+      },
+    ])
+);
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -67,7 +99,7 @@ export default defineConfig({
         start_url: '/',
         theme_color: '#1e3a5f',
       },
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       workbox: {
         globIgnores: ['**/node_modules/**', '**/dev-dist/**'],
         // Precache app shell (HTML, JS, CSS, static assets)
@@ -139,22 +171,10 @@ export default defineConfig({
       },
     }),
   ],
-  // The static GTFS dataset is produced by a private data pipeline, so it is not
-  // committed here (see README). For local dev, proxy /data and /data-train to
-  // production and inject the header the app normally sends, so the UI runs with
-  // live data out of the box. Dev-only — `vite build` output is unaffected.
+  // Datasets without a local build are proxied to production, with the header
+  // the app normally sends — see `dataProxy` above. Dev-only; `vite build`
+  // output is unaffected.
   server: {
-    proxy: {
-      '/data': {
-        changeOrigin: true,
-        headers: { 'X-App-Request': '1' },
-        target: 'https://kreni.app',
-      },
-      '/data-train': {
-        changeOrigin: true,
-        headers: { 'X-App-Request': '1' },
-        target: 'https://kreni.app',
-      },
-    },
+    proxy: dataProxy,
   },
 });

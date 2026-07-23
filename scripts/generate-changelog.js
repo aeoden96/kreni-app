@@ -48,12 +48,8 @@ for (let i = 0; i < versions.length; i++) {
     changes.push(text.trim());
   }
 
-  const force = block.includes('[FORCE]');
-
-  // Optionally map conventional commit titles to generic ones for i18n
   allReleases.push({
     changes,
-    force,
     version: v.version,
   });
 }
