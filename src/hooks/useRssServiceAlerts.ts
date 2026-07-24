@@ -116,29 +116,25 @@ function convertToServiceAlerts(
     shortNameIndex.set(route.shortName, id);
   }
 
-  // Filter to only currently active or future alerts
-  const now = Date.now() / 1000;
-
-  return rssAlerts
-    .filter((a) => {
-      const until = toActivePosix(a.endDate);
-      // Keep if no end date known, or end date is in the future
-      return until === null || until > now;
-    })
-    .map((a): ParsedServiceAlert => ({
-      activeSince: toActivePosix(a.startDate),
-      activeUntil: toActivePosix(a.endDate),
-      cause: 'OTHER_CAUSE',
-      description: a.summary,
-      effect: TYPE_TO_EFFECT[a.type] ?? 'OTHER_EFFECT',
-      header: a.title,
-      id: `rss-${a.id}`,
-      routeIds: a.lines
-        .map((line) => shortNameIndex.get(line))
-        .filter((id): id is string => id !== undefined),
-      stopIds: [...new Set(a.affectedStops.flatMap((name) => matchStopName(name, stopIndex)))],
-      url: a.url,
-    }));
+  // No date-based filtering: the parser already prunes any item ZET drops from
+  // the RSS feed (parse-service-alerts.mjs), so feed presence *is* ZET's own
+  // curation of "currently relevant". We deliberately do NOT hide alerts whose
+  // parsed endDate is in the past — those dates are best-effort LLM output (the
+  // source text often omits the year) and were silently burying live alerts.
+  return rssAlerts.map((a): ParsedServiceAlert => ({
+    activeSince: toActivePosix(a.startDate),
+    activeUntil: toActivePosix(a.endDate),
+    cause: 'OTHER_CAUSE',
+    description: a.summary,
+    effect: TYPE_TO_EFFECT[a.type] ?? 'OTHER_EFFECT',
+    header: a.title,
+    id: `rss-${a.id}`,
+    routeIds: a.lines
+      .map((line) => shortNameIndex.get(line))
+      .filter((id): id is string => id !== undefined),
+    stopIds: [...new Set(a.affectedStops.flatMap((name) => matchStopName(name, stopIndex)))],
+    url: a.url,
+  }));
 }
 
 function toActivePosix(dateStr: null | string): null | number {
