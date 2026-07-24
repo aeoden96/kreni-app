@@ -3,7 +3,7 @@ import type { TFunction } from 'i18next';
 import L from 'leaflet';
 import { Fragment, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CircleMarker, Marker, Pane, Polyline, Popup } from 'react-leaflet';
+import { Marker, Pane, Polyline, Popup } from 'react-leaflet';
 
 import type { RoadClosure } from '../../../../hooks/useRoadClosures';
 
@@ -37,10 +37,18 @@ export function RoadClosures({ closures, show }: RoadClosuresProps) {
   if (visibleClosures.length === 0) return null;
 
   const lineColor = theme === 'dark' ? '#ef4444' : '#dc2626'; // Tailwind red-500 / red-600
-  /** Wide invisible stroke on top of the visible line — easy to tap on touch screens. */
+  /** Wide invisible stroke over the whole line — the tap hitbox (easy to hit on touch screens). */
   const hitStrokeWeight = 30;
-  /** Above default overlayPane (400) so async layers (e.g. parking polygons) stay underneath. */
+  /**
+   * Pane z-index for the closure layer. MUST stay below the Leaflet marker pane (600) and the
+   * spiderfier panes (610 / 620) so stop, vehicle and spider-node clicks always win where they
+   * overlap a closure. Above overlayPane (400) so async path layers (parking polygons) stay under.
+   */
   const closurePaneZ = 450;
+  /** Debug: reveal the otherwise-invisible tap hitboxes. Flip to true to make them visible. */
+  const showHitboxes = false;
+  const hitboxColor = showHitboxes ? '#3b82f6' : lineColor; // blue-500 while debugging
+  const hitboxOpacity = showHitboxes ? 0.25 : 0;
 
   // Construction icon for point closures (if polyline has no/one point)
   const createConstructionIcon = () =>
@@ -62,14 +70,13 @@ export function RoadClosures({ closures, show }: RoadClosuresProps) {
   return (
     <Pane name="zet-road-closures" style={{ zIndex: closurePaneZ }}>
       {visibleClosures.map((closure) => {
-        // If it's a valid polyline: visible line (non-interactive) + wide hit slab + midpoint handle
+        // Valid polyline: visible dashed line (non-interactive) + wide invisible tap hitbox.
         if (closure.polyline && closure.polyline.length > 1) {
           const popup = (
             <Popup className="road-closure-popup" pane="popupPane">
               <RoadClosurePopupBody closure={closure} locale={i18n.language} t={t} />
             </Popup>
           );
-          const mid = polylineMidpoint(closure.polyline);
 
           return (
             <Fragment key={closure.id}>
@@ -85,34 +92,22 @@ export function RoadClosures({ closures, show }: RoadClosuresProps) {
                 }}
                 positions={closure.polyline}
               />
+              {/* Tap hitbox: wide stroke covering the whole closure. Invisible in prod
+                  (opacity 0); shown faintly while showHitboxes is true. bubblingMouseEvents
+                  is off so a tap opens the popup without reaching the map (spider / deselect). */}
               <Polyline
                 pathOptions={{
                   bubblingMouseEvents: false,
-                  color: lineColor,
+                  color: hitboxColor,
                   lineCap: 'round',
                   lineJoin: 'round',
-                  opacity: 0,
+                  opacity: hitboxOpacity,
                   weight: hitStrokeWeight,
                 }}
                 positions={closure.polyline}
               >
                 {popup}
               </Polyline>
-              <CircleMarker
-                center={mid}
-                pathOptions={{
-                  color: lineColor,
-                  fillColor: lineColor,
-                  fillOpacity: 0.38,
-                  lineCap: 'round',
-                  lineJoin: 'round',
-                  opacity: 0.95,
-                  weight: 2,
-                }}
-                radius={22}
-              >
-                {popup}
-              </CircleMarker>
             </Fragment>
           );
         }
@@ -133,24 +128,6 @@ export function RoadClosures({ closures, show }: RoadClosuresProps) {
       })}
     </Pane>
   );
-}
-
-/** Vertex-based midpoint along the polyline (good enough for a tap handle). */
-function polylineMidpoint(coords: [number, number][]): [number, number] {
-  const n = coords.length;
-  if (n === 0) {
-    return [0, 0];
-  }
-  if (n === 1) {
-    return coords[0];
-  }
-  const mid = (n - 1) / 2;
-  const i = Math.floor(mid);
-  const j = Math.ceil(mid);
-  if (i === j) {
-    return coords[i];
-  }
-  return [(coords[i][0] + coords[j][0]) / 2, (coords[i][1] + coords[j][1]) / 2];
 }
 
 function RoadClosurePopupBody({

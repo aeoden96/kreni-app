@@ -13,6 +13,7 @@ import { MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD } from './mapZoomConstants';
 import { StopMarkers } from './StopMarkers';
 
 interface ZoomBasedStopsProps {
+  alertStopIds: Set<string>;
   highlightStopIds: string[];
 
   onStopClick: (stopId: string) => void;
@@ -27,6 +28,7 @@ interface ZoomBasedStopsProps {
 }
 
 export const ZoomBasedStops = memo(function ZoomBasedStops({
+  alertStopIds,
   highlightStopIds,
 
   onStopClick,
@@ -100,6 +102,7 @@ export const ZoomBasedStops = memo(function ZoomBasedStops({
 
   return (
     <StopMarkers
+      alertStopIds={alertStopIds}
       highlightStopIds={highlightStopIds}
       isParentStationView={false}
       onStopClick={onStopClick}

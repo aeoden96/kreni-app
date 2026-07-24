@@ -149,6 +149,6 @@ export function mergeAndFilterRecents(
 }
 
 /** Lowercase + strip diacritics so "crnomerec" matches "Črnomerec". */
-function normalize(str: string): string {
+export function normalize(str: string): string {
   return str.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }

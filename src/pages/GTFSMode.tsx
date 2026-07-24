@@ -13,16 +13,17 @@ import { useTranslation } from 'react-i18next';
 import type { RealtimeStatusPanelHandle } from '../components/common/RealtimeStatusPanel';
 import type { GTFSModeConfig } from '../config/modes';
 import type { DirectionFilter } from '../hooks/useSelectionParams';
+import type { ParsedServiceAlert } from '../utils/realtime';
 
 import { DebugPanel } from '../components/common/DebugPanel';
 import { DirectionsModal } from '../components/common/DirectionsModal';
+import { DisruptionsPanel } from '../components/common/disruptions/DisruptionsPanel';
 import { NearbyStopsModal } from '../components/common/NearbyStopsModal';
 import { OnboardingWizard } from '../components/common/OnboardingWizard';
 import { RealtimeStatusPanel } from '../components/common/RealtimeStatusPanel';
 import { RouteVehiclePanel } from '../components/common/routePanel/RouteVehiclePanel';
 import { RouteViewLarge } from '../components/common/RouteViewLarge';
 import { SearchModal } from '../components/common/SearchModal';
-import { ServiceAlerts } from '../components/common/ServiceAlerts';
 import { StopInfoBar } from '../components/common/StopInfoBar';
 import { StopModal } from '../components/common/StopModal';
 import { MapView } from '../components/Map/MapView';
@@ -35,6 +36,7 @@ import { useGeolocation, useRegisterGeolocationFirstFix } from '../hooks/useGeol
 import { useInitialData } from '../hooks/useInitialData';
 import { useMapPanTarget } from '../hooks/useMapPanTarget';
 import { useRealtimeData } from '../hooks/useRealtimeData';
+import { useRoadClosures } from '../hooks/useRoadClosures';
 import { useRouteData } from '../hooks/useRouteData';
 import { useRouteTimetable } from '../hooks/useRouteTimetable';
 import { useRssServiceAlerts } from '../hooks/useRssServiceAlerts';
@@ -45,11 +47,15 @@ import { useNavigationStore } from '../stores/navigationStore';
 import { useRealtimeStore } from '../stores/realtimeStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { trackEvent } from '../utils/analytics';
+import { getMockServiceAlerts } from '../utils/devMockServiceAlerts';
 import { routeTypeColor } from '../utils/routeStyle';
 
 interface GTFSModeProps {
   config: GTFSModeConfig;
 }
+
+/** Stable empty-array identity for stops with no alerts (avoids re-renders). */
+const EMPTY_ALERTS: ParsedServiceAlert[] = [];
 
 export function GTFSMode({ config }: GTFSModeProps) {
   const { t } = useTranslation();
@@ -205,9 +211,51 @@ export function GTFSMode({ config }: GTFSModeProps) {
     zoomToRouteTrigger,
   } = useVehicleFollow(selectedRouteId, vehiclePositions, tripUpdates);
 
-  // RSS-parsed ZET service alerts (polled by GitHub Actions cron every 30 min)
-  const rssAlerts = useRssServiceAlerts(routesById);
-  const serviceAlerts = [...rssAlerts, ...gtfsRtAlerts];
+  // RSS-parsed ZET service alerts (polled by GitHub Actions cron every 30 min).
+  // `stops` lets the hook resolve each alert's affectedStops names → GTFS stop ids.
+  const rssAlerts = useRssServiceAlerts(routesById, stops);
+  // getMockServiceAlerts returns [] unless VITE_MOCK_ALERTS=true (dev only)
+  const serviceAlerts = useMemo(
+    () => [...getMockServiceAlerts(routesById, stops), ...rssAlerts, ...gtfsRtAlerts],
+    [routesById, stops, rssAlerts, gtfsRtAlerts]
+  );
+
+  // stopId → alerts affecting it. Alert stopIds are platform ids; also index each
+  // under its parent station so a tapped parent marker resolves its alerts too.
+  const alertsByStopId = useMemo(() => {
+    const map = new Map<string, ParsedServiceAlert[]>();
+    const add = (id: string, alert: ParsedServiceAlert) => {
+      const arr = map.get(id);
+      if (arr) {
+        if (!arr.includes(alert)) arr.push(alert);
+      } else {
+        map.set(id, [alert]);
+      }
+    };
+    for (const alert of serviceAlerts) {
+      for (const sid of alert.stopIds) {
+        add(sid, alert);
+        const parent = stopsById.get(sid)?.parentStation;
+        if (parent) add(parent, alert);
+      }
+    }
+    return map;
+  }, [serviceAlerts, stopsById]);
+
+  // Set of every stop id (platform + parent) that has an active alert — for the
+  // map marker badge. Stable identity so the memoized StopMarkers layer isn't busted.
+  const alertStopIds = useMemo(() => new Set(alertsByStopId.keys()), [alertsByStopId]);
+
+  // Road closures overlay + list (transit view only; `enabled` gates the fetch)
+  const isTransit = config.id === 'transit';
+  const {
+    closures: roadClosures,
+    loading: closuresLoading,
+    manualRefreshLocked: closuresRefreshLocked,
+    manualRefreshSecondsLeft: closuresRefreshSecondsLeft,
+    refetch: refetchClosures,
+    refreshedAtMs: closuresRefreshedAtMs,
+  } = useRoadClosures(isTransit);
 
   // Congestion heatmap (tram-only, transit mode only)
   const { congestionPoints } = useCongestionData({
@@ -241,6 +289,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
   const { locateError, userLocation } = useGeolocation();
 
   const triggerLocate = useNavigationStore((s) => s.triggerLocate);
+  const requestMapFlyTo = useNavigationStore((s) => s.requestMapFlyTo);
   const prevNearbyListExpandedRef = useRef(false);
 
   /** After expanding the nearby list on mobile, re-fly so the user marker clears the sheet. */
@@ -407,6 +456,29 @@ export function GTFSMode({ config }: GTFSModeProps) {
     [selectedRouteId, routeStops]
   );
 
+  // Cross-link from the disruptions panel: pan + pulse the map to an alert's
+  // affected stops (they are already amber-badged by the marker layer).
+  const handleAlertStopHighlight = useCallback(
+    (stopIds: string[]) => {
+      let sumLat = 0;
+      let sumLng = 0;
+      let count = 0;
+      for (const id of stopIds) {
+        const stop = stopsById.get(id);
+        if (stop) {
+          sumLat += stop.lat;
+          sumLng += stop.lon;
+          count += 1;
+        }
+      }
+      if (count === 0) return;
+      // Zoom must exceed MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD (15) or transit stops
+      // render at opacity 0 — otherwise we'd pan to invisible stops.
+      requestMapFlyTo({ lat: sumLat / count, lng: sumLng / count, pulseMs: 2500, zoom: 16 });
+    },
+    [stopsById, requestMapFlyTo]
+  );
+
   // Stable handler identities so MapView's React.memo isn't defeated by fresh
   // inline arrows each render. onVehicleClick goes through a ref because
   // handleSelectRoute is recreated every render; the ref keeps the callback
@@ -425,6 +497,9 @@ export function GTFSMode({ config }: GTFSModeProps) {
 
   const selectedRoute = selectedRouteId ? routesById.get(selectedRouteId) : null;
   const selectedStop = selectedStopId ? stopsById.get(selectedStopId) : null;
+  const selectedStopAlerts = selectedStop
+    ? (alertsByStopId.get(selectedStop.id) ?? EMPTY_ALERTS)
+    : EMPTY_ALERTS;
 
   // ── Loading / Error states ─────────────────────────────────────────────────
 
@@ -456,6 +531,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
       <div className="h-svh w-screen overflow-hidden relative">
         {/* Full-screen map */}
         <MapView
+          alertStopIds={alertStopIds}
           allVehicles={selectedRouteId ? [] : allVehicles}
           autoZoomToRoute={
             !!selectedRouteId &&
@@ -513,6 +589,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
               ? vehicleFocus.tripId
               : null
           }
+          roadClosures={isTransit ? roadClosures : undefined}
           routesById={routesById}
           routeShapes={shapes}
           routeShortName={selectedRoute?.shortName}
@@ -544,12 +621,19 @@ export function GTFSMode({ config }: GTFSModeProps) {
             </div>
           )}
 
-        {/* Service alerts (always visible) + realtime technical details (debug only); z above Leaflet bottom chrome */}
-        {config.id === 'transit' && (
+        {/* Disruptions (service alerts + road closures) + realtime technical details (debug only); z above Leaflet bottom chrome */}
+        {isTransit && (
           <div className="absolute bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-[1100] flex items-center justify-end gap-2">
-            <ServiceAlerts
+            <DisruptionsPanel
               alerts={serviceAlerts}
+              closures={roadClosures}
+              onRefresh={refetchClosures}
               onRouteClick={(routeId, routeType) => handleSelectRoute(routeId, routeType)}
+              onStopHighlight={handleAlertStopHighlight}
+              refreshCooldownSecondsLeft={closuresRefreshSecondsLeft}
+              refreshedAtMs={closuresRefreshedAtMs}
+              refreshing={closuresLoading}
+              refreshLocked={closuresRefreshLocked}
               routesById={routesById}
               selectedRouteId={selectedRouteId}
             />
@@ -688,6 +772,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
             routesById={routesById}
             stackBelow={false}
             stop={selectedStop}
+            stopAlerts={selectedStopAlerts}
             stopsById={stopsById}
           />
         )}
@@ -844,6 +929,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
             onStopSelect={handleSelectStop}
             routesById={routesById}
             stop={selectedStop}
+            stopAlerts={selectedStopAlerts}
             stopsById={stopsById}
           />
         )}

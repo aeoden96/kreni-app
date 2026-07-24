@@ -15,6 +15,14 @@ export const GTFS_API_KEY: string | undefined = import.meta.env.VITE_GTFS_API_KE
 /** Tally form ID for the feedback popup (Publish → Share in Tally) */
 export const TALLY_FEEDBACK_FORM_ID: string = import.meta.env.VITE_TALLY_FEEDBACK_FORM_ID || '';
 
+/**
+ * Dev-only preview toggle: inject fake ZET service alerts so the Disruptions
+ * chip/modal can be reviewed without live alerts. Enable with
+ * `VITE_MOCK_ALERTS=true` in .env.local. Forced off in production builds.
+ */
+export const MOCK_SERVICE_ALERTS: boolean =
+  import.meta.env.DEV && import.meta.env.VITE_MOCK_ALERTS === 'true';
+
 /** `data-tally-src` URL for the full-screen iframe embed (transparent background). */
 export function getTallyFeedbackEmbedSrc(formId: string): string {
   const params = new URLSearchParams();

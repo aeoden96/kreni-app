@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-import type { Route } from '../utils/gtfs';
+import type { Route, Stop } from '../utils/gtfs';
 import type { ParsedServiceAlert } from '../utils/realtime';
+import type { StopNameIndex } from '../utils/stopNameMatch';
 
 import { GTFS_API_KEY, GTFS_PROXY_URL } from '../config';
+import { buildStopNameIndex, matchStopName } from '../utils/stopNameMatch';
 
 interface RssAlert {
   affectedStops: string[];
@@ -36,8 +38,15 @@ const TYPE_TO_EFFECT: Record<RssAlert['type'], string> = {
 const CACHE_KEY = 'kreni-rss-alerts-cache';
 const CACHE_DURATION_MS = 30 * 60 * 1000; // 30 minutes – alerts update every 4 h
 
-export function useRssServiceAlerts(routesById: Map<string, Route>): ParsedServiceAlert[] {
+export function useRssServiceAlerts(
+  routesById: Map<string, Route>,
+  stops: Stop[]
+): ParsedServiceAlert[] {
   const [alerts, setAlerts] = useState<ParsedServiceAlert[]>([]);
+
+  // Stop-name → id index for matching alerts' `affectedStops`. Stable after the
+  // initial data load; rebuilt only when the stop list itself changes.
+  const stopIndex = useMemo(() => buildStopNameIndex(stops), [stops]);
 
   useEffect(() => {
     let cancelled = false;
@@ -50,7 +59,7 @@ export function useRssServiceAlerts(routesById: Map<string, Route>): ParsedServi
           const { data, ts }: { data: RssAlert[]; ts: number } = JSON.parse(cached);
           if (Date.now() - ts < CACHE_DURATION_MS) {
             if (!cancelled) {
-              setAlerts(convertToServiceAlerts(data, routesById));
+              setAlerts(convertToServiceAlerts(data, routesById, stopIndex));
             }
             return;
           }
@@ -75,7 +84,7 @@ export function useRssServiceAlerts(routesById: Map<string, Route>): ParsedServi
         }
 
         if (!cancelled) {
-          setAlerts(convertToServiceAlerts(json.alerts, routesById));
+          setAlerts(convertToServiceAlerts(json.alerts, routesById, stopIndex));
         }
       } catch {
         // network error – silently ignore, RSS alerts are non-critical
@@ -88,16 +97,18 @@ export function useRssServiceAlerts(routesById: Map<string, Route>): ParsedServi
     };
     // routesById is a new Map reference on every render but its content is stable
     // after initial data load. Using .size as a proxy dep avoids infinite re-runs
-    // while still re-fetching once routes are available.
+    // while still re-fetching once routes are available. stopIndex is memoized on
+    // the stop list, so it too is stable after load.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routesById.size]);
+  }, [routesById.size, stopIndex]);
 
   return alerts;
 }
 
 function convertToServiceAlerts(
   rssAlerts: RssAlert[],
-  routesById: Map<string, Route>
+  routesById: Map<string, Route>,
+  stopIndex: StopNameIndex
 ): ParsedServiceAlert[] {
   // Build a short-name → routeId index once
   const shortNameIndex = new Map<string, string>();
@@ -114,22 +125,20 @@ function convertToServiceAlerts(
       // Keep if no end date known, or end date is in the future
       return until === null || until > now;
     })
-    .map(
-      (a): ParsedServiceAlert => ({
-        activeSince: toActivePosix(a.startDate),
-        activeUntil: toActivePosix(a.endDate),
-        cause: 'OTHER_CAUSE',
-        description: a.summary,
-        effect: TYPE_TO_EFFECT[a.type] ?? 'OTHER_EFFECT',
-        header: a.title,
-        id: `rss-${a.id}`,
-        routeIds: a.lines
-          .map((line) => shortNameIndex.get(line))
-          .filter((id): id is string => id !== undefined),
-        stopIds: [],
-        url: a.url,
-      })
-    );
+    .map((a): ParsedServiceAlert => ({
+      activeSince: toActivePosix(a.startDate),
+      activeUntil: toActivePosix(a.endDate),
+      cause: 'OTHER_CAUSE',
+      description: a.summary,
+      effect: TYPE_TO_EFFECT[a.type] ?? 'OTHER_EFFECT',
+      header: a.title,
+      id: `rss-${a.id}`,
+      routeIds: a.lines
+        .map((line) => shortNameIndex.get(line))
+        .filter((id): id is string => id !== undefined),
+      stopIds: [...new Set(a.affectedStops.flatMap((name) => matchStopName(name, stopIndex)))],
+      url: a.url,
+    }));
 }
 
 function toActivePosix(dateStr: null | string): null | number {

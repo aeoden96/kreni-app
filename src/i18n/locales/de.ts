@@ -219,6 +219,16 @@ const de = {
       directRoutesCount_other: '{{count}} Linien',
       pickStops: 'Start und Ziel wählen',
     },
+    disruptions: {
+      chipAlertsAria_one: '{{count}} Verkehrshinweis anzeigen',
+      chipAlertsAria_other: '{{count}} Verkehrshinweise anzeigen',
+      chipClosuresAria_one: '{{count}} Straßensperrung anzeigen',
+      chipClosuresAria_other: '{{count}} Straßensperrungen anzeigen',
+      closeAria: 'Schließen',
+      showStopsOnMap: 'Haltestellen auf Karte',
+      tabAlerts: 'Hinweise',
+      tabClosures: 'Straßensperrungen',
+    },
     drivingLayers: {
       badge: 'Straßenebenen',
       cameras: {
@@ -558,6 +568,10 @@ const de = {
       },
     },
     serviceAlerts: {
+      count_one: '{{count}} Hinweis',
+      count_other: '{{count}} Hinweise',
+      dateFrom: 'ab {{date}}',
+      dateUntil: 'bis {{date}}',
       panelTitle: 'Verkehrshinweise',
     },
     settings: {

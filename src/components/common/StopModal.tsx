@@ -8,6 +8,7 @@ import { memo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { Route, Stop } from '../../utils/gtfs';
+import type { ParsedServiceAlert } from '../../utils/realtime';
 
 import { useGTFSMode } from '../../contexts/GTFSModeContext';
 import { useCurrentTime } from '../../hooks/useCurrentTime';
@@ -20,6 +21,7 @@ import { bearingToCompassKey, minutesToTime } from '../../utils/gtfs';
 import { compassLabelForBearing } from '../../utils/localizedCompass';
 import { routeTypeColor } from '../../utils/routeStyle';
 import { DepartureCard } from './DepartureCard';
+import { StopAlertBanner } from './StopAlertBanner';
 
 interface StopModalProps {
   isOpen: boolean;
@@ -41,6 +43,8 @@ interface StopModalProps {
   onStopSelect?: (stopId: string) => void;
   routesById: Map<string, Route>;
   stop: Stop;
+  /** ZET service alerts affecting this stop (shown as a warning banner). */
+  stopAlerts?: ParsedServiceAlert[];
   stopsById: Map<string, Stop>;
 }
 
@@ -53,6 +57,7 @@ export const StopModal = memo(function StopModal({
   onStopSelect,
   routesById,
   stop,
+  stopAlerts,
   stopsById,
 }: StopModalProps) {
   const { t } = useTranslation();
@@ -350,6 +355,15 @@ export const StopModal = memo(function StopModal({
 
         {/* Content — single unified departure board */}
         <div className="flex-1 overflow-y-auto overscroll-contain">
+          {/* Service-alert banner (disruptions affecting this stop) */}
+          {stopAlerts && stopAlerts.length > 0 && (
+            <StopAlertBanner
+              alerts={stopAlerts}
+              className="mx-4 mt-4 mb-3"
+              routesById={routesById}
+            />
+          )}
+
           {/* Planned-trip filter banner */}
           {journeyFilter && (
             <div className="mx-4 mt-4 mb-3 p-3 rounded-xl bg-primary/10 border border-primary/30 flex gap-2 items-center">

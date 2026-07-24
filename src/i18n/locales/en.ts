@@ -216,6 +216,16 @@ const en = {
       directRoutesCount_other: '{{count}} routes',
       pickStops: 'Choose origin and destination',
     },
+    disruptions: {
+      chipAlertsAria_one: 'Show {{count}} service alert',
+      chipAlertsAria_other: 'Show {{count}} service alerts',
+      chipClosuresAria_one: 'Show {{count}} road closure',
+      chipClosuresAria_other: 'Show {{count}} road closures',
+      closeAria: 'Close',
+      showStopsOnMap: 'Stops on map',
+      tabAlerts: 'Alerts',
+      tabClosures: 'Road closures',
+    },
     drivingLayers: {
       badge: 'Road layers',
       cameras: {
@@ -561,6 +571,10 @@ const en = {
       },
     },
     serviceAlerts: {
+      count_one: '{{count}} alert',
+      count_other: '{{count}} alerts',
+      dateFrom: 'from {{date}}',
+      dateUntil: 'until {{date}}',
       panelTitle: 'Service alerts',
     },
     settings: {

@@ -5,6 +5,7 @@
 import { memo } from 'react';
 
 import type { CongestionPoint } from '../../hooks/useCongestionData';
+import type { RoadClosure } from '../../hooks/useRoadClosures';
 import type { Route, Stop } from '../../utils/gtfs';
 import type { AllVehiclePosition, VehiclePosition } from '../../utils/vehicles';
 
@@ -12,6 +13,7 @@ import { useGTFSMode } from '../../contexts/GTFSModeContext';
 import { AllVehicleMarkers } from './AllVehicleMarkers';
 import { BaseMap } from './BaseMap';
 import { CongestionHeatmap } from './CongestionHeatmap';
+import { RoadClosures } from './modes/driving/RoadClosures';
 import { OffScreenStopIndicator } from './OffScreenStopIndicator';
 import { ParentStationZoomController } from './ParentStationZoomController';
 import { PreviewVehicleZoomController } from './PreviewVehicleZoomController';
@@ -23,7 +25,15 @@ import { VehicleFollower } from './VehicleFollower';
 import { VehicleMarkers } from './VehicleMarkers';
 import { ZoomBasedStops } from './ZoomBasedStops';
 
+/** Stable empty fallback so the memo isn't defeated before closures load. */
+const EMPTY_CLOSURES: RoadClosure[] = [];
+
+/** Stable empty fallback for the alert-stop set. */
+const EMPTY_ALERT_STOP_IDS: Set<string> = new Set();
+
 interface MapViewProps {
+  /** Stop ids (platform + parent) with an active ZET service alert — badged on the map. */
+  alertStopIds?: Set<string>;
   allVehicles?: AllVehiclePosition[];
   autoZoomToRoute?: boolean;
   /** Live congestion data points to render */
@@ -47,6 +57,8 @@ interface MapViewProps {
   platformStops: Stop[];
   previewVehiclePos?: null | { lat: number; lon: number };
   previewVehicleTripId?: null | string;
+  /** Road-closure overlay (transit view). Omitted/undefined when not applicable. */
+  roadClosures?: RoadClosure[];
   routesById: Map<string, Route>;
   routeShapes: Record<string, [number, number][]>;
   routeShortName?: string;
@@ -67,6 +79,7 @@ interface MapViewProps {
 }
 
 function MapViewImpl({
+  alertStopIds = EMPTY_ALERT_STOP_IDS,
   allVehicles = [],
   autoZoomToRoute = false,
   congestionPoints = [],
@@ -88,6 +101,7 @@ function MapViewImpl({
   platformStops,
   previewVehiclePos,
   previewVehicleTripId,
+  roadClosures,
   routesById,
   routeShapes,
   routeShortName,
@@ -136,6 +150,7 @@ function MapViewImpl({
         )}
 
         <ZoomBasedStops
+          alertStopIds={alertStopIds}
           highlightStopIds={highlightStopIds ?? (selectedRouteId ? routeStops : [])}
           onStopClick={onStopClick}
           orderedStops={orderedStops}
@@ -152,6 +167,11 @@ function MapViewImpl({
         />
 
         <CongestionHeatmap points={congestionPoints} show={showCongestionHeatmap} />
+
+        <RoadClosures
+          closures={roadClosures ?? EMPTY_CLOSURES}
+          show={(roadClosures?.length ?? 0) > 0}
+        />
 
         {selectedRouteId && (
           <>

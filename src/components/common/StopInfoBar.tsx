@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { Route, Stop } from '../../utils/gtfs';
+import type { ParsedServiceAlert } from '../../utils/realtime';
 
 import { useGTFSMode } from '../../contexts/GTFSModeContext';
 import { useSiblingPlatformRoutes } from '../../hooks/useSiblingPlatformRoutes';
@@ -18,6 +19,7 @@ import { bearingToCompassKey } from '../../utils/gtfs';
 import { compassLabelForBearing } from '../../utils/localizedCompass';
 import { routeTypeColor } from '../../utils/routeStyle';
 import { DepartureCard } from './DepartureCard';
+import { StopAlertBanner } from './StopAlertBanner';
 
 interface StopInfoBarProps {
   /** When set, narrows the board to a planned trip's routes and shows a banner. */
@@ -37,6 +39,8 @@ interface StopInfoBarProps {
   /** When true, shifts the bar down so it sits below the RouteVehiclePanel */
   stackBelow?: boolean;
   stop: Stop;
+  /** ZET service alerts affecting this stop (shown as a warning banner). */
+  stopAlerts?: ParsedServiceAlert[];
   stopsById: Map<string, Stop>;
 }
 
@@ -50,6 +54,7 @@ export function StopInfoBar({
   routesById,
   stackBelow = false,
   stop,
+  stopAlerts,
   stopsById,
 }: StopInfoBarProps) {
   const { t } = useTranslation();
@@ -255,6 +260,11 @@ export function StopInfoBar({
             </div>
           )}
         </div>
+
+        {/* Service-alert banner (disruptions affecting this stop) */}
+        {stopAlerts && stopAlerts.length > 0 && (
+          <StopAlertBanner alerts={stopAlerts} className="mb-2" routesById={routesById} />
+        )}
 
         {/* Planned-trip filter banner */}
         {journeyFilter && (

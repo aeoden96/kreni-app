@@ -28,6 +28,8 @@ import { useSpiderfierContext } from './SpiderfierContext';
 interface PlatformStopMarkerProps {
   color: string;
   effectiveFactor: number;
+  /** When true, overlays a small warning badge (stop has an active service alert). */
+  hasAlert: boolean;
   isDark: boolean;
   isHighlighted: boolean;
   isSelected: boolean;
@@ -37,6 +39,8 @@ interface PlatformStopMarkerProps {
 }
 
 interface StopMarkersProps {
+  /** Stop ids (platform + parent) with an active ZET service alert — badged on the map. */
+  alertStopIds: Set<string>;
   highlightStopIds: string[];
   isParentStationView: boolean;
   onStopClick: (stopId: string) => void;
@@ -57,6 +61,7 @@ interface StopMarkersProps {
 // ── Platform stop sub-component (registers with spiderfier) ────────────────
 
 export function StopMarkers({
+  alertStopIds,
   highlightStopIds,
   isParentStationView,
   onStopClick,
@@ -91,6 +96,7 @@ export function StopMarkers({
 
         const isSelected = id === selectedStopId;
         const isHighlighted = highlightSet.has(id);
+        const hasAlert = alertStopIds.has(id);
 
         // Render parent stations when in parent-station view
         if (isParentStationView && stop.locationType === 1) {
@@ -99,8 +105,9 @@ export function StopMarkers({
 
           const icon = L.divIcon({
             className: 'parent-station-icon',
-            html: `<div data-testid="stop-marker" class="parent-station-marker ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''}">
+            html: `<div data-testid="stop-marker" class="parent-station-marker ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''}" style="position:relative;">
               <span class="count">${displayCount}</span>
+              ${hasAlert ? STOP_ALERT_BADGE_CORNER : ''}
             </div>`,
             iconAnchor: [14, 14],
             iconSize: [28, 28],
@@ -141,6 +148,7 @@ export function StopMarkers({
           <PlatformStopMarker
             color={color}
             effectiveFactor={effectiveFactor}
+            hasAlert={hasAlert}
             isDark={isDark}
             isHighlighted={isHighlighted}
             isSelected={isSelected}
@@ -182,6 +190,29 @@ export function StopMarkers({
   );
 }
 
+/** Amber "!" disc placed at the top-right corner of a marker with an active alert. */
+const STOP_ALERT_BADGE_COLOR = '#f59e0b'; // Tailwind amber-500 (warning)
+
+/** Corner badge for the fixed-size parent-station marker (CSS-positioned). */
+const STOP_ALERT_BADGE_CORNER =
+  `<span style="position:absolute;top:-3px;right:-3px;width:12px;height:12px;border-radius:50%;` +
+  `background:${STOP_ALERT_BADGE_COLOR};border:1.5px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,0.4);` +
+  `display:flex;align-items:center;justify-content:center;">` +
+  `<span style="color:#fff;font-weight:800;font-size:9px;line-height:1;font-family:system-ui,sans-serif;">!</span></span>`;
+
+/** Alert badge overlay for an SVG stop marker, positioned near the coloured disc. */
+function alertBadgeHtml(cx: number, radius: number, stroke: string): string {
+  const bs = Math.max(11, radius * 1.5);
+  const centerX = cx + radius * 0.85;
+  const centerY = cx - radius * 0.85;
+  return (
+    `<span style="position:absolute;left:${(centerX - bs / 2).toFixed(1)}px;top:${(centerY - bs / 2).toFixed(1)}px;` +
+    `width:${bs.toFixed(1)}px;height:${bs.toFixed(1)}px;border-radius:50%;background:${STOP_ALERT_BADGE_COLOR};` +
+    `border:1.5px solid ${stroke};box-shadow:0 1px 2px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;">` +
+    `<span style="color:#fff;font-weight:800;font-size:${(bs * 0.72).toFixed(1)}px;line-height:1;font-family:system-ui,sans-serif;">!</span></span>`
+  );
+}
+
 /**
  * Build a DivIcon for a platform stop marker.
  * When `bearing` is supplied a small directional triangle is rendered
@@ -197,7 +228,8 @@ function makeStopIcon(
   opacityFactor: number,
   isDark: boolean,
   label?: string,
-  terminus?: boolean
+  terminus?: boolean,
+  hasAlert?: boolean
 ): L.DivIcon {
   const cx = size / 2;
   const safeLabel = label
@@ -220,6 +252,7 @@ function makeStopIcon(
       `<circle cx="${cx}" cy="${cx}" r="${(ringR * TERMINUS_INNER_RADIUS_RATIO).toFixed(2)}" fill="${stroke}"/>` +
       `</svg>` +
       `${safeLabel ? `<span class="stop-label">${safeLabel}</span>` : ''}` +
+      `${hasAlert ? alertBadgeHtml(cx, ringR, stroke) : ''}` +
       `</div>`;
     return L.divIcon({ className: '', html, iconAnchor: [cx, cx], iconSize: [size, size] });
   }
@@ -235,6 +268,7 @@ function makeStopIcon(
       `<path d="${pathData}" fill="${color}" stroke="${stroke}" stroke-width="2.5" stroke-linejoin="round"/>` +
       `</svg>` +
       `${safeLabel ? `<span class="stop-label">${safeLabel}</span>` : ''}` +
+      `${hasAlert ? alertBadgeHtml(cx, r, stroke) : ''}` +
       `</div>`;
     return L.divIcon({ className: '', html, iconAnchor: [cx, cx], iconSize: [size, size] });
   }
@@ -246,6 +280,7 @@ function makeStopIcon(
     `<circle cx="${cx}" cy="${cx}" r="${r}" fill="${color}" fill-opacity="0.95" stroke="${stroke}" stroke-width="2.5"/>` +
     `</svg>` +
     `${safeLabel ? `<span class="stop-label">${safeLabel}</span>` : ''}` +
+    `${hasAlert ? alertBadgeHtml(cx, r, stroke) : ''}` +
     `</div>`;
   return L.divIcon({ className: '', html, iconAnchor: [cx, cx], iconSize: [size, size] });
 }
@@ -253,6 +288,7 @@ function makeStopIcon(
 const PlatformStopMarker = memo(function PlatformStopMarker({
   color,
   effectiveFactor,
+  hasAlert,
   isDark,
   isHighlighted,
   isSelected,
@@ -272,8 +308,9 @@ const PlatformStopMarker = memo(function PlatformStopMarker({
   const bearing = stop.routeType === 2 ? undefined : stop.bearing;
   const terminus = stop.terminus === true;
   const icon = useMemo(
-    () => makeStopIcon(color, bearing, size, r, effectiveFactor, isDark, undefined, terminus),
-    [color, bearing, size, r, effectiveFactor, isDark, terminus]
+    () =>
+      makeStopIcon(color, bearing, size, r, effectiveFactor, isDark, undefined, terminus, hasAlert),
+    [color, bearing, size, r, effectiveFactor, isDark, terminus, hasAlert]
   );
   const iconRef = useRef(icon);
   useLayoutEffect(() => {

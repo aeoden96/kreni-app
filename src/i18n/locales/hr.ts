@@ -219,6 +219,18 @@ const hr = {
       directRoutesCount_other: '{{count}} linija',
       pickStops: 'Odaberite polazište i odredište',
     },
+    disruptions: {
+      chipAlertsAria_few: 'Prikaži {{count}} prometne obavijesti',
+      chipAlertsAria_one: 'Prikaži {{count}} prometnu obavijest',
+      chipAlertsAria_other: 'Prikaži {{count}} prometnih obavijesti',
+      chipClosuresAria_few: 'Prikaži {{count}} zatvorene ceste',
+      chipClosuresAria_one: 'Prikaži {{count}} zatvorenu cestu',
+      chipClosuresAria_other: 'Prikaži {{count}} zatvorenih cesta',
+      closeAria: 'Zatvori',
+      showStopsOnMap: 'Stajališta na karti',
+      tabAlerts: 'Obavijesti',
+      tabClosures: 'Zatvorene ceste',
+    },
     drivingLayers: {
       badge: 'Filteri',
       cameras: {
@@ -572,6 +584,11 @@ const hr = {
       },
     },
     serviceAlerts: {
+      count_few: '{{count}} obavijesti',
+      count_one: '{{count}} obavijest',
+      count_other: '{{count}} obavijesti',
+      dateFrom: 'od {{date}}',
+      dateUntil: 'do {{date}}',
       panelTitle: 'Prometne obavijesti',
     },
     settings: {
