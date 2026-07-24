@@ -1,22 +1,51 @@
+/**
+ * Site-wide announcement.
+ *
+ * Content comes from the `global-announcement` KV key (set by the
+ * `Global Announcement` workflow in kreni-core) via the proxy's /announcement
+ * endpoint. Each announcement carries an `id`; dismissals are stored per id, so
+ * a reader sees any given announcement once and a new one always gets through.
+ *
+ * This owns fetching, expiry and dismissal — <AnnouncementModal> owns the
+ * layout.
+ *
+ * To preview one locally, run this in the browser console and reload:
+ *
+ *   localStorage.setItem('devAnnouncement', JSON.stringify({
+ *     id: String(Date.now()),        // a fresh id each time, so it is never pre-dismissed
+ *     type: 'warning',               // info | warning | error | success
+ *     message: 'Tram 6 is diverted until Sunday.',
+ *     image: 'https://media.giphy.com/media/xyz/giphy.gif',   // optional
+ *     imageAlt: '',                  // optional
+ *     link: 'https://www.zet.hr/',   // optional
+ *     linkText: 'Read the notice',   // optional
+ *   }))
+ *
+ * `localStorage.removeItem('devAnnouncement')` goes back to the live one. The
+ * override replaces only the payload — expiry and dismissal behave exactly as
+ * in production, so what you see is what a reader gets. Dev builds only.
+ */
+
 import { useQuery } from '@tanstack/react-query';
-import { X } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
+import type { AnnouncementType } from './AnnouncementModal';
 
 import { GTFS_API_KEY, GTFS_PROXY_URL } from '../../config';
+import { AnnouncementModal } from './AnnouncementModal';
 
 interface GlobalAnnouncementData {
   expiresAt?: string;
   id: string;
-  link?: string;
-  linkText?: string;
+  image?: null | string;
+  imageAlt?: null | string;
+  link?: null | string;
+  linkText?: null | string;
   message: string;
-  type?: 'error' | 'info' | 'success' | 'warning';
+  type?: AnnouncementType;
 }
 
 export function GlobalAnnouncement() {
-  const { t } = useTranslation();
-
   const [dismissed, setDismissed] = useState<string[]>(() => {
     try {
       const stored = localStorage.getItem('dismissedAnnouncements');
@@ -35,7 +64,12 @@ export function GlobalAnnouncement() {
     return () => clearInterval(interval);
   }, []);
 
-  const { data: announcement } = useQuery<GlobalAnnouncementData | null>({
+  // Read once: a preview should not change under you while you are looking at it.
+  const [devAnnouncement] = useState(readDevAnnouncement);
+
+  const { data: fetched } = useQuery<GlobalAnnouncementData | null>({
+    // No point hitting the network when a local payload is already overriding it.
+    enabled: !devAnnouncement,
     queryFn: async () => {
       if (!GTFS_PROXY_URL) return null;
 
@@ -58,6 +92,8 @@ export function GlobalAnnouncement() {
     refetchInterval: 5 * 60 * 1000,
   });
 
+  const announcement = devAnnouncement ?? fetched;
+
   useEffect(() => {
     localStorage.setItem('dismissedAnnouncements', JSON.stringify(dismissed));
   }, [dismissed]);
@@ -67,53 +103,36 @@ export function GlobalAnnouncement() {
     return new Date(announcement.expiresAt).getTime() < now;
   }, [announcement?.expiresAt, now]);
 
-  if (!announcement || !announcement.id || !announcement.message) return null;
-  if (dismissed.includes(announcement.id)) return null;
-  if (isExpired) return null;
+  const announcementId = announcement?.id;
+  const handleDismiss = useCallback(() => {
+    if (!announcementId) return;
+    setDismissed((prev) => (prev.includes(announcementId) ? prev : [...prev, announcementId]));
+  }, [announcementId]);
 
-  const handleDismiss = () => {
-    setDismissed((prev) => [...prev, announcement.id]);
-  };
-
-  const getAlertClass = () => {
-    switch (announcement.type) {
-      case 'error':
-        return 'alert-error';
-      case 'success':
-        return 'alert-success';
-      case 'warning':
-        return 'alert-warning';
-      default:
-        return 'bg-primary text-primary-content'; // generic info using primary color
-    }
-  };
+  if (!announcement?.id || !announcement.message) return null;
+  if (dismissed.includes(announcement.id) || isExpired) return null;
 
   return (
-    <div className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-0 right-0 z-[2010] flex justify-center w-full px-4 sm:bottom-[max(1.5rem,env(safe-area-inset-bottom))] pointer-events-none">
-      <div
-        className={`alert rounded-2xl shadow-2xl flex flex-row items-center border border-white/20 pointer-events-auto max-w-lg w-full backdrop-blur-md bg-opacity-95 ${getAlertClass()}`}
-      >
-        <div className="flex-1 flex flex-wrap gap-2 text-sm font-medium pr-2">
-          <span>{announcement.message}</span>
-          {announcement.link && (
-            <a
-              className="font-bold underline underline-offset-2 opacity-80 hover:opacity-100 whitespace-nowrap"
-              href={announcement.link}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              {announcement.linkText || t('common.learnMore', 'Learn more')}
-            </a>
-          )}
-        </div>
-        <button
-          aria-label="Dismiss banner"
-          className="btn btn-ghost btn-circle btn-sm p-0 shrink-0 opacity-80 hover:opacity-100"
-          onClick={handleDismiss}
-        >
-          <X size={18} />
-        </button>
-      </div>
-    </div>
+    <AnnouncementModal
+      announcement={announcement}
+      labelId={`announcement-${announcement.id}`}
+      onDismiss={handleDismiss}
+    />
   );
+}
+
+/**
+ * Local preview payload, read once on mount. Guarded by `import.meta.env.DEV`,
+ * so the whole branch is dropped from a production build.
+ */
+function readDevAnnouncement(): GlobalAnnouncementData | null {
+  if (!import.meta.env.DEV) return null;
+  try {
+    const raw = localStorage.getItem('devAnnouncement');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as GlobalAnnouncementData;
+    return parsed.id && parsed.message ? parsed : null;
+  } catch {
+    return null;
+  }
 }

@@ -1,5 +1,12 @@
 const hr = {
   translation: {
+    announcement: {
+      dismiss: 'U redu',
+      eyebrowError: 'Prometna obavijest',
+      eyebrowInfo: 'Obavijest',
+      eyebrowSuccess: 'Dobre vijesti',
+      eyebrowWarning: 'Pažnja',
+    },
     app: {
       title: 'Kreni — Zagreb uživo: ZET, Parking, Bicikli i Gradske usluge',
     },
@@ -125,6 +132,7 @@ const hr = {
       followVehicle: 'Prati ovo vozilo',
       hide: 'Sakrij',
       kilometres: '{{km}} km',
+      learnMore: 'Saznaj više',
       metresShort: '{{metres}} m',
       next: 'Sljedeće',
       save: 'Spremi',

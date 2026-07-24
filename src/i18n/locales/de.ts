@@ -1,5 +1,12 @@
 const de = {
   translation: {
+    announcement: {
+      dismiss: 'Verstanden',
+      eyebrowError: 'Betriebsstörung',
+      eyebrowInfo: 'Mitteilung',
+      eyebrowSuccess: 'Gute Nachrichten',
+      eyebrowWarning: 'Achtung',
+    },
     app: {
       title: 'Kreni — Zagreb live: ÖPNV, Parken, Fahrräder & städtische Dienste',
     },
@@ -125,6 +132,7 @@ const de = {
       followVehicle: 'Diesem Fahrzeug folgen',
       hide: 'Ausblenden',
       kilometres: '{{km}} km',
+      learnMore: 'Mehr erfahren',
       metresShort: '{{metres}} m',
       next: 'Weiter',
       save: 'Speichern',

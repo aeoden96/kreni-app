@@ -222,6 +222,20 @@ body {
   }
 }
 
+/* A modal appearing is an interruption; for readers who ask for less motion it
+   should simply be there, without the slide and scale. */
+@media (prefers-reduced-motion: reduce) {
+  @keyframes modal-fade-in {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+}
+
 /* One-shot pulse on realtime status icon when client receives a new feed (~10s poll) */
 @keyframes realtime-data-refresh-tick {
   0% {

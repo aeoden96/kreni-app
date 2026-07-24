@@ -1,5 +1,12 @@
 const en = {
   translation: {
+    announcement: {
+      dismiss: 'Got it',
+      eyebrowError: 'Service alert',
+      eyebrowInfo: 'Announcement',
+      eyebrowSuccess: 'Good news',
+      eyebrowWarning: 'Heads up',
+    },
     app: {
       title: 'Kreni — Zagreb live: ZET, Parking, Bikes & City Services',
     },
@@ -125,6 +132,7 @@ const en = {
       followVehicle: 'Follow this vehicle',
       hide: 'Hide',
       kilometres: '{{km}} km',
+      learnMore: 'Learn more',
       metresShort: '{{metres}} m',
       next: 'Next',
       save: 'Save',
