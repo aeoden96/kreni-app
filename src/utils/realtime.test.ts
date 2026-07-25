@@ -6,9 +6,60 @@ import {
   formatDelay,
   haversineDistance,
   type ParsedVehiclePosition,
+  parseServiceAlerts,
   speedToKmh,
   type VehicleSnapshot,
 } from './realtime';
+
+describe('parseServiceAlerts', () => {
+  /** Minimal GTFS-RT feed carrying one id-less alert entity. */
+  const feedWithoutEntityId = () =>
+    ({
+      entity: [
+        {
+          alert: {
+            activePeriod: [{ end: 2000, start: 1000 }],
+            cause: 2,
+            descriptionText: { translation: [{ language: 'hr', text: 'Opis' }] },
+            effect: 1,
+            headerText: { translation: [{ language: 'hr', text: 'Naslov' }] },
+            informedEntity: [{ routeId: 'r4' }, { stopId: 's1' }],
+          },
+          id: '',
+        },
+      ],
+    }) as never;
+
+  it('derives a stable id when the feed omits the entity id', () => {
+    // Regression: this used to fall back to Math.random(), so the same alert got
+    // a new React key on every poll and its card remounted — effect colours
+    // visibly jumped around while the app was open.
+    const first = parseServiceAlerts(feedWithoutEntityId());
+    const second = parseServiceAlerts(feedWithoutEntityId());
+
+    expect(first).toHaveLength(1);
+    expect(first[0].id).toBe(second[0].id);
+    expect(first[0].id).not.toMatch(/^0\./); // not a bare Math.random()
+  });
+
+  it('distinguishes alerts that differ in content', () => {
+    const other = feedWithoutEntityId();
+    (
+      other as never as { entity: { alert: { informedEntity: unknown[] } }[] }
+    ).entity[0].alert.informedEntity = [{ routeId: 'r7' }];
+
+    expect(parseServiceAlerts(feedWithoutEntityId())[0].id).not.toBe(
+      parseServiceAlerts(other)[0].id
+    );
+  });
+
+  it('prefers the feed-provided entity id when present', () => {
+    const withId = feedWithoutEntityId();
+    (withId as never as { entity: { id: string }[] }).entity[0].id = 'zet-alert-9';
+
+    expect(parseServiceAlerts(withId)[0].id).toBe('zet-alert-9');
+  });
+});
 
 describe('formatDelay', () => {
   it('returns empty string when undefined', () => {

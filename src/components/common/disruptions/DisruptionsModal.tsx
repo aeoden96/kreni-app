@@ -116,17 +116,19 @@ export function DisruptionsModal({
 }
 
 function TabButton({ active, count, icon, label, onClick }: TabButtonProps) {
+  // min-w-0 + flex-nowrap lets the label be the only thing that gives: without
+  // them a long label ("Zatvorene ceste") pushed the count badge onto its own row.
   return (
     <button
       aria-selected={active}
-      className={`tab flex-1 gap-1.5 ${active ? 'tab-active font-semibold' : ''}`}
+      className={`tab flex min-w-0 flex-1 flex-nowrap gap-1.5 ${active ? 'tab-active font-semibold' : ''}`}
       onClick={onClick}
       role="tab"
       type="button"
     >
-      {icon}
-      <span className="truncate">{label}</span>
-      <span className="badge badge-sm badge-ghost">{count}</span>
+      <span className="shrink-0">{icon}</span>
+      <span className="min-w-0 truncate">{label}</span>
+      <span className="badge badge-sm badge-ghost shrink-0">{count}</span>
     </button>
   );
 }

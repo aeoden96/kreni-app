@@ -54,8 +54,11 @@ export function DisruptionsChip({
           onClick={() => onOpen('closures')}
           type="button"
         >
-          <Construction className="w-3 h-3" />
-          {t('roadClosures.listCount', { count: closuresCount })}
+          <Construction className="w-3 h-3 shrink-0" />
+          {/* Bare count: the closure list runs to dozens of entries and the
+              spelled-out label ("27 zatvorenih cesta") dominated the chip. The
+              icon carries the meaning; the aria-label keeps it for screen readers. */}
+          {closuresCount}
         </button>
       )}
     </div>

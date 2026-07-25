@@ -89,8 +89,14 @@ export interface ParsedServiceAlert {
   id: string;
   /** Affected route IDs */
   routeIds: string[];
-  /** Affected stop IDs */
+  /** Affected stop IDs — the flattened union of every platform in `stops` */
   stopIds: string[];
+  /**
+   * Affected stops grouped by the name the alert named them by, each carrying
+   * every platform id that name resolved to. RSS alerts only — GTFS-RT informs
+   * on raw stop ids with no name attached.
+   */
+  stops?: { ids: string[]; name: string }[];
   /** Optional URL to the original source (RSS alerts only) */
   url?: string;
 }
@@ -477,14 +483,21 @@ export function parseServiceAlerts(feed: GtfsRealtimeFeed): ParsedServiceAlert[]
       // Active period — take the first one if multiple
       const period: any = alert.activePeriod?.[0] ?? null;
 
+      const effect = EFFECT_LABELS[Number(alert.effect)] ?? 'UNKNOWN_EFFECT';
+      const header = getTranslatedText(alert.headerText);
+
       return {
         activeSince: period?.start ? Number(period.start) : null,
         activeUntil: period?.end ? Number(period.end) : null,
         cause: CAUSE_LABELS[Number(alert.cause)] ?? 'UNKNOWN_CAUSE',
         description: getTranslatedText(alert.descriptionText),
-        effect: EFFECT_LABELS[Number(alert.effect)] ?? 'UNKNOWN_EFFECT',
-        header: getTranslatedText(alert.headerText),
-        id: entity.id || String(Math.random()),
+        effect,
+        header,
+        // Content-addressed when the feed omits an entity id. It used to fall
+        // back to Math.random(), which minted a new id for the same alert on
+        // every poll: React saw a different key each time and remounted the
+        // card, so effect colours visibly jumped around mid-session.
+        id: entity.id || `rt-${effect}-${routeIds.join('.')}-${stopIds.join('.')}-${header}`,
         routeIds,
         stopIds,
       };

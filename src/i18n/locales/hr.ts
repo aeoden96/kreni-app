@@ -220,6 +220,7 @@ const hr = {
       pickStops: 'Odaberite polazište i odredište',
     },
     disruptions: {
+      affectedRoutesAndStops: 'Zahvaćene linije i stajališta',
       chipAlertsAria_few: 'Prikaži {{count}} prometne obavijesti',
       chipAlertsAria_one: 'Prikaži {{count}} prometnu obavijest',
       chipAlertsAria_other: 'Prikaži {{count}} prometnih obavijesti',
@@ -227,6 +228,7 @@ const hr = {
       chipClosuresAria_one: 'Prikaži {{count}} zatvorenu cestu',
       chipClosuresAria_other: 'Prikaži {{count}} zatvorenih cesta',
       closeAria: 'Zatvori',
+      showStopOnMapAria: 'Prikaži stajalište {{name}} na karti',
       showStopsOnMap: 'Stajališta na karti',
       tabAlerts: 'Obavijesti',
       tabClosures: 'Zatvorene ceste',

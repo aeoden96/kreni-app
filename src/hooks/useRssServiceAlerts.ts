@@ -7,18 +7,21 @@ import type { StopNameIndex } from '../utils/stopNameMatch';
 import { GTFS_API_KEY, GTFS_PROXY_URL } from '../config';
 import { buildStopNameIndex, matchStopName } from '../utils/stopNameMatch';
 
+// Fields the parser derives from the LLM are optional on the wire: a partial
+// model response omits keys, and JSON.stringify drops the resulting undefined
+// values on the way into KV. Only the feed-derived fields are guaranteed.
 interface RssAlert {
-  affectedStops: string[];
+  affectedStops?: string[];
   endDate: null | string;
   guid: string;
   id: string;
-  lines: string[];
+  lines?: string[];
   processedAt: string;
   pubDate: string;
   startDate: null | string;
-  summary: string;
+  summary?: string;
   title: string;
-  type: 'cancellation' | 'new-service' | 'other' | 'route-change' | 'stop-change';
+  type?: RssAlertType;
   url: string;
 }
 
@@ -27,7 +30,9 @@ interface RssAlertsFile {
   lastUpdate: string;
 }
 
-const TYPE_TO_EFFECT: Record<RssAlert['type'], string> = {
+type RssAlertType = 'cancellation' | 'new-service' | 'other' | 'route-change' | 'stop-change';
+
+const TYPE_TO_EFFECT: Record<RssAlertType, string> = {
   cancellation: 'NO_SERVICE',
   'new-service': 'ADDITIONAL_SERVICE',
   other: 'OTHER_EFFECT',
@@ -37,6 +42,54 @@ const TYPE_TO_EFFECT: Record<RssAlert['type'], string> = {
 
 const CACHE_KEY = 'kreni-rss-alerts-cache';
 const CACHE_DURATION_MS = 30 * 60 * 1000; // 30 minutes – alerts update every 4 h
+
+/** Exported for testing — the pure mapping from wire shape to render shape. */
+export function convertToServiceAlerts(
+  rssAlerts: RssAlert[],
+  routesById: Map<string, Route>,
+  stopIndex: StopNameIndex
+): ParsedServiceAlert[] {
+  // Build a short-name → routeId index once
+  const shortNameIndex = new Map<string, string>();
+  for (const [id, route] of routesById) {
+    shortNameIndex.set(route.shortName, id);
+  }
+
+  // No date-based filtering: the parser already prunes any item ZET drops from
+  // the RSS feed (parse-service-alerts.mjs), so feed presence *is* ZET's own
+  // curation of "currently relevant". We deliberately do NOT hide alerts whose
+  // parsed endDate is in the past — those dates are best-effort LLM output (the
+  // source text often omits the year) and were silently burying live alerts.
+  //
+  // Every LLM-derived field is defaulted rather than assumed: a partial model
+  // response reaches us with keys missing, and reading through one of them threw
+  // for the whole batch — one bad record used to hide all of them.
+  return rssAlerts.map((a): ParsedServiceAlert => {
+    // Keep each alert's stop names attached to the platforms they resolved to,
+    // so the card can offer one button per stop instead of a single catch-all.
+    // Names that match nothing are dropped — a button that pans nowhere is noise.
+    const stops = (a.affectedStops ?? [])
+      .map((name) => ({ ids: matchStopName(name, stopIndex), name }))
+      .filter((s) => s.ids.length > 0);
+
+    return {
+      activeSince: toActivePosix(a.startDate),
+      activeUntil: toActivePosix(a.endDate),
+      cause: 'OTHER_CAUSE',
+      // Falls back to the title so a summary-less alert still reads as something.
+      description: a.summary ?? a.title,
+      effect: (a.type && TYPE_TO_EFFECT[a.type]) ?? 'OTHER_EFFECT',
+      header: a.title,
+      id: `rss-${a.id}`,
+      routeIds: (a.lines ?? [])
+        .map((line) => shortNameIndex.get(line))
+        .filter((id): id is string => id !== undefined),
+      stopIds: [...new Set(stops.flatMap((s) => s.ids))],
+      stops,
+      url: a.url,
+    };
+  });
+}
 
 export function useRssServiceAlerts(
   routesById: Map<string, Route>,
@@ -86,8 +139,11 @@ export function useRssServiceAlerts(
         if (!cancelled) {
           setAlerts(convertToServiceAlerts(json.alerts, routesById, stopIndex));
         }
-      } catch {
-        // network error – silently ignore, RSS alerts are non-critical
+      } catch (err) {
+        // RSS alerts are non-critical, so a failure stays non-fatal — but it is
+        // no longer invisible: swallowing this silently made an empty panel
+        // indistinguishable from "no disruptions".
+        console.warn('[rss-alerts] failed to load service alerts', err);
       }
     }
 
@@ -103,38 +159,6 @@ export function useRssServiceAlerts(
   }, [routesById.size, stopIndex]);
 
   return alerts;
-}
-
-function convertToServiceAlerts(
-  rssAlerts: RssAlert[],
-  routesById: Map<string, Route>,
-  stopIndex: StopNameIndex
-): ParsedServiceAlert[] {
-  // Build a short-name → routeId index once
-  const shortNameIndex = new Map<string, string>();
-  for (const [id, route] of routesById) {
-    shortNameIndex.set(route.shortName, id);
-  }
-
-  // No date-based filtering: the parser already prunes any item ZET drops from
-  // the RSS feed (parse-service-alerts.mjs), so feed presence *is* ZET's own
-  // curation of "currently relevant". We deliberately do NOT hide alerts whose
-  // parsed endDate is in the past — those dates are best-effort LLM output (the
-  // source text often omits the year) and were silently burying live alerts.
-  return rssAlerts.map((a): ParsedServiceAlert => ({
-    activeSince: toActivePosix(a.startDate),
-    activeUntil: toActivePosix(a.endDate),
-    cause: 'OTHER_CAUSE',
-    description: a.summary,
-    effect: TYPE_TO_EFFECT[a.type] ?? 'OTHER_EFFECT',
-    header: a.title,
-    id: `rss-${a.id}`,
-    routeIds: a.lines
-      .map((line) => shortNameIndex.get(line))
-      .filter((id): id is string => id !== undefined),
-    stopIds: [...new Set(a.affectedStops.flatMap((name) => matchStopName(name, stopIndex)))],
-    url: a.url,
-  }));
 }
 
 function toActivePosix(dateStr: null | string): null | number {

@@ -220,11 +220,13 @@ const de = {
       pickStops: 'Start und Ziel wählen',
     },
     disruptions: {
+      affectedRoutesAndStops: 'Betroffene Linien und Haltestellen',
       chipAlertsAria_one: '{{count}} Verkehrshinweis anzeigen',
       chipAlertsAria_other: '{{count}} Verkehrshinweise anzeigen',
       chipClosuresAria_one: '{{count}} Straßensperrung anzeigen',
       chipClosuresAria_other: '{{count}} Straßensperrungen anzeigen',
       closeAria: 'Schließen',
+      showStopOnMapAria: 'Haltestelle {{name}} auf der Karte anzeigen',
       showStopsOnMap: 'Haltestellen auf Karte',
       tabAlerts: 'Hinweise',
       tabClosures: 'Straßensperrungen',

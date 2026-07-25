@@ -103,41 +103,70 @@ export function ServiceAlertsList({
             {/* Date range */}
             <DateRange since={alert.activeSince} until={alert.activeUntil} />
 
-            {/* Affected route badges + "show stops on map" */}
+            {/* Affected routes + stops, collapsed by default. Every badge here
+                carries a saturated colour, so a card with several routes read as
+                a wall of colour — the disclosure keeps the list scannable. */}
             {(alert.routeIds.length > 0 || (alert.stopIds.length > 0 && onStopHighlight)) && (
-              <div className="flex flex-wrap items-center gap-1.5 mt-3">
-                {alert.routeIds.map((rid) => {
-                  const route = routesById.get(rid);
-                  if (!route) return null;
-                  return (
-                    <button
-                      className="badge badge-sm font-bold gap-1 hover:opacity-80 transition-opacity cursor-pointer text-white"
-                      key={rid}
-                      onClick={() => {
-                        onRouteClick?.(rid, route.type);
-                        onClose();
-                      }}
-                      style={{ backgroundColor: route.type === 0 ? '#2563eb' : '#d97706' }}
-                    >
-                      {route.shortName}
-                      <ChevronRight className="w-3 h-3" />
-                    </button>
-                  );
-                })}
-                {alert.stopIds.length > 0 && onStopHighlight && (
-                  <button
-                    className="badge badge-sm badge-outline gap-1 hover:bg-base-200 transition-colors cursor-pointer"
-                    onClick={() => {
-                      onStopHighlight(alert.stopIds);
-                      onClose();
-                    }}
-                    type="button"
-                  >
-                    <MapPin className="w-3 h-3" />
-                    {t('disruptions.showStopsOnMap')}
-                  </button>
-                )}
-              </div>
+              <details className="group mt-3">
+                <summary className="flex cursor-pointer list-none items-center gap-1 text-xs text-base-content/55 transition-colors hover:text-base-content/80 [&::-webkit-details-marker]:hidden">
+                  <ChevronRight className="w-3 h-3 shrink-0 transition-transform group-open:rotate-90" />
+                  {t('disruptions.affectedRoutesAndStops')}
+                </summary>
+
+                <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                  {alert.routeIds.map((rid) => {
+                    const route = routesById.get(rid);
+                    if (!route) return null;
+                    return (
+                      <button
+                        className="badge badge-sm font-bold gap-1 hover:opacity-80 transition-opacity cursor-pointer text-white"
+                        key={rid}
+                        onClick={() => {
+                          onRouteClick?.(rid, route.type);
+                          onClose();
+                        }}
+                        style={{ backgroundColor: route.type === 0 ? '#2563eb' : '#d97706' }}
+                      >
+                        {route.shortName}
+                        <ChevronRight className="w-3 h-3" />
+                      </button>
+                    );
+                  })}
+
+                  {/* One button per named stop. GTFS-RT alerts inform on raw stop
+                      ids with no names, so those keep the single catch-all. */}
+                  {onStopHighlight &&
+                    (alert.stops?.length
+                      ? alert.stops.map((stop) => (
+                          <button
+                            aria-label={t('disruptions.showStopOnMapAria', { name: stop.name })}
+                            className="badge badge-sm badge-outline gap-1 hover:bg-base-200 transition-colors cursor-pointer"
+                            key={stop.name}
+                            onClick={() => {
+                              onStopHighlight(stop.ids);
+                              onClose();
+                            }}
+                            type="button"
+                          >
+                            <MapPin className="w-3 h-3 shrink-0" />
+                            {stop.name}
+                          </button>
+                        ))
+                      : alert.stopIds.length > 0 && (
+                          <button
+                            className="badge badge-sm badge-outline gap-1 hover:bg-base-200 transition-colors cursor-pointer"
+                            onClick={() => {
+                              onStopHighlight(alert.stopIds);
+                              onClose();
+                            }}
+                            type="button"
+                          >
+                            <MapPin className="w-3 h-3" />
+                            {t('disruptions.showStopsOnMap')}
+                          </button>
+                        ))}
+                </div>
+              </details>
             )}
           </div>
         );

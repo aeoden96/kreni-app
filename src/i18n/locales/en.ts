@@ -217,11 +217,13 @@ const en = {
       pickStops: 'Choose origin and destination',
     },
     disruptions: {
+      affectedRoutesAndStops: 'Affected routes and stops',
       chipAlertsAria_one: 'Show {{count}} service alert',
       chipAlertsAria_other: 'Show {{count}} service alerts',
       chipClosuresAria_one: 'Show {{count}} road closure',
       chipClosuresAria_other: 'Show {{count}} road closures',
       closeAria: 'Close',
+      showStopOnMapAria: 'Show stop {{name}} on the map',
       showStopsOnMap: 'Stops on map',
       tabAlerts: 'Alerts',
       tabClosures: 'Road closures',
