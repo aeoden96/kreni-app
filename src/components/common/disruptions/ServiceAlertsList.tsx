@@ -4,17 +4,7 @@
  * shared Disruptions tabbed panel.
  */
 
-import {
-  AlertTriangle,
-  ArrowRight,
-  Ban,
-  Bus,
-  Calendar,
-  ChevronRight,
-  Info,
-  MapPin,
-  Plus,
-} from 'lucide-react';
+import { ArrowRight, Ban, Bus, Calendar, ChevronRight, Info, MapPin, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import type { Route } from '../../../utils/gtfs';
@@ -65,11 +55,14 @@ export function ServiceAlertsList({
     <div className="flex-1 overflow-y-auto overscroll-contain divide-y divide-base-300">
       {sorted.map((alert) => {
         const isRelevant = !!(selectedRouteId && alert.routeIds.includes(selectedRouteId));
-        const style = effectStyle(alert.effect, isRelevant);
+        const style = effectStyle(alert.effect);
 
         return (
           <div
-            className={`p-4 border-l-4 ${style.border} ${isRelevant ? 'bg-error/5' : 'hover:bg-base-200/50'} transition-colors`}
+            // Relevance is marked with a neutral tint, never with colour: the
+            // colour belongs to the effect and has to mean the same thing
+            // whatever happens to be selected.
+            className={`p-4 border-l-4 ${style.border} ${isRelevant ? 'bg-base-200/60' : 'hover:bg-base-200/50'} transition-colors`}
             key={alert.id}
           >
             {/* Top row: icon + effect badge + ZET link */}
@@ -179,14 +172,16 @@ export function ServiceAlertsList({
   );
 }
 
-function effectStyle(effect: string, isRelevant: boolean): EffectStyle {
-  if (isRelevant) {
-    return {
-      badge: 'badge-error',
-      border: 'border-l-error',
-      icon: <AlertTriangle className="w-4 h-4 text-error" />,
-    };
-  }
+/**
+ * Colour and icon for an alert, from its effect alone.
+ *
+ * Deliberately takes nothing else: this used to escalate every alert on the
+ * selected route to red with a generic warning icon, which made the same alert
+ * render differently depending on what was selected and — worse — put a red
+ * badge next to a label reading "Stanica premještena" or "Dodatna usluga".
+ * Relevance is conveyed by the sort order and a neutral row tint instead.
+ */
+function effectStyle(effect: string): EffectStyle {
   switch (effect) {
     case 'ADDITIONAL_SERVICE':
       return {

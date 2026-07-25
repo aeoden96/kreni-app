@@ -15,6 +15,7 @@
 import {
   ArrowRight,
   Bus,
+  CalendarOff,
   ChevronDown,
   ChevronLeft,
   ChevronUp,
@@ -29,20 +30,28 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { Route, RouteTimetable, Stop } from '../../../utils/gtfs';
-import type { ParsedTripUpdate, ParsedVehiclePosition } from '../../../utils/realtime';
+import type {
+  ParsedServiceAlert,
+  ParsedTripUpdate,
+  ParsedVehiclePosition,
+} from '../../../utils/realtime';
 import type { VehiclePosition } from '../../../utils/vehicles';
 
 import { useGTFSMode } from '../../../contexts/GTFSModeContext';
 import { useStopDepartures } from '../../../hooks/useStopDepartures';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { isNightRoute } from '../../../utils/nightLines';
+import { getRouteSuspension, parseFeedDate } from '../../../utils/routeService';
 import { routeBadgeColor } from '../../../utils/routeStyle';
 import { getDirectionColor } from '../../Map/directionColors';
 import { DepartureCard } from '../DepartureCard';
 import { NightMoon } from '../NightMoon';
 import { RouteDirectionHeader } from '../RouteDirectionHeader';
 import { RouteStopList } from '../RouteStopList';
+import { ServiceAlertBanner } from '../ServiceAlertBanner';
 import { FocusedVehicleCard } from './FocusedVehicleCard';
+
+const DATE_FMT = new Intl.DateTimeFormat('hr-HR', { day: 'numeric', month: 'short' });
 
 interface RouteVehiclePanelProps {
   activeTripId: null | string;
@@ -67,6 +76,8 @@ interface RouteVehiclePanelProps {
   onVehicleClick: (tripId: string) => void;
   orderedStops?: Record<string, string[]>;
   route: Route;
+  /** ZET alerts naming this route — shown once a vehicle is focused. */
+  routeAlerts?: ParsedServiceAlert[];
   routesById?: Map<string, Route>;
   routeTimetable?: null | RouteTimetable;
   stopsById?: Map<string, Stop>;
@@ -93,6 +104,7 @@ export function RouteVehiclePanel({
   onVehicleClick,
   orderedStops,
   route,
+  routeAlerts,
   routesById,
   routeTimetable,
   stopsById,
@@ -105,6 +117,8 @@ export function RouteVehiclePanel({
   const RouteIcon = route.type === 3 ? Bus : Train;
   const { favouriteRouteIds, toggleFavouriteRoute } = useSettingsStore();
   const isFav = favouriteRouteIds.includes(route.id);
+  // Why the line looks dead: it is out of service for a stretch, not just idle.
+  const suspension = getRouteSuspension(route, new Date());
 
   const [compactListDirectionKey, setCompactListDirectionKey] = useState('');
   const [showOriginDepartures, setShowOriginDepartures] = useState(false);
@@ -189,10 +203,10 @@ export function RouteVehiclePanel({
 
   return (
     <div
-      className="fixed top-16 sm:top-20 left-2 right-2 sm:left-4 sm:right-auto sm:max-w-md z-[1050] bg-base-100 rounded-xl shadow-2xl"
+      className="fixed top-16 sm:top-20 left-2 right-2 sm:left-4 sm:right-auto sm:max-w-md z-[1150] bg-base-100 rounded-xl shadow-2xl flex flex-col overflow-hidden max-h-[calc(100dvh-5rem-env(safe-area-inset-bottom))] sm:max-h-[calc(100dvh-6rem-env(safe-area-inset-bottom))]"
       style={{ animation: 'modal-fade-in 0.2s ease-out' }}
     >
-      <div className="p-4">
+      <div className="flex flex-1 min-h-0 flex-col overflow-y-auto overscroll-contain p-4">
         {/* Header */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex-1 min-w-0 flex items-center gap-2">
@@ -266,6 +280,28 @@ export function RouteVehiclePanel({
           </div>
         </div>
 
+        {suspension && (
+          <div className="flex items-center gap-2.5 px-3 py-2.5 mb-3 rounded-lg border border-warning/30 bg-warning/10">
+            <CalendarOff className="w-4 h-4 shrink-0 text-warning" />
+            <span className="text-xs font-medium text-base-content/70">
+              {t('routeBar.suspendedBanner', {
+                date: DATE_FMT.format(parseFeedDate(suspension.until)),
+              })}
+            </span>
+          </div>
+        )}
+
+        {/* Alerts sit above the body so they read the same whether you are
+            browsing the line or watching one vehicle on it. */}
+        {routesById && (
+          <ServiceAlertBanner
+            alerts={routeAlerts ?? []}
+            className="mb-3"
+            compact
+            routesById={routesById}
+          />
+        )}
+
         {/* Body */}
         {hasDirections ? (
           <div className="space-y-2">
@@ -321,7 +357,10 @@ export function RouteVehiclePanel({
                 )}
 
                 {/* The line of stops — same diagram as the expanded route view */}
-                <div className="max-h-[45vh] overflow-y-auto overflow-x-hidden overscroll-contain rounded-lg border border-base-300">
+                {/* Capped well under the panel's own height so the banners, the
+                    direction header and the departures below stay reachable
+                    without the panel itself having to scroll. */}
+                <div className="max-h-[32vh] overflow-y-auto overflow-x-hidden overscroll-contain rounded-lg border border-base-300">
                   <RouteStopList
                     journeySegment={journeySegment}
                     onStopClick={onStopClick}

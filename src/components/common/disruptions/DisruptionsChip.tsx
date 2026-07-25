@@ -12,17 +12,10 @@ import type { DisruptionTab } from './DisruptionsModal';
 interface DisruptionsChipProps {
   alertsCount: number;
   closuresCount: number;
-  /** A route is selected and at least one alert affects it → escalate alert colour. */
-  hasRelevantAlerts: boolean;
   onOpen: (tab: DisruptionTab) => void;
 }
 
-export function DisruptionsChip({
-  alertsCount,
-  closuresCount,
-  hasRelevantAlerts,
-  onOpen,
-}: DisruptionsChipProps) {
+export function DisruptionsChip({ alertsCount, closuresCount, onOpen }: DisruptionsChipProps) {
   const { t } = useTranslation();
 
   const showAlerts = alertsCount > 0;
@@ -34,9 +27,10 @@ export function DisruptionsChip({
       {showAlerts && (
         <button
           aria-label={t('disruptions.chipAlertsAria', { count: alertsCount })}
-          className={`flex items-center gap-1.5 px-2.5 py-1 cursor-pointer transition-colors hover:bg-base-200 ${
-            hasRelevantAlerts ? 'text-error' : 'text-warning'
-          }`}
+          // Fixed colour. This used to flip to text-error whenever the selected
+          // route had an alert, so the same feed made the chip change colour as
+          // you tapped around the map.
+          className="flex items-center gap-1.5 px-2.5 py-1 cursor-pointer transition-colors hover:bg-base-200 text-warning"
           onClick={() => onOpen('alerts')}
           type="button"
         >

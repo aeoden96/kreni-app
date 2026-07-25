@@ -478,6 +478,7 @@ const en = {
       oppositeTerminusNote: 'Still at terminus',
       positionUnknown: 'Position unknown',
       stationsLabel: 'Stations',
+      suspendedBanner: 'This line is not running until {{date}}',
       switchDirection: 'Switch direction',
       tapVehiclesHint: 'Tap a vehicle icon to track it',
       viewDeparturesHere: 'Departures at {{stop}}',
@@ -544,6 +545,7 @@ const en = {
         rail: 'Rail station',
         tram: 'Tram stop',
       },
+      suspendedUntil: 'Not running until {{date}}',
       swapStopsAria: 'Swap origin and destination',
       tabs: {
         buses: 'Buses ({{count}})',

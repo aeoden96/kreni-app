@@ -21,7 +21,7 @@ import { isNightRoute } from '../../utils/nightLines';
 import { routeBadgeColor } from '../../utils/routeStyle';
 import { DepartureCard } from './DepartureCard';
 import { NightMoon } from './NightMoon';
-import { StopAlertBanner } from './StopAlertBanner';
+import { ServiceAlertBanner } from './ServiceAlertBanner';
 
 interface StopInfoBarProps {
   /** When set, narrows the board to a planned trip's routes and shows a banner. */
@@ -173,7 +173,7 @@ export function StopInfoBar({
 
   return (
     <div
-      className={`fixed left-2 right-2 sm:left-4 sm:right-auto sm:max-w-md z-[1050] bg-base-100 rounded-xl shadow-2xl flex flex-col overflow-hidden ${
+      className={`fixed left-2 right-2 sm:left-4 sm:right-auto sm:max-w-md z-[1150] bg-base-100 rounded-xl shadow-2xl flex flex-col overflow-hidden ${
         stackBelow
           ? 'top-[calc(11rem+env(safe-area-inset-top))] max-h-[calc(100dvh-12rem-env(safe-area-inset-top))]'
           : 'top-[calc(4rem+env(safe-area-inset-top))] sm:top-[calc(5rem+env(safe-area-inset-top))] max-h-[calc(100dvh-5rem-env(safe-area-inset-top))] sm:max-h-[calc(100dvh-6rem-env(safe-area-inset-top))]'
@@ -268,7 +268,7 @@ export function StopInfoBar({
 
         {/* Service-alert banner (disruptions affecting this stop) */}
         {stopAlerts && stopAlerts.length > 0 && (
-          <StopAlertBanner alerts={stopAlerts} className="mb-2" routesById={routesById} />
+          <ServiceAlertBanner alerts={stopAlerts} className="mb-2" routesById={routesById} />
         )}
 
         {/* Planned-trip filter banner */}

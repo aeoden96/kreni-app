@@ -479,6 +479,7 @@ const de = {
       oppositeTerminusNote: 'Noch am Endpunkt',
       positionUnknown: 'Position unbekannt',
       stationsLabel: 'Haltestellen',
+      suspendedBanner: 'Diese Linie fährt nicht bis {{date}}',
       switchDirection: 'Richtung wechseln',
       tapVehiclesHint: 'Fahrzeug antippen zum Verfolgen',
       viewDeparturesHere: 'Abfahrten an {{stop}}',
@@ -541,6 +542,7 @@ const de = {
         rail: 'Bahnhof',
         tram: 'Straßenbahnhaltestelle',
       },
+      suspendedUntil: 'Fährt nicht bis {{date}}',
       swapStopsAria: 'Start und Ziel tauschen',
       tabs: {
         buses: 'Busse ({{count}})',

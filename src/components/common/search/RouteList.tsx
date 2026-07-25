@@ -4,7 +4,10 @@ import { useTranslation } from 'react-i18next';
 import type { Route } from '../../../utils/gtfs';
 
 import { trackEvent } from '../../../utils/analytics';
+import { getRouteSuspension, parseFeedDate } from '../../../utils/routeService';
 import { RouteBadge } from '../RouteBadge';
+
+const DATE_FMT = new Intl.DateTimeFormat('hr-HR', { day: 'numeric', month: 'short' });
 
 interface RouteListProps {
   /** Unused for night lines, which carry their own night colour. */
@@ -25,6 +28,8 @@ export function RouteList({
   toggleFavouriteRoute,
 }: RouteListProps) {
   const { t } = useTranslation();
+  // One reading for the whole list, so no two rows disagree about the date.
+  const now = new Date();
 
   if (filteredRoutes.length === 0) {
     return (
@@ -38,6 +43,9 @@ export function RouteList({
     <div className="divide-y divide-base-300">
       {filteredRoutes.map((route) => {
         const isFav = favouriteRouteIds.includes(route.id);
+        // Out of service for a stretch — still listed and selectable, since the
+        // timetable is what tells you when it comes back.
+        const suspension = getRouteSuspension(route, now);
         return (
           <div
             className="flex items-center hover:bg-base-200 active:bg-base-300 transition-colors"
@@ -51,9 +59,21 @@ export function RouteList({
                 <RouteBadge
                   className="min-w-[3rem] justify-center"
                   color={badgeColor}
+                  dimmed={!!suspension}
                   route={route}
                 />
-                <div className="text-sm">{route.longName}</div>
+                <div className="min-w-0">
+                  <div className={`text-sm${suspension ? ' text-base-content/50' : ''}`}>
+                    {route.longName}
+                  </div>
+                  {suspension && (
+                    <div className="text-[11px] text-warning">
+                      {t('search.suspendedUntil', {
+                        date: DATE_FMT.format(parseFeedDate(suspension.until)),
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             </button>
             <button

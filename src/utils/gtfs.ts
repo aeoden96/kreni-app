@@ -69,6 +69,13 @@ export interface InitialData {
 export interface Route {
   id: string;
   longName: string;
+  /**
+   * Stretches of at least a week with no service, as `YYYYMMDD` half-open
+   * ranges — the route is out from `from` up to but not including `until`.
+   * Added by process_gtfs.py and absent on the ~150 routes that never stop.
+   * Read it through `getRouteSuspension`, never directly.
+   */
+  serviceGaps?: { from: string; until: string }[];
   shortName: string;
   type: number; // 0 = Tram, 3 = Bus
 }

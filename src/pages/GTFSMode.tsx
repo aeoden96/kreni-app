@@ -30,6 +30,7 @@ import { StopModal } from '../components/common/StopModal';
 import { MapView } from '../components/Map/MapView';
 import { MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD } from '../components/Map/mapZoomConstants';
 import { GTFSModeProvider } from '../contexts/GTFSModeContext';
+import { useAlertIndexes } from '../hooks/useAlertIndexes';
 import { useAllVehiclePositions } from '../hooks/useAllVehiclePositions';
 import { useCongestionData } from '../hooks/useCongestionData';
 import { useCurrentService } from '../hooks/useCurrentService';
@@ -222,31 +223,10 @@ export function GTFSMode({ config }: GTFSModeProps) {
     [routesById, stops, rssAlerts, gtfsRtAlerts]
   );
 
-  // stopId → alerts affecting it. Alert stopIds are platform ids; also index each
-  // under its parent station so a tapped parent marker resolves its alerts too.
-  const alertsByStopId = useMemo(() => {
-    const map = new Map<string, ParsedServiceAlert[]>();
-    const add = (id: string, alert: ParsedServiceAlert) => {
-      const arr = map.get(id);
-      if (arr) {
-        if (!arr.includes(alert)) arr.push(alert);
-      } else {
-        map.set(id, [alert]);
-      }
-    };
-    for (const alert of serviceAlerts) {
-      for (const sid of alert.stopIds) {
-        add(sid, alert);
-        const parent = stopsById.get(sid)?.parentStation;
-        if (parent) add(parent, alert);
-      }
-    }
-    return map;
-  }, [serviceAlerts, stopsById]);
-
-  // Set of every stop id (platform + parent) that has an active alert — for the
-  // map marker badge. Stable identity so the memoized StopMarkers layer isn't busted.
-  const alertStopIds = useMemo(() => new Set(alertsByStopId.keys()), [alertsByStopId]);
+  const { alertsByRouteId, alertsByStopId, alertStopIds } = useAlertIndexes(
+    serviceAlerts,
+    stopsById
+  );
 
   // Road closures overlay + list (transit view only; `enabled` gates the fetch)
   const isTransit = config.id === 'transit';
@@ -502,6 +482,9 @@ export function GTFSMode({ config }: GTFSModeProps) {
   const selectedStopAlerts = selectedStop
     ? (alertsByStopId.get(selectedStop.id) ?? EMPTY_ALERTS)
     : EMPTY_ALERTS;
+  const selectedRouteAlerts = selectedRouteId
+    ? (alertsByRouteId.get(selectedRouteId) ?? EMPTY_ALERTS)
+    : EMPTY_ALERTS;
 
   // ── Loading / Error states ─────────────────────────────────────────────────
 
@@ -749,6 +732,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
                 onVehicleClick={handleVehicleClickFromRoute}
                 orderedStops={orderedStops}
                 route={selectedRoute}
+                routeAlerts={selectedRouteAlerts}
                 routesById={routesById}
                 routeTimetable={routeTimetable}
                 stopsById={stopsById}

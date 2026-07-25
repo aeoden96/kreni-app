@@ -16,9 +16,9 @@ interface RouteBadgeProps {
    */
   color?: string;
   /**
-   * Dim the badge to mark a line that is not running at this hour. Only ever set
-   * for night lines during the day — a night line is still fully selectable,
-   * this just stops it competing with lines you can actually board right now.
+   * Dim the badge to mark a line that is not running — a night line during the
+   * day, or one suspended for a stretch of days. Either way the line stays fully
+   * selectable; this just stops it competing with lines you can board right now.
    */
   dimmed?: boolean;
   /** Overrides the displayed text (train numbers stand in for the short name). */

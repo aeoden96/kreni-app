@@ -23,7 +23,7 @@ import { isNightRoute } from '../../utils/nightLines';
 import { routeBadgeColor } from '../../utils/routeStyle';
 import { DepartureCard } from './DepartureCard';
 import { NightMoon } from './NightMoon';
-import { StopAlertBanner } from './StopAlertBanner';
+import { ServiceAlertBanner } from './ServiceAlertBanner';
 
 interface StopModalProps {
   isOpen: boolean;
@@ -362,7 +362,7 @@ export const StopModal = memo(function StopModal({
         <div className="flex-1 overflow-y-auto overscroll-contain">
           {/* Service-alert banner (disruptions affecting this stop) */}
           {stopAlerts && stopAlerts.length > 0 && (
-            <StopAlertBanner
+            <ServiceAlertBanner
               alerts={stopAlerts}
               className="mx-4 mt-4 mb-3"
               routesById={routesById}

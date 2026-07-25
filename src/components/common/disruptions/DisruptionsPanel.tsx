@@ -51,17 +51,11 @@ export function DisruptionsPanel({
     setOpen(true);
   };
 
-  // A route is selected and at least one alert affects it → escalate the chip colour.
-  const hasRelevantAlerts = !!(
-    selectedRouteId && alerts.some((a) => a.routeIds.includes(selectedRouteId))
-  );
-
   return (
     <>
       <DisruptionsChip
         alertsCount={alerts.length}
         closuresCount={closures.length}
-        hasRelevantAlerts={hasRelevantAlerts}
         onOpen={handleOpen}
       />
 

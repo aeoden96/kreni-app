@@ -21,6 +21,36 @@ import pkg from './package.json';
  */
 const forceRemote = process.env.VITE_REMOTE_DATA === '1';
 
+/**
+ * Dev-only passthrough to the production realtime Worker.
+ *
+ * The Worker only allows `https://kreni.app` as a CORS origin, so a browser on
+ * localhost cannot call it directly — the preflight is refused no matter what
+ * key is sent. Vite proxies server-side, where CORS does not apply, so the page
+ * sees a same-origin `/api/...` URL and the Worker sees a normal request.
+ *
+ * Enable by pointing the app at the proxy prefix instead of the Worker itself:
+ *
+ *     VITE_GTFS_PROXY_URL=/api
+ *
+ * Leave it pointed at `http://localhost:8787` when running the Worker locally —
+ * that is same-origin enough for the browser and needs none of this.
+ */
+const REALTIME_PROXY_PREFIX = '/api';
+
+const realtimeProxy = {
+  [REALTIME_PROXY_PREFIX]: {
+    changeOrigin: true,
+    // Call sites build both `${base}?endpoint=…` and `${base}/?endpoint=…`, so
+    // stripping the prefix can leave a path that does not start with a slash.
+    rewrite: (path: string) => {
+      const rest = path.slice(REALTIME_PROXY_PREFIX.length);
+      return rest.startsWith('/') ? rest : `/${rest}`;
+    },
+    target: 'https://api.kreni.app',
+  },
+};
+
 const dataProxy = Object.fromEntries(
   ['data', 'data-train']
     .filter(
@@ -172,9 +202,10 @@ export default defineConfig({
     }),
   ],
   // Datasets without a local build are proxied to production, with the header
-  // the app normally sends — see `dataProxy` above. Dev-only; `vite build`
-  // output is unaffected.
+  // the app normally sends — see `dataProxy` above. `/api` reaches the realtime
+  // Worker past its CORS allowlist — see `realtimeProxy`. Both dev-only;
+  // `vite build` output is unaffected.
   server: {
-    proxy: dataProxy,
+    proxy: { ...dataProxy, ...realtimeProxy },
   },
 });

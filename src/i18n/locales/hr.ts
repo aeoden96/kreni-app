@@ -489,6 +489,7 @@ const hr = {
       oppositeTerminusNote: 'Još je na krajnoj postaji',
       positionUnknown: 'Položaj nepoznat',
       stationsLabel: 'Stanice',
+      suspendedBanner: 'Ova linija ne prometuje do {{date}}',
       switchDirection: 'Promijeni smjer',
       tapVehiclesHint: 'Dodirnite vozilo za pracenje',
       viewDeparturesHere: 'Polasci sa stanice {{stop}}',
@@ -555,6 +556,7 @@ const hr = {
         rail: 'Željeznička stanica',
         tram: 'Tramvajska stanica',
       },
+      suspendedUntil: 'Ne prometuje do {{date}}',
       swapStopsAria: 'Zamijeni polazište i odredište',
       tabs: {
         buses: 'Autobusi ({{count}})',
