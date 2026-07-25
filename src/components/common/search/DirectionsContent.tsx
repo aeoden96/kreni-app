@@ -6,10 +6,12 @@ import type { Route, Stop } from '../../../utils/gtfs';
 import type { AllVehiclePosition } from '../../../utils/vehicles';
 
 import { useGTFSMode } from '../../../contexts/GTFSModeContext';
+import { useCurrentTime } from '../../../hooks/useCurrentTime';
 import { useJourneyDepartures } from '../../../hooks/useJourneyDepartures';
 import { useRouteTripDirections } from '../../../hooks/useRouteTripDirections';
 import { fetchRouteStops } from '../../../utils/gtfs';
-import { routeTypeColor } from '../../../utils/routeStyle';
+import { isNightRoute, isNightTime } from '../../../utils/nightLines';
+import { RouteBadge } from '../RouteBadge';
 import { RouteMiniTrack } from '../RouteMiniTrack';
 
 export interface JourneyStopFilter {
@@ -30,6 +32,8 @@ interface DirectionResult {
 
 interface DirectionResultRowProps {
   dataDir: string;
+  /** Night line shown during the day — see dimNightLines in DirectionsContent. */
+  dimNight: boolean;
   fromName: string;
   item: DirectionResult;
   journeyRouteIds: string[];
@@ -70,6 +74,11 @@ export function DirectionsContent({
 }: DirectionsContentProps) {
   const { t } = useTranslation();
   const { dataDir, hasRealtime } = useGTFSMode();
+
+  // Night lines are always offered — planning tomorrow's way home is a daytime
+  // activity — but during the day they are dimmed so they don't read as an
+  // option you could board now.
+  const dimNightLines = !isNightTime(useCurrentTime());
 
   // Every direct route that makes this journey — the departure board at the
   // boarding stop is narrowed to these once a result is tapped.
@@ -121,7 +130,6 @@ export function DirectionsContent({
         {!loading && journeyDepartures.length > 0 && (
           <div className="divide-y divide-base-300 border border-base-300 rounded-xl overflow-hidden">
             {journeyDepartures.map((d) => {
-              const color = routeTypeColor(d.route.type);
               const direction = directionByRoute.get(d.route.id) ?? 'A';
               return (
                 <button
@@ -144,12 +152,12 @@ export function DirectionsContent({
                     <span className="text-xs text-base-content/50 tabular-nums">
                       {fmtDuration(d.durationMin)}
                     </span>
-                    <span
-                      className="badge badge-sm font-bold text-white"
-                      style={{ backgroundColor: color }}
-                    >
-                      {d.trainNumber || d.route.shortName}
-                    </span>
+                    <RouteBadge
+                      className="badge-sm"
+                      dimmed={dimNightLines && isNightRoute(d.route)}
+                      label={d.trainNumber || undefined}
+                      route={d.route}
+                    />
                   </div>
                 </button>
               );
@@ -182,6 +190,7 @@ export function DirectionsContent({
             {dirResults.map((item) => (
               <DirectionResultRow
                 dataDir={dataDir}
+                dimNight={dimNightLines && isNightRoute(item.route)}
                 fromName={dirFromStop?.name ?? ''}
                 item={item}
                 journeyRouteIds={journeyRouteIds}
@@ -217,6 +226,7 @@ export function DirectionsContent({
  */
 function DirectionResultRow({
   dataDir,
+  dimNight,
   fromName,
   item,
   journeyRouteIds,
@@ -226,7 +236,6 @@ function DirectionResultRow({
   vehicles,
 }: DirectionResultRowProps) {
   const { t } = useTranslation();
-  const color = routeTypeColor(item.route.type);
 
   const candidateVehicles = useMemo(
     () => vehicles.filter((v) => v.routeId === item.route.id),
@@ -263,13 +272,12 @@ function DirectionResultRow({
         onClick={goToBoardingStop}
         type="button"
       >
-        <div className="flex items-center gap-3">
-          <span
-            className="badge font-bold text-white min-w-[3rem] justify-center"
-            style={{ backgroundColor: color }}
-          >
-            {item.route.shortName}
-          </span>
+        <div className={`flex items-center gap-3 ${dimNight ? 'opacity-60' : ''}`}>
+          <RouteBadge
+            className="min-w-[3rem] justify-center"
+            dimmed={dimNight}
+            route={item.route}
+          />
           <div className="min-w-0 flex-1">
             <div className="text-sm line-clamp-1">{item.route.longName}</div>
             <div className="text-xs text-base-content/60">

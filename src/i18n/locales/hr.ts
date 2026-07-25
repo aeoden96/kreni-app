@@ -533,6 +533,7 @@ const hr = {
       listFirst20Hint: 'Prikazano prvih 20. Upišite više u pretragu za bolje filtriranje.',
       listNoResultsForQuery: 'Nema rezultata za „{{query}}”',
       loading: 'Učitavanje...',
+      nightLine: 'Noćna linija',
       noDirectRoutes: 'Nema izravne linije za odabrane stanice',
       noDirectTrains: 'Danas nema izravnih vlakova za ove stanice',
       noLinesForStop: 'Nema linija za prikaz',

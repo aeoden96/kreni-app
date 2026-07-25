@@ -35,9 +35,11 @@ import type { VehiclePosition } from '../../../utils/vehicles';
 import { useGTFSMode } from '../../../contexts/GTFSModeContext';
 import { useStopDepartures } from '../../../hooks/useStopDepartures';
 import { useSettingsStore } from '../../../stores/settingsStore';
-import { routeTypeColor } from '../../../utils/routeStyle';
+import { isNightRoute } from '../../../utils/nightLines';
+import { routeBadgeColor } from '../../../utils/routeStyle';
 import { getDirectionColor } from '../../Map/directionColors';
 import { DepartureCard } from '../DepartureCard';
+import { NightMoon } from '../NightMoon';
 import { RouteDirectionHeader } from '../RouteDirectionHeader';
 import { RouteStopList } from '../RouteStopList';
 import { FocusedVehicleCard } from './FocusedVehicleCard';
@@ -99,7 +101,7 @@ export function RouteVehiclePanel({
 }: RouteVehiclePanelProps) {
   const { t } = useTranslation();
   const { dataDir } = useGTFSMode();
-  const color = routeTypeColor(route.type);
+  const color = routeBadgeColor(route);
   const RouteIcon = route.type === 3 ? Bus : Train;
   const { favouriteRouteIds, toggleFavouriteRoute } = useSettingsStore();
   const isFav = favouriteRouteIds.includes(route.id);
@@ -208,6 +210,7 @@ export function RouteVehiclePanel({
               style={{ backgroundColor: color, borderColor: color }}
             >
               {route.shortName}
+              {isNightRoute(route) && <NightMoon />}
             </span>
             <h3 className="font-bold text-base leading-tight text-base-content truncate flex items-center gap-1 min-w-0">
               {showHeadsignInsteadOfRouteName ? (

@@ -5,6 +5,9 @@ import type { Route, Stop } from '../../../utils/gtfs';
 import type { RecentMergedItem } from '../../../utils/searchUtils';
 
 import { isRouteTypeRail, isRouteTypeTram } from '../../../utils/gtfs';
+import { isNightRoute } from '../../../utils/nightLines';
+import { NIGHT_ROUTE_COLOR } from '../../../utils/routeStyle';
+import { NightMoon } from '../NightMoon';
 
 interface RecentsBarProps {
   onClearRecents: () => void;
@@ -57,14 +60,17 @@ export function RecentsBar({
                 key={`recent-r-${item.data.id}`}
                 onClick={() => onSelectRoute(item.data)}
                 style={{
-                  backgroundColor: isRouteTypeTram(item.data.type)
-                    ? '#2563eb'
-                    : isRouteTypeRail(item.data.type)
-                      ? '#64748b'
-                      : '#d97706',
+                  backgroundColor: isNightRoute(item.data)
+                    ? NIGHT_ROUTE_COLOR
+                    : isRouteTypeTram(item.data.type)
+                      ? '#2563eb'
+                      : isRouteTypeRail(item.data.type)
+                        ? '#64748b'
+                        : '#d97706',
                 }}
               >
                 {item.data.shortName}
+                {isNightRoute(item.data) && <NightMoon />}
               </button>
             ) : (
               <button

@@ -6,6 +6,7 @@
 import type { Stop } from './gtfs';
 
 import { calculateDistance } from './gtfs';
+import { NIGHT_LINE_SHORT_NAMES } from './nightLines';
 
 /** Half-angle (degrees) from vertical to tangent on the directional pin arc. */
 export const DIRECTIONAL_PIN_HALF_ANGLE_DEG = 48;
@@ -49,6 +50,8 @@ export const SPIDER_BADGE_H_PAD = 10;
 export const SPIDER_BADGE_MIN_W = 18;
 export const SPIDER_BADGE_GAP = 3;
 export const SPIDER_TICKER_VISIBLE_PX = 110;
+/** Moon glyph + its gap, added to night-line badges (see .spider-route-moon). */
+export const SPIDER_BADGE_MOON_PX = 10;
 
 interface ParentLabelGroup {
   children: Stop[];
@@ -59,12 +62,17 @@ interface ParentLabelGroup {
 
 /**
  * Estimated total width (px) of a row of route short-name badges (spiderfier label).
+ *
+ * Night-line badges carry a moon glyph after the number, so they measure wider
+ * than their text alone. Getting this wrong only mis-picks the static-row vs
+ * scrolling-ticker threshold, but that shows up as a clipped badge.
  */
 export function estimateSpiderRouteBadgeRowWidth(shortNames: string[]): number {
   return shortNames.reduce(
     (sum, shortName, i) =>
       sum +
       Math.max(SPIDER_BADGE_MIN_W, shortName.length * SPIDER_BADGE_CHAR_PX + SPIDER_BADGE_H_PAD) +
+      (NIGHT_LINE_SHORT_NAMES.has(shortName) ? SPIDER_BADGE_MOON_PX : 0) +
       (i > 0 ? SPIDER_BADGE_GAP : 0),
     0
   );

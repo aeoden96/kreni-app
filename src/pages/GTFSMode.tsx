@@ -19,6 +19,7 @@ import { DebugPanel } from '../components/common/DebugPanel';
 import { DirectionsModal } from '../components/common/DirectionsModal';
 import { DisruptionsPanel } from '../components/common/disruptions/DisruptionsPanel';
 import { NearbyStopsModal } from '../components/common/NearbyStopsModal';
+import { NightMoon } from '../components/common/NightMoon';
 import { OnboardingWizard } from '../components/common/OnboardingWizard';
 import { RealtimeStatusPanel } from '../components/common/RealtimeStatusPanel';
 import { RouteVehiclePanel } from '../components/common/routePanel/RouteVehiclePanel';
@@ -48,7 +49,8 @@ import { useRealtimeStore } from '../stores/realtimeStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { trackEvent } from '../utils/analytics';
 import { getMockServiceAlerts } from '../utils/devMockServiceAlerts';
-import { routeTypeColor } from '../utils/routeStyle';
+import { isNightRoute } from '../utils/nightLines';
+import { routeBadgeColor } from '../utils/routeStyle';
 
 interface GTFSModeProps {
   config: GTFSModeConfig;
@@ -793,9 +795,10 @@ export function GTFSMode({ config }: GTFSModeProps) {
                 <span className="text-sm flex-1">
                   <span
                     className="badge font-bold mr-2 text-white"
-                    style={{ backgroundColor: routeTypeColor(selectedRoute.type) }}
+                    style={{ backgroundColor: routeBadgeColor(selectedRoute) }}
                   >
                     {selectedRoute.shortName}
+                    {isNightRoute(selectedRoute) && <NightMoon />}
                   </span>
                   <span className="text-base-content/70">{selectedRoute.longName}</span>
                 </span>

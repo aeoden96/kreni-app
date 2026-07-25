@@ -18,6 +18,9 @@ import { useTranslation } from 'react-i18next';
 import type { StopDeparture } from '../../hooks/useStopDepartures';
 
 import { formatTime24h } from '../../utils/gtfs';
+import { isNightRoute } from '../../utils/nightLines';
+import { NIGHT_ROUTE_COLOR } from '../../utils/routeStyle';
+import { NightMoon } from './NightMoon';
 
 /** Show the "in N min" helper on scheduled rows when departure is within this window */
 const SCHEDULED_IMMINENT_SECONDS = 600;
@@ -56,7 +59,12 @@ export function DepartureCard({ compact = false, departure, onRouteClick }: Depa
   const isLive = hasGps && !passedStop;
   const isAtStop = isLive && distanceMeters !== null && distanceMeters < 15;
 
-  const badgeColor = departure.routeType === 0 ? '#2563eb' : '#d97706';
+  const isNight = isNightRoute({ shortName: departure.routeShortName });
+  const badgeColor = isNight
+    ? NIGHT_ROUTE_COLOR
+    : departure.routeType === 0
+      ? '#2563eb'
+      : '#d97706';
   // Expected clock time (delay-adjusted when realtime data exists); wraps after midnight
   const clockTime = formatTime24h(hasDelay ? adjustedMinutes : scheduledMinutes);
   const clockColor = isLate ? 'text-error' : isEarly ? 'text-success' : 'text-base-content/40';
@@ -117,6 +125,7 @@ export function DepartureCard({ compact = false, departure, onRouteClick }: Depa
       }}
     >
       {departure.routeShortName}
+      {isNight && <NightMoon />}
     </span>
   );
 

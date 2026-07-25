@@ -4,8 +4,10 @@ import { useTranslation } from 'react-i18next';
 import type { Route } from '../../../utils/gtfs';
 
 import { trackEvent } from '../../../utils/analytics';
+import { RouteBadge } from '../RouteBadge';
 
 interface RouteListProps {
+  /** Unused for night lines, which carry their own night colour. */
   badgeColor: string;
   favouriteRouteIds: string[];
   filteredRoutes: Route[];
@@ -46,12 +48,11 @@ export function RouteList({
               onClick={() => onSelectRoute(route)}
             >
               <div className="flex items-center gap-3">
-                <div
-                  className="badge font-bold min-w-[3rem] justify-center text-white"
-                  style={{ backgroundColor: badgeColor }}
-                >
-                  {route.shortName}
-                </div>
+                <RouteBadge
+                  className="min-w-[3rem] justify-center"
+                  color={badgeColor}
+                  route={route}
+                />
                 <div className="text-sm">{route.longName}</div>
               </div>
             </button>

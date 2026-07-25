@@ -777,6 +777,18 @@ body {
   /* slate-600 */
 }
 
+.spider-route-badge.is-night {
+  background-color: #312e81;
+  /* indigo-900 — night lines; keep in step with NIGHT_ROUTE_COLOR in routeStyle.ts */
+  gap: 2px;
+}
+
+.spider-route-moon {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+}
+
 .spider-route-ticker {
   width: 100%;
   max-width: 130px;

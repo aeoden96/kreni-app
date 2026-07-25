@@ -5,6 +5,10 @@ import { useTranslation } from 'react-i18next';
 import type { Route, Stop } from '../../../utils/gtfs';
 import type { FilterType } from '../../../utils/searchUtils';
 
+import { isNightRoute } from '../../../utils/nightLines';
+import { NIGHT_ROUTE_COLOR } from '../../../utils/routeStyle';
+import { NightMoon } from '../NightMoon';
+
 interface GTFSModeConfig {
   dataDir: string;
   id: string;
@@ -167,9 +171,12 @@ export function SearchHeader({
                     className="badge badge-lg font-bold hover:opacity-80 transition-opacity cursor-pointer text-white"
                     key={route.id}
                     onClick={() => onSelectRoute(route)}
-                    style={{ backgroundColor: badgeColor }}
+                    style={{
+                      backgroundColor: isNightRoute(route) ? NIGHT_ROUTE_COLOR : badgeColor,
+                    }}
                   >
                     {route.shortName}
+                    {isNightRoute(route) && <NightMoon className="w-3.5 h-3.5" />}
                   </button>
                 ))}
               </div>

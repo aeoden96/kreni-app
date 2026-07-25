@@ -6,8 +6,10 @@ import type { Route, Stop } from '../../../utils/gtfs';
 import { useStopRoutes } from '../../../hooks/useStopRoutes';
 import { useStopTermini } from '../../../hooks/useStopTermini';
 import { compassLabelForBearing } from '../../../utils/localizedCompass';
-import { routeTypeColor } from '../../../utils/routeStyle';
+import { isNightRoute } from '../../../utils/nightLines';
+import { routeBadgeColor } from '../../../utils/routeStyle';
 import { getStopTypeIcons } from '../../../utils/searchUtils';
+import { NightMoon } from '../NightMoon';
 
 interface TerminalStopRowProps {
   dataDir: string;
@@ -66,10 +68,11 @@ export const TerminalStopRow = memo(function TerminalStopRow({
                   className="badge badge-xs font-bold text-white"
                   key={route.id}
                   style={{
-                    backgroundColor: routeTypeColor(route.type),
+                    backgroundColor: routeBadgeColor(route),
                   }}
                 >
                   {route.shortName}
+                  {isNightRoute(route) && <NightMoon className="w-2.5 h-2.5" />}
                 </span>
               ))}
               {routes.length > 8 && (

@@ -12,6 +12,8 @@ import type { SpiderfierEntry } from './SpiderfierContext';
 
 import { useAnimatedVehiclePosition } from '../../hooks/useAnimatedVehiclePosition';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { isNightRoute } from '../../utils/nightLines';
+import { NIGHT_VEHICLE_COLOR } from '../../utils/routeStyle';
 import { makeVehicleIcon } from '../../utils/vehicleIcon';
 import { MARKER_Z_VEHICLE } from './mapMarkerZIndex';
 import { useSpiderfierContext } from './SpiderfierContext';
@@ -42,7 +44,13 @@ function SpiderfiedAllVehicleMarker({
   // 7 s position polls — react-leaflet only calls marker.setIcon() (a full DOM
   // rebuild) when one of these actually changes, not on every fix. Bearing is
   // quantized so sub-2° GPS jitter doesn't trigger a needless icon rebuild.
-  const color = vehicle.routeType === 0 ? '#2337ff' : '#ff6b35';
+  // Night trams get their own hue so they stand apart from the day tram blue at
+  // the hours when both can briefly be on the map together.
+  const color = isNightRoute({ shortName: vehicle.routeShortName })
+    ? NIGHT_VEHICLE_COLOR
+    : vehicle.routeType === 0
+      ? '#2337ff'
+      : '#ff6b35';
   const isDark = theme === 'dark';
   const bearingKey =
     vehicle.bearing === undefined ? undefined : Math.round(vehicle.bearing / 2) * 2;

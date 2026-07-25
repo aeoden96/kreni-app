@@ -20,7 +20,10 @@ import { useTranslation } from 'react-i18next';
 import type { Route } from '../../../utils/gtfs';
 import type { ParsedServiceAlert } from '../../../utils/realtime';
 
+import { isNightRoute } from '../../../utils/nightLines';
+import { routeBadgeColor } from '../../../utils/routeStyle';
 import { serviceAlertEffectLabel } from '../../../utils/serviceAlertEffectLabel';
+import { NightMoon } from '../NightMoon';
 
 // ── Per-effect visual config ───────────────────────────────────────────────
 type EffectStyle = {
@@ -125,9 +128,10 @@ export function ServiceAlertsList({
                           onRouteClick?.(rid, route.type);
                           onClose();
                         }}
-                        style={{ backgroundColor: route.type === 0 ? '#2563eb' : '#d97706' }}
+                        style={{ backgroundColor: routeBadgeColor(route) }}
                       >
                         {route.shortName}
+                        {isNightRoute(route) && <NightMoon />}
                         <ChevronRight className="w-3 h-3" />
                       </button>
                     );

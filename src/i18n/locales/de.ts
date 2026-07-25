@@ -520,6 +520,7 @@ const de = {
       listFirst20Hint: 'Erste 20 Einträge. Mehr tippen, um zu filtern.',
       listNoResultsForQuery: 'Keine Treffer für „{{query}}“',
       loading: 'Laden…',
+      nightLine: 'Nachtlinie',
       noDirectRoutes: 'Keine Direktverbindung für diese Haltestellen',
       noDirectTrains: 'Heute keine direkten Züge für diese Bahnhöfe',
       noLinesForStop: 'Keine Linien',

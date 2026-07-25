@@ -10,7 +10,10 @@ import { useTranslation } from 'react-i18next';
 import type { Route } from '../../utils/gtfs';
 import type { ParsedServiceAlert } from '../../utils/realtime';
 
+import { isNightRoute } from '../../utils/nightLines';
+import { routeBadgeColor } from '../../utils/routeStyle';
 import { serviceAlertEffectLabel } from '../../utils/serviceAlertEffectLabel';
+import { NightMoon } from './NightMoon';
 
 const DATE_FMT = new Intl.DateTimeFormat('hr-HR', { day: 'numeric', month: 'short' });
 
@@ -48,9 +51,10 @@ export function StopAlertBanner({ alerts, className, routesById }: StopAlertBann
                   <span
                     className="badge badge-xs font-bold text-white border-0"
                     key={rid}
-                    style={{ backgroundColor: route.type === 0 ? '#2563eb' : '#d97706' }}
+                    style={{ backgroundColor: routeBadgeColor(route) }}
                   >
                     {route.shortName}
+                    {isNightRoute(route) && <NightMoon className="w-2.5 h-2.5" />}
                   </span>
                 );
               })}

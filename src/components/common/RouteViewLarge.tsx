@@ -19,8 +19,10 @@ import type { VehiclePosition } from '../../utils/vehicles';
 import { useGTFSMode } from '../../contexts/GTFSModeContext';
 import { useCurrentTime } from '../../hooks/useCurrentTime';
 import { formatMinutes } from '../../utils/format';
+import { isNightRoute } from '../../utils/nightLines';
 import { routeTypeColor } from '../../utils/routeStyle';
 import { getDirectionColor } from '../Map/directionColors';
+import { NightMoon } from './NightMoon';
 import { RouteDirectionHeader } from './RouteDirectionHeader';
 import { RouteStopList } from './RouteStopList';
 
@@ -243,11 +245,15 @@ export const RouteViewLarge = memo(function RouteViewLarge({
               <ArrowLeft className="w-4 h-4" />
             </button>
 
+            {/* Colour stays the direction colour here — the header badge is part
+                of the route view's A/B colour coding — so night lines are marked
+                by the moon alone. */}
             <span
               className="badge badge-lg font-bold text-white shrink-0"
               style={{ backgroundColor: color }}
             >
               {route.shortName}
+              {isNightRoute(route) && <NightMoon className="w-3.5 h-3.5" />}
             </span>
 
             <RouteIcon className="w-3.5 h-3.5 opacity-40 shrink-0" />

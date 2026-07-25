@@ -17,8 +17,10 @@ import { useStopTermini } from '../../hooks/useStopTermini';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { bearingToCompassKey } from '../../utils/gtfs';
 import { compassLabelForBearing } from '../../utils/localizedCompass';
-import { routeTypeColor } from '../../utils/routeStyle';
+import { isNightRoute } from '../../utils/nightLines';
+import { routeBadgeColor } from '../../utils/routeStyle';
 import { DepartureCard } from './DepartureCard';
+import { NightMoon } from './NightMoon';
 import { StopAlertBanner } from './StopAlertBanner';
 
 interface StopInfoBarProps {
@@ -146,6 +148,7 @@ export function StopInfoBar({
                 {routes.slice(0, maxBadges).map((r) => (
                   <span className="badge badge-xs font-bold badge-ghost opacity-80" key={r.id}>
                     {r.shortName}
+                    {isNightRoute(r) && <NightMoon className="w-2.5 h-2.5" />}
                   </span>
                 ))}
                 {routes.length > maxBadges && (
@@ -193,18 +196,20 @@ export function StopInfoBar({
                           className="badge badge-sm font-bold text-white cursor-pointer hover:opacity-75 transition-opacity"
                           key={route.id}
                           onClick={() => onRouteClick(route.id, route.type)}
-                          style={{ backgroundColor: routeTypeColor(route.type) }}
+                          style={{ backgroundColor: routeBadgeColor(route) }}
                           type="button"
                         >
                           {route.shortName}
+                          {isNightRoute(route) && <NightMoon />}
                         </button>
                       ) : (
                         <span
                           className="badge badge-sm font-bold text-white"
                           key={route.id}
-                          style={{ backgroundColor: routeTypeColor(route.type) }}
+                          style={{ backgroundColor: routeBadgeColor(route) }}
                         >
                           {route.shortName}
+                          {isNightRoute(route) && <NightMoon />}
                         </span>
                       )
                   )}

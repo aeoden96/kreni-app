@@ -5,7 +5,9 @@ import { useTranslation } from 'react-i18next';
 import type { Route, Stop } from '../../utils/gtfs';
 
 import { useDirections } from '../../hooks/useDirections';
-import { routeTypeColor } from '../../utils/routeStyle';
+import { isNightRoute } from '../../utils/nightLines';
+import { routeBadgeColor } from '../../utils/routeStyle';
+import { NightMoon } from './NightMoon';
 import { ParentStopInput } from './ParentStopInput';
 
 interface DirectionsPanelProps {
@@ -82,7 +84,7 @@ export function DirectionsPanel({
       {hasSelection && !loading && results.length > 0 && (
         <div className="divide-y divide-base-300 border border-base-300 rounded-xl overflow-hidden">
           {results.map((item) => {
-            const color = routeTypeColor(item.route.type);
+            const color = routeBadgeColor(item.route);
             const VehicleIcon = item.route.type === 3 ? Bus : TrainFront;
             return (
               <button
@@ -97,6 +99,7 @@ export function DirectionsPanel({
                     style={{ backgroundColor: color }}
                   >
                     {item.route.shortName}
+                    {isNightRoute(item.route) && <NightMoon />}
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="text-sm line-clamp-1">{item.route.longName}</div>

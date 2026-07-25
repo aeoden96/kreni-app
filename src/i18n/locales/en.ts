@@ -522,6 +522,7 @@ const en = {
       listFirst20Hint: 'Showing first 20. Type more to narrow the search.',
       listNoResultsForQuery: 'No results for "{{query}}"',
       loading: 'Loading…',
+      nightLine: 'Night line',
       noDirectRoutes: 'No direct route for these stops',
       noDirectTrains: 'No direct trains today for these stations',
       noLinesForStop: 'No lines to show',

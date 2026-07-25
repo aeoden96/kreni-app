@@ -11,6 +11,7 @@ import {
   SPIDER_BADGE_GAP,
   SPIDER_BADGE_H_PAD,
   SPIDER_BADGE_MIN_W,
+  SPIDER_BADGE_MOON_PX,
 } from './stopMarkersMath';
 
 describe('buildDirectionalStopPinPathData', () => {
@@ -47,6 +48,14 @@ describe('estimateSpiderRouteBadgeRowWidth', () => {
     const longName = '999';
     const w = estimateSpiderRouteBadgeRowWidth([longName]);
     expect(w).toBe(longName.length * SPIDER_BADGE_CHAR_PX + SPIDER_BADGE_H_PAD);
+  });
+
+  it('reserves room for the moon glyph on night lines', () => {
+    // '33' is a night line, '13' is not — same character count, so the whole
+    // difference is the moon.
+    expect(estimateSpiderRouteBadgeRowWidth(['33'])).toBe(
+      estimateSpiderRouteBadgeRowWidth(['13']) + SPIDER_BADGE_MOON_PX
+    );
   });
 });
 

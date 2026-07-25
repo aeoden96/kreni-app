@@ -8,6 +8,7 @@ import { Marker, Polyline, useMap } from 'react-leaflet';
 
 import { useSettingsStore } from '../../stores/settingsStore';
 import { fetchStopTimetable, type Route, type Stop } from '../../utils/gtfs';
+import { isNightRoute } from '../../utils/nightLines';
 import {
   buildDirectionalStopPinPathData,
   buildParentLabelGroups,
@@ -24,6 +25,15 @@ import {
   MARKER_Z_STOP_SELECTED,
 } from './mapMarkerZIndex';
 import { useSpiderfierContext } from './SpiderfierContext';
+
+/**
+ * Filled crescent, matching lucide's `moon` outline. Inlined because spider
+ * labels are built as HTML strings for a Leaflet DivIcon and never pass through
+ * React — see RouteBadge for the component the rest of the app uses.
+ */
+const NIGHT_MOON_SVG =
+  `<svg class="spider-route-moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">` +
+  `<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`;
 
 interface PlatformStopMarkerProps {
   color: string;
@@ -338,8 +348,20 @@ const PlatformStopMarker = memo(function PlatformStopMarker({
 
         const renderedBadges = routes
           .map((r) => {
-            const typeClass = r.type === 0 ? 'is-tram' : r.type === 3 ? 'is-bus' : 'is-mixed';
-            return `<span class="spider-route-badge ${typeClass}">${r.shortName}</span>`;
+            // Night lines take their own class instead of the route-type one —
+            // the night colour replaces the tram blue rather than tinting it.
+            const typeClass = isNightRoute(r)
+              ? 'is-night'
+              : r.type === 0
+                ? 'is-tram'
+                : r.type === 3
+                  ? 'is-bus'
+                  : 'is-mixed';
+            // These badges are an HTML string inside a Leaflet DivIcon, so the
+            // moon is an inline SVG rather than the lucide React component the
+            // rest of the app uses (RouteBadge). Same glyph, drawn by hand.
+            const moon = isNightRoute(r) ? NIGHT_MOON_SVG : '';
+            return `<span class="spider-route-badge ${typeClass}">${r.shortName}${moon}</span>`;
           })
           .join('');
 
