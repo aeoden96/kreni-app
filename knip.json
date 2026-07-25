@@ -8,6 +8,9 @@
     "src/hooks/useParentStopSearch.ts",
     "vitest.shims.d.ts"
   ],
-  "ignoreDependencies": ["@secretlint/secretlint-rule-preset-recommend"],
+  "ignoreDependencies": [
+    "@secretlint/secretlint-rule-preset-recommend",
+    "@capacitor-community/background-geolocation"
+  ],
   "ignoreBinaries": []
 }

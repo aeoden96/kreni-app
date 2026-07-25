@@ -15,7 +15,7 @@
  */
 
 /** How often an open tab re-checks. Deploys are infrequent; this is not a poll loop. */
-export const SW_UPDATE_INTERVAL_MS = 60 * 60 * 1000;
+const SW_UPDATE_INTERVAL_MS = 60 * 60 * 1000;
 
 /** The slice of ServiceWorkerRegistration we use, so tests need no DOM stub. */
 export interface UpdatableRegistration {

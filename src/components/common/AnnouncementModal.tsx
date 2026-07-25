@@ -15,7 +15,9 @@ import { useTranslation } from 'react-i18next';
 
 import { safeUrl } from '../../utils/safeUrl';
 
-export interface AnnouncementContent {
+export type AnnouncementType = 'error' | 'info' | 'success' | 'warning';
+
+interface AnnouncementContent {
   /** Optional image or GIF, shown full-bleed above the message. */
   image?: null | string;
   /** Alt text for `image`. Empty means decorative — the message carries the content. */
@@ -25,8 +27,6 @@ export interface AnnouncementContent {
   message: string;
   type?: AnnouncementType;
 }
-
-export type AnnouncementType = 'error' | 'info' | 'success' | 'warning';
 
 interface AnnouncementModalProps {
   announcement: AnnouncementContent;
