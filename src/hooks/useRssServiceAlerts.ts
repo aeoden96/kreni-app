@@ -30,12 +30,17 @@ interface RssAlertsFile {
   lastUpdate: string;
 }
 
-type RssAlertType = 'cancellation' | 'new-service' | 'other' | 'route-change' | 'stop-change';
+type RssAlertType =
+  'cancellation' | 'new-service' | 'other' | 'replacement' | 'route-change' | 'stop-change';
 
 const TYPE_TO_EFFECT: Record<RssAlertType, string> = {
   cancellation: 'NO_SERVICE',
   'new-service': 'ADDITIONAL_SERVICE',
   other: 'OTHER_EFFECT',
+  // Rail-replacement and the like: the line still runs, just not as a tram. It
+  // used to share `cancellation`, which rendered "Nema usluge" over an alert
+  // that in fact told the rider a bus was coming.
+  replacement: 'MODIFIED_SERVICE',
   'route-change': 'DETOUR',
   'stop-change': 'STOP_MOVED',
 };
