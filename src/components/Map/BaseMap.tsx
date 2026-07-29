@@ -92,8 +92,29 @@ export function BaseMap({
       zoomControl={false}
       {...mapProps}
     >
+      {/*
+        `crossOrigin` is a storage fix, not a rendering one.
+
+        Without it Leaflet loads tiles as plain <img>, so the request is no-cors
+        and the service worker caches an *opaque* response. Chromium pads opaque
+        entries in quota accounting — it cannot let a page infer cross-origin
+        response sizes — and the padding dwarfs the tile: measured on a real
+        device, 1922 cached tiles of ~32 KB each were accounted at 13.44 GB, or
+        ~7 MB apiece, against a 2 GB quota. That is the number users see under
+        "Cookies and site data", and no `maxEntries` cap can fix it because the
+        padding is per entry rather than per byte.
+
+        Fetching in CORS mode makes the responses non-opaque and unpadded, so
+        the same tiles account for what they actually weigh. All three providers
+        (OSM HOT, CARTO, CyclOSM) send `access-control-allow-origin: *`. If one
+        ever stops, its tiles fail to load rather than degrading quietly — the
+        `cacheableResponse` rule in vite.config refuses to cache opaque
+        responses at all now, so a regression shows up immediately instead of
+        silently refilling the quota.
+      */}
       <TileLayer
         attribution={tileConfig.attribution}
+        crossOrigin="anonymous"
         keepBuffer={3}
         key={tileLayerKey}
         updateWhenIdle={true}

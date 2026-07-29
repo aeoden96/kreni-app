@@ -19,9 +19,15 @@ import { PublicTransportMode } from './pages/PublicTransportMode.tsx';
 import { TallyFeedbackPage } from './pages/TallyFeedbackPage.tsx';
 import { TrainMode } from './pages/TrainMode.tsx';
 import { isNative } from './utils/platform.ts';
+import { retireOldCaches } from './utils/retireCaches.ts';
 import { startSwUpdateChecks } from './utils/swUpdate.ts';
 
 const queryClient = new QueryClient();
+
+// Reclaims the pre-CORS tile caches, whose opaque entries are padded to several
+// megabytes each in quota accounting. Runs before render because it is a couple
+// of `caches` calls and never blocks — see the module for the measurements.
+retireOldCaches();
 
 // Native splash is held open (launchAutoHide: false) until the app shell is on
 // screen, then dismissed here to avoid a white flash. No-op on web/PWA.

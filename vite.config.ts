@@ -230,10 +230,17 @@ export default defineConfig({
           {
             handler: 'CacheFirst',
             options: {
+              // 200 only. A `0` here would re-admit opaque responses, which
+              // is the whole bug: they are padded to ~7 MB each in quota
+              // accounting regardless of the ~32 KB they actually weigh.
               cacheableResponse: {
-                statuses: [0, 200],
+                statuses: [200],
               },
-              cacheName: 'map-tiles-osm',
+              // `-v2` because `caches.match()` keys on URL, not request mode:
+              // an opaque entry left by an older build would otherwise be
+              // handed to a CORS-mode <img>, which refuses it and leaves a
+              // blank tile. `retireOldCaches` deletes the `-v1` names outright.
+              cacheName: 'map-tiles-osm-v2',
               expiration: {
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
                 maxEntries: 600,
@@ -244,10 +251,17 @@ export default defineConfig({
           {
             handler: 'CacheFirst',
             options: {
+              // 200 only. A `0` here would re-admit opaque responses, which
+              // is the whole bug: they are padded to ~7 MB each in quota
+              // accounting regardless of the ~32 KB they actually weigh.
               cacheableResponse: {
-                statuses: [0, 200],
+                statuses: [200],
               },
-              cacheName: 'map-tiles-carto',
+              // `-v2` because `caches.match()` keys on URL, not request mode:
+              // an opaque entry left by an older build would otherwise be
+              // handed to a CORS-mode <img>, which refuses it and leaves a
+              // blank tile. `retireOldCaches` deletes the `-v1` names outright.
+              cacheName: 'map-tiles-carto-v2',
               expiration: {
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
                 maxEntries: 600,
@@ -258,10 +272,17 @@ export default defineConfig({
           {
             handler: 'CacheFirst',
             options: {
+              // 200 only. A `0` here would re-admit opaque responses, which
+              // is the whole bug: they are padded to ~7 MB each in quota
+              // accounting regardless of the ~32 KB they actually weigh.
               cacheableResponse: {
-                statuses: [0, 200],
+                statuses: [200],
               },
-              cacheName: 'map-tiles-cyclosm',
+              // `-v2` because `caches.match()` keys on URL, not request mode:
+              // an opaque entry left by an older build would otherwise be
+              // handed to a CORS-mode <img>, which refuses it and leaves a
+              // blank tile. `retireOldCaches` deletes the `-v1` names outright.
+              cacheName: 'map-tiles-cyclosm-v2',
               expiration: {
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
                 maxEntries: 600,
