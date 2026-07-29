@@ -57,6 +57,27 @@
 }
 
 :root {
+  /*
+   * Not decorative — this exists to change the emitted CSS filename.
+   *
+   * On 2026-07-29 Cloudflare's edge cached the SPA fallback HTML under
+   * /assets/index-ejrSWkLj.css: Pages answers a path it has no file for with
+   * index.html and a 200, and the `/assets/*` rule in public/_headers then
+   * stamped that HTML with `immutable, max-age=31536000`. Browsers that
+   * fetched it during the window have HTML pinned under a stylesheet URL for a
+   * year and will not revalidate it, so purging the edge does not reach them.
+   *
+   * index.html is served `no-cache`, so the escape hatch is to make it point
+   * somewhere else: Vite hashes assets by content, and a changed hash is a
+   * changed filename, which is a URL those browsers have never cached. A
+   * comment alone cannot do this — CSS minification strips comments, leaving
+   * the output byte-identical. A custom property survives, and an unreferenced
+   * one has no effect on rendering.
+   *
+   * Safe to delete once no client can still be holding the poisoned entry.
+   */
+  --cache-generation: 2;
+
   --accent: #2337ff;
   --accent-dark: #000d8a;
   --black: 15, 18, 25;
