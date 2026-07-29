@@ -649,6 +649,7 @@ const en = {
       theme: 'Theme',
       themeHint: 'Light or dark theme',
       title: 'Settings',
+      totalStorage: 'Total storage used',
       version: 'Version',
       web: 'Web',
     },

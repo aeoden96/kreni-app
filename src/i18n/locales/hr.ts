@@ -664,6 +664,7 @@ const hr = {
       theme: 'Tema',
       themeHint: 'Svijetla ili tamna tema',
       title: 'Postavke',
+      totalStorage: 'Ukupno zauzeto',
       version: 'Verzija',
       web: 'Web',
     },

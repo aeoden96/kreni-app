@@ -207,7 +207,12 @@ export default defineConfig({
               cacheName: 'gtfs-data',
               expiration: {
                 maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
-                maxEntries: 500,
+                // Every file here is also held, parsed, by stores/dataCache, so
+                // this cache exists for the offline cold start rather than for
+                // hit rate — 500 entries was buying a second copy of up to
+                // ~100 MB for that. The route timetables are the big ones
+                // (~293 KB each); 150 still covers a normal day's browsing.
+                maxEntries: 150,
               },
               networkTimeoutSeconds: 10,
             },
@@ -216,6 +221,12 @@ export default defineConfig({
           // Runtime caching for map tiles (OSM HOT + CartoCDN + CyclOSM)
           // CacheFirst: serve from cache immediately, only fetch if not cached yet.
           // This is OSM-policy-compliant passive caching (no pre-fetching).
+          //
+          // 600 entries each, down from 2000: at ~25-40 KB a tile that was a
+          // 150-250 MB ceiling across the three providers, for tiles nobody
+          // revisits — only one provider is active at a time, and it is chosen
+          // by theme and the `detailedMap` setting. 600 still holds Zagreb at
+          // several zoom levels, which is what panning around actually reuses.
           {
             handler: 'CacheFirst',
             options: {
@@ -225,7 +236,7 @@ export default defineConfig({
               cacheName: 'map-tiles-osm',
               expiration: {
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-                maxEntries: 2000,
+                maxEntries: 600,
               },
             },
             urlPattern: /^https:\/\/(\w+\.)?tile\.openstreetmap\.fr\/hot\/.*/,
@@ -239,7 +250,7 @@ export default defineConfig({
               cacheName: 'map-tiles-carto',
               expiration: {
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-                maxEntries: 2000,
+                maxEntries: 600,
               },
             },
             urlPattern: /^https:\/\/(\w+\.)?basemaps\.cartocdn\.com\/.*/,
@@ -253,7 +264,7 @@ export default defineConfig({
               cacheName: 'map-tiles-cyclosm',
               expiration: {
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-                maxEntries: 2000,
+                maxEntries: 600,
               },
             },
             urlPattern: /^https:\/\/(\w+\.)?tile-cyclosm\.openstreetmap\.fr\/.*/,

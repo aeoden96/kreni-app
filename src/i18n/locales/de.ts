@@ -646,6 +646,7 @@ const de = {
       theme: 'Design',
       themeHint: 'Helles oder dunkles Design',
       title: 'Einstellungen',
+      totalStorage: 'Gesamter Speicher',
       version: 'Version',
       web: 'Web',
     },

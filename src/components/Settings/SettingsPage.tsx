@@ -18,14 +18,19 @@ import {
   Sun,
   Trash2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useInitialData } from '../../hooks/useInitialData';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 import { getCurrentLanguage, setLanguage, type SupportedLanguage } from '../../i18n';
-import { useDataCacheStore } from '../../stores/dataCache';
+import {
+  type CacheStats,
+  clearPayloadCache,
+  getCacheStats,
+  useDataCacheStore,
+} from '../../stores/dataCache';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { trackEvent } from '../../utils/analytics';
 import { isNative } from '../../utils/platform';
@@ -46,8 +51,6 @@ export function SettingsPage() {
   const setDetailedMap = useSettingsStore((state) => state.setDetailedMap);
   const [isChangelogOpen, setIsChangelogOpen] = useState(false);
 
-  const clearCache = useDataCacheStore((state) => state.clearCache);
-  const getCacheStats = useDataCacheStore((state) => state.getCacheStats);
   const cacheVersion = useDataCacheStore((state) => state.version);
 
   const currentLang: SupportedLanguage = getCurrentLanguage();
@@ -55,16 +58,30 @@ export function SettingsPage() {
 
   const { feedEndDate, feedStartDate, feedVersion } = useInitialData();
 
-  const cacheStats = getCacheStats();
+  // Reading the cache index and asking the browser for its storage estimate are
+  // both async, so the figures land after the first paint rather than blocking it.
+  const [cacheStats, setCacheStats] = useState<CacheStats | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void getCacheStats().then((stats) => {
+      if (!cancelled) setCacheStats(stats);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const goHome = () => {
+    // Send the user back to the main route rather than leaving them on
+    // `/settings` while the app reloads into an empty cache.
+    const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
+    window.location.href = `${baseUrl}/`;
+  };
 
   const handleClearCache = () => {
     if (window.confirm(t('settings.confirmClearCache'))) {
       trackEvent('cache_cleared');
-      clearCache();
-      // After clearing cached GTFS data, send the user back to the main
-      // route so they don't stay on `/settings` while the app reloads.
-      const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
-      window.location.href = `${baseUrl}/`;
+      void clearPayloadCache().then(goHome);
     }
   };
 
@@ -77,10 +94,19 @@ export function SettingsPage() {
         if (key && key.startsWith('kreni-')) keysToRemove.push(key);
       }
       keysToRemove.forEach((key) => localStorage.removeItem(key));
-      clearCache();
-      // After clearing all data, send the user back to the main route.
-      const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
-      window.location.href = `${baseUrl}/`;
+
+      // "Delete all" used to leave the map-tile caches behind, which are the
+      // largest thing the app stores after the GTFS payloads — so the reported
+      // usage barely moved and the button looked broken.
+      const dropCaches =
+        typeof caches === 'undefined'
+          ? Promise.resolve()
+          : caches
+              .keys()
+              .then((names) => Promise.all(names.map((name) => caches.delete(name))))
+              .catch(() => {});
+
+      void Promise.all([clearPayloadCache(), dropCaches]).then(goHome);
     }
   };
 
@@ -267,12 +293,27 @@ export function SettingsPage() {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-base-content/70">{t('settings.entryCount')}</span>
-                <span className="font-medium">{cacheStats.entryCount}</span>
+                <span className="font-medium">{cacheStats ? cacheStats.entryCount : '…'}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-base-content/70">{t('settings.size')}</span>
-                <span className="font-medium">{formatBytes(cacheStats.sizeBytes)}</span>
+                <span className="font-medium">
+                  {cacheStats ? formatBytes(cacheStats.sizeBytes) : '…'}
+                </span>
               </div>
+              {/*
+                Shown next to the cache's own figure because the two answer
+                different questions: this is what the browser bills the origin
+                for under "Cookies and site data", including map tiles and the
+                service worker's caches, and it is the number a user comes here
+                worried about.
+              */}
+              {cacheStats?.originBytes != null && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-base-content/70">{t('settings.totalStorage')}</span>
+                  <span className="font-medium">{formatBytes(cacheStats.originBytes)}</span>
+                </div>
+              )}
               {cacheVersion && (
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-base-content/70">{t('settings.version')}</span>
