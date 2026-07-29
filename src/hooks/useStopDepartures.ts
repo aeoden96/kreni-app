@@ -31,7 +31,6 @@ import type { Route, RouteStopsData, Stop, StopTimetable } from '../utils/gtfs';
 
 import { useRealtimeStore } from '../stores/realtimeStore';
 import { fetchRouteStops, fetchStopTimetable } from '../utils/gtfs';
-import { indexByTripKey, matchRealtime } from '../utils/tripIdMatch';
 import { computeVehicleStopProgress } from '../utils/vehicles';
 import { useInitialData } from './useInitialData';
 
@@ -121,12 +120,6 @@ export function useStopDepartures(
   const vehiclePositions = useRealtimeStore((s) => s.vehiclePositions);
   const tripUpdates = useRealtimeStore((s) => s.tripUpdates);
   const { calendar } = useInitialData({ dataDir });
-
-  // Secondary indexes for the service-prefix drift fallback. Built once per feed
-  // poll rather than per trip — the departure loop runs over every trip at the
-  // stop, and re-deriving these inside it would be quadratic.
-  const vehiclePositionsByKey = useMemo(() => indexByTripKey(vehiclePositions), [vehiclePositions]);
-  const tripUpdatesByKey = useMemo(() => indexByTripKey(tripUpdates), [tripUpdates]);
 
   // Track the stopId for which data is currently being fetched (stale-check guard)
   const fetchingForStopId = useRef<null | string>(null);
@@ -261,33 +254,20 @@ export function useStopDepartures(
           : route.longName;
 
       for (const [tripId, { time: scheduledMinutes }] of Object.entries(trips)) {
-        // Service membership is now needed *before* the GPS lookup, not just after:
-        // it is what makes the drift fallback in `matchRealtime` unambiguous.
-        const inTodayService = activeServiceId !== null && tripId.startsWith(activeServiceId + '_');
-        const inOvernightService =
-          scheduledMinutes >= 1440 &&
-          previousServiceId !== null &&
-          tripId.startsWith(previousServiceId + '_');
-        const inActiveService = inTodayService || inOvernightService;
-
-        // Exact ID first; on a miss, fall back to the publication-stable key, but
-        // only for trips in an active service — see utils/tripIdMatch. This is what
-        // keeps stop boards live when ZET's realtime and static feeds disagree on
-        // the service prefix (the 2026-07-29 incident).
-        const vehiclePos = matchRealtime(
-          vehiclePositions,
-          vehiclePositionsByKey,
-          tripId,
-          inActiveService
-        );
+        const vehiclePos = vehiclePositions.get(tripId);
         const hasGps = vehiclePos !== undefined;
 
         // Data quality: keep a scheduled-only row only when it belongs to today's service,
         // or to yesterday's service for after-midnight (≥ 24:00) trips still running.
         // Live GPS rows are kept regardless — we trust realtime over the static calendar.
-        // (Drift-matched rows are already service-scoped by the check above, so this
-        // continues to apply to exact matches only, exactly as before.)
-        if (!hasGps && activeServiceId && !inActiveService) continue;
+        if (!hasGps && activeServiceId) {
+          const inTodayService = tripId.startsWith(activeServiceId + '_');
+          const inOvernightService =
+            scheduledMinutes >= 1440 &&
+            previousServiceId !== null &&
+            tripId.startsWith(previousServiceId + '_');
+          if (!inTodayService && !inOvernightService) continue;
+        }
 
         // Suppress scheduled-only rows for trips we already saw pass this stop on GPS —
         // an early-running vehicle must not resurrect as "arriving" after its GPS drops.
@@ -299,7 +279,7 @@ export function useStopDepartures(
         // Resolve delay: prefer stop-level match over trip-level
         let delaySeconds: null | number = null;
         let realtimeSource: 'stop' | 'trip' | null = null;
-        const tripUpdate = matchRealtime(tripUpdates, tripUpdatesByKey, tripId, inActiveService);
+        const tripUpdate = tripUpdates.get(tripId);
         if (tripUpdate) {
           const stu = tripUpdate.stopTimeUpdates.find((s) => s.stopId === stopId);
           if (stu) {
@@ -496,8 +476,6 @@ export function useStopDepartures(
     routeStopsCache,
     vehiclePositions,
     tripUpdates,
-    vehiclePositionsByKey,
-    tripUpdatesByKey,
     nowMs,
     stopsById,
     routesById,
