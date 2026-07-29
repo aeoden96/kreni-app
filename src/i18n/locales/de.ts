@@ -376,6 +376,15 @@ const de = {
         'Diese Seite erklärt, welche Daten Kreni verwendet und welche Daten bei der Nutzung der App nicht erfasst werden.',
       title: 'Datenschutzerklärung',
     },
+    push: {
+      channelDescription: 'Störungen, Umleitungen und Ausfälle',
+      channelName: 'Störungsmeldungen',
+      denied: 'Benachrichtigungen sind blockiert. Aktiviere sie in den Systemeinstellungen.',
+      description:
+        'Benachrichtigung erhalten, wenn ZET eine Störung, Umleitung oder einen Ausfall meldet.',
+      title: 'Störungsmeldungen',
+      unavailable: 'Push-Benachrichtigungen sind in dieser Version nicht verfügbar.',
+    },
     realtimePanel: {
       detailsHeading: 'Technische Details',
       detailsTitle: 'ZET-Daten zuletzt {{timeAgo}} (alle {{pollSec}} s)',

@@ -376,6 +376,14 @@ const en = {
         'This page explains what data Kreni uses and what it does not collect when you use the app.',
       title: 'Privacy Policy',
     },
+    push: {
+      channelDescription: 'Disruptions, detours and cancellations',
+      channelName: 'Service alerts',
+      denied: 'Notifications are blocked. Enable them in system settings to get alerts.',
+      description: 'Get notified when ZET announces a disruption, detour or cancellation.',
+      title: 'Service alert notifications',
+      unavailable: 'Push notifications are not available in this build.',
+    },
     realtimePanel: {
       detailsHeading: 'Technical details',
       detailsTitle: 'ZET data refreshed {{timeAgo}} ago (every {{pollSec}} s)',

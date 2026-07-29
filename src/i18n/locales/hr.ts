@@ -384,6 +384,14 @@ const hr = {
         'Ova stranica objašnjava koje podatke Kreni koristi i koje podatke ne prikuplja tijekom korištenja aplikacije.',
       title: 'Pravila privatnosti',
     },
+    push: {
+      channelDescription: 'Smetnje, obilasci i otkazivanja',
+      channelName: 'Obavijesti o prometu',
+      denied: 'Obavijesti su blokirane. Omogućite ih u postavkama sustava.',
+      description: 'Primajte obavijest kada ZET objavi smetnju, obilazak ili otkazivanje.',
+      title: 'Obavijesti o prometu',
+      unavailable: 'Push obavijesti nisu dostupne u ovoj verziji aplikacije.',
+    },
     realtimePanel: {
       detailsHeading: 'Tehnički detalji',
       detailsTitle: 'ZET podaci osvježeni prije {{timeAgo}} (osvježavanje svakih {{pollSec}} s)',

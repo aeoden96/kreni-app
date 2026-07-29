@@ -10,6 +10,7 @@ import { useAndroidBackButton } from '../hooks/useAndroidBackButton';
 import { useNativeStatusBar } from '../hooks/useNativeStatusBar';
 import { usePageTracking } from '../hooks/usePageTracking';
 import { useReminderSync } from '../hooks/useReminderSync';
+import { useServiceAlertPushSync } from '../hooks/useServiceAlertPushSync';
 import { useUrlQueryParams } from '../hooks/useUrlQueryParams';
 import { useSettingsStore } from '../stores/settingsStore';
 
@@ -19,6 +20,7 @@ export function AppLayout() {
   useAndroidBackButton();
   useNativeStatusBar();
   useReminderSync();
+  useServiceAlertPushSync();
   const { t } = useTranslation();
 
   const globalOnboardingCompleted = useSettingsStore((s) => s.globalOnboardingCompleted);

@@ -43,6 +43,7 @@
   },
   "dependencies": {
     "@capacitor-community/background-geolocation": "^1.2.26",
+    "@capacitor-firebase/messaging": "^8",
     "@capacitor/app": "^8",
     "@capacitor/core": "^8.4.1",
     "@capacitor/geolocation": "^8",
@@ -53,6 +54,7 @@
     "@capacitor/splash-screen": "^8",
     "@capacitor/status-bar": "^8",
     "@tanstack/react-query": "^5.101.2",
+    "firebase": "^12",
     "gtfs-realtime-bindings": "^1.1.1",
     "i18next": "^25.10.10",
     "idb-keyval": "^6.3.0",

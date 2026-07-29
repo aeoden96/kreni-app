@@ -69,6 +69,9 @@ interface SettingsState {
   removeRecentStops: (ids: string[]) => void;
   removeReminder: (id: string) => void;
   sandboxVisible: boolean;
+  /** Opt-in to service-alert push (native only). Off by default — pushes are
+   *  unsolicited, and the FCM topic subscription is what this flag drives. */
+  serviceAlertPush: boolean;
   setCyclosmMapVariant: (variant: CyclosmMapVariant) => void;
   setDetailedMap: (detailed: boolean) => void;
   setDismissedGpsTip: (dismissed: boolean) => void;
@@ -79,6 +82,7 @@ interface SettingsState {
 
   setOnboardingStep: (step: number) => void;
   setSandboxVisible: (visible: boolean) => void;
+  setServiceAlertPush: (enabled: boolean) => void;
   setShowBikeParkings: (show: boolean) => void;
   setShowBikePaths: (show: boolean) => void;
   setShowBikeStations: (show: boolean) => void;
@@ -271,6 +275,7 @@ export const useSettingsStore = create<SettingsState>()(
           })),
         removeReminder: (id) => set((s) => ({ reminders: s.reminders.filter((r) => r.id !== id) })),
         sandboxVisible: false,
+        serviceAlertPush: false,
         setCyclosmMapVariant: (variant) => set({ cyclosmMapVariant: variant }),
         setDetailedMap: (detailed) => set({ detailedMap: detailed }),
         setDismissedGpsTip: (dismissed) => set({ dismissedGpsTip: dismissed }),
@@ -305,6 +310,7 @@ export const useSettingsStore = create<SettingsState>()(
 
         setOnboardingStep: (step) => set({ onboardingStep: step }),
         setSandboxVisible: (visible) => set({ sandboxVisible: visible }),
+        setServiceAlertPush: (enabled) => set({ serviceAlertPush: enabled }),
         setShowBikeParkings: (show) => set({ showBikeParkings: show }),
         setShowBikePaths: (show) => set({ showBikePaths: show }),
         setShowBikeStations: (show) => set({ showBikeStations: show }),

@@ -37,6 +37,7 @@ import { isNative } from '../../utils/platform';
 import { ChangelogModal } from '../common/ChangelogModal';
 import { FlatLanguageFlags } from '../Navigation/FlatLanguageFlags';
 import { RemindersSection } from './RemindersSection';
+import { ServiceAlertPushSection } from './ServiceAlertPushSection';
 
 // Map tile providers handled automatically via theme + detailedMap setting
 
@@ -163,6 +164,9 @@ export function SettingsPage() {
 
         {/* Departure reminders (native local notifications only) */}
         {isNative() && <RemindersSection />}
+
+        {/* Service-alert pushes (native FCM topic subscription only) */}
+        {isNative() && <ServiceAlertPushSection />}
 
         {/* Feedback Section */}
         <div className="card bg-base-100 shadow-sm">
