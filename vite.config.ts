@@ -136,10 +136,44 @@ export default defineConfig({
         globPatterns:
           process.env.NODE_ENV === 'production' ? ['**/*.{js,css,html,ico,png,svg,woff2}'] : [],
 
-        // Runtime caching for GTFS data JSON files
+        // Runtime caching for GTFS data JSON files.
+        //
+        // Routes are matched in registration order, so the manifest rule must
+        // stay ahead of the general one.
         runtimeCaching: [
           {
-            handler: 'StaleWhileRevalidate',
+            // `manifest.json` drives cache invalidation (`checkCacheVersion`),
+            // so it must never be answered from cache while the network is up.
+            // It used to fall under the StaleWhileRevalidate rule below, which
+            // meant a data republication was detected only on the *next* load:
+            // the app compared a stale manifest against itself, concluded
+            // nothing had changed, and skipped clearing both IndexedDB and the
+            // `gtfs-data` cache. NetworkFirst (not NetworkOnly) so a cold start
+            // offline still boots.
+            handler: 'NetworkFirst',
+            options: {
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+              cacheName: 'gtfs-manifest',
+              networkTimeoutSeconds: 10,
+            },
+            urlPattern: /\/data\/manifest\.json$/,
+          },
+          {
+            // NetworkFirst, not StaleWhileRevalidate: ZET renumbers the service
+            // segment of every trip ID on each publication, so serving one file
+            // from an older publication alongside a newer one is not "slightly
+            // stale", it is incoherent. `initial.json` is refetched on every
+            // start while a stop timetable is only refetched when that stop is
+            // opened, so SWR reliably produced exactly that mix — today's
+            // calendar (`0_4`) against yesterday's trip IDs (`0_21_…`), which
+            // match nothing and empty the departure board.
+            //
+            // The IndexedDB layer in stores/dataCache absorbs repeat reads, so
+            // this costs a round trip only on a cold read, and falls back to
+            // cache when offline.
+            handler: 'NetworkFirst',
             options: {
               cacheableResponse: {
                 statuses: [0, 200],
@@ -149,6 +183,7 @@ export default defineConfig({
                 maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
                 maxEntries: 500,
               },
+              networkTimeoutSeconds: 10,
             },
             urlPattern: /\/data\/.*\.json$/,
           },
