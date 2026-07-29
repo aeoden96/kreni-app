@@ -132,9 +132,35 @@ export default defineConfig({
       registerType: 'autoUpdate',
       workbox: {
         globIgnores: ['**/node_modules/**', '**/dev-dist/**'],
-        // Precache app shell (HTML, JS, CSS, static assets)
-        globPatterns:
-          process.env.NODE_ENV === 'production' ? ['**/*.{js,css,html,ico,png,svg,woff2}'] : [],
+
+        // The app shell is deliberately NOT precached, and navigations are not
+        // served by the worker.
+        //
+        // Precaching it made the site unloadable in Brave: after any deploy the
+        // worker reinstalls and repopulates its precache, and from then on every
+        // normal refresh failed on `/assets/index-*.css` with a CORS error while
+        // a hard reload — which bypasses the worker — was fine. Unregistering
+        // fixed it; the reinstall on the next load broke it again. Ruled out at
+        // the edge: Cloudflare never blocked or challenged those requests (all
+        // managed challenges in a 12h window were PHP scanner noise), no Worker
+        // routes, no header transforms, and the origin returns 200 text/css with
+        // `access-control-allow-origin: *`. Chrome is unaffected by the same
+        // build and the same server.
+        //
+        // Vite marks its tags `crossorigin`, so the shell is fetched in CORS
+        // mode, and `<script type="module">` is CORS mode regardless of the
+        // attribute — so this cannot be side-stepped by dropping it. Rather than
+        // keep guessing at why Brave's cached copy fails that check, take the
+        // worker out of the path: the shell is served straight from Cloudflare,
+        // already `immutable` and hash-named.
+        //
+        // An empty manifest also purges what earlier builds precached, so
+        // clients stuck on a bad entry recover on their own.
+        //
+        // Runtime caching below is unaffected, so the worker still has a fetch
+        // handler and the app stays installable.
+        globPatterns: [],
+        navigateFallback: null,
 
         // Runtime caching for GTFS data JSON files.
         //
