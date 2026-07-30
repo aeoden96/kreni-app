@@ -3,7 +3,11 @@ import { useTranslation } from 'react-i18next';
 
 import { useSettingsStore } from '../stores/settingsStore';
 import { isNative } from '../utils/platform';
-import { disableServiceAlertPush, enableServiceAlertPush } from '../utils/push';
+import {
+  disableServiceAlertPush,
+  enableServiceAlertPush,
+  startForegroundPushDisplay,
+} from '../utils/push';
 
 /**
  * Re-applies the persisted service-alert push preference to FCM on launch.
@@ -39,6 +43,9 @@ export function useServiceAlertPushSync(): void {
         t('push.channelName'),
         t('push.channelDescription')
       );
+      // Only worth attaching once the subscription is live — and only then is
+      // the channel guaranteed to exist for the local notification to post to.
+      if (result === 'enabled') await startForegroundPushDisplay();
       // Permission revoked in OS settings since the toggle was flipped, or this
       // build has no Firebase config. Clear the flag so Settings stops claiming
       // pushes are on — silently, because this runs at launch with no UI focus.

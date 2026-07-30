@@ -1,4 +1,5 @@
 import { FirebaseMessaging } from '@capacitor-firebase/messaging';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 import { isNative } from './platform';
 
@@ -33,6 +34,9 @@ const CHANNEL_ID = 'service-alerts';
 
 /** Must match the topic the Worker publishes alerts to. */
 const TOPIC = 'service-alerts';
+
+/** Registered once per process; `addListener` would otherwise stack duplicates. */
+let foregroundListenerAttached = false;
 
 type PushEnableResult =
   /** The user declined POST_NOTIFICATIONS (Android 13+). */
@@ -88,5 +92,49 @@ export async function enableServiceAlertPush(
   } catch {
     // Firebase is not configured in this build, or the plugin is missing.
     return 'unavailable';
+  }
+}
+
+/**
+ * Show pushes that arrive while the app is in the foreground.
+ *
+ * Android only auto-posts an FCM `notification` payload to the tray when the app
+ * is backgrounded. In the foreground the SDK hands the message to the app
+ * instead, so without this listener a delivered alert is silently dropped — the
+ * message arrives, `notificationReceived` fires with nobody listening, and the
+ * user sees nothing. Re-posting it as a local notification on the same channel
+ * makes foreground and background behave identically.
+ *
+ * Idempotent, and safe to call before the topic subscription exists.
+ */
+export async function startForegroundPushDisplay(): Promise<void> {
+  if (!isNative() || foregroundListenerAttached) return;
+  foregroundListenerAttached = true;
+
+  try {
+    await FirebaseMessaging.addListener('notificationReceived', ({ notification }) => {
+      const title = notification?.title;
+      const body = notification?.body;
+      // A data-only message has nothing to show; the Worker always sends both,
+      // but a malformed or test payload must not post an empty notification.
+      if (!title && !body) return;
+
+      void LocalNotifications.schedule({
+        notifications: [
+          {
+            body: body ?? '',
+            channelId: CHANNEL_ID,
+            // Distinct from the reminders id space (slot * 10 + weekday), and
+            // rotating so a second alert does not overwrite the first.
+            id: Date.now() % 100000,
+            smallIcon: 'ic_launcher_monochrome',
+            title: title ?? '',
+          },
+        ],
+      });
+    });
+  } catch {
+    // No Firebase in this build — same "push unavailable" story as elsewhere.
+    foregroundListenerAttached = false;
   }
 }
