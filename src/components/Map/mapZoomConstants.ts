@@ -21,3 +21,16 @@ const MAP_ZOOM_STATIC_LAYERS_MIN = MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD;
  * zoom is strictly greater than this value — wider view than transit’s zoom-15 hint range.
  */
 export const MAP_ZOOM_CITY_STATIC_LAYERS_MIN = MAP_ZOOM_STATIC_LAYERS_MIN - 4;
+
+/**
+ * All-vehicles layer: fully hidden at or below {@link MAP_ZOOM_VEHICLES_FADE_MIN},
+ * fully opaque at or above {@link MAP_ZOOM_VEHICLES_FADE_MAX}.
+ *
+ * Deliberately aligned with {@link MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD}: the hint
+ * badge promises "zoom in to show stops and vehicles", so vehicles must not already
+ * be on screen while it is up. It is also what keeps the layer cheap — one zoom step
+ * out roughly quadruples the viewport area, and with the whole fleet inside it the
+ * marker count (and its per-poll DOM churn) is what makes low zoom levels stutter.
+ */
+export const MAP_ZOOM_VEHICLES_FADE_MIN = MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD;
+export const MAP_ZOOM_VEHICLES_FADE_MAX = MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD + 1;
