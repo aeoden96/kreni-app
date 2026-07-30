@@ -323,23 +323,24 @@ body {
   animation: realtime-feed-dot-flash 0.75s ease-out 1;
 }
 
+/* Transform + opacity only: both run on the compositor. An animated
+   `filter: blur()` repaints the element every frame, and the spider menu
+   reveals ~9 of these at once — on Android that alone stalled the open. */
 @keyframes spider-reveal {
   0% {
     opacity: 0;
     transform: translateY(-1rem) scale(0.9);
-    filter: blur(4px);
   }
 
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
-    filter: blur(0);
   }
 }
 
 .animate-spider-reveal {
   animation: spider-reveal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  will-change: transform, opacity, filter;
+  will-change: transform, opacity;
 }
 
 /* Leaflet popup styling for enhanced stop popups */

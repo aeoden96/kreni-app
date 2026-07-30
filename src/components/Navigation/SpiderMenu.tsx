@@ -32,9 +32,14 @@ const routeIcons: Record<string, ReactNode> = {
   '/train': <Train className="w-5 h-5 sm:w-6 sm:h-6" />,
 };
 
-/** Icon color for the hub button — matches each route's accent color */
+/**
+ * Icon color for the hub button — matches each route's accent color.
+ * These sit on a near-black `bg-neutral` pill, so every entry has to be a light
+ * enough shade to read against it. `text-primary` (daisyUI's dark-theme indigo)
+ * was not, hence the explicit blue for transit — the same hue as trams on the map.
+ */
 const routeIconColors: Record<string, string> = {
-  '/': 'text-primary',
+  '/': 'text-blue-400',
   '/city': 'text-purple-500',
   '/cycling': 'text-success',
   '/driving': 'text-orange-500',
@@ -61,10 +66,12 @@ export function SpiderMenu() {
 
   const isHeaderMode = location.pathname === '/settings';
 
-  /** Same footprint as hub trigger (locate + menu buttons align) */
-  const triggerSizeClass = isHeaderMode
-    ? 'w-8 h-8 min-h-8'
-    : 'w-10 h-10 min-h-10 sm:w-14 sm:h-14 sm:min-h-14';
+  /**
+   * Same footprint as hub trigger (locate + menu buttons align), and the same on
+   * every route: the settings header used to shrink these to 32px, which made the
+   * controls a different size depending on where you were.
+   */
+  const triggerSizeClass = 'w-10 h-10 min-h-10 sm:w-14 sm:h-14 sm:min-h-14';
 
   const currentIcon = routeIcons[location.pathname] ?? routeIcons['/'];
   const currentIconColor = routeIconColors[location.pathname] ?? 'text-white';
@@ -138,9 +145,11 @@ export function SpiderMenu() {
               </button>
             )}
 
-            {/* Hub button — neutral glass, colored icon */}
+            {/* Hub button — same `btn-gps-inactive` shade as the locate button it
+                sits next to (bg-neutral/90 read as flat black beside it, most
+                obviously against the light settings header). */}
             <button
-              className={`relative flex items-center justify-center ${triggerSizeClass} rounded-full shadow-2xl transition-all duration-300 ease-in-out border border-white/20 active:scale-95 backdrop-blur-xl bg-neutral/90 hover:bg-neutral`}
+              className={`relative flex items-center justify-center ${triggerSizeClass} btn-gps-inactive rounded-full shadow-2xl transition-all duration-300 ease-in-out active:scale-95`}
               onClick={toggleMenu}
             >
               <div
@@ -189,7 +198,7 @@ export function SpiderMenu() {
           style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.875rem)' }}
         >
           <button
-            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-neutral/90 text-neutral-content shadow-lg border border-white/10 hover:bg-neutral hover:scale-105 transition-all duration-300 backdrop-blur-xl"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-neutral/90 text-neutral-content shadow-lg border border-white/10 hover:bg-neutral hover:scale-105 transition-all duration-300"
             onClick={handleFeedback}
             type="button"
           >
@@ -204,7 +213,7 @@ export function SpiderMenu() {
       {/* Transient "link copied" confirmation (web clipboard fallback only). */}
       {linkCopied && (
         <div
-          className="fixed left-1/2 -translate-x-1/2 z-[2100] rounded-full bg-neutral/95 text-neutral-content shadow-2xl border border-white/10 px-4 py-2 text-xs font-semibold backdrop-blur-xl animate-[modal-fade-in_0.2s_ease-out] pointer-events-none"
+          className="fixed left-1/2 -translate-x-1/2 z-[2100] rounded-full bg-neutral/95 text-neutral-content shadow-2xl border border-white/10 px-4 py-2 text-xs font-semibold animate-[modal-fade-in_0.2s_ease-out] pointer-events-none"
           role="status"
           style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)' }}
         >

@@ -23,8 +23,10 @@ export function SpiderRouteList() {
 
   const routes: RouteConfig[] = [
     {
-      activeIconColor: 'text-primary',
-      activeRing: 'ring-primary',
+      // Matches the hub button's transit colour; daisyUI's `primary` is too dark
+      // against the near-black pill. See routeIconColors in SpiderMenu.
+      activeIconColor: 'text-blue-400',
+      activeRing: 'ring-blue-400',
       icon: <TramFront className="w-5 h-5" />,
       label: t('spiderMenu.modes.transit'),
       to: '/',
@@ -67,7 +69,7 @@ export function SpiderRouteList() {
       //   Each route now occupies its own row; SpiderFilterBar expands below when active.
       <Fragment key={item.to}>
         <NavLink
-          className={`flex items-center gap-3 px-4 py-2 rounded-full shadow-xl transition-all duration-300 backdrop-blur-md border border-white/10 animate-spider-reveal bg-neutral/90 hover:bg-neutral ${
+          className={`flex items-center gap-3 px-4 py-2 rounded-full shadow-xl transition-all duration-300 border border-white/10 animate-spider-reveal bg-neutral/90 hover:bg-neutral ${
             isActive
               ? `ring-2 ${item.activeRing} ring-offset-2 ring-offset-neutral scale-105 text-white`
               : 'text-white/50 hover:text-white/80'
