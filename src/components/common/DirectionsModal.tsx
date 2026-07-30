@@ -73,7 +73,7 @@ export const DirectionsModal = memo(function DirectionsModal(props: DirectionsMo
 
       {/* Modal */}
       <div
-        className="relative w-full max-w-lg mx-2 mt-2 sm:mt-8 max-h-[90svh] bg-base-100 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+        className="modal-card-safe relative w-full max-w-lg mx-2 bg-base-100 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
         style={{ animation: 'modal-fade-in 0.2s ease-out' }}
       >
         {/* Header */}

@@ -201,9 +201,12 @@ export function RouteVehiclePanel({
     journeySegment && routesById ? (directionStopIds[journeySegment.fromIdx] ?? null) : null;
   const originStopName = originStopId ? stopsById?.get(originStopId)?.name : undefined;
 
+  // Anchored exactly like StopInfoBar: a flat `top-16` ignores the status-bar
+  // inset, so on Android the card rode up into the search / journey / locate /
+  // spider buttons instead of starting below them.
   return (
     <div
-      className="fixed top-16 sm:top-20 left-2 right-2 sm:left-4 sm:right-auto sm:max-w-md z-[1150] bg-base-100 rounded-xl shadow-2xl flex flex-col overflow-hidden max-h-[calc(100dvh-5rem-env(safe-area-inset-bottom))] sm:max-h-[calc(100dvh-6rem-env(safe-area-inset-bottom))]"
+      className="fixed top-[calc(4rem+env(safe-area-inset-top))] sm:top-[calc(5rem+env(safe-area-inset-top))] left-2 right-2 sm:left-4 sm:right-auto sm:max-w-md z-[1150] bg-base-100 rounded-xl shadow-2xl flex flex-col overflow-hidden max-h-[calc(100dvh-5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] sm:max-h-[calc(100dvh-6rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))]"
       style={{ animation: 'modal-fade-in 0.2s ease-out' }}
     >
       <div className="flex flex-1 min-h-0 flex-col overflow-y-auto overscroll-contain p-4">

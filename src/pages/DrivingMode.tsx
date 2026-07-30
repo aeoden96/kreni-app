@@ -69,7 +69,7 @@ export function DrivingMode() {
           </div>
         </div>
       )}
-      <div className="absolute bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-[1000] flex flex-col items-end gap-2">
+      <div className="absolute bottom-[max(1.5rem,calc(env(safe-area-inset-bottom,0px)+1rem))] right-[max(1rem,env(safe-area-inset-right))] z-[1000] flex flex-col items-end gap-2">
         {closures.length > 0 && !isDrivingLayersOpen && (
           <RoadClosuresListModal
             closures={closures}

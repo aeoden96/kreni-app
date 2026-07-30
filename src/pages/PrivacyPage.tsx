@@ -7,7 +7,8 @@ export function PrivacyPage() {
 
   return (
     <div className="min-h-svh overflow-y-auto bg-base-200">
-      <div className="bg-base-100 border-b border-base-300">
+      {/* pt clears the Android status bar, which the edge-to-edge WebView draws under. */}
+      <div className="bg-base-100 border-b border-base-300 pt-[env(safe-area-inset-top)]">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
           <Link
             aria-label={t('common.back')}

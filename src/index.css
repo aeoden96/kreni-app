@@ -214,6 +214,32 @@ body {
   padding-right: env(safe-area-inset-right);
 }
 
+/*
+ * Vertical box for a floating modal card (search, journey planner, disruptions).
+ *
+ * The map is deliberately edge-to-edge, but a card is not: anchored at a flat
+ * `mt-2` it slides under the Android status bar, so its header sits behind the
+ * clock; sized in raw viewport units its last row ends up behind the navigation
+ * bar. Both insets are therefore subtracted from the height as well as added to
+ * the offset — 100dvh spans the whole screen, system bars included.
+ *
+ * Full-screen-on-mobile sheets (StopModal) do not want this: they cover the
+ * inset areas on purpose and pad their own content instead.
+ */
+.modal-card-safe {
+  margin-top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
+  max-height: calc(
+    100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 1rem
+  );
+}
+
+@media (min-width: 640px) {
+  .modal-card-safe {
+    margin-top: 2rem;
+    max-height: calc(100dvh - 4rem);
+  }
+}
+
 /* Ensure touch targets are at least 44x44px for better mobile UX */
 .touch-target {
   min-width: 44px;

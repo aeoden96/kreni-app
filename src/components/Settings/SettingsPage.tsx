@@ -126,8 +126,10 @@ export function SettingsPage() {
 
   return (
     <div className="h-full overflow-y-auto bg-base-200">
-      {/* Header */}
-      <div className="bg-base-100 border-b border-base-300 pt-[env(safe-area-inset-top)]">
+      {/* Header — sticky within the scroll container above. Opaque bg-base-100,
+          so cards scrolling under it stay hidden; z-10 keeps it over the cards
+          while staying under the fixed navigation hub (z-2000). */}
+      <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300 pt-[env(safe-area-inset-top)]">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
           <Link className="btn btn-circle btn-ghost btn-sm" to="/">
             <ArrowLeft className="w-5 h-5" />
@@ -136,8 +138,9 @@ export function SettingsPage() {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-4xl mx-auto p-4 space-y-4">
+      {/* Content — the bottom pad clears the Android navigation bar, which would
+          otherwise sit on top of the last card once scrolled to the end. */}
+      <div className="max-w-4xl mx-auto p-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] space-y-4">
         {/* Language Section */}
         <div className="card bg-base-100 shadow-sm">
           <div className="card-body">

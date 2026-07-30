@@ -6,7 +6,8 @@
  * prop-drilling.
  */
 
-import { ArrowLeftRight, Search, Train, X } from 'lucide-react';
+// `Route` is aliased: the bare name is the GTFS domain type everywhere else.
+import { Route as RouteIcon, Search, Train, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -608,7 +609,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
 
         {/* Disruptions (service alerts + road closures) + realtime technical details (debug only); z above Leaflet bottom chrome */}
         {isTransit && (
-          <div className="absolute bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-[1100] flex items-center justify-end gap-2">
+          <div className="absolute bottom-[max(1.5rem,calc(env(safe-area-inset-bottom,0px)+1rem))] right-[max(1rem,env(safe-area-inset-right))] z-[1100] flex items-center justify-end gap-2">
             <DisruptionsPanel
               alerts={serviceAlerts}
               closures={roadClosures}
@@ -826,7 +827,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
             }}
             type="button"
           >
-            <ArrowLeftRight className="w-5 h-5 sm:w-6 sm:h-6" />
+            <RouteIcon className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
 

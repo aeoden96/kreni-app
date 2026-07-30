@@ -32,7 +32,8 @@ export function TallyFeedbackPage() {
 
   return (
     <div className="h-svh w-screen overflow-hidden bg-base-100 flex flex-col">
-      <div className="shrink-0 flex items-center gap-2 p-2 border-b border-base-300/50 bg-base-100/95 backdrop-blur-sm z-10">
+      {/* pt clears the Android status bar, which the edge-to-edge WebView draws under. */}
+      <div className="shrink-0 flex items-center gap-2 p-2 pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] border-b border-base-300/50 bg-base-100/95 backdrop-blur-sm z-10">
         <button
           aria-label={t('common.back')}
           className="btn btn-ghost btn-circle btn-sm sm:btn-md"

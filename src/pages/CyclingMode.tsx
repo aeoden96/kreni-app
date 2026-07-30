@@ -91,7 +91,7 @@ export function CyclingMode() {
       <CyclingLayersPanel stations={stations} />
 
       {/* z-index above Leaflet .leaflet-bottom / .leaflet-top (1000) so map chrome cannot steal clicks */}
-      <div className="pointer-events-none absolute bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-[max(1rem,env(safe-area-inset-left))] right-[max(1rem,env(safe-area-inset-right))] z-[1100] flex flex-col gap-2">
+      <div className="pointer-events-none absolute bottom-[max(1.5rem,calc(env(safe-area-inset-bottom,0px)+1rem))] left-[max(1rem,env(safe-area-inset-left))] right-[max(1rem,env(safe-area-inset-right))] z-[1100] flex flex-col gap-2">
         <div className="pointer-events-auto flex flex-col items-end gap-2 self-end">
           {showBikePaths && cyclosmMapVariant === 'full' && cyclosmLegendOpen && (
             <div className="mb-2 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-base-200 bg-base-100 p-3 text-xs shadow-xl">
