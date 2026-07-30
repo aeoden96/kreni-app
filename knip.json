@@ -6,7 +6,8 @@
     "src/components/common/DirectionsPanel.tsx",
     "src/components/common/ParentStopInput.tsx",
     "src/hooks/useParentStopSearch.ts",
-    "vitest.shims.d.ts"
+    "vitest.shims.d.ts",
+    "capacitor.config.ts"
   ],
   "ignoreDependencies": [
     "@secretlint/secretlint-rule-preset-recommend",
