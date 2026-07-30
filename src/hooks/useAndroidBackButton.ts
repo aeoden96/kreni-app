@@ -10,9 +10,15 @@ import { isNative } from '../utils/platform';
  *
  * Back behavior: route changes (modes) and selections (route/stop sheets) all
  * push history entries — see `useSelectionParams` (`{ replace: false }`) — so a
- * plain history-back closes the topmost of them before leaving the screen. Only
- * when the WebView reports no further history (`canGoBack === false`, i.e. the
- * launch screen) do we exit the app, matching native Android convention.
+ * plain history-back closes the topmost of them before leaving the screen. At
+ * the SPA's first entry we exit the app instead, matching native Android
+ * convention.
+ *
+ * Depth comes from React Router's `history.state.idx`, NOT from Capacitor's
+ * `canGoBack`. `canGoBack` also counts the WebView's own pre-SPA entry — the
+ * Capacitor origin `http://localhost/` that is loaded before the bundle (or,
+ * with live reload, before the dev-server URL). Backing into that entry left the
+ * app on a blank page instead of exiting.
  *
  * Extension point: local-state overlays that do NOT push history (layer panels,
  * one-off modals) should be closed here first, ahead of the history-back, once
@@ -24,8 +30,11 @@ export function useAndroidBackButton(): void {
   useEffect(() => {
     if (!isNative()) return;
 
-    const backHandle = App.addListener('backButton', ({ canGoBack }) => {
-      if (canGoBack) {
+    const backHandle = App.addListener('backButton', () => {
+      // Undefined idx means React Router has not pushed anything yet, i.e. we are
+      // still on the entry the app launched at — treat it as the root and exit.
+      const idx = (window.history.state as null | { idx?: number })?.idx;
+      if (typeof idx === 'number' && idx > 0) {
         window.history.back();
       } else {
         void App.exitApp();

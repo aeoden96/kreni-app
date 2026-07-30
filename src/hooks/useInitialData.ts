@@ -4,10 +4,21 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-import type { InitialData, Stop } from '../utils/gtfs';
+import type { InitialData, Route, Stop } from '../utils/gtfs';
 
 import { checkCacheVersion } from '../stores/dataCache';
 import { fetchInitialData } from '../utils/gtfs';
+
+/**
+ * Stable identities for the pre-load window. Returning `{}` / `[]` inline handed
+ * every render a fresh object, so consumers keying effects on them re-ran on
+ * every render — `useCurrentService` then called setState from each commit and
+ * React aborted the tree with "Maximum update depth exceeded", blanking the
+ * transit page whenever it remounted (e.g. Back out of Settings).
+ */
+const EMPTY_CALENDAR: Record<string, string> = {};
+const EMPTY_ROUTES: Route[] = [];
+const EMPTY_STOPS: Stop[] = [];
 
 interface UseInitialDataOptions {
   /** Data directory to load from (default: 'data'). Use 'data-train' for train mode. */
@@ -56,15 +67,15 @@ export function useInitialData(options: UseInitialDataOptions = {}) {
   }, [data]);
 
   return {
-    calendar: data?.calendar || {},
+    calendar: data?.calendar ?? EMPTY_CALENDAR,
     error,
     feedEndDate: data?.feedEndDate,
     feedStartDate: data?.feedStartDate,
     feedVersion: data?.feedVersion,
     loading,
-    routes: data?.routes || [],
+    routes: data?.routes ?? EMPTY_ROUTES,
     routesById,
-    stops: data?.stops || [],
+    stops: data?.stops ?? EMPTY_STOPS,
     stopsById,
   };
 }
