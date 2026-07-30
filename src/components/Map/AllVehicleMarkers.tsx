@@ -16,7 +16,10 @@ import { isNightRoute } from '../../utils/nightLines';
 import { NIGHT_VEHICLE_COLOR } from '../../utils/routeStyle';
 import { makeVehicleIcon } from '../../utils/vehicleIcon';
 import { MARKER_Z_VEHICLE } from './mapMarkerZIndex';
-import { MAP_ZOOM_VEHICLES_FADE_MAX, MAP_ZOOM_VEHICLES_FADE_MIN } from './mapZoomConstants';
+import {
+  MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD,
+  MAP_ZOOM_VEHICLES_FADE_MAX,
+} from './mapZoomConstants';
 import { useSpiderfierContext } from './SpiderfierContext';
 
 // ── Spiderfied sub-component for all-vehicles view ───────────────────────
@@ -186,7 +189,7 @@ export function AllVehicleMarkers({ onVehicleClick, vehicles }: AllVehicleMarker
     };
   }, [map]);
 
-  const FADE_MIN = MAP_ZOOM_VEHICLES_FADE_MIN;
+  const FADE_MIN = MAP_ZOOM_TRANSIT_STOPS_HINT_THRESHOLD;
   const FADE_MAX = MAP_ZOOM_VEHICLES_FADE_MAX;
   const opacityFactor =
     zoom >= FADE_MAX ? 1 : zoom <= FADE_MIN ? 0 : (zoom - FADE_MIN) / (FADE_MAX - FADE_MIN);
