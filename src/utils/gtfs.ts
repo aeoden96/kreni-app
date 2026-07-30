@@ -2,6 +2,7 @@
  * Utility functions for working with processed GTFS data
  */
 
+import { GTFS_DATA_ORIGIN } from '../config';
 import { cachedFetch, dataFetch } from '../stores/dataCache';
 
 const BASE_URL = import.meta.env.BASE_URL;
@@ -26,6 +27,41 @@ export interface Stop {
    * passenger can ride to.
    */
   terminus?: boolean;
+}
+
+/**
+ * Fetch one processed-GTFS file, memoised in IndexedDB.
+ *
+ * On native {@link GTFS_DATA_ORIGIN} points at the deployed web origin, so new
+ * timetables reach installed apps without a Play release; the copy bundled in
+ * the APK is the fallback when that request fails, which is what keeps the app
+ * usable offline and on first run.
+ *
+ * The cache key is the *relative* path on purpose. Keying on the resolved URL
+ * would give the remote and bundled copies separate entries, doubling the cache
+ * and re-downloading everything the first time a device falls back.
+ *
+ * @param onMissing produces a value for a 404 instead of throwing — some
+ *   datasets legitimately omit files (HZPP ships no shapes.txt).
+ */
+async function fetchDataFile<T>(relPath: string, label: string, onMissing?: () => T): Promise<T> {
+  const localUrl = `${BASE_URL}${relPath}`;
+  return cachedFetch(localUrl, async () => {
+    const candidates = GTFS_DATA_ORIGIN ? [`${GTFS_DATA_ORIGIN}${localUrl}`, localUrl] : [localUrl];
+    let lastError: unknown;
+
+    for (const url of candidates) {
+      try {
+        const response = await dataFetch(url);
+        if (response.status === 404 && onMissing) return onMissing();
+        if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+        return (await response.json()) as T;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw new Error(`Failed to fetch ${label}: ${String(lastError)}`);
+  });
 }
 
 /** Eight compass sectors — stable keys for grouping (locale-independent). */
@@ -155,121 +191,64 @@ export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2
 }
 
 export async function fetchInitialData(dataDir = 'data'): Promise<InitialData> {
-  const url = `${BASE_URL}${dataDir}/initial.json`;
-  return cachedFetch(url, async () => {
-    const response = await dataFetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch initial data: ${response.statusText}`);
-    }
-    return response.json();
-  });
+  return fetchDataFile(`${dataDir}/initial.json`, 'initial data');
 }
 
 export async function fetchRouteActiveTrips(
   routeId: string,
   dataDir = 'data'
 ): Promise<RouteActiveTripsData> {
-  const url = `${BASE_URL}${dataDir}/route_active_trips/${routeId}.json`;
-  return cachedFetch(url, async () => {
-    const response = await dataFetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch active trips for route ${routeId}: ${response.statusText}`);
-    }
-    return response.json();
-  });
+  return fetchDataFile(
+    `${dataDir}/route_active_trips/${routeId}.json`,
+    `active trips for route ${routeId}`
+  );
 }
 
 export async function fetchRouteParentStops(dataDir = 'data'): Promise<RouteParentStopsIndex> {
-  const url = `${BASE_URL}${dataDir}/route_parent_stops.json`;
-  return cachedFetch(url, async () => {
-    const response = await dataFetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch route parent stops index: ${response.statusText}`);
-    }
-    return response.json();
-  });
+  return fetchDataFile(`${dataDir}/route_parent_stops.json`, 'route parent stops index');
 }
 
 export async function fetchRouteShapes(
   routeId: string,
   dataDir = 'data'
 ): Promise<Record<string, [number, number][]>> {
-  const url = `${BASE_URL}${dataDir}/shapes/${routeId}.json`;
-  return cachedFetch(url, async () => {
-    const response = await dataFetch(url);
-    if (response.status === 404) {
-      // Shape data is optional — some datasets (e.g. HZPP trains) don't include shapes.txt.
-      return {};
-    }
-    if (!response.ok) {
-      throw new Error(`Failed to fetch shapes for route ${routeId}: ${response.statusText}`);
-    }
-    return response.json();
-  });
+  return fetchDataFile(
+    `${dataDir}/shapes/${routeId}.json`,
+    `shapes for route ${routeId}`,
+    () => ({})
+  );
 }
 
 export async function fetchRouteStops(routeId: string, dataDir = 'data'): Promise<RouteStopsData> {
-  const url = `${BASE_URL}${dataDir}/route_stops/${routeId}.json`;
-  return cachedFetch(url, async () => {
-    const response = await dataFetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch route stops for route ${routeId}: ${response.statusText}`);
-    }
-    return response.json();
-  });
+  return fetchDataFile(
+    `${dataDir}/route_stops/${routeId}.json`,
+    `route stops for route ${routeId}`
+  );
 }
 
 export async function fetchRouteTimetable(
   routeId: string,
   dataDir = 'data'
 ): Promise<Record<string, [string, number, number][]>> {
-  const url = `${BASE_URL}${dataDir}/timetables/${routeId}.json`;
-  return cachedFetch(url, async () => {
-    const response = await dataFetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch timetable for route ${routeId}: ${response.statusText}`);
-    }
-    return response.json();
-  });
+  return fetchDataFile(`${dataDir}/timetables/${routeId}.json`, `timetable for route ${routeId}`);
 }
 
 export async function fetchRouteTrips(
   routeId: string,
   dataDir = 'data'
 ): Promise<{ trips: Trip[] }> {
-  const url = `${BASE_URL}${dataDir}/routes/${routeId}.json`;
-  return cachedFetch(url, async () => {
-    const response = await dataFetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch route ${routeId}: ${response.statusText}`);
-    }
-    return response.json();
-  });
+  return fetchDataFile(`${dataDir}/routes/${routeId}.json`, `route ${routeId}`);
 }
 
 export async function fetchStopDepartures(
   stopId: string,
   dataDir = 'data'
 ): Promise<StopDepartures> {
-  const url = `${BASE_URL}${dataDir}/stops/${stopId}.json`;
-  return cachedFetch(url, async () => {
-    const response = await dataFetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch departures for stop ${stopId}: ${response.statusText}`);
-    }
-    return response.json();
-  });
+  return fetchDataFile(`${dataDir}/stops/${stopId}.json`, `departures for stop ${stopId}`);
 }
 
 export async function fetchStopTimetable(stopId: string, dataDir = 'data'): Promise<StopTimetable> {
-  const url = `${BASE_URL}${dataDir}/stop_timetables/${stopId}.json`;
-  return cachedFetch(url, async () => {
-    const response = await dataFetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch stop timetable for ${stopId}: ${response.statusText}`);
-    }
-    return response.json();
-  });
+  return fetchDataFile(`${dataDir}/stop_timetables/${stopId}.json`, `stop timetable for ${stopId}`);
 }
 
 export function findNearestStops(

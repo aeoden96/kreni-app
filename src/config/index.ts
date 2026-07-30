@@ -3,11 +3,31 @@
  * Uses Vite environment variables (VITE_* prefix)
  */
 
+import { isNative } from '../utils/platform';
+
 /** Base URL of the GTFS Realtime proxy Cloudflare Worker */
 export const GTFS_PROXY_URL = import.meta.env.VITE_GTFS_PROXY_URL || '';
 
 /** Base URL for the static datasets stored in the R2 Bucket */
 export const STATIC_DATA_URL = import.meta.env.VITE_STATIC_DATA_URL || 'https://data.kreni.app';
+
+/**
+ * Origin to fetch the processed GTFS files (`/data`, `/data-train`) from.
+ *
+ * Empty on the web, where they are same-origin. On native it is the deployed web
+ * origin, so a timetable bump reaches installed apps without a Play release —
+ * the copy inside the APK is frozen at build time, and ZET reissues the feed far
+ * more often than we would ship. That copy stays as the offline fallback.
+ *
+ * NOT `STATIC_DATA_URL`: data.kreni.app is a Worker exposing named dataset
+ * endpoints (`/galleries-csv` and friends) and 404s on `/data/*`.
+ *
+ * Requests must carry `X-App-Request` or Cloudflare's WAF answers 403 — see
+ * `dataFetch`, which every caller goes through.
+ */
+export const GTFS_DATA_ORIGIN: string = isNative()
+  ? (import.meta.env.VITE_GTFS_DATA_URL || 'https://kreni.app').replace(/\/+$/, '')
+  : '';
 
 /** Optional API key for the proxy worker */
 export const GTFS_API_KEY: string | undefined = import.meta.env.VITE_GTFS_API_KEY;

@@ -22,6 +22,7 @@ import { clear, createStore, del, delMany, get, set } from 'idb-keyval';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+import { GTFS_DATA_ORIGIN } from '../config';
 import { indexedDBStorage } from './indexedDBStorage';
 
 /** Dedicated database, so payload eviction can never disturb the metadata. */
@@ -153,8 +154,15 @@ export function cachedFetchWithTTL<T>(
  */
 export async function checkCacheVersion(manifestRelPath = 'data/manifest.json'): Promise<void> {
   try {
-    const url = `${import.meta.env.BASE_URL}${manifestRelPath}`;
-    const response = await dataFetch(url);
+    // On native this is the one request that must reach the network: the
+    // manifest bundled in the APK is frozen at build time, so reading it locally
+    // would report the shipped version forever and no timetable bump would ever
+    // invalidate the cache. Falling back to the bundled copy keeps first run and
+    // offline working — it just cannot discover a newer version.
+    const localUrl = `${import.meta.env.BASE_URL}${manifestRelPath}`;
+    const response = GTFS_DATA_ORIGIN
+      ? await dataFetch(`${GTFS_DATA_ORIGIN}${localUrl}`).catch(() => dataFetch(localUrl))
+      : await dataFetch(localUrl);
     if (!response.ok) {
       console.warn(`Failed to fetch ${manifestRelPath}`);
       return;
