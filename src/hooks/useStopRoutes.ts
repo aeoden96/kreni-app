@@ -19,17 +19,22 @@ export function useStopRoutes(
 ): { loading: boolean; routes: Route[] } {
   const { dataDir = 'data' } = options;
   const [routes, setRoutes] = useState<Route[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [resolvedKey, setResolvedKey] = useState<null | string>(null);
+  const key = stopId === null ? null : `${stopId}|${dataDir}`;
+
+  // Derived, not a useState(false): the effect only runs after the first paint,
+  // so a state flag reports "loaded" for one frame and callers flash empty
+  // content before the skeleton appears.
+  const loading = key !== null && resolvedKey !== key;
 
   useEffect(() => {
     if (!stopId) {
       setRoutes([]);
-      setLoading(false);
+      setResolvedKey(null);
       return;
     }
 
     let cancelled = false;
-    setLoading(true);
 
     fetchStopTimetable(stopId, dataDir)
       .then((timetable) => {
@@ -50,19 +55,19 @@ export function useStopRoutes(
         });
 
         setRoutes(resolved);
-        setLoading(false);
+        setResolvedKey(key);
       })
       .catch(() => {
         if (!cancelled) {
           setRoutes([]);
-          setLoading(false);
+          setResolvedKey(key);
         }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [stopId, routesById, dataDir]);
+  }, [key, stopId, routesById, dataDir]);
 
   return { loading, routes };
 }

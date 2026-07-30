@@ -25,17 +25,20 @@ export function useStopTermini(
 ): { loading: boolean; termini: string[] } {
   const { dataDir = 'data' } = options;
   const [termini, setTermini] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [resolvedKey, setResolvedKey] = useState<null | string>(null);
+  const key = stopId === null ? null : `${stopId}|${dataDir}`;
+
+  // Derived rather than a state flag — see the note in useStopRoutes.
+  const loading = key !== null && resolvedKey !== key;
 
   useEffect(() => {
     if (!stopId) {
       setTermini([]);
-      setLoading(false);
+      setResolvedKey(null);
       return;
     }
 
     let cancelled = false;
-    setLoading(true);
 
     fetchStopTimetable(stopId, dataDir)
       .then(async (timetable) => {
@@ -79,19 +82,19 @@ export function useStopTermini(
 
         // If too many termini, return empty so callers fall back to compass direction
         setTermini(names.length > MAX_TERMINI ? [] : names);
-        setLoading(false);
+        setResolvedKey(key);
       })
       .catch(() => {
         if (!cancelled) {
           setTermini([]);
-          setLoading(false);
+          setResolvedKey(key);
         }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [stopId, stopsById, dataDir]);
+  }, [key, stopId, stopsById, dataDir]);
 
   return { loading, termini };
 }

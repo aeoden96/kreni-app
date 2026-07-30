@@ -24,6 +24,7 @@ import { routeBadgeColor } from '../../utils/routeStyle';
 import { DepartureCard } from './DepartureCard';
 import { NightMoon } from './NightMoon';
 import { ServiceAlertBanner } from './ServiceAlertBanner';
+import { StopModalBodySkeleton, StopModalHeaderSkeleton } from './StopModalSkeleton';
 
 interface StopModalProps {
   isOpen: boolean;
@@ -131,7 +132,11 @@ export const StopModal = memo(function StopModal({
   })();
 
   // Fetch routes for each sibling platform so we can show route badges
-  const { routeMap: siblingRouteMap, terminusSet: siblingTerminusSet } = useSiblingPlatformRoutes(
+  const {
+    loading: siblingRoutesLoading,
+    routeMap: siblingRouteMap,
+    terminusSet: siblingTerminusSet,
+  } = useSiblingPlatformRoutes(
     siblingPlatforms.map((s) => s.id),
     routesById,
     { dataDir }
@@ -188,8 +193,23 @@ export const StopModal = memo(function StopModal({
     </div>
   ) : null;
 
-  const { routes: stopRoutes } = useStopRoutes(isOpen ? stop.id : null, routesById, { dataDir });
-  const { termini } = useStopTermini(isOpen ? stop.id : null, stopsById, routesById, { dataDir });
+  const { loading: stopRoutesLoading, routes: stopRoutes } = useStopRoutes(
+    isOpen ? stop.id : null,
+    routesById,
+    { dataDir }
+  );
+  const { loading: terminiLoading, termini } = useStopTermini(
+    isOpen ? stop.id : null,
+    stopsById,
+    routesById,
+    { dataDir }
+  );
+
+  // One gate for all four sources. Holding the whole modal body until they have
+  // all landed trades a slightly longer wait for an open that does not reflow —
+  // staggering them made the card grow two or three times in the first moments.
+  const contentLoading =
+    departuresLoading || siblingRoutesLoading || stopRoutesLoading || terminiLoading;
 
   if (!isOpen) return null;
 
@@ -228,7 +248,8 @@ export const StopModal = memo(function StopModal({
           </div>
           <div className="flex items-center justify-between mb-3">
             <div className="text-sm text-base-content/60">
-              {!isAllTerminus && (stop.bearing !== undefined || stop.code) && (
+              {contentLoading && <div className="skeleton h-4 w-40 rounded" />}
+              {!contentLoading && !isAllTerminus && (stop.bearing !== undefined || stop.code) && (
                 <span>
                   {stop.bearing !== undefined
                     ? termini.length > 0
@@ -245,8 +266,9 @@ export const StopModal = memo(function StopModal({
               <span>{minutesToTime(currentTime)}</span>
             </div>
           </div>
+          {contentLoading && <StopModalHeaderSkeleton />}
           {/* Tab selector */}
-          {stopRoutes.length > 0 && (
+          {!contentLoading && stopRoutes.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-3">
               {(routesExpanded ? stopRoutes : stopRoutes.slice(0, ROUTES_COLLAPSED_MAX)).map(
                 (route) => (
@@ -276,7 +298,7 @@ export const StopModal = memo(function StopModal({
               )}
             </div>
           )}
-          {siblingPlatforms.length > 0 && !isAllTerminus && (
+          {!contentLoading && siblingPlatforms.length > 0 && !isAllTerminus && (
             <div className="mb-3">
               <p className="text-[10px] uppercase tracking-wide text-base-content/40 mb-1.5">
                 {t('stopView.otherPlatforms')}
@@ -414,11 +436,8 @@ export const StopModal = memo(function StopModal({
               </button>
             </div>
           )}
-          {departuresLoading ? (
-            <div className="flex items-center justify-center gap-3 p-8 text-base-content/50">
-              <span className="loading loading-spinner loading-sm" />
-              <span>{t('stopView.loadingTimetable')}</span>
-            </div>
+          {contentLoading ? (
+            <StopModalBodySkeleton label={t('stopView.loadingTimetable')} />
           ) : shownDepartures.length === 0 ? (
             journeyFilter ? (
               <div className="p-8 text-center text-base-content/50">

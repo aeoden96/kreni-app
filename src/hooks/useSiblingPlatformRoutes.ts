@@ -18,18 +18,25 @@ export function useSiblingPlatformRoutes(
   stopIds: string[],
   routesById: Map<string, Route>,
   options: { dataDir?: string } = {}
-): { routeMap: Map<string, Route[]>; terminusSet: Set<string> } {
+): { loading: boolean; routeMap: Map<string, Route[]>; terminusSet: Set<string> } {
   const { dataDir = 'data' } = options;
   const [routeMap, setRouteMap] = useState<Map<string, Route[]>>(new Map());
   const [terminusSet, setTerminusSet] = useState<Set<string>>(new Set());
+  const [resolvedKey, setResolvedKey] = useState<null | string>(null);
 
   // Stable key for the stopIds array to avoid unnecessary re-fetches
   const idsKey = useMemo(() => stopIds.slice().sort().join(','), [stopIds]);
+
+  // Derived rather than a `loading` state flag: this is already true on the very
+  // first render, before the effect below has had a chance to set anything. A
+  // useState(false) would report "loaded" for one frame and flash empty badges.
+  const loading = idsKey !== '' && resolvedKey !== idsKey;
 
   useEffect(() => {
     if (stopIds.length === 0) {
       setRouteMap(new Map());
       setTerminusSet(new Set());
+      setResolvedKey(idsKey);
       return;
     }
 
@@ -79,6 +86,7 @@ export function useSiblingPlatformRoutes(
       if (cancelled) return;
       setRouteMap(new Map(results.map((r) => [r.sid, r.routes])));
       setTerminusSet(new Set(results.filter((r) => r.isTerminus).map((r) => r.sid)));
+      setResolvedKey(idsKey);
     });
 
     return () => {
@@ -87,7 +95,7 @@ export function useSiblingPlatformRoutes(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idsKey, routesById, dataDir]);
 
-  return { routeMap, terminusSet };
+  return { loading, routeMap, terminusSet };
 }
 
 function sortRoutes(routes: Route[]): Route[] {
