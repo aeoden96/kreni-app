@@ -362,6 +362,9 @@ const en = {
       welcomeTitle: 'Welcome to Kreni',
     },
     privacyPage: {
+      analyticsBody:
+        'Kreni uses Google Analytics to count page views and basic interactions, such as which screens are opened, so we can see which features people actually use. This covers app usage and device data, including an approximate location derived from your IP address — it never includes your GPS location. There are no user accounts, so the data is pseudonymous, and it is never sold or shared for advertising.',
+      analyticsTitle: 'Analytics',
       disclaimerBody:
         'This app is an unofficial hobby project and is not affiliated with ZET, HŽ or the City of Zagreb. Data is shown as-is; we do not guarantee accuracy. Live data may be delayed. Use at your own risk.',
       disclaimerTitle: 'Disclaimer',
@@ -370,7 +373,7 @@ const en = {
       mapAttributionLink: '© OpenStreetMap contributors',
       mapAttributionTitle: 'Map',
       privacyBody:
-        'Kreni does not collect, store or share your location. All location (GPS) processing happens only on your device.',
+        'Kreni does not collect, store or share your GPS location. All location (GPS) processing happens only on your device.',
       privacyTitle: 'Privacy',
       summary:
         'This page explains what data Kreni uses and what it does not collect when you use the app.',
@@ -625,7 +628,7 @@ const en = {
       mapAttributionTitle: 'Map',
       mapTitle: 'Map',
       privacyBody:
-        'Kreni does not collect, store or share your location. All location (GPS) processing happens only on your device.',
+        'Kreni does not collect, store or share your GPS location. All location (GPS) processing happens only on your device.',
       privacyPolicyAction: 'Read policy',
       privacyPolicyHint: 'How Kreni handles your data, location, and map sources',
       privacyPolicyTitle: 'Privacy policy',

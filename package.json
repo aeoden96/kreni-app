@@ -42,7 +42,6 @@
     ]
   },
   "dependencies": {
-    "@capacitor-community/background-geolocation": "^1.2.26",
     "@capacitor-firebase/messaging": "^8",
     "@capacitor/app": "^8",
     "@capacitor/core": "^8.4.1",

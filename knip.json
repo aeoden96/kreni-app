@@ -9,9 +9,6 @@
     "vitest.shims.d.ts",
     "capacitor.config.ts"
   ],
-  "ignoreDependencies": [
-    "@secretlint/secretlint-rule-preset-recommend",
-    "@capacitor-community/background-geolocation"
-  ],
+  "ignoreDependencies": ["@secretlint/secretlint-rule-preset-recommend"],
   "ignoreBinaries": []
 }

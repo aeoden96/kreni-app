@@ -44,6 +44,13 @@ export function PrivacyPage() {
 
             <section>
               <h3 className="font-bold mb-1 text-base-content">
+                {t('privacyPage.analyticsTitle')}
+              </h3>
+              <p>{t('privacyPage.analyticsBody')}</p>
+            </section>
+
+            <section>
+              <h3 className="font-bold mb-1 text-base-content">
                 {t('privacyPage.mapAttributionTitle')}
               </h3>
               <a

@@ -362,6 +362,9 @@ const de = {
       welcomeTitle: 'Willkommen bei Kreni',
     },
     privacyPage: {
+      analyticsBody:
+        'Kreni verwendet Google Analytics, um Seitenaufrufe und grundlegende Interaktionen zu zählen — etwa welche Bildschirme geöffnet werden —, damit wir sehen, welche Funktionen tatsächlich genutzt werden. Erfasst werden App-Nutzung und Gerätedaten, einschließlich eines aus Ihrer IP-Adresse abgeleiteten ungefähren Standorts; Ihr GPS-Standort ist nie enthalten. Es gibt keine Benutzerkonten, die Daten sind daher pseudonym und werden niemals verkauft oder für Werbung weitergegeben.',
+      analyticsTitle: 'Analyse',
       disclaimerBody:
         'Diese App ist ein inoffizielles Hobbyprojekt und nicht mit ZET, HŽ oder der Stadt Zagreb verbunden. Daten werden „wie besehen“ angezeigt; keine Gewähr für Richtigkeit. Live-Daten können verzögert sein. Nutzung auf eigenes Risiko.',
       disclaimerTitle: 'Haftungsausschluss',
@@ -370,7 +373,7 @@ const de = {
       mapAttributionLink: '© OpenStreetMap-Mitwirkende',
       mapAttributionTitle: 'Karte',
       privacyBody:
-        'Kreni erfasst, speichert oder teilt Ihren Standort nicht. Die Standortverarbeitung (GPS) erfolgt ausschließlich auf Ihrem Gerät.',
+        'Kreni erfasst, speichert oder teilt Ihren GPS-Standort nicht. Die Standortverarbeitung (GPS) erfolgt ausschließlich auf Ihrem Gerät.',
       privacyTitle: 'Datenschutz',
       summary:
         'Diese Seite erklärt, welche Daten Kreni verwendet und welche Daten bei der Nutzung der App nicht erfasst werden.',
@@ -623,7 +626,7 @@ const de = {
       mapAttributionTitle: 'Karte',
       mapTitle: 'Karte',
       privacyBody:
-        'Kreni erfasst, speichert oder teilt Ihren Standort nicht. Die Standortverarbeitung (GPS) erfolgt ausschließlich auf Ihrem Gerät.',
+        'Kreni erfasst, speichert oder teilt Ihren GPS-Standort nicht. Die Standortverarbeitung (GPS) erfolgt ausschließlich auf Ihrem Gerät.',
       privacyPolicyAction: 'Richtlinie lesen',
       privacyPolicyHint: 'Wie Kreni Daten, Standort und Kartenquellen verarbeitet',
       privacyPolicyTitle: 'Datenschutzerklärung',

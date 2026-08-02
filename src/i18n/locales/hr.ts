@@ -370,6 +370,9 @@ const hr = {
       welcomeTitle: 'Dobrodošli u Kreni',
     },
     privacyPage: {
+      analyticsBody:
+        'Kreni koristi Google Analytics za brojanje pregleda stranica i osnovnih interakcija, primjerice koji se zasloni otvaraju, kako bismo vidjeli koje se značajke stvarno koriste. To obuhvaća korištenje aplikacije i podatke o uređaju, uključujući približnu lokaciju izvedenu iz vaše IP adrese — nikada ne uključuje vašu GPS lokaciju. Aplikacija nema korisničke račune pa su podaci pseudonimni te se nikada ne prodaju niti dijele za oglašavanje.',
+      analyticsTitle: 'Analitika',
       disclaimerBody:
         'Ova aplikacija je neslužbeni hobby projekt i nije povezana sa ZET-om, HŽ-om ili Gradom Zagrebom. Podaci se prikazuju "kakvi jesu" (as-is) i ne garantiramo njihovu točnost. Podaci uživo mogu kasniti. Koristite na vlastitu odgovornost.',
       disclaimerTitle: 'Odricanje od odgovornosti',
@@ -378,7 +381,7 @@ const hr = {
       mapAttributionLink: '© OpenStreetMap contributors',
       mapAttributionTitle: 'Karta',
       privacyBody:
-        'Kreni ne prikuplja, ne sprema niti dijeli vašu lokaciju. Sva obrada podataka o lokaciji (GPS) događa se isključivo na vašem uređaju.',
+        'Kreni ne prikuplja, ne sprema niti dijeli vašu GPS lokaciju. Sva obrada podataka o lokaciji (GPS) događa se isključivo na vašem uređaju.',
       privacyTitle: 'Privatnost',
       summary:
         'Ova stranica objašnjava koje podatke Kreni koristi i koje podatke ne prikuplja tijekom korištenja aplikacije.',
@@ -640,7 +643,7 @@ const hr = {
       mapAttributionTitle: 'Karta',
       mapTitle: 'Karta',
       privacyBody:
-        'Kreni ne prikuplja, ne sprema niti dijeli vašu lokaciju. Sva obrada podataka o lokaciji (GPS) događa se isključivo na vašem uređaju.',
+        'Kreni ne prikuplja, ne sprema niti dijeli vašu GPS lokaciju. Sva obrada podataka o lokaciji (GPS) događa se isključivo na vašem uređaju.',
       privacyPolicyAction: 'Otvori pravila',
       privacyPolicyHint: 'Kako Kreni obrađuje podatke, lokaciju i izvore karata',
       privacyPolicyTitle: 'Pravila privatnosti',

@@ -879,11 +879,6 @@
   resolved "https://registry.yarnpkg.com/@blazediff/core/-/core-1.9.1.tgz#ad61c4ec48dc11a2913b9753c8c74902e05e8f14"
   integrity sha512-ehg3jIkYKulZh+8om/O25vkvSsXXwC+skXmyA87FFx6A/45eqOkZsBltMw/TVteb0mloiGT8oGRTcjRAz66zaA==
 
-"@capacitor-community/background-geolocation@^1.2.26":
-  version "1.2.26"
-  resolved "https://registry.yarnpkg.com/@capacitor-community/background-geolocation/-/background-geolocation-1.2.26.tgz#f7036754804acc43d219d284e6dee0e2489c1398"
-  integrity sha512-kuva8VQ6zM+uIKgHUJTP87IYbmGKhX7DZw62JYfGZ888h4Xr5zeN+UTR6KBRHQVrGBpzSfbv+6/HQVuHYa7W5A==
-
 "@capacitor-firebase/messaging@^8":
   version "8.3.0"
   resolved "https://registry.yarnpkg.com/@capacitor-firebase/messaging/-/messaging-8.3.0.tgz#0817a1f6eacacccc6748e8191b914a8adceae870"
