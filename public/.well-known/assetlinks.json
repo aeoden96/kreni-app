@@ -4,7 +4,10 @@
     "target": {
       "namespace": "android_app",
       "package_name": "app.kreni",
-      "sha256_cert_fingerprints": ["REPLACE_WITH_SHA256_FINGERPRINT_OF_PLAY_APP_SIGNING_KEY"]
+      "sha256_cert_fingerprints": [
+        "46:1F:9C:7D:EF:48:91:BC:DD:5B:86:E2:4B:5F:0F:9B:E7:60:FF:80:C3:22:8F:2C:36:3F:8D:A2:5A:24:B7:92",
+        "46:36:D2:C4:4E:F1:D9:78:2A:86:C9:1C:B2:8F:35:BC:BB:87:CF:DE:0E:31:2C:C9:F1:49:DA:B9:63:37:39:38"
+      ]
     }
   }
 ]
