@@ -14,7 +14,10 @@
 import * as _GtfsRT from 'gtfs-realtime-bindings';
 const GtfsRealtimeBindings: typeof _GtfsRT = ((_GtfsRT as any).default ??
   _GtfsRT) as typeof _GtfsRT;
+import { CapacitorHttp } from '@capacitor/core';
+
 import { GTFS_API_KEY, GTFS_PROXY_URL } from '../config';
+import { isNative } from './platform';
 
 /**
  * Worker query param for the ZET combined GTFS-RT protobuf (vehicles + trip updates + alerts).
@@ -163,6 +166,39 @@ type GtfsRealtimeFeed = InstanceType<typeof GtfsRealtimeBindings.transit_realtim
 // ============================================
 
 /**
+ * One shape for both transports, so only the fetch differs and the decode,
+ * header reads and error handling below stay single-path.
+ */
+interface RawFeedResponse {
+  bytes: Uint8Array;
+  /** Case-insensitive: native returns a plain object, not a `Headers`. */
+  header: (name: string) => null | string;
+  status: number;
+}
+
+/**
+ * Coerce whatever the native bridge hands back into bytes.
+ *
+ * Android returns an `arraybuffer` response as a **base64 string** rather than a
+ * real ArrayBuffer, and the plugin's own typings say only `data: any`, so the
+ * shape is checked at runtime instead of assumed. Getting this wrong is
+ * invisible until a protobuf fails to decode on a device.
+ */
+export function feedBytes(data: unknown): Uint8Array {
+  if (data instanceof ArrayBuffer) return new Uint8Array(data);
+  if (ArrayBuffer.isView(data)) {
+    return new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+  }
+  if (typeof data === 'string') {
+    const binary = atob(data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+  }
+  throw new Error(`GTFS proxy returned an unusable body (${typeof data})`);
+}
+
+/**
  * Fetch and protobuf-decode a GTFS-RT feed from the proxy worker.
  *
  * @param endpoint - Which feed to request
@@ -184,28 +220,26 @@ export async function fetchRealtimeFeed(endpoint: 'trip-updates' | 'vehicle-posi
   }
 
   const fetchStart = Date.now();
-  const response = await fetch(url, {
-    cache: 'no-store', // Bypass browser cache so each poll fetches fresh data
-    headers,
-  });
+  const response = isNative()
+    ? await requestFeedNative(url, headers)
+    : await requestFeedWeb(url, headers);
 
-  if (!response.ok) {
-    throw new Error(`GTFS proxy request failed: ${response.status} ${response.statusText}`);
+  if (response.status < 200 || response.status >= 300) {
+    throw new Error(`GTFS proxy request failed: ${response.status}`);
   }
 
   const fetchEnd = Date.now();
-  const workerTimestamp = response.headers.get('X-Timestamp');
-  const rawCacheStatus = response.headers.get('X-Cache-Status');
+  const workerTimestamp = response.header('X-Timestamp');
+  const rawCacheStatus = response.header('X-Cache-Status');
   const cacheStatus: RealtimeFetchMetadata['cacheStatus'] =
     rawCacheStatus === 'HIT' || rawCacheStatus === 'MISS' ? rawCacheStatus : null;
-  const ageHeader = response.headers.get('Age');
+  const ageHeader = response.header('Age');
   const parsedAge = ageHeader != null ? Number.parseInt(ageHeader, 10) : Number.NaN;
   const cacheAgeSeconds = Number.isFinite(parsedAge) && parsedAge >= 0 ? parsedAge : null;
   const fetchTimeMs = fetchEnd - fetchStart;
   const httpStatus = response.status;
 
-  const buffer = await response.arrayBuffer();
-  const feed = GtfsRealtimeBindings.transit_realtime.FeedMessage.decode(new Uint8Array(buffer));
+  const feed = GtfsRealtimeBindings.transit_realtime.FeedMessage.decode(response.bytes);
 
   return {
     feed,
@@ -304,6 +338,50 @@ function getTranslatedText(ts: any): string {
   if (!ts?.translation?.length) return '';
   const hr = ts.translation.find((t: { language?: string; text?: string }) => t.language === 'hr');
   return (hr ?? ts.translation[0])?.text ?? '';
+}
+
+/**
+ * Native transport, bypassing the CapacitorHttp `fetch` shim on purpose.
+ *
+ * The shim is enabled globally (see capacitor.config.ts — `/data/*` cannot be
+ * reached without it) but decodes bodies by content-type into a string, which
+ * silently corrupts `application/x-protobuf`. Calling the plugin directly with
+ * an explicit `responseType` is what keeps the feed bytes intact.
+ */
+async function requestFeedNative(
+  url: string,
+  headers: Record<string, string>
+): Promise<RawFeedResponse> {
+  const res = await CapacitorHttp.request({
+    headers,
+    method: 'GET',
+    responseType: 'arraybuffer',
+    url,
+  });
+  const lowered = new Map(
+    Object.entries(res.headers ?? {}).map(([k, v]) => [k.toLowerCase(), String(v)])
+  );
+  return {
+    bytes: feedBytes(res.data),
+    header: (name) => lowered.get(name.toLowerCase()) ?? null,
+    status: res.status,
+  };
+}
+
+/** Web transport — a normal `fetch`, which handles binary correctly. */
+async function requestFeedWeb(
+  url: string,
+  headers: Record<string, string>
+): Promise<RawFeedResponse> {
+  const res = await fetch(url, {
+    cache: 'no-store', // Bypass browser cache so each poll fetches fresh data
+    headers,
+  });
+  return {
+    bytes: new Uint8Array(await res.arrayBuffer()),
+    header: (name) => res.headers.get(name),
+    status: res.status,
+  };
 }
 
 const CAUSE_LABELS: Record<number, string> = {
