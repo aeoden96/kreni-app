@@ -676,6 +676,8 @@ const en = {
         settings: 'Settings',
         share: 'Share',
         stopTracking: 'Stop location tracking',
+        themeToDark: 'Switch to dark theme',
+        themeToLight: 'Switch to light theme',
       },
       modes: {
         city: 'City',

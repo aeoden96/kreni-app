@@ -691,6 +691,8 @@ const hr = {
         settings: 'Postavke',
         share: 'Podijeli',
         stopTracking: 'Zaustavi praćenje lokacije',
+        themeToDark: 'Prebaci na tamnu temu',
+        themeToLight: 'Prebaci na svijetlu temu',
       },
       modes: {
         city: 'Grad',

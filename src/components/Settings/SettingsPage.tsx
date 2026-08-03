@@ -236,7 +236,7 @@ export function SettingsPage() {
                   className="toggle toggle-primary"
                   onChange={(e) => {
                     const nextTheme = e.target.checked ? 'dark' : 'light';
-                    trackEvent('theme_changed', { theme: nextTheme });
+                    trackEvent('theme_changed', { source: 'settings', theme: nextTheme });
                     setTheme(nextTheme);
                   }}
                   type="checkbox"

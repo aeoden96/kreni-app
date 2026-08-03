@@ -674,6 +674,8 @@ const de = {
         settings: 'Einstellungen',
         share: 'Teilen',
         stopTracking: 'Standortverfolgung beenden',
+        themeToDark: 'Zu dunklem Design wechseln',
+        themeToLight: 'Zu hellem Design wechseln',
       },
       modes: {
         city: 'Stadt',

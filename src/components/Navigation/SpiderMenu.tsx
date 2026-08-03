@@ -4,6 +4,8 @@ import {
   Car,
   LocateFixed,
   MessageSquare,
+  Moon,
+  Sun,
   Train,
   TramFront,
   X,
@@ -53,7 +55,7 @@ export function SpiderMenu() {
   const location = useLocation();
   const { t } = useTranslation();
 
-  const { setOnboardingCompleted, setOnboardingStep } = useSettingsStore();
+  const { setOnboardingCompleted, setOnboardingStep, setTheme, theme } = useSettingsStore();
   const { isTracking, locating, onLocateClick } = useNavigationStore();
 
   const [linkCopied, setLinkCopied] = useState(false);
@@ -94,6 +96,13 @@ export function SpiderMenu() {
     closeMenu();
   };
 
+  const handleThemeToggle = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    hapticImpact('light');
+    trackEvent('theme_changed', { source: 'spider_menu', theme: nextTheme });
+    setTheme(nextTheme);
+  };
+
   const handleShare = () => {
     trackEvent('share_opened', { source: 'spider_menu' });
     void shareCurrentView(t('app.title'), t('spiderMenu.share.text')).then((result) => {
@@ -123,8 +132,28 @@ export function SpiderMenu() {
         <div
           className={`pointer-events-auto flex flex-col items-end ${isOpen ? 'gap-3' : 'gap-0'}`}
         >
-          {/* Locate + Hub row */}
+          {/* Theme + Locate + Hub row */}
           <div className="flex items-center gap-2">
+            {/* Hidden on /settings, which already carries the appearance toggle. */}
+            {!isOpen && !isHeaderMode && (
+              <button
+                className={`btn btn-circle p-0 min-h-0 ${triggerSizeClass} btn-gps-inactive shadow-2xl transition-all duration-300 ring-2 ring-white/5`}
+                onClick={handleThemeToggle}
+                title={
+                  theme === 'dark'
+                    ? t('spiderMenu.actions.themeToLight')
+                    : t('spiderMenu.actions.themeToDark')
+                }
+                type="button"
+              >
+                {theme === 'dark' ? (
+                  <Sun className="w-5 h-5 sm:w-6 sm:h-6" />
+                ) : (
+                  <Moon className="w-5 h-5 sm:w-6 sm:h-6" />
+                )}
+              </button>
+            )}
+
             {!isOpen && onLocateClick && (
               <button
                 className={`btn btn-circle p-0 min-h-0 ${triggerSizeClass} ${isTracking ? 'btn-gps-active' : 'btn-gps-inactive'} shadow-2xl transition-all duration-300 ring-2 ring-white/5`}
