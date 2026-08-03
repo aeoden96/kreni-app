@@ -242,6 +242,7 @@ export function RouteLineDiagram({
             aria-hidden={onVehicleClick ? undefined : true}
             aria-label={tooltip}
             className="absolute"
+            data-testid="route-vehicle"
             disabled={!onVehicleClick}
             key={`v-${idx}`}
             onClick={onVehicleClick ? () => onVehicleClick(vehicle.tripId) : undefined}
