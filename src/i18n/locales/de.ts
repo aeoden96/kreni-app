@@ -279,7 +279,7 @@ const de = {
       loadingTrain: 'Zugdaten werden geladen…',
       loadingTransit: 'Daten werden geladen…',
       trainNoLiveTracking: 'Live-Zugverfolgung ist nicht verfügbar',
-      zoomForStopsAndVehicles: 'Hineinzoomen, um Haltestellen und Fahrzeuge anzuzeigen',
+      zoomForStopsAndVehicles: 'Hineinzoomen, um Haltestellen und einzelne Fahrzeuge anzuzeigen',
     },
     map: {
       zoomForLayers: 'Hineinzoomen, um Kartenebenen anzuzeigen',

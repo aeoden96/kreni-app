@@ -281,7 +281,7 @@ const hr = {
       loadingTrain: 'Učitavanje podataka o vlakovima...',
       loadingTransit: 'Učitavanje podataka...',
       trainNoLiveTracking: 'Live praćenje vlakova nije dostupno',
-      zoomForStopsAndVehicles: 'Zumiraj za prikaz stanica i vozila',
+      zoomForStopsAndVehicles: 'Zumiraj za prikaz stanica i pojedinačnih vozila',
     },
     map: {
       zoomForLayers: 'Zumiraj za prikaz slojeva karte',

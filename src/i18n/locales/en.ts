@@ -276,7 +276,7 @@ const en = {
       loadingTrain: 'Loading train data…',
       loadingTransit: 'Loading data…',
       trainNoLiveTracking: 'Live train tracking is not available',
-      zoomForStopsAndVehicles: 'Zoom in to show stops and vehicles',
+      zoomForStopsAndVehicles: 'Zoom in to show stops and individual vehicles',
     },
     map: {
       zoomForLayers: 'Zoom in to show map layers',

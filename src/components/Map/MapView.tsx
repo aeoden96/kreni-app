@@ -21,6 +21,7 @@ import { RouteShape } from './RouteShape';
 import { RouteZoomController } from './RouteZoomController';
 import { SpiderfierProvider } from './SpiderfierContext';
 import { SpiderfierManager } from './SpiderfierManager';
+import { VehicleClusterLayer } from './VehicleClusterLayer';
 import { VehicleFollower } from './VehicleFollower';
 import { VehicleMarkers } from './VehicleMarkers';
 import { ZoomBasedStops } from './ZoomBasedStops';
@@ -165,6 +166,10 @@ function MapViewImpl({
           onVehicleClick={onVehicleClick}
           vehicles={selectedRouteId ? [] : allVehicles}
         />
+
+        {/* Takes over below the zoom where AllVehicleMarkers fades out. Same
+            gating on selectedRouteId so the two never disagree. */}
+        <VehicleClusterLayer vehicles={selectedRouteId ? [] : allVehicles} />
 
         <CongestionHeatmap points={congestionPoints} show={showCongestionHeatmap} />
 
