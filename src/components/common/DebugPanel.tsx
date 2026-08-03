@@ -106,7 +106,9 @@ function summariseTrip(d: TripDiagnostic, nowMs: number) {
           vehicleId: d.vehiclePos.vehicleId || null,
         }
       : null,
+    inActiveService: d.inActiveService,
     included: d.included,
+    matchKind: d.matchKind,
     passedStop: d.passedStop,
     reason: d.filterReason,
     route: d.routeShortName,
@@ -135,10 +137,15 @@ interface LiveFeedTabProps {
 }
 
 interface StopDiagnosticTabProps {
+  activeServiceId: null | string;
   diagnostics: TripDiagnostic[];
+  driftHits: number;
   error: Error | null;
+  exactHits: number;
+  feedVersion: string | undefined;
   loading: boolean;
   nowMs: number;
+  previousServiceId: null | string;
   routesById: Map<string, Route>;
   selectedStopId: null | string;
   stopsById: Map<string, Stop>;
@@ -206,6 +213,17 @@ export function DebugPanel({
             lat: selectedStop.lat,
             lon: selectedStop.lon,
             name: selectedStop.name,
+            // Which publication the client is running, and how trips resolved.
+            // `exactHits: 0` with `driftHits > 0` is the expected healthy state
+            // while ZET's realtime and static feeds disagree on the service
+            // segment; both at zero points at the calendar, not the matching.
+            service: {
+              activeServiceId: stopDiag.activeServiceId,
+              driftHits: stopDiag.driftHits,
+              exactHits: stopDiag.exactHits,
+              feedVersion: stopDiag.feedVersion,
+              previousServiceId: stopDiag.previousServiceId,
+            },
             summary: {
               totalTrips: stopDiag.totalTrips,
               tripsIncluded: stopDiag.tripsIncluded,
@@ -298,10 +316,15 @@ export function DebugPanel({
 
         {activeTab === 'stop' && (
           <StopDiagnosticTab
+            activeServiceId={stopDiag.activeServiceId}
             diagnostics={stopDiag.diagnostics}
+            driftHits={stopDiag.driftHits}
             error={stopDiag.error}
+            exactHits={stopDiag.exactHits}
+            feedVersion={stopDiag.feedVersion}
             loading={stopDiag.loading}
             nowMs={nowMs}
+            previousServiceId={stopDiag.previousServiceId}
             routesById={routesById}
             selectedStopId={selectedStopId}
             stopsById={stopsById}
@@ -378,10 +401,15 @@ function LiveFeedTab({ nowMs, routesById }: LiveFeedTabProps) {
 // ─── Sub-component: StopDiagnosticTab ────────────────────────────────────────
 
 function StopDiagnosticTab({
+  activeServiceId,
   diagnostics,
+  driftHits,
   error,
+  exactHits,
+  feedVersion,
   loading,
   nowMs,
+  previousServiceId,
   selectedStopId,
   stopsById,
   totalTrips,
@@ -431,6 +459,20 @@ function StopDiagnosticTab({
         <span className="badge badge-warning badge-xs">{excludedTrips.length} filtered out</span>
         <span className="badge badge-info badge-xs">{tripsWithGPS} with GPS</span>
         <span className="badge badge-ghost badge-xs">{totalTrips} total (±60 min)</span>
+      </div>
+
+      {/* Which publication this client is on, and how the realtime join resolved.
+          `exact 0 / drift >0` is healthy while ZET's feeds disagree on the service
+          segment; both at zero means the calendar is the suspect, not the join. */}
+      <div className="flex flex-wrap gap-1 text-[10px]">
+        <span className="badge badge-outline badge-xs">
+          service {activeServiceId ?? '—'}
+          {previousServiceId ? ` (prev ${previousServiceId})` : ''}
+        </span>
+        <span className={`badge badge-xs ${driftHits > 0 ? 'badge-info' : 'badge-ghost'}`}>
+          exact {exactHits} / drift {driftHits}
+        </span>
+        {feedVersion && <span className="badge badge-ghost badge-xs">feed {feedVersion}</span>}
       </div>
 
       {includedTrips.length > 0 && (

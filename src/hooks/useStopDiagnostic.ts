@@ -4,9 +4,16 @@
  * Runs an *approximation* of the useStopDepartures matching logic but surfaces
  * ALL trips (not just the included ones) together with the reason each trip was
  * included or dropped. It intentionally does not replicate the newer refinements
- * (GPS-primary ETA fusion, service-day/overnight handling, passed-stop distance
- * classification, passed-trip memory) — it exists to inspect the raw inputs, not
- * the fused output.
+ * (GPS-primary ETA fusion, passed-stop distance classification, passed-trip
+ * memory) — it exists to inspect the raw inputs, not the fused output.
+ *
+ * The realtime join, however, must mirror production exactly. It previously used
+ * a bare `vehiclePositions.get(tripId)`, which has scored zero since ZET's
+ * realtime feed began running a service segment the static feed does not contain:
+ * the panel reported `tripsWithGPS: 0` while the real board — which goes through
+ * {@link matchRealtime} — was matching normally. A diagnostic that disagrees with
+ * production is worse than no diagnostic, so the same exact-then-drift lookup and
+ * the same active-service scoping are used here.
  *
  * Only active when sandboxVisible is true so no extra overhead is incurred
  * in production.
@@ -19,7 +26,9 @@ import type { ParsedTripUpdate, ParsedVehiclePosition } from '../utils/realtime'
 
 import { useRealtimeStore } from '../stores/realtimeStore';
 import { fetchRouteStops, fetchStopTimetable } from '../utils/gtfs';
+import { indexByTripKey, matchRealtime } from '../utils/tripIdMatch';
 import { computeVehicleStopProgress } from '../utils/vehicles';
+import { useInitialData } from './useInitialData';
 
 // ── Mirror of the constants in useStopDepartures ───────────────────────────
 const LOOKAHEAD_MINUTES = 30;
@@ -46,7 +55,15 @@ export interface TripDiagnostic {
   filterReason: TripFilterReason;
   /** True if the realtime feed has a position for this trip */
   hasVehiclePosition: boolean;
+  /**
+   * Whether the trip belongs to today's calendar service (or yesterday's, for
+   * after-midnight trips). Production requires this before allowing the drift
+   * fallback, so a trip that is live but out of service explains a missing match.
+   */
+  inActiveService: boolean;
   included: boolean;
+  /** How the realtime row was found — `drift` means the exact ID missed. */
+  matchKind: 'drift' | 'exact' | 'none';
   passedStop: boolean;
 
   routeId: string;
@@ -74,9 +91,19 @@ export type TripFilterReason =
   | 'terminus'; // this stop is the last stop of the route direction (arriving, not departing)
 
 interface StopDiagnosticResult {
+  /** Today's calendar service, e.g. `0_4`. Null when the calendar has no entry. */
+  activeServiceId: null | string;
   diagnostics: TripDiagnostic[];
+  /** Trips matched only via the publication-stable key — the drift fallback. */
+  driftHits: number;
   error: Error | null;
+  /** Trips matched on the exact realtime trip ID. Zero while ZET's feeds disagree. */
+  exactHits: number;
+  /** Static publication the calendar came from, for spotting mixed-publication state. */
+  feedVersion: string | undefined;
   loading: boolean;
+  /** Yesterday's service — still owns after-midnight (≥ 24:00) trips. */
+  previousServiceId: null | string;
   /** Derived summary stats */
   totalTrips: number;
   tripsIncluded: number;
@@ -98,6 +125,12 @@ export function useStopDiagnostic(
 
   const vehiclePositions = useRealtimeStore((s) => s.vehiclePositions);
   const tripUpdates = useRealtimeStore((s) => s.tripUpdates);
+  const { calendar, feedVersion } = useInitialData({ dataDir });
+
+  // Same secondary indexes production builds, for the same reason: re-deriving
+  // them inside the per-trip loop would be quadratic over a stop's whole timetable.
+  const vehiclePositionsByKey = useMemo(() => indexByTripKey(vehiclePositions), [vehiclePositions]);
+  const tripUpdatesByKey = useMemo(() => indexByTripKey(tripUpdates), [tripUpdates]);
 
   const fetchingForStopId = useRef<null | string>(null);
 
@@ -146,6 +179,23 @@ export function useStopDiagnostic(
       });
   }, [stopId, dataDir]);
 
+  // Hoisted out of the diagnostics memo so the panel can report them even when
+  // the stop has no trips to show — a null activeServiceId is itself the finding.
+  const { activeServiceId, previousServiceId } = useMemo(() => {
+    // Local date, not toISOString(): at UTC+1/+2 the UTC date would keep serving
+    // yesterday's calendar entry until 01:00/02:00 local. Mirrors useStopDepartures.
+    const localDateStr = (ms: number) => {
+      const d = new Date(ms);
+      return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(
+        d.getDate()
+      ).padStart(2, '0')}`;
+    };
+    return {
+      activeServiceId: calendar[localDateStr(nowMs)] ?? null,
+      previousServiceId: calendar[localDateStr(nowMs - 86_400_000)] ?? null,
+    };
+  }, [calendar, nowMs]);
+
   const diagnostics = useMemo<TripDiagnostic[]>(() => {
     if (!stopId || !stopTimetable) return [];
 
@@ -191,8 +241,23 @@ export function useStopDiagnostic(
         targetStopIndex >= 0 && routeStopCount > 1 && targetStopIndex === routeStopCount - 1;
 
       for (const [tripId, { time: scheduledMinutes }] of Object.entries(trips)) {
-        const vehiclePos = vehiclePositions.get(tripId) ?? null;
-        const tripUpdate = tripUpdates.get(tripId) ?? null;
+        // Mirrors useStopDepartures: service membership gates the drift fallback,
+        // so it has to be decided before the lookup rather than after it.
+        const inTodayService = activeServiceId !== null && tripId.startsWith(activeServiceId + '_');
+        const inOvernightService =
+          scheduledMinutes >= 1440 &&
+          previousServiceId !== null &&
+          tripId.startsWith(previousServiceId + '_');
+        const inActiveService = inTodayService || inOvernightService;
+
+        const exactVehiclePos = vehiclePositions.get(tripId);
+        const vehiclePos =
+          matchRealtime(vehiclePositions, vehiclePositionsByKey, tripId, inActiveService) ?? null;
+        const tripUpdate =
+          matchRealtime(tripUpdates, tripUpdatesByKey, tripId, inActiveService) ?? null;
+
+        const matchKind: TripDiagnostic['matchKind'] =
+          exactVehiclePos !== undefined ? 'exact' : vehiclePos !== null ? 'drift' : 'none';
 
         // Resolve delay
         let delaySeconds: null | number = null;
@@ -220,7 +285,9 @@ export function useStopDiagnostic(
             etaAbsoluteSeconds,
             filterReason: 'beyond_diag_window',
             hasVehiclePosition: vehiclePos !== null,
+            inActiveService,
             included: false,
+            matchKind,
             passedStop: false,
             routeId,
             routeLongName: route.longName,
@@ -328,7 +395,9 @@ export function useStopDiagnostic(
           etaAbsoluteSeconds,
           filterReason,
           hasVehiclePosition: vehiclePos !== null,
+          inActiveService,
           included,
+          matchKind,
           passedStop,
           routeId,
           routeLongName: route.longName,
@@ -352,6 +421,10 @@ export function useStopDiagnostic(
     routeStopsCache,
     vehiclePositions,
     tripUpdates,
+    vehiclePositionsByKey,
+    tripUpdatesByKey,
+    activeServiceId,
+    previousServiceId,
     nowMs,
     stopsById,
     routesById,
@@ -360,11 +433,18 @@ export function useStopDiagnostic(
   const totalTrips = diagnostics.filter((d) => d.filterReason !== 'beyond_diag_window').length;
   const tripsWithGPS = diagnostics.filter((d) => d.hasVehiclePosition).length;
   const tripsIncluded = diagnostics.filter((d) => d.included).length;
+  const exactHits = diagnostics.filter((d) => d.matchKind === 'exact').length;
+  const driftHits = diagnostics.filter((d) => d.matchKind === 'drift').length;
 
   return {
+    activeServiceId,
     diagnostics,
+    driftHits,
     error,
+    exactHits,
+    feedVersion,
     loading: loading || (!!stopId && !stopTimetable && !error),
+    previousServiceId,
     totalTrips,
     tripsIncluded,
     tripsWithGPS,
