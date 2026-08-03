@@ -164,7 +164,7 @@ export function GTFSMode({ config }: GTFSModeProps) {
     stopsById,
   });
 
-  const serviceId = useCurrentService(calendar);
+  const { previousServiceId, serviceId } = useCurrentService(calendar);
 
   // Load route-specific data
   const {
@@ -185,7 +185,8 @@ export function GTFSMode({ config }: GTFSModeProps) {
   const vehicles = useVehiclePositions(
     config.hasRealtime ? selectedRouteId : null,
     config.hasRealtime ? activeTripsData : null,
-    serviceId
+    serviceId,
+    previousServiceId
   );
 
   // Realtime GTFS-RT polling (no-op when disabled)

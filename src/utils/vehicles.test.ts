@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { ActiveTrip } from './gtfs';
 import type { ParsedVehiclePosition } from './realtime';
 
+import { createStaticTripResolver } from './staticTripResolver';
 import {
   computeVehicleStopProgress,
   getStopAwareProgress,
@@ -179,5 +180,52 @@ describe('mapRealtimeToVehiclePositions', () => {
 
   it('returns nothing without a trip index or a routeId', () => {
     expect(mapRealtimeToVehiclePositions(positions, noUpdates, [], null)).toEqual([]);
+  });
+
+  // The regression this guards: ZET's realtime feed runs service 0_40 while the
+  // static feed publishes 0_4, so an exact join drops every vehicle the moment
+  // the trip index finishes loading and the route panel reports an empty line.
+  describe('across a static/realtime service split', () => {
+    const LIVE = '0_40_601_6_13099';
+    const STATIC = '0_4_601_6_13099';
+    const drifted = new Map([[LIVE, pos(LIVE, '6')]]);
+
+    it('drops the vehicle without a resolver', () => {
+      expect(mapRealtimeToVehiclePositions(drifted, noUpdates, [trip(STATIC)], '6')).toEqual([]);
+    });
+
+    it('keeps it, with headsign and direction, when the resolver knows the service', () => {
+      const resolver = createStaticTripResolver([STATIC], ['0_4']);
+      const result = mapRealtimeToVehiclePositions(
+        drifted,
+        noUpdates,
+        [trip(STATIC)],
+        '6',
+        resolver
+      );
+      expect(result.map((v) => v.tripId)).toEqual([LIVE]);
+      expect(result[0].headsign).toBe('Sopot');
+      expect(result[0].direction).toBe(1);
+    });
+
+    it('still reports the realtime trip ID, which is what the rest of the app keys on', () => {
+      const resolver = createStaticTripResolver([STATIC], ['0_4']);
+      const result = mapRealtimeToVehiclePositions(
+        drifted,
+        noUpdates,
+        [trip(STATIC)],
+        '6',
+        resolver
+      );
+      expect(result[0].tripId).toBe(LIVE);
+    });
+
+    it('does not resurrect a vehicle whose trip is not on the route at all', () => {
+      const resolver = createStaticTripResolver([STATIC], ['0_4']);
+      const other = new Map([['0_40_999_9_1', pos('0_40_999_9_1', '6')]]);
+      expect(
+        mapRealtimeToVehiclePositions(other, noUpdates, [trip(STATIC)], '6', resolver)
+      ).toEqual([]);
+    });
   });
 });

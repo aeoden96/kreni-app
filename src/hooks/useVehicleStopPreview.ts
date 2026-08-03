@@ -5,9 +5,11 @@ import type { RouteTimetable, Stop } from '../utils/gtfs';
 import type { ParsedTripUpdate, ParsedVehiclePosition } from '../utils/realtime';
 import type { VehiclePosition } from '../utils/vehicles';
 
+import { useGTFSMode } from '../contexts/GTFSModeContext';
 import { formatDelay, formatMinutes, haversineMeters } from '../utils/format';
 import { VehicleStopStatus } from '../utils/realtime';
 import { getRouteVehicleStopPreview } from '../utils/vehicles';
+import { useStaticTripResolver } from './useStaticTripResolver';
 
 export interface VehicleStopPreview {
   delayInfo: null | { positive: boolean; text: string };
@@ -45,6 +47,12 @@ export function useVehicleStopPreview({
   upcomingCount = 4,
 }: UseVehicleStopPreviewArgs): null | VehicleStopPreview {
   const { t } = useTranslation();
+  const { dataDir } = useGTFSMode();
+
+  // `routeTimetable` is keyed by static trip IDs; `activeTripId` is a realtime
+  // one. Without this the itinerary is empty on every focused vehicle.
+  const timetableTripIds = useMemo(() => Object.keys(routeTimetable ?? {}), [routeTimetable]);
+  const resolver = useStaticTripResolver(timetableTripIds, { dataDir });
 
   return useMemo(() => {
     if (!activeTripId || !stopsById) return null;
@@ -53,6 +61,7 @@ export function useVehicleStopPreview({
     const previewLon = clickedVehiclePos?.longitude ?? clickedVehicle?.lon ?? 0;
 
     const preview = getRouteVehicleStopPreview({
+      resolver,
       routeTimetable: routeTimetable ?? undefined,
       stopsById,
       tripId: activeTripId,
@@ -141,6 +150,7 @@ export function useVehicleStopPreview({
     clickedTripUpdate,
     clickedVehicle,
     clickedVehiclePos,
+    resolver,
     routeTimetable,
     stopsById,
     upcomingCount,

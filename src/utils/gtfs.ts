@@ -312,6 +312,27 @@ export function getNextDepartures(
   return departures.filter((time) => time >= currentTimeMinutes).slice(0, count);
 }
 
+/**
+ * Yesterday's service, which still owns trips running past midnight — GTFS
+ * encodes those as ≥ 24:00 on the previous service day, so at 01:00 the vehicles
+ * on a night line belong to the calendar entry for the day before.
+ *
+ * Returns `null` rather than a day-of-week guess when the calendar has no entry:
+ * unlike {@link getCurrentServiceId} this only ever *widens* a search, and a
+ * fabricated service would widen it into trips that do not exist.
+ *
+ * NOTE: the date basis here matches `getCurrentServiceId` (UTC, via
+ * `toISOString`) so the pair stays internally consistent. That basis differs
+ * from the local-time one `useStopDepartures` uses, which is a real
+ * inconsistency between the two code paths in the hours around midnight — but
+ * changing it is a behaviour change beyond the scope of this fix.
+ */
+export function getPreviousServiceId(calendar: Record<string, string>): null | string {
+  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const dateStr = yesterday.toISOString().slice(0, 10).replace(/-/g, '');
+  return calendar[dateStr] ?? null;
+}
+
 export function getRouteTypeName(routeType: number): string {
   switch (routeType) {
     case 0:

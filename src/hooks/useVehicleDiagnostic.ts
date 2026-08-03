@@ -31,6 +31,7 @@ import { useRealtimeStore } from '../stores/realtimeStore';
 import { haversineMeters } from '../utils/format';
 import { fetchRouteTimetable, fetchRouteTrips, minutesToTime } from '../utils/gtfs';
 import { getRouteVehicleStopPreview } from '../utils/vehicles';
+import { useStaticTripResolver } from './useStaticTripResolver';
 
 export interface VehicleDiagnostic {
   /** Service alerts whose `routeIds` contain this trip's route */
@@ -126,6 +127,8 @@ export function useVehicleDiagnostic(
   const tripUpdates = useRealtimeStore((s) => s.tripUpdates);
   const serviceAlerts = useRealtimeStore((s) => s.serviceAlerts);
 
+  // `tripId` here is the realtime ID of a vehicle the user focused, so these two
+  // are realtime-keyed lookups with a realtime key — exact is correct.
   const vehiclePos = tripId ? (vehiclePositions.get(tripId) ?? null) : null;
   const tripUpdate = tripId ? (tripUpdates.get(tripId) ?? null) : null;
   const routeId = vehiclePos?.routeId ?? tripUpdate?.routeId ?? null;
@@ -170,17 +173,25 @@ export function useVehicleDiagnostic(
       });
   }, [routeId, dataDir]);
 
+  const timetableTripIds = useMemo(() => Object.keys(routeTimetable ?? {}), [routeTimetable]);
+  const resolver = useStaticTripResolver(timetableTripIds, { dataDir });
+
   const diagnostic = useMemo<null | VehicleDiagnostic>(() => {
     if (!tripId) return null;
 
     const route = routeId ? routesById.get(routeId) : undefined;
-    const trip = routeTrips?.find((t) => t.id === tripId) ?? null;
+    // Both static collections are keyed by static trip IDs while `tripId` comes
+    // from the realtime feed. Resolving once and reusing the result keeps the
+    // timetable and the trip record agreeing on which trip this vehicle is.
+    const staticTripId = resolver.resolve(tripId);
+    const trip = routeTrips?.find((t) => t.id === staticTripId) ?? null;
 
     const stopTimeUpdateByStopId = new Map(
       (tripUpdate?.stopTimeUpdates ?? []).map((stu) => [stu.stopId, stu])
     );
 
     const preview = getRouteVehicleStopPreview({
+      resolver,
       routeTimetable,
       stopsById,
       tripId,
@@ -277,6 +288,7 @@ export function useVehicleDiagnostic(
     tripId,
     routeId,
     routesById,
+    resolver,
     routeTimetable,
     routeTrips,
     serviceAlerts,

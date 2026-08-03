@@ -7,6 +7,7 @@
  */
 
 import type { ActiveTrip, Route, RouteTimetable, Stop } from './gtfs';
+import type { StaticTripResolver } from './staticTripResolver';
 
 import { type ParsedTripUpdate, type ParsedVehiclePosition, VehicleStopStatus } from './realtime';
 
@@ -106,6 +107,8 @@ export function computeVehicleStopProgress(
  */
 export function getRouteVehicleStopPreview(args: {
   orderedStopIdsForSort?: string[];
+  /** Realtime → static trip ID resolution for `routeTimetable`. Omitted means exact-only. */
+  resolver?: null | StaticTripResolver;
   routeTimetable?: null | RouteTimetable;
   stopsById: Map<string, Stop>;
   tripId: string;
@@ -116,6 +119,7 @@ export function getRouteVehicleStopPreview(args: {
 }): RouteVehicleStopPreview {
   const {
     orderedStopIdsForSort,
+    resolver,
     routeTimetable,
     stopsById,
     tripId,
@@ -125,7 +129,12 @@ export function getRouteVehicleStopPreview(args: {
     vehiclePos,
   } = args;
 
-  const tripStops = routeTimetable?.[tripId] ?? null;
+  // `routeTimetable` is keyed by *static* trip IDs while `tripId` comes from the
+  // realtime feed, so this needs the same drift resolution as route membership —
+  // otherwise the focused vehicle's itinerary is permanently empty and every
+  // GPS-derived next stop falls back to the trip-update path alone.
+  const staticTripId = resolver ? resolver.resolve(tripId) : tripId;
+  const tripStops = (staticTripId === undefined ? null : routeTimetable?.[staticTripId]) ?? null;
 
   const currentStopId = vehiclePos?.currentStopId;
   const stopStatus = vehiclePos?.status;
@@ -440,23 +449,33 @@ export function mapRealtimeToAllVehiclePositions(
  * user just clicked would blink out. Headsign and direction fill in once the
  * index is here; the fallback stops applying the moment it is.
  *
+ * `routeTrips` is static data and the feed's trip IDs are not, so membership goes
+ * through `resolver` rather than a bare `tripMeta.get(tripId)`. Without it, an
+ * exact join scores zero whenever ZET's two feeds disagree on the service segment
+ * and *every* vehicle is dropped the instant the index finishes loading — the
+ * route panel showed "no vehicles on this line" while the map, which never joins
+ * on trip ID, displayed them. See {@link createStaticTripResolver}.
+ *
  * @param positions - Map of tripId → ParsedVehiclePosition from the realtime store
  * @param tripUpdates - Map of tripId → ParsedTripUpdate for delay data
  * @param routeTrips - Active trips for the selected route (used for headsign/direction lookup)
  * @param routeId - Selected route; used only for the pre-index fallback above
+ * @param resolver - Realtime → static trip ID resolution. Omitted means exact-only.
  */
 export function mapRealtimeToVehiclePositions(
   positions: Map<string, ParsedVehiclePosition>,
   tripUpdates: Map<string, ParsedTripUpdate>,
   routeTrips: ActiveTrip[],
-  routeId?: null | string
+  routeId?: null | string,
+  resolver?: null | StaticTripResolver
 ): VehiclePosition[] {
   const tripMeta = new Map(routeTrips.map((t) => [t.id, t]));
   const indexLoaded = routeTrips.length > 0;
   const result: VehiclePosition[] = [];
 
   for (const [tripId, pos] of positions) {
-    const meta = tripMeta.get(tripId);
+    const staticTripId = resolver ? resolver.resolve(tripId) : tripId;
+    const meta = staticTripId === undefined ? undefined : tripMeta.get(staticTripId);
     if (!meta && (indexLoaded || !routeId || pos.routeId !== routeId)) continue; // not on this route
 
     const update = tripUpdates.get(tripId);
