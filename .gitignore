@@ -63,3 +63,7 @@ keystore.properties
 public/onboarding_new/full-screen-*.mp4
 public/onboarding_new/*Zone.Identifier
 public/onboarding_new/*.png
+
+# Generated Play Console store screenshots (scripts/play-screenshots.mjs).
+play-screenshots/
+trip-drift-evidence.json
