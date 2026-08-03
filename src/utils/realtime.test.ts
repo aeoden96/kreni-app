@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import {
   computeBearing,
   enrichWithDeadReckoning,
-  feedBytes,
   formatDelay,
   haversineDistance,
   type ParsedVehiclePosition,
@@ -182,32 +181,5 @@ describe('enrichWithDeadReckoning', () => {
     const out = enrichWithDeadReckoning(cur, prev);
     expect(out.speed).toBeGreaterThan(7);
     expect(out.speed).toBeLessThan(8);
-  });
-});
-
-describe('feedBytes', () => {
-  // A GTFS-RT header is bytes the protobuf decoder actually accepts, so a
-  // round-trip failure here is the same failure a device would hit.
-  const protobufBytes = new Uint8Array([0x0a, 0x07, 0x0a, 0x03, 0x32, 0x2e, 0x30, 0x18, 0x00]);
-  const asBase64 = btoa(String.fromCharCode(...protobufBytes));
-
-  it('decodes the base64 string Android returns for an arraybuffer response', () => {
-    expect(Array.from(feedBytes(asBase64))).toEqual(Array.from(protobufBytes));
-  });
-
-  it('passes a real ArrayBuffer through unchanged', () => {
-    const buf = protobufBytes.slice().buffer;
-    expect(Array.from(feedBytes(buf))).toEqual(Array.from(protobufBytes));
-  });
-
-  it('handles a typed-array view without copying the wrong window', () => {
-    const padded = new Uint8Array([0xff, 0xff, ...protobufBytes, 0xff]);
-    const view = new Uint8Array(padded.buffer, 2, protobufBytes.length);
-    expect(Array.from(feedBytes(view))).toEqual(Array.from(protobufBytes));
-  });
-
-  it('refuses anything else rather than handing the decoder garbage', () => {
-    expect(() => feedBytes({ nested: 'object' })).toThrow(/unusable body/);
-    expect(() => feedBytes(null)).toThrow(/unusable body/);
   });
 });

@@ -14,8 +14,6 @@
 import * as _GtfsRT from 'gtfs-realtime-bindings';
 const GtfsRealtimeBindings: typeof _GtfsRT = ((_GtfsRT as any).default ??
   _GtfsRT) as typeof _GtfsRT;
-import { CapacitorHttp } from '@capacitor/core';
-
 import { GTFS_API_KEY, GTFS_PROXY_URL } from '../config';
 import { isNative } from './platform';
 
@@ -165,37 +163,8 @@ type GtfsRealtimeFeed = InstanceType<typeof GtfsRealtimeBindings.transit_realtim
 // Parsing utilities (adapted from worker parser.ts)
 // ============================================
 
-/**
- * One shape for both transports, so only the fetch differs and the decode,
- * header reads and error handling below stay single-path.
- */
-interface RawFeedResponse {
-  bytes: Uint8Array;
-  /** Case-insensitive: native returns a plain object, not a `Headers`. */
-  header: (name: string) => null | string;
-  status: number;
-}
-
-/**
- * Coerce whatever the native bridge hands back into bytes.
- *
- * Android returns an `arraybuffer` response as a **base64 string** rather than a
- * real ArrayBuffer, and the plugin's own typings say only `data: any`, so the
- * shape is checked at runtime instead of assumed. Getting this wrong is
- * invisible until a protobuf fails to decode on a device.
- */
-export function feedBytes(data: unknown): Uint8Array {
-  if (data instanceof ArrayBuffer) return new Uint8Array(data);
-  if (ArrayBuffer.isView(data)) {
-    return new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
-  }
-  if (typeof data === 'string') {
-    const binary = atob(data);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    return bytes;
-  }
-  throw new Error(`GTFS proxy returned an unusable body (${typeof data})`);
+interface WindowWithWebFetch {
+  CapacitorWebFetch?: typeof fetch;
 }
 
 /**
@@ -220,26 +189,30 @@ export async function fetchRealtimeFeed(endpoint: 'trip-updates' | 'vehicle-posi
   }
 
   const fetchStart = Date.now();
-  const response = isNative()
-    ? await requestFeedNative(url, headers)
-    : await requestFeedWeb(url, headers);
+  const response = await feedFetch()(url, {
+    cache: 'no-store', // Bypass browser cache so each poll fetches fresh data
+    headers,
+  });
 
-  if (response.status < 200 || response.status >= 300) {
-    throw new Error(`GTFS proxy request failed: ${response.status}`);
+  // Before touching the body: a WAF block is an HTML page, and decoding that as
+  // a protobuf produces an error that describes the parser rather than the 403.
+  if (!response.ok) {
+    throw new Error(`GTFS proxy request failed: ${response.status} ${response.statusText}`);
   }
 
   const fetchEnd = Date.now();
-  const workerTimestamp = response.header('X-Timestamp');
-  const rawCacheStatus = response.header('X-Cache-Status');
+  const workerTimestamp = response.headers.get('X-Timestamp');
+  const rawCacheStatus = response.headers.get('X-Cache-Status');
   const cacheStatus: RealtimeFetchMetadata['cacheStatus'] =
     rawCacheStatus === 'HIT' || rawCacheStatus === 'MISS' ? rawCacheStatus : null;
-  const ageHeader = response.header('Age');
+  const ageHeader = response.headers.get('Age');
   const parsedAge = ageHeader != null ? Number.parseInt(ageHeader, 10) : Number.NaN;
   const cacheAgeSeconds = Number.isFinite(parsedAge) && parsedAge >= 0 ? parsedAge : null;
   const fetchTimeMs = fetchEnd - fetchStart;
   const httpStatus = response.status;
 
-  const feed = GtfsRealtimeBindings.transit_realtime.FeedMessage.decode(response.bytes);
+  const buffer = await response.arrayBuffer();
+  const feed = GtfsRealtimeBindings.transit_realtime.FeedMessage.decode(new Uint8Array(buffer));
 
   return {
     feed,
@@ -331,6 +304,33 @@ export function parseVehiclePositions(feed: GtfsRealtimeFeed): ParsedVehiclePosi
 }
 
 /**
+ * The fetch to use for the realtime feeds — deliberately *not* the ambient one
+ * on native.
+ *
+ * `CapacitorHttp` is enabled globally (see capacitor.config.ts: `/data/*` is
+ * unreachable without it) and replaces `window.fetch` with a shim that routes
+ * through the native HTTP stack. For these feeds that is wrong twice over:
+ *
+ *   - Cloudflare's WAF 403s the native stack. Measured on device: a
+ *     `CapacitorHttp.request` to the proxy comes back as the "Sorry, you have
+ *     been blocked" HTML page, while the same URL from the WebView's own fetch
+ *     succeeds. The block keys off the client, not the credentials.
+ *   - The shim decodes bodies by content-type into a string, which corrupts
+ *     `application/x-protobuf` even when the request does get through.
+ *
+ * The bridge stashes the untouched implementation on `window.CapacitorWebFetch`
+ * before patching, so use that: a real WebView request that the WAF accepts,
+ * with correct binary handling. CORS is satisfied — the Worker answers
+ * `https://localhost` and allowlists `X-API-Key` on the preflight, unlike the
+ * `/data` origin, which is why only these feeds can go this way.
+ */
+function feedFetch(): typeof fetch {
+  if (!isNative()) return fetch;
+  const preserved = (window as unknown as WindowWithWebFetch).CapacitorWebFetch;
+  return typeof preserved === 'function' ? preserved.bind(window) : fetch;
+}
+
+/**
  * Extract text from a GTFS-RT TranslatedString.
  * Prefers Croatian ('hr'), falls back to first translation.
  */
@@ -338,50 +338,6 @@ function getTranslatedText(ts: any): string {
   if (!ts?.translation?.length) return '';
   const hr = ts.translation.find((t: { language?: string; text?: string }) => t.language === 'hr');
   return (hr ?? ts.translation[0])?.text ?? '';
-}
-
-/**
- * Native transport, bypassing the CapacitorHttp `fetch` shim on purpose.
- *
- * The shim is enabled globally (see capacitor.config.ts — `/data/*` cannot be
- * reached without it) but decodes bodies by content-type into a string, which
- * silently corrupts `application/x-protobuf`. Calling the plugin directly with
- * an explicit `responseType` is what keeps the feed bytes intact.
- */
-async function requestFeedNative(
-  url: string,
-  headers: Record<string, string>
-): Promise<RawFeedResponse> {
-  const res = await CapacitorHttp.request({
-    headers,
-    method: 'GET',
-    responseType: 'arraybuffer',
-    url,
-  });
-  const lowered = new Map(
-    Object.entries(res.headers ?? {}).map(([k, v]) => [k.toLowerCase(), String(v)])
-  );
-  return {
-    bytes: feedBytes(res.data),
-    header: (name) => lowered.get(name.toLowerCase()) ?? null,
-    status: res.status,
-  };
-}
-
-/** Web transport — a normal `fetch`, which handles binary correctly. */
-async function requestFeedWeb(
-  url: string,
-  headers: Record<string, string>
-): Promise<RawFeedResponse> {
-  const res = await fetch(url, {
-    cache: 'no-store', // Bypass browser cache so each poll fetches fresh data
-    headers,
-  });
-  return {
-    bytes: new Uint8Array(await res.arrayBuffer()),
-    header: (name) => res.headers.get(name),
-    status: res.status,
-  };
 }
 
 const CAUSE_LABELS: Record<number, string> = {
