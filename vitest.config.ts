@@ -26,6 +26,26 @@ export default defineConfig({
         },
       },
       {
+        // Opt-in only (`yarn verify:live`). These hit the real ZET feeds, so they
+        // are deliberately outside `yarn test` — a network blip or a depot at
+        // 03:00 is not a code regression and must never fail CI.
+        //
+        // Not `extends: true`: the root config's jsdom setup file reaches for
+        // `window`, which does not exist in a node environment. Nothing here
+        // renders, so there is nothing to inherit.
+        test: {
+          // The report *is* the deliverable here, so let it reach the terminal
+          // instead of being buffered away by the default reporter.
+          disableConsoleIntercept: true,
+          environment: 'node',
+          include: ['scripts/live/**/*.live.ts'],
+          name: 'live',
+          reporters: ['basic'],
+          setupFiles: ['./scripts/live/setup.ts'],
+          testTimeout: 120_000,
+        },
+      },
+      {
         extends: true,
         plugins: [
           // The plugin will run tests for the stories defined in your Storybook config

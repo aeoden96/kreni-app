@@ -25,6 +25,7 @@
     "pw:server:down": "docker compose -f docker-compose.playwright.yml down playwright-server",
     "knip": "knip",
     "screenshots": "node scripts/play-screenshots.mjs",
+    "verify:live": "vitest run --project live",
     "verify:trip-drift": "node scripts/verify-trip-drift.mjs",
     "sample:trip-drift": "node scripts/sample-trip-drift.mjs",
     "storybook": "storybook dev -p 6006",
