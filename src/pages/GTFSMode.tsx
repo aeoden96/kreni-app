@@ -612,8 +612,6 @@ export function GTFSMode({ config }: GTFSModeProps) {
                 onExpand={handleExpandRoute}
                 onFollowStart={handleFollowStart}
                 onStopFollowing={handleStopFollowing}
-                onVehicleFocus={(tripId) => focusVehicle(tripId, { follow: true })}
-                onVehicleSwitch={focusVehicle}
                 orderedStops={orderedStops}
                 route={selectedRoute}
                 routesById={routesById}
