@@ -232,9 +232,9 @@ export function SpiderMenu() {
             <a
               className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary/90 text-primary-content shadow-lg border border-primary-content/10 hover:bg-primary hover:scale-105 transition-all duration-300"
               href="https://play.google.com/store/apps/details?id=app.kreni"
+              onClick={() => trackEvent('play_store_clicked', { source: 'spider_menu' })}
               rel="noopener noreferrer"
               target="_blank"
-              onClick={() => trackEvent('play_store_clicked', { source: 'spider_menu' })}
             >
               <Download className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
               <span className="text-[10px] font-black tracking-widest uppercase whitespace-nowrap">

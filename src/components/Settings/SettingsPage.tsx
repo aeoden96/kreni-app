@@ -208,9 +208,9 @@ export function SettingsPage() {
                 <a
                   className="btn btn-sm btn-primary"
                   href="https://play.google.com/store/apps/details?id=app.kreni"
+                  onClick={() => trackEvent('play_store_clicked', { source: 'settings' })}
                   rel="noopener noreferrer"
                   target="_blank"
-                  onClick={() => trackEvent('play_store_clicked', { source: 'settings' })}
                 >
                   <ExternalLink className="w-4 h-4" />
                   Google Play
