@@ -193,6 +193,33 @@ export function SettingsPage() {
           </div>
         </div>
 
+        {/* Android App Promotion Section */}
+        {!isNative() && (
+          <div className="card bg-base-100 shadow-sm border-2 border-primary/20">
+            <div className="card-body">
+              <h2 className="card-title text-lg flex items-center gap-2">
+                <Download className="w-5 h-5 text-primary" />
+                {t('settings.getAndroidAppTitle', 'Get the Android App')}
+              </h2>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-base-content/70">
+                  {t('settings.getAndroidAppHint', 'Available now on the Google Play Store.')}
+                </p>
+                <a
+                  className="btn btn-sm btn-primary"
+                  href="https://play.google.com/store/apps/details?id=app.kreni"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  onClick={() => trackEvent('play_store_clicked', { source: 'settings' })}
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Google Play
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Install App Section */}
         {canInstall && (
           <div className="card bg-base-100 shadow-sm">

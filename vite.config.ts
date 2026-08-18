@@ -82,6 +82,10 @@ export default defineConfig({
       },
       includeAssets: ['favicon.svg', 'favicon.png', 'pwa-192x192.png'],
       manifest: {
+        related_applications: [
+          { platform: 'play', id: 'app.kreni', url: 'https://play.google.com/store/apps/details?id=app.kreni' },
+        ],
+        prefer_related_applications: true,
         background_color: '#102a44',
         description:
           'Zet uzivo na karti Zagreba — tramvaji, autobusi i vlakovi ZET-a uživo; parking, bicikli i ostale gradske usluge na jednoj karti.',
