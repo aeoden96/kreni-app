@@ -108,6 +108,10 @@ export default defineConfig({
         ],
         lang: 'hr',
         name: 'Kreni — Zagreb javni prijevoz',
+        prefer_related_applications: true,
+        related_applications: [
+          { id: 'app.kreni', platform: 'play', url: 'https://play.google.com/store/apps/details?id=app.kreni' },
+        ],
         scope: '/',
         screenshots: [
           {

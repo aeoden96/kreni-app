@@ -2,6 +2,7 @@ import {
   Bike,
   Building2,
   Car,
+  Download,
   LocateFixed,
   MessageSquare,
   Moon,
@@ -18,6 +19,7 @@ import { useNavigationStore } from '../../stores/navigationStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { trackEvent } from '../../utils/analytics';
 import { hapticImpact } from '../../utils/haptics';
+import { isNative } from '../../utils/platform';
 import { shareCurrentView } from '../../utils/share';
 import { SpiderActionRow } from './SpiderActionRow';
 import { SpiderRouteList } from './SpiderRouteList';
@@ -220,12 +222,26 @@ export function SpiderMenu() {
         </div>
       </div>
 
-      {/* Bottom-right: feedback (visible when menu is open) */}
+      {/* Bottom-right: feedback and promotions (visible when menu is open) */}
       {isOpen && (
         <div
-          className="fixed right-3 sm:right-4 z-[2001] animate-spider-reveal pointer-events-auto"
+          className="fixed right-3 sm:right-4 z-[2001] animate-spider-reveal pointer-events-auto flex flex-col gap-2 items-end"
           style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.875rem)' }}
         >
+          {!isNative() && (
+            <a
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary/90 text-primary-content shadow-lg border border-primary-content/10 hover:bg-primary hover:scale-105 transition-all duration-300"
+              href="https://play.google.com/store/apps/details?id=app.kreni"
+              onClick={() => trackEvent('play_store_clicked', { source: 'spider_menu' })}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <Download className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+              <span className="text-[10px] font-black tracking-widest uppercase whitespace-nowrap">
+                Google Play
+              </span>
+            </a>
+          )}
           <button
             className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-neutral/90 text-neutral-content shadow-lg border border-white/10 hover:bg-neutral hover:scale-105 transition-all duration-300"
             onClick={handleFeedback}
