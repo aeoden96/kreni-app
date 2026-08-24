@@ -880,14 +880,14 @@
   integrity sha512-ehg3jIkYKulZh+8om/O25vkvSsXXwC+skXmyA87FFx6A/45eqOkZsBltMw/TVteb0mloiGT8oGRTcjRAz66zaA==
 
 "@capacitor-firebase/messaging@^8":
-  version "8.3.0"
-  resolved "https://registry.yarnpkg.com/@capacitor-firebase/messaging/-/messaging-8.3.0.tgz#0817a1f6eacacccc6748e8191b914a8adceae870"
-  integrity sha512-gjlpPH8nFN2D4PGpg+Bi7Pk1Apy+nRh6DHTI8hr4o3QfCmZPnNCT0mhhT8Rcdpwf2D+E5NxkaVy4/2GYiXoF8Q==
+  version "8.4.0"
+  resolved "https://registry.yarnpkg.com/@capacitor-firebase/messaging/-/messaging-8.4.0.tgz#cf2e444400e4b3d399b131e364964d5762c35031"
+  integrity sha512-wpVaiM6GGBp++4KSiJ2Bw4AZKmO09pbTnJ6PNNg6UMkYehbokvisG83D/7P4u7Lt+5HcrlSwCtXKwWCfIGb2qQ==
 
 "@capacitor/app@^8":
-  version "8.1.0"
-  resolved "https://registry.yarnpkg.com/@capacitor/app/-/app-8.1.0.tgz#fd8da0994a02a767981c8a235d2b6524d36a3aae"
-  integrity sha512-MlmttTOWHDedr/G4SrhNRxsXMqY+R75S4MM4eIgzsgCzOYhb/MpCkA5Q3nuOCfL1oHm26xjUzqZ5aupbOwdfYg==
+  version "8.1.1"
+  resolved "https://registry.yarnpkg.com/@capacitor/app/-/app-8.1.1.tgz#af00649d0c7799ec83469b1c4ada921f9933a77e"
+  integrity sha512-xM2ZTX5jK60tFtmjsmJv+Cdj1Qsb6NcavkqmdEnCPQBeya9oKhamZJxYOnQNj1ZvcJM7sWfG6BEtSLx42pisbA==
 
 "@capacitor/core@^8.4.1":
   version "8.4.1"
