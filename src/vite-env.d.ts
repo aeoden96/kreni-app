@@ -2,6 +2,8 @@
 /// <reference types="vite-plugin-pwa/client" />
 
 interface ImportMetaEnv {
+  /** CARTO Basemaps key. Unset renders an "API KEY REQUIRED" watermark, not an error. */
+  readonly VITE_CARTO_KEY?: string;
   /** Origin the native build fetches processed GTFS files from (default https://kreni.app). */
   readonly VITE_GTFS_DATA_URL?: string;
   readonly VITE_TALLY_FEEDBACK_FORM_ID?: string;

@@ -32,11 +32,38 @@ function MapTestRef() {
   return null;
 }
 
+/**
+ * CARTO began watermarking keyless raster tiles in August 2026: "API KEY
+ * REQUIRED" stamped diagonally across the image, served as a normal 200. The
+ * failure is therefore silent — nothing errors, the map is just defaced, and
+ * the `CacheFirst` rule below happily stores it for 30 days.
+ *
+ * The key is free (5M tile requests/month against our measured ~100-250k) but
+ * it is a *build-time* value: Cloudflare Pages and the Android build each need
+ * `VITE_CARTO_KEY` in their environment or their tiles come back stamped.
+ *
+ * It is not a secret in any useful sense — a `VITE_` var is inlined into the
+ * bundle and extractable from the APK. Keeping it out of the repo makes it
+ * rotatable and unshared, not private.
+ *
+ * Left unset the URL simply carries no `key` param and the watermark shows.
+ * That is deliberate: a contributor building this public repo sees exactly
+ * what is missing, rather than a basemap silently swapped out from under them.
+ *
+ * CARTO is retiring the raster service in favour of vector, so treat this as a
+ * bridge rather than a resting place.
+ */
+const CARTO_KEY = import.meta.env.VITE_CARTO_KEY;
+
+const cartoUrl = (style: string): string =>
+  `https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png` +
+  (CARTO_KEY ? `?key=${CARTO_KEY}` : '');
+
 const TILE_PROVIDERS = {
   'dark-matter': {
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    url: cartoUrl('dark_all'),
   },
   osm: {
     attribution:
@@ -47,7 +74,7 @@ const TILE_PROVIDERS = {
   positron: {
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    url: cartoUrl('light_all'),
   },
 };
 

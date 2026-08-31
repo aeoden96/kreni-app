@@ -265,7 +265,15 @@ export default defineConfig({
               // an opaque entry left by an older build would otherwise be
               // handed to a CORS-mode <img>, which refuses it and leaves a
               // blank tile. `retireOldCaches` deletes the `-v1` names outright.
-              cacheName: 'map-tiles-carto-v2',
+              //
+              // `-v3` for a different reason: CARTO now stamps "API KEY
+              // REQUIRED" across keyless tiles and serves them as a normal 200,
+              // so `CacheFirst` stored 30 days of defaced tiles. Adding the key
+              // changes the URL, so those entries would never be *served*
+              // again — but nothing would reclaim them either, and a device
+              // that cached a full 600 would sit on ~20 MB of garbage until
+              // expiry. The rename orphans them in one go for `retireOldCaches`.
+              cacheName: 'map-tiles-carto-v3',
               expiration: {
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
                 maxEntries: 600,

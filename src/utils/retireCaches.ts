@@ -15,8 +15,19 @@
  *
  * Without this they would linger indefinitely: nothing writes to them, so
  * workbox's expiration never runs against them and never trims them.
+ *
+ * `map-tiles-carto-v2` joins them for an unrelated reason. CARTO began stamping
+ * "API KEY REQUIRED" across keyless tiles and serving them as a normal 200, so
+ * that cache filled with defaced images on a 30-day expiry. `BaseMap` now sends
+ * a key, which changes the tile URL and orphans every one of those entries —
+ * same situation as above, so the same fix.
  */
-const RETIRED_CACHES = ['map-tiles-osm', 'map-tiles-carto', 'map-tiles-cyclosm'];
+const RETIRED_CACHES = [
+  'map-tiles-osm',
+  'map-tiles-carto',
+  'map-tiles-cyclosm',
+  'map-tiles-carto-v2',
+];
 
 /**
  * Fire-and-forget; failures are ignored on purpose. This reclaims space, so a
