@@ -417,7 +417,7 @@ export function SettingsPage() {
               <p className="text-sm text-base-content/70">{t('settings.repositoryHint')}</p>
               <a
                 className="btn btn-sm btn-primary"
-                href="https://github.com/aeoden96/kreni-app"
+                href="https://github.com/m-t-e-o/kreni-app"
                 rel="noopener noreferrer"
                 target="_blank"
               >
