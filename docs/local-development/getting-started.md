@@ -15,7 +15,7 @@ updated: 2026-07-04
 ## Install & run
 
 ```bash
-git clone https://github.com/aeoden96/kreni-app.git
+git clone https://github.com/m-t-e-o/kreni-app.git
 cd kreni-app
 
 # 1. Install dependencies

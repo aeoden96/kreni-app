@@ -106,7 +106,7 @@ export function ChangelogModal({ isOpen, onClose }: ChangelogModalProps) {
         <div className="p-4 border-t border-base-200 bg-base-100 shrink-0">
           <a
             className="btn btn-outline btn-sm w-full flex items-center justify-center gap-2"
-            href="https://github.com/aeoden96/kreni-app/releases"
+            href="https://github.com/m-t-e-o/kreni-app/releases"
             rel="noopener noreferrer"
             target="_blank"
           >

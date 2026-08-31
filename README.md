@@ -7,11 +7,11 @@
 **All on one map: track ZET trams and buses live, find free parking spots, public garages, Nextbike bicycles, and cycling paths in Zagreb. Also includes locations of public water fountains, EV charging stations, and student cafeterias.**
 
 [![License](https://img.shields.io/badge/license-PolyForm_Noncommercial_1.0.0-blue.svg?style=flat-square)](LICENSE)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/aeoden96/kreni-app/deploy.yml?branch=master&style=flat-square)](https://github.com/aeoden96/kreni-app/actions)
-[![Static Analysis](https://img.shields.io/github/actions/workflow/status/aeoden96/kreni-app/ci.yml?branch=master&label=ci&style=flat-square)](https://github.com/aeoden96/kreni-app/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/m-t-e-o/kreni-app/deploy.yml?branch=master&style=flat-square)](https://github.com/m-t-e-o/kreni-app/actions)
+[![Static Analysis](https://img.shields.io/github/actions/workflow/status/m-t-e-o/kreni-app/ci.yml?branch=master&label=ci&style=flat-square)](https://github.com/m-t-e-o/kreni-app/actions)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
-[**Live Demo**](https://kreni.app/) • [**Report Bug**](https://github.com/aeoden96/kreni-app/issues) • [**Request Feature**](https://github.com/aeoden96/kreni-app/issues)
+[**Live Demo**](https://kreni.app/) • [**Report Bug**](https://github.com/m-t-e-o/kreni-app/issues) • [**Request Feature**](https://github.com/m-t-e-o/kreni-app/issues)
 
 </div>
 
@@ -117,7 +117,7 @@ The full documentation vault lives in **[docs/Home.md](docs/Home.md)**.
 ### Installation
 
 ```bash
-git clone https://github.com/aeoden96/kreni-app.git
+git clone https://github.com/m-t-e-o/kreni-app.git
 cd kreni-app
 
 # 1. Install dependencies
